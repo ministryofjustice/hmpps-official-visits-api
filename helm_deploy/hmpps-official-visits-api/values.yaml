@@ -1,6 +1,8 @@
 generic-service:
   nameOverride: hmpps-official-visits-api
   productId: "DPS131" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
+  # Used to access resources like SQS queues and SNS topics
+  serviceAccountName: "hmpps-official-visits-api"
 
   replicaCount: 4
 
@@ -28,6 +30,11 @@ generic-service:
   namespace_secrets:
     hmpps-official-visits-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    rds-postgresql-instance-output:
+      DB_SERVER: "rds_instance_address"
+      DB_NAME: "database_name"
+      DB_USER: "database_username"
+      DB_PASS: "database_password"
 
   allowlist:
     groups:
