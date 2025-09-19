@@ -2,7 +2,7 @@ generic-service:
   nameOverride: hmpps-official-visits-api
   productId: "DPS131" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
   # Used to access resources like SQS queues and SNS topics
-  serviceAccountName: "hmpps-official-visits-api"
+  serviceAccountName: "hmpps-official-visits"
 
   replicaCount: 4
 
