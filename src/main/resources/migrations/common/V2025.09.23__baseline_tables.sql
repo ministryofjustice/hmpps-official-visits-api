@@ -5,7 +5,7 @@ CREATE TABLE test_table (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO test_table VALUES
+INSERT INTO test_table (name) VALUES
   ('Harry'),
   ('Tim');
 
