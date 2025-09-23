@@ -1,33 +1,19 @@
 version: "3"
 services:
-  hmpps-official-visits-api:
-    build:
-      context: .
+  db:
+    image: postgres:latest
     networks:
       - hmpps
-    container_name: hmpps-official-visits-api
+    container_name: official-visits-db
+    restart: always
     ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ping"]
+      - "5432:5432"
     environment:
-      - SERVER_PORT=8080
-      - HMPPS_AUTH_URL=http://hmpps-auth:8080/auth
-      - SPRING_PROFILES_ACTIVE=dev
-
-  hmpps-auth:
-    image: quay.io/hmpps/hmpps-auth:latest
-    networks:
-      - hmpps
-    container_name: hmpps-auth
-    ports:
-      - "8090:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/auth/health"]
-    environment:
-      - SERVER_PORT=8080
-      - SPRING_PROFILES_ACTIVE=dev
-      - APPLICATION_AUTHENTICATION_UI_ALLOWLIST=0.0.0.0/0
+      POSTGRES_DB: official-visits-db
+      POSTGRES_USER: official-visits
+      POSTGRES_PASSWORD: official-visits
+    volumes:
+      - ./docker-init.sql:/docker-entrypoint-initdb.d/init.sql
 
 networks:
   hmpps:
