@@ -39,22 +39,43 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ matrix.environments }}
-  kotlin_validate:
-    name: Validate the kotlin
+
+  gradle_validate:
+    name: Build the application and run the unit tests
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
+    with:
+      upload-build-artifacts: ${{ github.ref == 'refs/head/main' }}
+      artifact-name: 'unit-test-results'
+
+  gradle_integration_tests:
+    name: Run the integration tests
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_postgres_verify.yml@v2 # WORKFLOW_VERSION
+    secrets: inherit
+    needs:
+      - gradle_validate
+    with:
+      gradle-command: './gradlew integrationTest'
+      postgres-db: official-visits-test-db
+      postgres-tag: "16"
+      postgres-username: official-visits
+      postgres-password: official-visits
+      artifact-name: integration-test-results
+
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - kotlin_validate
+      - gradle_validate
+      - gradle_integration_tests
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
       additional_docker_tag: ${{ inputs.additional_docker_tag }}
       push: ${{ inputs.push || true }}
       docker_multiplatform: false
+
   deploy_dev:
     name: Deploy to the development environment
     needs:
@@ -65,6 +86,7 @@ jobs:
     with:
       environment: 'dev'
       app_version: '${{ needs.build.outputs.app_version }}'
+
   # deploy_preprod:
   #   name: Deploy to pre-production environment
   #   needs:
@@ -75,6 +97,7 @@ jobs:
   #   with:
   #     environment: 'preprod'
   #     app_version: '${{ needs.build.outputs.app_version }}'
+
   # deploy_prod:
   #   name: Deploy to production environment
   #   needs:
