@@ -1,3 +1,21 @@
+spring:
+
+  main:
+    allow-bean-definition-overriding: true
+
+  jpa:
+    show-sql: true
+
+  datasource:
+    url: 'jdbc:postgresql://localhost:5432/official-visits-test-db'
+    username: official-visits
+    password: official-visits
+    hikari:
+      minimum-idle: 5
+
+  flyway:
+    locations: classpath:/migrations/common,classpath:/migrations/dev
+
 server:
   shutdown: immediate
 
@@ -5,5 +23,8 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
-hmpps-auth:
-  url: "http://localhost:8090/auth"
+api:
+  base:
+    url:
+      hmpps-auth: http://localhost:8090/auth
+      locations-inside-prison: http://localhost:8091

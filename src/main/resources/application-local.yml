@@ -5,23 +5,27 @@
 
 # Most values are inherited from - application.yml - except the following:
 spring:
-  datasource:
-    url: 'jdbc:postgresql://${DB_SERVER}/${DB_NAME}?sslmode=prefer'
-    username: ${DB_USER}
-    password: ${DB_PASS}
-
   jpa:
     show-sql: true
 
+  # Override data source to the locally running Postgresql (usually a docker container)
+  datasource:
+    url: 'jdbc:postgresql://localhost:5432/official-visits-db?sslmode=prefer'
+    username: official-visits
+    password: official-visits
+
+  # Apply migrations from common and dev locations for local runs
   flyway:
     locations: classpath:/migrations/common,classpath:/migrations/dev
 
-system:
-  client:
-    id: ${SYSTEM_CLIENT_ID}
-    secret: ${SYSTEM_CLIENT_SECRET}
-
 api:
+  # client credentials from environment - provide via .env file
+  client:
+    id: ${API_CLIENT_ID}
+    secret: ${API_CLIENT_SECRET}
+
+  # API urls - point to DEV environment for external dependencies
   base:
     url:
       hmpps-auth: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
+      locations-inside-prison: https://locations-inside-prison-api-dev.hmpps.service.justice.gov.uk
