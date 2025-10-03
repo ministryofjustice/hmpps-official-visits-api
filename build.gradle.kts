@@ -1,6 +1,22 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.0.0"
-  kotlin("plugin.spring") version "2.2.10"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.1"
+  id("org.openapi.generator") version "7.15.0"
+  kotlin("plugin.spring") version "2.2.20"
+  kotlin("plugin.jpa") version "2.2.20"
+}
+
+allOpen {
+  annotations(
+    "javax.persistence.Entity",
+    "javax.persistence.MappedSuperclass",
+    "javax.persistence.Embeddable",
+  )
 }
 
 configurations {
@@ -8,28 +24,35 @@ configurations {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.5.0")
-
-  // Spring boot
-  implementation("org.springframework.boot:spring-boot-starter-webflux")
-  implementation("org.springframework.boot:spring-boot-starter-security")
+  // Spring boot dependencies
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11")
+  implementation("org.springframework.boot:spring-boot-starter-security")
+  implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0")
 
   // Database dependencies
-  runtimeOnly("org.flywaydb:flyway-core")
-  runtimeOnly("org.postgresql:postgresql:42.7.1")
+  runtimeOnly("org.flywaydb:flyway-database-postgresql")
+  runtimeOnly("org.postgresql:postgresql:42.7.8")
 
-  // test dependencies
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.5.0")
-  testImplementation("org.wiremock:wiremock-standalone:3.13.1")
-  testImplementation("com.h2database:h2")
+  // OpenAPI dependencies
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+
+  // Open telemetry dependencies
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.20.1")
+
+  // Test dependencies
+  testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
+  testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit:4.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:4.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:4.1.1")
+  testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("org.mockito:mockito-inline:5.2.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit:3.2.2")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:3.2.2")
-  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:3.2.2")
-  testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.springframework.security:spring-security-test")
+  testImplementation("org.testcontainers:postgresql:1.21.3")
+  testImplementation("org.wiremock:wiremock-standalone:3.13.1")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.5.0")
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.32") {
     exclude(group = "io.swagger.core.v3")
   }
@@ -40,7 +63,77 @@ kotlin {
 }
 
 tasks {
-  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+  withType<KotlinCompile> {
+    dependsOn("buildLocationsInsidePrisonApiModel")
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    compilerOptions.freeCompilerArgs.add("-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled")
+  }
+  withType<KtLintCheckTask> {
+    // Under gradle 8 we must declare the dependency here, even if we're not going to be linting the model
+    mustRunAfter("buildLocationsInsidePrisonApiModel")
+  }
+  withType<KtLintFormatTask> {
+    // Under gradle 8 we must declare the dependency here, even if we're not going to be linting the model
+    mustRunAfter("buildLocationsInsidePrisonApiModel")
+  }
+}
+
+val configValues = mapOf(
+  "dateLibrary" to "java8-localdatetime",
+  "serializationLibrary" to "jackson",
+  "enumPropertyNaming" to "original",
+  "useSpringBoot3" to "true",
+)
+
+val buildDirectory: Directory = layout.buildDirectory.get()
+
+tasks.register("buildLocationsInsidePrisonApiModel", GenerateTask::class) {
+  generatorName.set("kotlin")
+  inputSpec.set("openapi-specs/locations-inside-prison-api.json")
+  outputDir.set("$buildDirectory/generated/locationsinsideprisonapi")
+  modelPackage.set("uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model")
+  configOptions.set(configValues)
+  globalProperties.set(mapOf("models" to ""))
+}
+
+val generatedProjectDirs = listOf("locationsinsideprisonapi")
+
+tasks.register("integrationTest", Test::class) {
+  description = "Runs integration tests"
+  group = "verification"
+  testClassesDirs = sourceSets["test"].output.classesDirs
+  classpath = sourceSets["test"].runtimeClasspath
+
+  useJUnitPlatform {
+    filter {
+      includeTestsMatching("*.integration.*")
+    }
+  }
+
+  shouldRunAfter("test")
+  maxHeapSize = "2048m"
+}
+tasks.named<Test>("test") {
+  filter {
+    excludeTestsMatching("*.integration.*")
+  }
+}
+
+kotlin {
+  generatedProjectDirs.forEach { generatedProject ->
+    sourceSets["main"].apply {
+      kotlin.srcDir("$buildDirectory/generated/$generatedProject/src/main/kotlin")
+    }
+  }
+}
+
+configure<KtlintExtension> {
+  filter {
+    generatedProjectDirs.forEach { generatedProject ->
+      exclude { element ->
+        element.file.path.contains("build/generated/$generatedProject/src/main/")
+      }
+    }
   }
 }

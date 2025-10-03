@@ -1,2 +1,5 @@
-hmpps-auth:
-  url: "http://localhost:8090/auth"
+# All this does is to ensure that common and dev-specific migrations are applied when SPRING_PROFILES_ACTIVE includes dev
+# This is only set (through values-dev.yaml) when running in the DEV k8s environment
+spring:
+  flyway:
+    locations: classpath:/migrations/common,classpath:/migrations/dev

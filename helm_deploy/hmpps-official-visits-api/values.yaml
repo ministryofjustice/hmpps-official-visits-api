@@ -1,6 +1,7 @@
 generic-service:
   nameOverride: hmpps-official-visits-api
   productId: "DPS131" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
+
   # Used to access resources like SQS queues and SNS topics
   serviceAccountName: "hmpps-official-visits"
 
@@ -15,12 +16,15 @@ generic-service:
     enabled: true
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-official-visits-api-cert
+    path: /
 
   # Environment variables to load into the deployment
   env:
     JAVA_OPTS: "-Xmx512m"
     SERVER_PORT: "8080"
+    SPRING_PROFILES_ACTIVE: "logstash"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
+    DB_SSL_MODE: "verify-full"
 
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
@@ -30,6 +34,9 @@ generic-service:
   namespace_secrets:
     hmpps-official-visits-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    hmpps-official-visits-api-client-creds:
+      API_CLIENT_ID: "API_CLIENT_ID"
+      API_CLIENT_SECRET: "API_CLIENT_SECRET"
     rds-postgresql-instance-output:
       DB_SERVER: "rds_instance_address"
       DB_NAME: "database_name"
