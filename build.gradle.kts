@@ -70,11 +70,9 @@ tasks {
     compilerOptions.freeCompilerArgs.add("-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled")
   }
   withType<KtLintCheckTask> {
-    // Under gradle 8 we must declare the dependency here, even if we're not going to be linting the model
     mustRunAfter("buildLocationsInsidePrisonApiModel")
   }
   withType<KtLintFormatTask> {
-    // Under gradle 8 we must declare the dependency here, even if we're not going to be linting the model
     mustRunAfter("buildLocationsInsidePrisonApiModel")
   }
 }
