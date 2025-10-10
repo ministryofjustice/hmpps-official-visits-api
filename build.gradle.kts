@@ -1,7 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
-import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
-import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
@@ -64,16 +62,10 @@ kotlin {
 
 tasks {
   withType<KotlinCompile> {
-    dependsOn("buildLocationsInsidePrisonApiModel")
+    dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel")
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
     compilerOptions.freeCompilerArgs.add("-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled")
-  }
-  withType<KtLintCheckTask> {
-    mustRunAfter("buildLocationsInsidePrisonApiModel")
-  }
-  withType<KtLintFormatTask> {
-    mustRunAfter("buildLocationsInsidePrisonApiModel")
   }
 }
 
@@ -95,7 +87,16 @@ tasks.register("buildLocationsInsidePrisonApiModel", GenerateTask::class) {
   globalProperties.set(mapOf("models" to ""))
 }
 
-val generatedProjectDirs = listOf("locationsinsideprisonapi")
+tasks.register("buildManageUsersApiModel", GenerateTask::class) {
+  generatorName.set("kotlin")
+  inputSpec.set("openapi-specs/manage-users-api.json")
+  outputDir.set("$buildDirectory/generated/manageusersapi")
+  modelPackage.set("uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model")
+  configOptions.set(configValues)
+  globalProperties.set(mapOf("models" to ""))
+}
+
+val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi")
 
 tasks.register("integrationTest", Test::class) {
   description = "Runs integration tests"
@@ -124,6 +125,10 @@ kotlin {
       kotlin.srcDir("$buildDirectory/generated/$generatedProject/src/main/kotlin")
     }
   }
+}
+
+tasks.named("runKtlintCheckOverMainSourceSet") {
+  dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel")
 }
 
 configure<KtlintExtension> {

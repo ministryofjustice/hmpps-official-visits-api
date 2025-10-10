@@ -16,6 +16,10 @@ class HealthCheckTest : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("status").isEqualTo("UP")
+      .jsonPath("components.locationsInsidePrisonApi.status").isEqualTo("UP")
+      .jsonPath("components.manageUsersApi.status").isEqualTo("UP")
+      .jsonPath("components.hmppsAuth.status").isEqualTo("UP")
+      .jsonPath("components.prisonerSearchApi.status").isEqualTo("UP")
   }
 
   @Test
@@ -30,6 +34,10 @@ class HealthCheckTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("status").isEqualTo("DOWN")
       .jsonPath("components.hmppsAuth.status").isEqualTo("DOWN")
+      .jsonPath("components.locationsInsidePrisonApi.status").isEqualTo("DOWN")
+      .jsonPath("components.manageUsersApi.status").isEqualTo("DOWN")
+      .jsonPath("components.hmppsAuth.status").isEqualTo("DOWN")
+      .jsonPath("components.prisonerSearchApi.status").isEqualTo("DOWN")
   }
 
   @Test

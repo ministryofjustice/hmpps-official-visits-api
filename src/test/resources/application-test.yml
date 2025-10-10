@@ -28,3 +28,5 @@ api:
     url:
       hmpps-auth: http://localhost:8090/auth
       locations-inside-prison: http://localhost:8091
+      prisoner-search: http://localhost:8092
+      manage-users: http://localhost:8093
