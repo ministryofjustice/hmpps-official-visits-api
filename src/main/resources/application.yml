@@ -40,8 +40,8 @@ spring:
         registration:
           manage-users:
             provider: hmpps-auth
-            client-id: ${system.client.id}
-            client-secret: ${system.client.secret}
+            client-id: ${api.client.id}
+            client-secret: ${api.client.secret}
             authorization-grant-type: client_credentials
             scope: read
           locations-inside-prison:
@@ -52,8 +52,8 @@ spring:
             scope: read
           prisoner-search:
             provider: hmpps-auth
-            client-id: ${system.client.id}
-            client-secret: ${system.client.secret}
+            client-id: ${api.client.id}
+            client-secret: ${api.client.secret}
             authorization-grant-type: client_credentials
             scope: read
         provider:
