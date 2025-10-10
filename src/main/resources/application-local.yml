@@ -29,3 +29,5 @@ api:
     url:
       hmpps-auth: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
       locations-inside-prison: https://locations-inside-prison-api-dev.hmpps.service.justice.gov.uk
+      manage-users: https://manage-users-api-dev.hmpps.service.justice.gov.uk
+      prisoner-search: https://prisoner-search-dev.prison.service.justice.gov.uk
