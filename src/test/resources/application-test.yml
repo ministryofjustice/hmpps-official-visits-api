@@ -30,3 +30,29 @@ api:
       locations-inside-prison: http://localhost:8091
       prisoner-search: http://localhost:8092
       manage-users: http://localhost:8093
+
+feature:
+  event:
+    official-visits-api:
+      visit:
+        created: true
+        updated: true
+        cancelled: true
+      visitor:
+        created: true
+        updated: true
+        deleted: true
+      prisoner:
+        updated: true
+      day:
+        created: true
+        updated: true
+        deleted: true
+      time-slot:
+        created: true
+        updated: true
+        deleted: true
+      visit-slot:
+        created: true
+        updated: true
+        deleted: true

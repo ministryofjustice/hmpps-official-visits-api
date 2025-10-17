@@ -104,6 +104,10 @@ management:
       cache:
         time-to-live: 2000ms
 
+hmpps:
+  sqs:
+    queueAdminRole: OFFICIAL_VISITS_ADMIN
+
 springdoc:
   swagger-ui:
     tags-sorter: alpha
