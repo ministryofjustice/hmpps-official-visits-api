@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger

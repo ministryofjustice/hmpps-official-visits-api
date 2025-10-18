@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.StandardTelemetryEvent
 import java.time.LocalDateTime

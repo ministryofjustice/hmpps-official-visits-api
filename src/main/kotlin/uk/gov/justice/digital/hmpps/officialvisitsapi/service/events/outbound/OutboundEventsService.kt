@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

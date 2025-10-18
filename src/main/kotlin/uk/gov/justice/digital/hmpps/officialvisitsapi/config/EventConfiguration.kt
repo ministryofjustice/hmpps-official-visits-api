@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.HmppsQueueOutboundEventsPublisher
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.OutboundEventsPublisher
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.HmppsQueueOutboundEventsPublisher
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsPublisher
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 
 @Configuration

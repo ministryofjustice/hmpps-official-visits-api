@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound
 
 import org.assertj.core.api.Assertions.within
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
