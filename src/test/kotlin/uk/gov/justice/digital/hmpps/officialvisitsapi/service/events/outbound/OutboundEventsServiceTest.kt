@@ -114,7 +114,101 @@ class OutboundEventsServiceTest {
     )
   }
 
-  // TODO: More here
+  @Test
+  fun `day created event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.DAY_CREATED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.DAY_CREATED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.day.created",
+      expectedAdditionalInformation = DayInfo(dayId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "A day has been added for official visits",
+    )
+  }
+
+  @Test
+  fun `day deleted event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.DAY_DELETED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.DAY_DELETED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.day.deleted",
+      expectedAdditionalInformation = DayInfo(dayId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "A day has been removed for official visits",
+    )
+  }
+
+  @Test
+  fun `time slot created event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_CREATED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.TIME_SLOT_CREATED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.time-slot.created",
+      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "An official visit time slot has been created",
+    )
+  }
+
+  @Test
+  fun `time slot updated event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_UPDATED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.TIME_SLOT_UPDATED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.time-slot.updated",
+      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "An official visit time slot has been updated",
+    )
+  }
+
+  @Test
+  fun `time slot deleted event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_DELETED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.TIME_SLOT_DELETED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.time-slot.deleted",
+      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "An official visit time slot has been deleted",
+    )
+  }
+
+  @Test
+  fun `visit slot created event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_SLOT_CREATED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.VISIT_SLOT_CREATED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.visit-slot.created",
+      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "An official visit slot has been created",
+    )
+  }
+
+  @Test
+  fun `visit slot amended event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_SLOT_UPDATED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.VISIT_SLOT_UPDATED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.visit-slot.updated",
+      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "An official visit slot has been updated",
+    )
+  }
+
+  @Test
+  fun `visit slot deleted event is published`() {
+    featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_SLOT_DELETED) } doReturn true }
+    outboundEventsService.send(OutboundEvent.VISIT_SLOT_DELETED, 1L, null, noms = "", user = aUser)
+    verify(
+      expectedEventType = "official-visits-api.visit-slot.deleted",
+      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedPersonReference = null,
+      expectedDescription = "An official visit slot has been deleted",
+    )
+  }
 
   @Test
   fun `events are not published for any outbound event when not enabled`() {
@@ -138,7 +232,7 @@ class OutboundEventsServiceTest {
   private fun verify(
     expectedEventType: String,
     expectedAdditionalInformation: AdditionalInformation,
-    expectedPersonReference: PersonReference,
+    expectedPersonReference: PersonReference? = null,
     expectedOccurredAt: LocalDateTime = LocalDateTime.now(),
     expectedDescription: String,
   ) {
@@ -147,8 +241,8 @@ class OutboundEventsServiceTest {
     with(eventCaptor.firstValue) {
       assertThat(eventType).isEqualTo(expectedEventType)
       assertThat(additionalInformation).isEqualTo(expectedAdditionalInformation)
-      assertThat(personReference?.contactId()).isEqualTo(expectedPersonReference.contactId())
-      assertThat(personReference?.nomsNumber()).isEqualTo(expectedPersonReference.nomsNumber())
+      assertThat(personReference?.contactId()).isEqualTo(expectedPersonReference?.contactId())
+      assertThat(personReference?.nomsNumber()).isEqualTo(expectedPersonReference?.nomsNumber())
       assertThat(occurredAt).isCloseTo(expectedOccurredAt, within(60, ChronoUnit.SECONDS))
       assertThat(description).isEqualTo(expectedDescription)
     }
@@ -157,8 +251,8 @@ class OutboundEventsServiceTest {
 
     with(telemetryCaptor.firstValue) {
       assertThat(eventType).isEqualTo(expectedEventType)
-      assertThat(properties()["prisoner_number"]).isEqualTo(expectedPersonReference.nomsNumber())
-      assertThat(properties()["contact_id"]).isEqualTo(expectedPersonReference.contactId())
+      assertThat(properties()["prisoner_number"]).isEqualTo(expectedPersonReference?.nomsNumber())
+      assertThat(properties()["contact_id"]).isEqualTo(expectedPersonReference?.contactId())
       assertThat(properties()["version"]).isEqualTo("1")
       assertThat(properties()["description"]).isEqualTo(expectedDescription)
       assertThat(properties()["source"]).isEqualTo(expectedAdditionalInformation.source.toString())
