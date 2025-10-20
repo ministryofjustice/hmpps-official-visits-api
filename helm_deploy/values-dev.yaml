@@ -26,4 +26,4 @@ generic-service:
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
   businessHoursOnly: true
-  alertSeverity: hmpps-official-visits-dev
+  alertSeverity: hmpps-official-visits-non-prod

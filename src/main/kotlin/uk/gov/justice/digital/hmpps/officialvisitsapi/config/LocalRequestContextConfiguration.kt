@@ -16,17 +16,13 @@ import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
 import java.time.LocalDateTime
 
 @Configuration
-class LocalRequestContextConfiguration(
-  private val localRequestContextInterceptor: LocalRequestContextInterceptor,
-) : WebMvcConfigurer {
-
+class LocalRequestContextConfiguration(private val localRequestContextInterceptor: LocalRequestContextInterceptor) : WebMvcConfigurer {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
   override fun addInterceptors(registry: InterceptorRegistry) {
-    log.info("Adding BVLS user request interceptor")
-
+    log.info("Adding LocalRequestContextConfiguration - user request interceptor")
     registry.addInterceptor(localRequestContextInterceptor)
       .addPathPatterns(
         "/official-visits/**",
@@ -42,10 +38,16 @@ class LocalRequestContextInterceptor(private val userService: UserService) : Han
     val clientId = authentication().clientId
 
     if (username != null) {
-      request.setAttribute(LocalRequestContext::class.simpleName, LocalRequestContext(user = userService.getUser(username) ?: throw AccessDeniedException("User with username $username not found")))
+      request.setAttribute(
+        LocalRequestContext::class.simpleName,
+        LocalRequestContext(user = userService.getUser(username) ?: throw AccessDeniedException("User with username $username not found")),
+      )
     } else {
       // The clientId is non-nullable, otherwise the request would not be authenticated!
-      request.setAttribute(LocalRequestContext::class.simpleName, LocalRequestContext(user = getClientAsUser(clientId)))
+      request.setAttribute(
+        LocalRequestContext::class.simpleName,
+        LocalRequestContext(user = getClientAsUser(clientId)),
+      )
     }
 
     return true
