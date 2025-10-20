@@ -21,7 +21,7 @@ class InboundEventsListener(
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @SqsListener("official-visits", factory = "hmppsQueueContainerFactoryProxy")
+  @SqsListener("ov", factory = "hmppsQueueContainerFactoryProxy")
   fun onMessage(rawMessage: String) {
     val message: Message = mapper.readValue(rawMessage)
 
