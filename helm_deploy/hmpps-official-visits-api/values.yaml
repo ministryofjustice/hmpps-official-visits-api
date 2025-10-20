@@ -61,6 +61,10 @@ generic-service:
       DB_PASS: "database_password"
     hmpps-domain-events-topic:
       HMPPS_SQS_TOPICS_DOMAINEVENTS_ARN: "topic_arn"
+    sqs-domain-events-queue:
+      HMPPS_SQS_QUEUES_OV_QUEUE_NAME: "sqs_name"
+    sqs-domain-events-dlq:
+      HMPPS_SQS_QUEUES_OV_DLQ_NAME: "sqs_name"
 
   allowlist:
     groups:
