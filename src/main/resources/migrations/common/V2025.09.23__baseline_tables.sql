@@ -13,7 +13,11 @@ create table prison_time_slot (
     start_time time without time zone NOT NULL,
     end_time time without time zone NOT NULL,
     effective_date date NOT NULL,
-    expiry_date date
+    expiry_date date,
+    created_time timestamp NOT NULL,
+    created_by varchar(100) NOT NULL,
+    updated_time timestamp,
+    updated_by varchar(100)
 );
 
 CREATE INDEX idx_prison_time_slot_1 ON prison_time_slot(prison_code);
@@ -34,7 +38,11 @@ create table prison_visit_slot (
     dps_location_id UUID not null,
     max_adults int NOT NULL,
     max_groups int NOT NULL,
-    max_video_sessions int NOT NULL
+    max_video_sessions int NOT NULL,
+    created_time timestamp NOT NULL,
+    created_by varchar(100) NOT NULL,
+    updated_time timestamp,
+    updated_by varchar(100)
 );
 
 CREATE INDEX idx_prison_visit_slot_1 ON prison_visit_slot(prison_time_slot_id);
@@ -48,7 +56,11 @@ CREATE INDEX idx_prison_visit_slot_2 ON prison_visit_slot(dps_location_id);
 create table video_location (
    video_location_id bigserial NOT NULL CONSTRAINT video_location_pk PRIMARY KEY,
    dps_location_id UUID NOT NULL,
-   video_url varchar(160)
+   video_url varchar(160),
+   created_time timestamp NOT NULL,
+   created_by varchar(100) NOT NULL,
+   updated_time timestamp,
+   updated_by varchar(100)
 );
 
 CREATE INDEX idx_video_location_1 ON prison_visit_slot(dps_location_id);
@@ -89,10 +101,10 @@ create table official_visit (
    completion_code varchar(20), -- SCH by default, staff must enter how it turned out
    override_ban_by varchar(100),
    override_ban_time timestamp,
-   created_by varchar(100) NOT NULL,
    created_time timestamp NOT NULL,
-   amended_by varchar(100),
-   amended_time timestamp
+   created_by varchar(100) NOT NULL,
+   updated_time timestamp,
+   updated_by varchar(100)
 );
 
 CREATE INDEX idx_official_visit_1 ON official_visit(prison_visit_slot_id);
@@ -114,7 +126,11 @@ create table prisoner_visited (
    attendance_code varchar(20),
    attendance_notes varchar(240),
    attendance_by varchar(100),
-   attendance_time timestamp
+   attendance_time timestamp,
+   created_time timestamp NOT NULL,
+   created_by varchar(100) NOT NULL,
+   updated_time timestamp,
+   updated_by varchar(100)
 );
 
 CREATE INDEX idx_prisoner_visited_1 ON prisoner_visited(official_visit_id);
@@ -145,10 +161,10 @@ create table official_visitor (
    attendance_notes varchar(240),
    attendance_by varchar(100),
    attendance_time timestamp,
-   created_by varchar(100) NOT NULL,
    created_time timestamp NOT NULL,
-   amended_by varchar(100),
-   amended_time timestamp
+   created_by varchar(100) NOT NULL,
+   updated_time timestamp,
+   updated_by varchar(100)
 );
 
 CREATE INDEX idx_official_visitor_1 ON official_visitor(official_visit_id);
@@ -172,12 +188,12 @@ create table visitor_equipment(
    reason varchar(100),
    approved boolean NOT NULL DEFAULT false,
    approval_notes varchar(240),
-   approved_by varchar(100),
    approved_time timestamp,
-   created_by varchar(100) NOT NULL,
+   approved_by varchar(100),
    created_time timestamp NOT NULL,
-   updated_by varchar(100),
-   updated_time timestamp
+   created_by varchar(100) NOT NULL,
+   updated_time timestamp,
+   updated_by varchar(100)
 );
 
 CREATE INDEX idx_visitor_equipment_1 ON visitor_equipment(official_visitor_id);
