@@ -146,11 +146,11 @@ create table official_visitor (
    official_visit_id bigint NOT NULL references official_visit(official_visit_id),
    visitor_type_code varchar(20) NOT NULL, -- CONTACT, OPV, PRISONER
    contact_type_code varchar(20) NOT NULL, -- SOCIAL, OFFICIAL, NOT_A_CONTACT
-   first_name varchar(60), -- denormalized for ease of checking - otherwise just IDs
-   last_name varchar(60), -- denormalized for ease of checking - otherwise just IDs
-   contact_id bigint, -- if in contacts or null
-   prisoner_contact_id bigint, --if defined in social or official relationship or null
-   relationship_code varchar(20), -- denormalized for ease of checking
+   first_name varchar(60), -- denormalized for ease of checking
+   last_name varchar(60), -- denormalized for ease of checking
+   contact_id bigint, -- same as person_id from NOMIS or contact_id in DPS - should be present
+   prisoner_contact_id bigint, -- may be null in migrated visits, but populated in DPS created visits
+   relationship_code varchar(20), -- denormalized for ease of checking, but can be null
    opv_organisation varchar(100), -- if an OPV visitor
    lead_visitor boolean NOT NULL DEFAULT false,
    assisted_visit boolean NOT NULL DEFAULT false,
