@@ -22,10 +22,12 @@ values ('VIS_COMPLETE', 'CANC' , 'Cancelled', 99, true),
        ('VIS_COMPLETE', 'SCH' , 'Scheduled', 99, true),
        ('VIS_COMPLETE', 'VDE' , 'Visitor declined entry', 99, true);
 
--- Visit type (VISIT_TYPE domain in NOMIS)
+-- Visit type code(use type OTHER if the type of visit is not known from NOMIS)
 insert into reference_data (group_code, code, description, display_sequence, enabled)
-values ('VISIT_TYPE', 'OFFI' , 'Official visit', 1, true),
-       ('VISIT_TYPE', 'SCON' , 'Social contact', 2, true);
+values ('VIS_TYPE_CODE', 'IN_PERSON' , 'Official visit', 1, true),
+       ('VIS_TYPE_CODE', 'VIDEO' , 'Social contact', 2, true),
+       ('VIS_TYPE_CODE', 'TELEPHONE' , 'Social contact', 2, true),
+       ('VIS_TYPE_CODE', 'OTHER' , 'Social contact', 2, true);
 
 -- Visit location type (VIS_LOC_TYPE domain in NOMIS)
 insert into reference_data (group_code, code, description, display_sequence, enabled)
@@ -57,8 +59,10 @@ insert into reference_data (group_code, code, description, display_sequence, ena
 values ('EQUIP_CATEGORY', 'PHONE' , 'Mobile phone', 1, true),
        ('EQUIP_CATEGORY', 'LAPTOP' , 'Laptop computer', 2, true),
        ('EQUIP_CATEGORY', 'WATCH' , 'Smart watch', 3, true),
-       ('EQUIP_CATEGORY', 'OTHER' , 'Other electronic device', 5, true),
-       ('EQUIP_CATEGORY', 'TABLET' , 'Tablet computer', 4, true);
+       ('EQUIP_CATEGORY', 'TABLET' , 'Tablet computer', 4, true),
+       ('EQUIP_CATEGORY', 'RECORDING' , 'Recording device', 5, true),
+       ('EQUIP_CATEGORY', 'CAMERA' , 'Camera', 6, true),
+       ('EQUIP_CATEGORY', 'OTHER' , 'Other electronic device', 7, true);
 
 -- Days of the week (DAY domain in NOMIS)
 insert into reference_data (group_code, code, description, display_sequence, enabled)

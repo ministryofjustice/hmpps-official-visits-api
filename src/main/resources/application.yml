@@ -7,7 +7,7 @@ spring:
     name: hmpps-official-visits-api
   http:
     codecs:
-      max-in-memory-size: 10MB
+      max-in-memory-size: 50MB
 
   datasource:
     url: 'jdbc:postgresql://${DB_SERVER}/${DB_NAME}?sslmode=${DB_SSL_MODE}'
@@ -65,7 +65,7 @@ spring:
       thread-name-prefix: async-thread-
       pool:
         core-size: 2
-        max-size: 2
+        max-size: 4
         queue-capacity: 50
 
   mvc:
