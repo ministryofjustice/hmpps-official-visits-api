@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import jakarta.validation.ValidationException
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
@@ -10,10 +11,15 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.ReferenceDataRe
 
 @Service
 class ReferenceDataService(private val referenceDataRepository: ReferenceDataRepository) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   fun getReferenceDataByGroup(groupCode: ReferenceDataGroup, sort: Sort, activeOnly: Boolean): List<ReferenceDataItem> = if (activeOnly) {
+    logger.info("Find reference codes for $groupCode sorting: $sort activeOnly: $activeOnly")
     referenceDataRepository.findAllByGroupCodeAndEnabledEquals(groupCode, true, sort).toModel()
   } else {
+    logger.info("Find reference codes for $groupCode sorting: $sort activeOnly: $activeOnly")
     referenceDataRepository.findAllByGroupCodeEquals(groupCode, sort).toModel()
   }
 

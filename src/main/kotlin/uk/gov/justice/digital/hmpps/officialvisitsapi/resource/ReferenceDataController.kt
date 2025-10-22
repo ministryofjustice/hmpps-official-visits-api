@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
-import org.springframework.data.web.SortDefault
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -32,20 +30,7 @@ class ReferenceDataController(private val referenceDataService: ReferenceDataSer
     private val logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @Operation(
-    summary = "Endpoint to return reference data for a provided group key. " +
-      "Sorted by display order then description by default.",
-    parameters = [
-      Parameter(
-        name = "sort",
-        `in` = ParameterIn.QUERY,
-        description = "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-        required = false,
-        example = "displayOrder,asc",
-        array = io.swagger.v3.oas.annotations.media.ArraySchema(schema = Schema(type = "string")),
-      ),
-    ],
-  )
+  @Operation(summary = "Endpoint to return reference data for a provided group key, sorted by display sequence and description")
   @ApiResponses(
     value = [
       ApiResponse(
@@ -86,14 +71,15 @@ class ReferenceDataController(private val referenceDataService: ReferenceDataSer
     @Parameter(description = "The group code of the reference codes to load", required = true, example = "VIS_STS")
     @PathVariable("groupCode", required = true)
     groupCode: ReferenceDataGroup,
-    @Parameter(hidden = true, required = false) // Hide from OpenAPI
-    @SortDefault("displaySequence", "description")
-    sort: Sort,
     @Parameter(description = "Whether to only return active codes or not, defaults to true", required = false)
     @RequestParam(name = "activeOnly", required = false, defaultValue = "true")
-    activeOnly: Boolean,
+    activeOnly: Boolean = true,
   ): List<ReferenceDataItem> {
-    logger.info("Received request for reference data: $groupCode")
-    return referenceDataService.getReferenceDataByGroup(groupCode, sort, activeOnly)
+    logger.info("Received request for reference data group: $groupCode, active only: $activeOnly")
+    return referenceDataService.getReferenceDataByGroup(
+      groupCode,
+      sort = Sort.by(Sort.Direction.ASC, "displaySequence", "description"),
+      activeOnly,
+    )
   }
 }
