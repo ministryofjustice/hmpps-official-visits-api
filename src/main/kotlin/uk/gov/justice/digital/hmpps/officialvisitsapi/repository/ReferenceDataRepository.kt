@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.respository
+package uk.gov.justice.digital.hmpps.officialvisitsapi.repository
 
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.repository.JpaRepository

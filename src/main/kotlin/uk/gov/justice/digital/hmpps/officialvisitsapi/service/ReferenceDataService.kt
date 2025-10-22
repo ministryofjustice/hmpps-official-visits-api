@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ReferenceDataItem
-import uk.gov.justice.digital.hmpps.officialvisitsapi.respository.ReferenceDataRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.ReferenceDataRepository
 
 @Service
 class ReferenceDataService(private val referenceDataRepository: ReferenceDataRepository) {

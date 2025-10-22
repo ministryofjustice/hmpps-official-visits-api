@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.migrate.MigrationS
 @AuthApiResponses
 class MigrateVisitsController(val migrationService: MigrationService) {
 
-  @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping("/visit-configuration", consumes = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Migrate official visits configuration",
     description = "Migrate a visit time slot and its associated visit slots, locations and capacity limits",
@@ -50,7 +50,7 @@ class MigrateVisitsController(val migrationService: MigrationService) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
-  fun migrateContact(
+  fun migrateVisitConfiguration(
     @Valid @RequestBody request: MigrateVisitConfigRequest,
   ) = migrationService.migrateVisitConfiguration(request)
 }

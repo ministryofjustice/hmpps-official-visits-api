@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.SortDefault
 import org.springframework.http.MediaType
@@ -27,6 +28,9 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 @RestController
 @RequestMapping(value = ["reference-data"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class ReferenceDataController(private val referenceDataService: ReferenceDataService) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   @Operation(
     summary = "Endpoint to return reference data for a provided group key. " +
@@ -79,14 +83,17 @@ class ReferenceDataController(private val referenceDataService: ReferenceDataSer
   @GetMapping(value = ["/group/{groupCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
   fun getReferenceDataByGroup(
-    @Parameter(description = "The group code of the reference codes to load", required = true, example = "PHONE_TYPE")
+    @Parameter(description = "The group code of the reference codes to load", required = true, example = "VIS_STS")
     @PathVariable("groupCode", required = true)
     groupCode: ReferenceDataGroup,
     @Parameter(hidden = true, required = false) // Hide from OpenAPI
-    @SortDefault("displayOrder", "description")
+    @SortDefault("displaySequence", "description")
     sort: Sort,
     @Parameter(description = "Whether to only return active codes or not, defaults to true", required = false)
     @RequestParam(name = "activeOnly", required = false, defaultValue = "true")
     activeOnly: Boolean,
-  ): List<ReferenceDataItem> = referenceDataService.getReferenceDataByGroup(groupCode, sort, activeOnly)
+  ): List<ReferenceDataItem> {
+    logger.info("Received request for reference data: $groupCode")
+    return referenceDataService.getReferenceDataByGroup(groupCode, sort, activeOnly)
+  }
 }

@@ -9,13 +9,13 @@ data class ReferenceDataItem(
   @Schema(description = "An internally-generated unique identifier for this reference code.", example = "12345")
   val referenceDataId: Long,
 
-  @Schema(description = "The group name for related reference codes.", example = "PHONE_TYPE")
+  @Schema(description = "The group name for related reference codes.", example = "VIS_STS")
   val groupCode: ReferenceDataGroup,
 
-  @Schema(description = "The code for this reference data", example = "MOB")
+  @Schema(description = "The code for this reference data", example = "SCH")
   val code: String,
 
-  @Schema(description = "A fuller description of the reference code", example = "Mobile")
+  @Schema(description = "A fuller description of the reference code", example = "Scheduled")
   val description: String,
 
   @Schema(description = "The default order configured for the reference code, lowest number first.", example = "5")
