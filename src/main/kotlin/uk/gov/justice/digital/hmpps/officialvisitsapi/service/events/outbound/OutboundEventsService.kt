@@ -61,15 +61,6 @@ class OutboundEventsService(
           )
         }
 
-        OutboundEvent.DAY_CREATED,
-        OutboundEvent.DAY_DELETED,
-        -> {
-          sendSafely(
-            outboundEvent,
-            DayInfo(identifier, source, user.username, user.activeCaseLoadId),
-          )
-        }
-
         OutboundEvent.TIME_SLOT_CREATED,
         OutboundEvent.TIME_SLOT_UPDATED,
         OutboundEvent.TIME_SLOT_DELETED,

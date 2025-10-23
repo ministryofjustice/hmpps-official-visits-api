@@ -44,10 +44,6 @@ feature:
         deleted: true
       prisoner:
         updated: true
-      day:
-        created: true
-        updated: true
-        deleted: true
       time-slot:
         created: true
         updated: true
