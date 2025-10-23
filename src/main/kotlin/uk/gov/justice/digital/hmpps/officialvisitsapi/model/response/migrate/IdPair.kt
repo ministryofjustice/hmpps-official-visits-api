@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
  * Class to group together a type of data item and the NOMIS / DPS IDs for it.
  */
 data class IdPair(
-  @Schema(description = "The category of information returned", example = "PHONE")
+  @Schema(description = "The category of information returned", example = "PRISON_VISIT_SLOT")
   val elementType: ElementType,
 
   @Schema(description = "The unique ID for this data item provided in the request", example = "123435")

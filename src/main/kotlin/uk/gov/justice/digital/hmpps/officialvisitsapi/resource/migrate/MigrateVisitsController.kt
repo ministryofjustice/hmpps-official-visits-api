@@ -49,7 +49,7 @@ class MigrateVisitsController(val migrationService: MigrationService) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
   fun migrateVisitConfiguration(
     @Valid @RequestBody request: MigrateVisitConfigRequest,
   ) = migrationService.migrateVisitConfiguration(request)
