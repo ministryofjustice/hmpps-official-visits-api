@@ -11,7 +11,7 @@ data class MigrateVisitConfigResponse(
   val dayCode: String,
 
   @Schema(description = "The time slot sequence from NOMIS", example = "1", required = true)
-  val timeSlotSeq: Long,
+  val timeSlotSeq: Int,
 
   @Schema(description = "The ID created in DPS for this prison time slot", example = "123456")
   val dpsTimeSlotId: Long,

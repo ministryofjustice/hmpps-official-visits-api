@@ -45,6 +45,8 @@ class MigrationService(
         expiryDate = request.expiryDate,
         createdTime = request.createDateTime ?: LocalDateTime.now(),
         createdBy = request.createUsername ?: "MIGRATION",
+        updatedTime = request.modifyDateTime,
+        updatedBy = request.modifyUsername,
       ),
     )
 
@@ -59,9 +61,9 @@ class MigrationService(
     )
   }
 
-  private fun extractAndSaveVisitSlots(timeSlotId: Long, request: MigrateVisitConfigRequest) = request.visitSlots.map { slot ->
+  fun extractAndSaveVisitSlots(timeSlotId: Long, request: MigrateVisitConfigRequest) = request.visitSlots.map { slot ->
     Pair(
-      timeSlotId,
+      slot.agencyVisitSlotId!!,
       prisonVisitSlotRepository.saveAndFlush(
         PrisonVisitSlotEntity(
           prisonTimeSlotId = timeSlotId,
@@ -71,6 +73,8 @@ class MigrationService(
           maxVideoSessions = slot.maxVideoSessions!!,
           createdTime = slot.createDateTime ?: LocalDateTime.now(),
           createdBy = slot.createUsername ?: "MIGRATION",
+          updatedTime = slot.modifyDateTime,
+          updatedBy = slot.modifyUsername,
         ),
       ),
     )
