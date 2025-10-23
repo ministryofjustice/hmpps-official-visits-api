@@ -65,22 +65,6 @@ enum class OutboundEvent(val eventType: String) {
       description = "A prisoner on an official visit has been updated",
     )
   },
-  DAY_CREATED("official-visits-api.day.created") {
-    override fun event(additionalInformation: AdditionalInformation, personReference: PersonReference?) = OutboundHMPPSDomainEvent(
-      eventType = eventType,
-      additionalInformation = additionalInformation,
-      personReference = personReference,
-      description = "A day has been added for official visits",
-    )
-  },
-  DAY_DELETED("official-visits-api.day.deleted") {
-    override fun event(additionalInformation: AdditionalInformation, personReference: PersonReference?) = OutboundHMPPSDomainEvent(
-      eventType = eventType,
-      additionalInformation = additionalInformation,
-      personReference = personReference,
-      description = "A day has been removed for official visits",
-    )
-  },
   TIME_SLOT_CREATED("official-visits-api.time-slot.created") {
     override fun event(additionalInformation: AdditionalInformation, personReference: PersonReference?) = OutboundHMPPSDomainEvent(
       eventType = eventType,
@@ -194,13 +178,6 @@ data class VisitorInfo(
 data class PrisonerInfo(
   val officialVisitId: Long,
   val prisonerVisitedId: Long,
-  override val source: Source = Source.DPS,
-  override val username: String,
-  override val prisonId: String?,
-) : AdditionalInformation(source, username, prisonId)
-
-data class DayInfo(
-  val dayId: Long,
   override val source: Source = Source.DPS,
   override val username: String,
   override val prisonId: String?,

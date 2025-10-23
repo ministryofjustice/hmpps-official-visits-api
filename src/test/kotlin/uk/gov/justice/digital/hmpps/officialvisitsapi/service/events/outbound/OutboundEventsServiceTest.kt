@@ -115,30 +115,6 @@ class OutboundEventsServiceTest {
   }
 
   @Test
-  fun `day created event is published`() {
-    featureSwitches.stub { on { isEnabled(OutboundEvent.DAY_CREATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.DAY_CREATED, 1L, null, noms = "", user = aUser)
-    verify(
-      expectedEventType = "official-visits-api.day.created",
-      expectedAdditionalInformation = DayInfo(dayId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
-      expectedPersonReference = null,
-      expectedDescription = "A day has been added for official visits",
-    )
-  }
-
-  @Test
-  fun `day deleted event is published`() {
-    featureSwitches.stub { on { isEnabled(OutboundEvent.DAY_DELETED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.DAY_DELETED, 1L, null, noms = "", user = aUser)
-    verify(
-      expectedEventType = "official-visits-api.day.deleted",
-      expectedAdditionalInformation = DayInfo(dayId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
-      expectedPersonReference = null,
-      expectedDescription = "A day has been removed for official visits",
-    )
-  }
-
-  @Test
   fun `time slot created event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_CREATED) } doReturn true }
     outboundEventsService.send(OutboundEvent.TIME_SLOT_CREATED, 1L, null, noms = "", user = aUser)
