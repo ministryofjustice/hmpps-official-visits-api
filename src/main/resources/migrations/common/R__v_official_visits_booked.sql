@@ -1,4 +1,9 @@
-CREATE OR REPLACE VIEW v_official_visits_booked AS
+--
+-- View to provide the booked official visits for a prison
+--
+DROP VIEW IF EXISTS v_official_visits_booked;
+
+CREATE VIEW v_official_visits_booked AS
   select ov.prison_code,
          pts.day_code,
          rd.description as day_description,

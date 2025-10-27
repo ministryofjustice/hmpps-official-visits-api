@@ -1,7 +1,9 @@
 --
 -- View to provide the available official visit slots for a prison
 --
-CREATE OR REPLACE VIEW v_available_visit_slots AS
+DROP VIEW IF EXISTS v_available_visit_slots;
+
+CREATE VIEW v_available_visit_slots AS
    select
        pts.prison_code,
        pvs.prison_visit_slot_id,
