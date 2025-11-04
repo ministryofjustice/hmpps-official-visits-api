@@ -25,7 +25,7 @@ class LocalRequestContextConfiguration(private val localRequestContextIntercepto
     log.info("Adding LocalRequestContextConfiguration - user request interceptor")
     registry.addInterceptor(localRequestContextInterceptor)
       .addPathPatterns(
-        "/official-visits/**",
+        "/official-visit/**",
       )
   }
 }
