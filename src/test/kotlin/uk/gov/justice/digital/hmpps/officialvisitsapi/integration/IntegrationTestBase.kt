@@ -48,6 +48,7 @@ abstract class IntegrationTestBase {
 
   protected fun stubUser(user: User) {
     manageUsersApi().stubGetUserDetails(user.username, UserDetailsDto.AuthSource.nomis, user.name)
+    manageUsersApi().stubGetUserEmail(username = user.username, email = user.username.plus("@email.com"))
   }
 
   internal fun setAuthorisation(
