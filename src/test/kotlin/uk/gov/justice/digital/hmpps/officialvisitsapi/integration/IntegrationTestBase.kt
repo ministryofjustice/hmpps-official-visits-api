@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -9,13 +10,16 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.health.LocationsInsidePrisonApiHealthPingCheck
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.container.PostgresqlContainer
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.LocationsInsidePrisonApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.ManageUsersApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
 @ExtendWith(
@@ -36,6 +40,15 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
+
+  @BeforeEach
+  fun `stub default users`() {
+    stubUser(PRISON_USER)
+  }
+
+  protected fun stubUser(user: User) {
+    manageUsersApi().stubGetUserDetails(user.username, UserDetailsDto.AuthSource.nomis, user.name)
+  }
 
   internal fun setAuthorisation(
     username: String? = "AUTH_ADM",
