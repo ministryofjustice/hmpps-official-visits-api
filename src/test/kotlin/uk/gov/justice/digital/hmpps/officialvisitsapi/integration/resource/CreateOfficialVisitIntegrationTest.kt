@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 
@@ -22,7 +24,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   private lateinit var officialVisitRepository: OfficialVisitRepository
 
   @Test
-  fun `should create official visit`() {
+  @Transactional
+  fun `should create official visit with one social visitor`() {
     val officialVisitResponse = webTestClient.create(
       CreateOfficialVisitRequest(
         prisonerNumber = PENTONVILLE_PRISONER.number,
@@ -30,10 +33,20 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
         prisonCode = PENTONVILLE_PRISONER.prison,
         visitDate = today(),
         visitTypeCode = "IN_PERSON",
+        officialVisitors = listOf(
+          OfficialVisitor(
+            visitorTypeCode = "CONTACT",
+            contactTypeCode = "SOCIAL",
+            contactId = null,
+            prisonerContactId = null,
+          ),
+        ),
       ),
     )
 
-    with(officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()) {
+    val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
+
+    with(persistedOfficialVisit) {
       prisonVisitSlot.prisonVisitSlotId isEqualTo 1
       prisonerNumber isEqualTo PENTONVILLE_PRISONER.number
       prisonCode isEqualTo PENTONVILLE_PRISONER.prison
@@ -42,6 +55,11 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       visitStatusCode isEqualTo "ACTIVE"
       createdBy isEqualTo PENTONVILLE_PRISON_USER.username
       createdTime isCloseTo now()
+    }
+
+    with(persistedOfficialVisit.officialVisitors().single()) {
+      visitorTypeCode isEqualTo "CONTACT"
+      contactTypeCode isEqualTo "SOCIAL"
     }
   }
 
