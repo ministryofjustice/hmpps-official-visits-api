@@ -12,7 +12,8 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.health.LocationsInsidePrisonApiHealthPingCheck
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.container.PostgresqlContainer
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -42,13 +43,13 @@ abstract class IntegrationTestBase {
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @BeforeEach
-  fun `stub default users`() {
-    stubUser(PRISON_USER)
+  fun `stub default users and prisoners`() {
+    stubUser(PENTONVILLE_PRISON_USER)
+    prisonerSearchApi().stubGetPrisoner(PENTONVILLE_PRISONER)
   }
 
   protected fun stubUser(user: User) {
     manageUsersApi().stubGetUserDetails(user.username, UserDetailsDto.AuthSource.nomis, user.name)
-    manageUsersApi().stubGetUserEmail(username = user.username, email = user.username.plus("@email.com"))
   }
 
   internal fun setAuthorisation(

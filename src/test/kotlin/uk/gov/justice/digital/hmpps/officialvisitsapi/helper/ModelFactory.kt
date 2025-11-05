@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.EmailAddressDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
@@ -66,8 +65,6 @@ fun prisonerSearchPrisoner(
   lastPrisonId = lastPrisonCode,
 )
 
-fun userEmailAddress(username: String, email: String, verified: Boolean = true) = EmailAddressDto(username, verified, email)
-
 fun userDetails(
   username: String,
   name: String = "Test User",
@@ -88,12 +85,10 @@ fun serviceUser() = UserService.getServiceAsUser()
 fun prisonUser(
   username: String = "prison_user",
   name: String = "Prison User",
-  email: String? = "prison.user@prison.com",
   activeCaseLoadId: String = BIRMINGHAM,
 ) = PrisonUser(
   username = username,
   name = name,
-  email = email,
   activeCaseLoadId = activeCaseLoadId,
 )
 

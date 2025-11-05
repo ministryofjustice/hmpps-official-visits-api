@@ -21,8 +21,8 @@ class OfficialVisitsApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        userMessage = e.message,
+        developerMessage = "Validation failure: ${e.message}",
       ),
     ).also { log.info("Validation exception: {}", e.message) }
 

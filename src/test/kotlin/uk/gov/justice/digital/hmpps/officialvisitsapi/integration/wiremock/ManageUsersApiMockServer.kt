@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.userDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.userEmailAddress
 import java.net.URLEncoder
 
 class ManageUsersApiMockServer : MockServer(8093) {
@@ -20,18 +19,6 @@ class ManageUsersApiMockServer : MockServer(8093) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(mapper.writeValueAsString(userDetails(username, name, authSource, activeCaseload, userId)))
-            .withStatus(200),
-        ),
-    )
-  }
-
-  fun stubGetUserEmail(username: String, email: String, verified: Boolean = true) {
-    stubFor(
-      get("/users/${username.urlEncode()}/email?unverified=false")
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(userEmailAddress(username, email, verified)))
             .withStatus(200),
         ),
     )

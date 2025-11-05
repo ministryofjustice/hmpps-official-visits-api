@@ -4,15 +4,17 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
@@ -20,27 +22,55 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   private lateinit var officialVisitRepository: OfficialVisitRepository
 
   @Test
-  fun `happy path - create official visit`() {
+  fun `should create official visit`() {
     val officialVisitResponse = webTestClient.create(
       CreateOfficialVisitRequest(
-        prisonerNumber = "1234567",
+        prisonerNumber = PENTONVILLE_PRISONER.number,
         prisonVisitSlotId = 1,
-        prisonCode = "PVI",
-        visitDate = LocalDate.now(),
+        prisonCode = PENTONVILLE_PRISONER.prison,
+        visitDate = today(),
         visitTypeCode = "IN_PERSON",
       ),
     )
 
     with(officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()) {
       prisonVisitSlot.prisonVisitSlotId isEqualTo 1
-      prisonerNumber isEqualTo "1234567"
-      prisonCode isEqualTo "PVI"
-      visitDate isEqualTo LocalDate.now()
+      prisonerNumber isEqualTo PENTONVILLE_PRISONER.number
+      prisonCode isEqualTo PENTONVILLE_PRISONER.prison
+      visitDate isEqualTo today()
       visitTypeCode isEqualTo "IN_PERSON"
       visitStatusCode isEqualTo "ACTIVE"
-      createdBy isEqualTo PRISON_USER.username
-      createdTime isCloseTo LocalDateTime.now()
+      createdBy isEqualTo PENTONVILLE_PRISON_USER.username
+      createdTime isCloseTo now()
     }
+  }
+
+  @Test
+  fun `should fail when unknown prison visit slot id`() {
+    webTestClient.badRequest(
+      CreateOfficialVisitRequest(
+        prisonerNumber = PENTONVILLE_PRISONER.number,
+        prisonVisitSlotId = -99,
+        prisonCode = PENTONVILLE_PRISONER.prison,
+        visitDate = today(),
+        visitTypeCode = "IN_PERSON",
+      ),
+      "Prison visit slot with id -99 not found.",
+    )
+  }
+
+  @Test
+  fun `should fail when prisoner not at prison`() {
+    webTestClient.badRequest(
+      CreateOfficialVisitRequest(
+        prisonerNumber = PENTONVILLE_PRISONER.number,
+        prisonVisitSlotId = 1,
+        prisonCode = WANDSWORTH,
+        visitDate = today(),
+        visitTypeCode = "IN_PERSON",
+      ),
+      "Prisoner ${PENTONVILLE_PRISONER.number} not found at prison WWI",
+    )
   }
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
@@ -48,10 +78,20 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     .uri("/official-visit")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .headers(setAuthorisation(username = PENTONVILLE_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isCreated
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody(CreateOfficialVisitResponse::class.java)
     .returnResult().responseBody!!
+
+  private fun WebTestClient.badRequest(request: CreateOfficialVisitRequest, errorMessage: String) = this
+    .post()
+    .uri("/official-visit")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = PENTONVILLE_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isBadRequest
+    .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
 }
