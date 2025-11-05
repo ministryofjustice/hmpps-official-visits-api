@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.U
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.BIRMINGHAM
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.userDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.userEmailAddress
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService.Companion.getClientAsUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService.Companion.getServiceAsUser
 
@@ -57,16 +56,6 @@ class UserServiceTest {
     whenever(manageUsersClient.getUsersDetails("testUser")) doReturn null
 
     userService.getUser("testUser") isEqualTo null
-  }
-
-  @Test
-  fun `getUser should set nomis users email from manageUsersClient when username is not an email`() {
-    val username = "testUser"
-    val userDetails = userDetails(username, "Test User", authSource = AuthSource.nomis)
-    whenever(manageUsersClient.getUsersDetails("testUser")) doReturn userDetails
-    whenever(manageUsersClient.getUsersEmail(username)) doReturn userEmailAddress(username, "test@example.com")
-
-    (userService.getUser(username) as PrisonUser).email isEqualTo "test@example.com"
   }
 
   @Test

@@ -4,8 +4,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.ManageUsersClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
-import uk.gov.justice.digital.hmpps.officialvisitsapi.common.isEmail
-import java.util.*
+import java.util.Objects
 
 @Service
 class UserService(private val manageUsersClient: ManageUsersClient) {
@@ -32,7 +31,6 @@ class UserService(private val manageUsersClient: ManageUsersClient) {
         PrisonUser(
           username = username,
           name = userDetails.name,
-          email = if (username.isEmail()) username.lowercase() else manageUsersClient.getUsersEmail(username)?.email?.lowercase(),
           activeCaseLoadId = userDetails.activeCaseLoadId,
         )
       }
@@ -62,7 +60,6 @@ abstract class User(
 }
 
 class PrisonUser(
-  val email: String? = null,
   val activeCaseLoadId: String? = null,
   username: String,
   name: String,
@@ -74,7 +71,6 @@ class PrisonUser(
 
     other as PrisonUser
 
-    if (email != other.email) return false
     if (activeCaseLoadId != other.activeCaseLoadId) return false
 
     return true
@@ -82,7 +78,6 @@ class PrisonUser(
 
   override fun hashCode(): Int {
     var result = super.hashCode()
-    result = 31 * result + (email?.hashCode() ?: 0)
     result = 31 * result + (activeCaseLoadId?.hashCode() ?: 0)
     return result
   }
