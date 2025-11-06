@@ -28,4 +28,6 @@ class CreateOfficialVisitRequest(
 
   @field:NotBlank(message = "The type code for the official visit is mandatory")
   val visitTypeCode: String?,
+
+  val officialVisitors: List<OfficialVisitor> = emptyList(),
 )

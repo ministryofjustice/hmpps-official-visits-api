@@ -24,13 +24,23 @@ class OfficialVisitCreateService(
     officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
         prisonVisitSlot = prisonVisitSlot,
-        prisonCode = request.prisonCode!!,
-        prisonerNumber = request.prisonerNumber!!,
+        prisonCode = request.prisonCode,
+        prisonerNumber = request.prisonerNumber,
         visitDate = request.visitDate!!,
         visitStatusCode = "ACTIVE",
         visitTypeCode = request.visitTypeCode!!,
         createdBy = user.username,
-      ),
+      ).apply {
+        request.officialVisitors.forEach {
+          addVisitor(
+            visitorTypeCode = it.visitorTypeCode!!,
+            contactTypeCode = it.contactTypeCode!!,
+            contactId = it.contactId,
+            prisonerContactId = it.prisonerContactId,
+            createdBy = user,
+          )
+        }
+      },
     ).let {
       CreateOfficialVisitResponse(it.officialVisitId)
     }
