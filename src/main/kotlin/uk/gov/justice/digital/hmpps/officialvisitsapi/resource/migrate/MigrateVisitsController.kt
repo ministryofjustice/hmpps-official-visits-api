@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitConfigRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.MigrateVisitConfigResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.MigrateVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.migrate.MigrationService
 
@@ -53,4 +55,33 @@ class MigrateVisitsController(val migrationService: MigrationService) {
   fun migrateVisitConfiguration(
     @Valid @RequestBody request: MigrateVisitConfigRequest,
   ) = migrationService.migrateVisitConfiguration(request)
+
+  @PostMapping("/visit", consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @Operation(
+    summary = "Migrate a single official visit and its visitors",
+    description = "Migrate a visit and all visitors",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "The visit and visitor ID mappings between NOMIS and DPS",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = MigrateVisitResponse::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "The request failed validation with invalid or missing data",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  fun migrateVisit(
+    @Valid @RequestBody request: MigrateVisitRequest,
+  ) = migrationService.migrateVisit(request)
 }
