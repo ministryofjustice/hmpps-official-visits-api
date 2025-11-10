@@ -15,6 +15,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
+import java.time.LocalTime
+import java.util.UUID
 
 @Entity
 @Table(name = "official_visit")
@@ -27,24 +29,48 @@ class OfficialVisitEntity(
   @JoinColumn(name = "prison_visit_slot_id")
   val prisonVisitSlot: PrisonVisitSlotEntity,
 
-  val prisonCode: String,
-
-  val prisonerNumber: String,
-
   val visitDate: LocalDate,
+
+  val startTime: LocalTime,
+
+  val endTime: LocalTime,
+
+  val dpsLocationId: UUID,
 
   val visitStatusCode: String,
 
   val visitTypeCode: String,
 
+  val prisonCode: String,
+
+  val prisonerNumber: String,
+
+  val currentTerm: Boolean = true,
+
+  val privateNotes: String? = null,
+
+  val publicNotes: String? = null,
+
+  val searchTypeCode: String? = null,
+
+  val visitorConcernText: String? = null,
+
+  val completionCode: String? = null,
+
+  val overrideBanTime: LocalDateTime? = null,
+
+  val overrideBanBy: String? = null,
+
   val createdBy: String,
+
+  val createdTime: LocalDateTime = now(),
+
+  val updatedBy: String? = null,
+
+  val updatedTime: LocalDateTime? = null,
+
+  val offenderVisitId: Long? = null,
 ) {
-  val createdTime: LocalDateTime = now()
-
-  var updatedBy: String? = null
-
-  var updatedTime: LocalDateTime? = null
-
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
 
@@ -53,7 +79,15 @@ class OfficialVisitEntity(
     contactTypeCode: String,
     contactId: Long? = null,
     prisonerContactId: Long? = null,
+    firstName: String? = null,
+    lastName: String? = null,
+    leadVisitor: Boolean? = false,
+    assistedVisit: Boolean? = false,
+    emailAddress: String? = null,
+    phoneNumber: String? = null,
+    visitorNotes: String? = null,
     createdBy: User,
+    createdTime: LocalDateTime = LocalDateTime.now(),
   ) {
     officialVisitors.add(
       OfficialVisitorEntity(
@@ -62,7 +96,15 @@ class OfficialVisitEntity(
         contactTypeCode = contactTypeCode,
         contactId = contactId,
         prisonerContactId = prisonerContactId,
+        firstName = firstName,
+        lastName = lastName,
+        leadVisitor = leadVisitor ?: false,
+        assistedVisit = assistedVisit ?: false,
+        emailAddress = emailAddress,
+        phoneNumber = phoneNumber,
+        visitorNotes = visitorNotes,
         createdBy = createdBy.username,
+        createdTime = createdTime,
       ),
     )
   }

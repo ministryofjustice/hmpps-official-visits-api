@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
+import java.time.LocalTime
+import java.util.UUID
 
 class CreateOfficialVisitRequest(
   @field:NotNull(message = "The prison visit slot identifier for the official visit is mandatory")
@@ -26,8 +28,29 @@ class CreateOfficialVisitRequest(
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val visitDate: LocalDate?,
 
+  @field:NotNull(message = "The start time of the official visit is mandatory")
+  @Schema(description = "The start time of the official visit", example = "10:00")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
+  val startTime: LocalTime?,
+
+  @field:NotNull(message = "The end time of the official visit is mandatory")
+  @Schema(description = "The end time of the official visit", example = "11:00")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
+  val endTime: LocalTime?,
+
+  @field:NotNull(message = "The DPS location ID is mandatory")
+  @Schema(description = "The DPS location ID where the official visit is to take place", example = "aaaa-bbbb-9f9f9f9f-9f9f9f9f")
+  val dpsLocationId: UUID?,
+
   @field:NotBlank(message = "The type code for the official visit is mandatory")
+  @Schema(description = "The visit type code (VIDEO, IN_PERSON, TELEPHONE)", example = "IN_PERSON")
   val visitTypeCode: String?,
+
+  @Schema(description = "Notes that will not be shared on movement slips", example = "Private note")
+  val privateNotes: String?,
+
+  @Schema(description = "Notes that may be shared on movement slips", example = "Public note")
+  val publicNotes: String?,
 
   val officialVisitors: List<OfficialVisitor> = emptyList(),
 )

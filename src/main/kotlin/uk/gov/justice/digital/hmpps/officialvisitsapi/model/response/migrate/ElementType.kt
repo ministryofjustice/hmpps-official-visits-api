@@ -7,4 +7,5 @@ enum class ElementType(val elementType: String) {
   PRISON_VISIT_SLOT("VisitSlot"),
   OFFICIAL_VISIT("Visit"),
   OFFICIAL_VISITOR("Visitor"),
+  PRISONER_VISITED("PrisonerVisited"),
 }

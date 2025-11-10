@@ -27,8 +27,13 @@ class OfficialVisitCreateService(
         prisonCode = request.prisonCode,
         prisonerNumber = request.prisonerNumber,
         visitDate = request.visitDate!!,
+        startTime = request.startTime!!,
+        endTime = request.endTime!!,
+        dpsLocationId = request.dpsLocationId!!,
         visitStatusCode = "ACTIVE",
         visitTypeCode = request.visitTypeCode!!,
+        privateNotes = request.privateNotes,
+        publicNotes = request.publicNotes,
         createdBy = user.username,
       ).apply {
         request.officialVisitors.forEach {
@@ -37,6 +42,13 @@ class OfficialVisitCreateService(
             contactTypeCode = it.contactTypeCode!!,
             contactId = it.contactId,
             prisonerContactId = it.prisonerContactId,
+            firstName = it.firstName,
+            lastName = it.lastName,
+            leadVisitor = it.leadVisitor ?: false,
+            assistedVisit = it.assistedVisit ?: false,
+            emailAddress = it.emailAddress,
+            phoneNumber = it.phoneNumber,
+            visitorNotes = it.visitorNotes,
             createdBy = user,
           )
         }

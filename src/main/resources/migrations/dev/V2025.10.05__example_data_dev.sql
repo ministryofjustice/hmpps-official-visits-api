@@ -28,8 +28,8 @@ values (1, 1, '9485cf4a-750b-4d74-b594-59bacbcda247', 10, 5, 4, 'TIM', current_t
 alter sequence if exists prison_visit_slot_prison_visit_slot_id_seq restart with 10;
 
 -- Existing visit
-insert into official_visit (official_visit_id, prison_visit_slot_id, visit_date, visit_status_code, visit_type_code, prison_code, prisoner_number, search_type_code, created_by, created_time)
-values (1, 1, current_date, 'SCH', 'VIDEO', 'MDI', 'G4793VF', 'RUB_A', 'TIM', current_timestamp);
+insert into official_visit (official_visit_id, prison_visit_slot_id, visit_date, start_time, end_time, dps_location_id, visit_status_code, visit_type_code, prison_code, prisoner_number, current_term, search_type_code, created_by, created_time)
+values (1, 1, current_date, '09:00', '10:00','9485cf4a-750b-4d74-b594-59bacbcda247','SCH', 'VIDEO', 'MDI', 'G4793VF', true,'RUB_A', 'TIM', current_timestamp);
 
 alter sequence if exists official_visit_official_visit_id_seq restart with 2;
 

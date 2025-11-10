@@ -91,20 +91,26 @@ create table official_visit (
    official_visit_id bigserial NOT NULL CONSTRAINT official_visit_pk PRIMARY KEY,
    prison_visit_slot_id bigint NOT NULL references prison_visit_slot(prison_visit_slot_id),
    visit_date date NOT NULL,
-   visit_status_code varchar(20) NOT NULL, -- ACTIVE, CANCELLED, COMPLETED, AWAITING_OUTCOME
-   visit_type_code varchar(20) NOT NULL,  -- IN_PERSON, VIDEO, TELEPHONE,OTHER
-   prison_code varchar(10) NOT NULL, -- intentional duplication for support
-   prisoner_number varchar(7) NOT NULL, -- intentional duplication for support
-   private_notes varchar(240), -- not shared on movement slips or schedules
-   public_notes varchar(240), -- can be shared with the prisoner on movement slips
-   search_type_code varchar(20), -- ref code SEARCH_TYPE
-   completion_code varchar(20), -- SCH by default, staff must enter how it turned out
-   override_ban_by varchar(100),
+   start_time time without time zone NOT NULL,
+   end_time time without time zone NOT NULL,
+   dps_location_id UUID NOT NULL,
+   visit_status_code varchar(20) NOT NULL,
+   visit_type_code varchar(20) NOT NULL,
+   prison_code varchar(10) NOT NULL,
+   prisoner_number varchar(7) NOT NULL,
+   current_term boolean NOT NULL DEFAULT true,
+   private_notes varchar(240),
+   public_notes varchar(240),
+   search_type_code varchar(20),
+   visitor_concern_text varchar(240),
+   completion_code varchar(20),
    override_ban_time timestamp,
+   override_ban_by varchar(100),
    created_time timestamp NOT NULL,
    created_by varchar(100) NOT NULL,
    updated_time timestamp,
-   updated_by varchar(100)
+   updated_by varchar(100),
+   offender_visit_id bigint -- Only set for migrated bookings otherwise null
 );
 
 CREATE INDEX idx_official_visit_1 ON official_visit(prison_visit_slot_id);
@@ -114,6 +120,7 @@ CREATE INDEX idx_official_visit_4 ON official_visit(prisoner_number);
 CREATE INDEX idx_official_visit_5 ON official_visit(visit_type_code);
 CREATE INDEX idx_official_visit_6 ON official_visit(visit_status_code);
 CREATE INDEX idx_official_visit_7 ON official_visit(created_time);
+CREATE INDEX idx_official_visit_8 ON official_visit(offender_visit_id);
 
 --
 -- Table prisoner_visited
@@ -144,37 +151,37 @@ CREATE INDEX idx_prisoner_visited_3 ON prisoner_visited(attendance_code);
 create table official_visitor (
    official_visitor_id bigserial NOT NULL CONSTRAINT official_visitor_pk PRIMARY KEY,
    official_visit_id bigint NOT NULL references official_visit(official_visit_id),
-   visitor_type_code varchar(20) NOT NULL, -- CONTACT, OPV, PRISONER
-   contact_type_code varchar(20) NOT NULL, -- SOCIAL, OFFICIAL, NOT_A_CONTACT
-   first_name varchar(60), -- denormalized for ease of checking
-   last_name varchar(60), -- denormalized for ease of checking
-   contact_id bigint, -- same as person_id from NOMIS or contact_id in DPS - should be present
-   prisoner_contact_id bigint, -- may be null in migrated visits, but populated in DPS created visits
-   relationship_code varchar(20), -- denormalized for ease of checking, but can be null
-   opv_organisation varchar(100), -- if an OPV visitor
+   visitor_type_code varchar(20) NOT NULL,
+   contact_type_code varchar(20) NOT NULL,
+   first_name varchar(60), -- Lookup from contact if present
+   last_name varchar(60), -- Lookup from contact if present
+   contact_id bigint, -- person_id from NOMIS - mandatory unless visitor is an OPV
+   prisoner_contact_id bigint, -- Only set for DPS visits - null on migration - unless Syscon can send?
+   relationship_code varchar(20), -- Only set for DPS visits - null on migration - unless Syscon can send?
    lead_visitor boolean NOT NULL DEFAULT false,
    assisted_visit boolean NOT NULL DEFAULT false,
-   email_address varchar(160), -- potential to notify lead visitor about this visit
-   phone_number varchar(30), -- potential to notify lead visitor about this visit
+   email_address varchar(160), -- DPS-only - potential to notify lead visitor about this visit
+   phone_number varchar(30), -- DPS-only - potential to notify lead visitor about this visit
    visitor_notes varchar(240),
    attendance_code varchar(20),
-   attendance_notes varchar(240),
-   attendance_by varchar(100),
-   attendance_time timestamp,
+   attendance_notes varchar(240), -- DPS only - no NOMIS equivalent
+   attendance_by varchar(100), -- DPS only - no NOMIS equivalent
+   attendance_time timestamp, -- DPS only - no NOMIS equivalent
    created_time timestamp NOT NULL,
    created_by varchar(100) NOT NULL,
    updated_time timestamp,
-   updated_by varchar(100)
+   updated_by varchar(100),
+   offender_visit_visitor_id bigint -- Only set for migrated visitors, otherwise null
 );
 
 CREATE INDEX idx_official_visitor_1 ON official_visitor(official_visit_id);
 CREATE INDEX idx_official_visitor_2 ON official_visitor(visitor_type_code);
 CREATE INDEX idx_official_visitor_3 ON official_visitor(contact_type_code);
 CREATE INDEX idx_official_visitor_4 ON official_visitor(last_name, first_name);
-CREATE INDEX idx_official_visitor_5 ON official_visitor(contact_id, prisoner_contact_id);
-CREATE INDEX idx_official_visitor_6 ON official_visitor(relationship_code);
+CREATE INDEX idx_official_visitor_5 ON official_visitor(contact_id);
 CREATE INDEX idx_official_visitor_7 ON official_visitor(created_time);
 CREATE INDEX idx_official_visitor_8 ON official_visitor(created_by);
+CREATE INDEX idx_official_visitor_9 ON official_visitor(offender_visit_visitor_id);
 
 --
 -- Table visitor_equipment

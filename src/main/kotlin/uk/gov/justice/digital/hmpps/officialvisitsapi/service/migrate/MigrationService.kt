@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitConfigRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.ElementType
@@ -18,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.time.LocalDateTime
 
 @Service
@@ -26,6 +28,7 @@ class MigrationService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val officialVisitRepository: OfficialVisitRepository,
   private val officialVisitorRepository: OfficialVisitorRepository,
+  private val prisonerVisitedRepository: PrisonerVisitedRepository,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -79,7 +82,7 @@ class MigrationService(
           dpsLocationId = slot.dpsLocationId!!,
           maxAdults = slot.maxAdults!!,
           maxGroups = slot.maxGroups!!,
-          maxVideoSessions = slot.maxVideoSessions!!,
+          maxVideoSessions = slot.maxVideoSessions ?: 0,
           createdTime = slot.createDateTime ?: LocalDateTime.now(),
           createdBy = slot.createUsername ?: "MIGRATION",
           updatedTime = slot.modifyDateTime,
@@ -92,63 +95,99 @@ class MigrationService(
   @Transactional
   fun migrateVisit(request: MigrateVisitRequest): MigrateVisitResponse {
     logger.info(
-      "Migrate official visit ID {} at {} for {} on {} with {} visitors",
+      "Migrate official visit ID {} at {} for {} (bookId {}) on {} with {} visitors",
       request.offenderVisitId,
       request.prisonCode!!,
       request.prisonerNumber!!,
-      request.visitDate!!,
+      request.offenderBookId,
+      request.visitDate,
       request.visitors.size,
     )
 
-    // The visit slot must exist prior to the visit being migrated - error if does not
-    val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId).orElseThrow {
+    // The visit slot must exist prior to related visits being migrated
+    val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} not found on offender visit ID ${request.offenderVisitId}")
     }
+
+    // TODO: Get the contact and relationships from the personal relationships API -- CurrentTerm? Old ones?
 
     val visit = officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
         prisonVisitSlot = visitSlot,
         prisonCode = request.prisonCode,
         prisonerNumber = request.prisonerNumber,
-        visitDate = request.visitDate,
-        visitStatusCode = request.visitStatusCode.code,
-        visitTypeCode = request.visitTypeCode.code,
+        currentTerm = request.currentTerm ?: false,
+        visitDate = request.visitDate!!,
+        startTime = request.startTime!!,
+        endTime = request.endTime!!,
+        dpsLocationId = request.dpsLocationId!!,
+        visitStatusCode = request.visitStatusCode?.code ?: "ACTIVE", // TODO: Map this value to DPS code
+        visitTypeCode = request.visitTypeCode?.code ?: "IN_PERSON", // TODO: Map this value to DPS code
+        publicNotes = request.commentText,
+        searchTypeCode = request.searchTypeCode?.code, // TODO: Map this value to DPS code
+        visitorConcernText = request.visitorConcernText,
+        completionCode = request.eventOutcomeCode?.code, // TODO: Map this from outcome code and outcome reason code
+        overrideBanBy = request.overrideBanStaffUsername,
+        overrideBanTime = null, // TODO: Investigate whether Syscon can send this?
+        createdTime = request.createDateTime ?: LocalDateTime.now(),
         createdBy = request.createUsername ?: "MIGRATION",
-        // TODO: Needs a full set of values defined on the entity
-      ).apply {
-        // this.createdTime = request.createDateTime ?: LocalDateTime.now()
-        // TODO: Needs createdTime as a constructor arg or private set var to pass through NOMIS value
-        this.updatedTime = request.modifyDateTime
-        this.updatedBy = request.modifyUsername
-      },
+        updatedTime = request.modifyDateTime,
+        updatedBy = request.modifyUsername,
+        officialVisitId = request.offenderVisitId!!,
+      ),
     )
 
-    val visitorsPairs = extractAndSaveVisitors(visit, request)
+    val prisoner = extractAndSavePrisonerVisited(visit, request)
 
-    // Build the response object to map NOMIS IDs to DPS IDs for each entity created
+    val visitorPairs = extractAndSaveVisitors(visit, request)
+
     return MigrateVisitResponse(
-      visit = IdPair(nomisId = request.offenderVisitId, dpsId = visit.officialVisitId, elementType = ElementType.OFFICIAL_VISIT),
-      visitors = visitorsPairs.map { IdPair(ElementType.OFFICIAL_VISITOR, it.first, it.second.officialVisitorId) },
+      visit = IdPair(elementType = ElementType.OFFICIAL_VISIT, nomisId = request.offenderVisitId, dpsId = visit.officialVisitId),
+      prisoner = IdPair(elementType = ElementType.PRISONER_VISITED, nomisId = request.offenderBookId!!, dpsId = prisoner.prisonerVisitedId),
+      visitors = visitorPairs.map { IdPair(elementType = ElementType.OFFICIAL_VISITOR, nomisId = it.first, dpsId = it.second.officialVisitorId) },
     )
   }
 
   fun extractAndSaveVisitors(dpsVisit: OfficialVisitEntity, request: MigrateVisitRequest) = request.visitors.map { visitor ->
     Pair(
-      visitor.offenderVisitVisitorId,
+      visitor.offenderVisitVisitorId!!,
       officialVisitorRepository.saveAndFlush(
         OfficialVisitorEntity(
           officialVisit = dpsVisit,
-          visitorTypeCode = "O",
-          contactTypeCode = "O",
           contactId = visitor.personId,
+          visitorTypeCode = "O", // TODO: Get from contacts
+          contactTypeCode = "O", // TODO: Get from contacts
           leadVisitor = visitor.groupLeaderFlag ?: false,
           assistedVisit = visitor.assistedVisitFlag ?: false,
-          createdBy = visitor.createUsername ?: dpsVisit.createdBy,
-          // TODO: More fields required for each visitor
-          // TODO: The prisoner contact ID is not available
-          // TODO: The relationships between prisoner and visitor is not available
+          visitorNotes = visitor.commentText,
+          firstName = null, // TODO: Get from contact
+          lastName = null, // TODO: Get from contact
+          prisonerContactId = null, // TODO: Get from prisoner contact - can we get this for old relationships?
+          relationshipCode = null, // TODO: Get from prisoner contact - can we get this for old relationships?
+          attendanceCode = visitor.eventOutcomeCode?.code, // TODO: Map from event outcome/outcome reason code
+          createdBy = visitor.createUsername ?: "MIGRATION",
+          createdTime = visitor.createDateTime ?: LocalDateTime.now(),
+          updatedBy = visitor.modifyUsername,
+          updatedTime = visitor.modifyDateTime,
+          offenderVisitVisitorId = visitor.offenderVisitVisitorId,
         ),
       ),
     )
   }
+
+  fun extractAndSavePrisonerVisited(
+    dpsVisit: OfficialVisitEntity,
+    request: MigrateVisitRequest,
+  ): PrisonerVisitedEntity = prisonerVisitedRepository.saveAndFlush(
+    PrisonerVisitedEntity(
+      officialVisit = dpsVisit,
+      prisonerNumber = dpsVisit.prisonerNumber,
+      attendanceCode = dpsVisit.completionCode, // TODO: Check this
+      attendanceBy = null, // TODO: Don't think we can get this for migrated visits?
+      createdBy = dpsVisit.createdBy,
+      createdTime = dpsVisit.createdTime,
+      updatedBy = dpsVisit.updatedBy,
+      updatedTime = dpsVisit.updatedTime,
+    ),
+  )
 }

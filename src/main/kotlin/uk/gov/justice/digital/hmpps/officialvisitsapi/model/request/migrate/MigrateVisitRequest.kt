@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.UUID
 
 /**
@@ -15,43 +16,57 @@ import java.util.UUID
  */
 
 data class MigrateVisitRequest(
-  @Schema(description = "The NOMIS offender visit ID", example = "133232")
+  @Schema(description = "The NOMIS offender visit ID", example = "133232", required = true)
   @field:NotNull(message = "The NOMIS offender visit ID is mandatory")
-  val offenderVisitId: Long,
+  val offenderVisitId: Long?,
 
-  @Schema(description = "The DPS visit slot ID - this provides the location, start time and end time via configuration data", example = "123132")
+  @Schema(description = "The DPS visit slot ID - this provides the location, start time and end time via configuration data", example = "123132", required = true)
   @field:NotNull(message = "The DPS visit slot ID is mandatory")
-  val prisonVisitSlotId: Long,
+  val prisonVisitSlotId: Long?,
 
+  @Schema(description = "The prison code where the visit takes place", example = "PVI", required = true)
   @field:NotBlank(message = "The prison code is mandatory")
-  @Schema(description = "The prison code where the visit takes place", example = "PVI")
   val prisonCode: String?,
 
+  @Schema(description = "The offender book ID to echo back", example = "74748", required = true)
+  @field:NotNull(message = "The offender book ID is mandatory")
+  val offenderBookId: Long?,
+
+  @Schema(description = "The prisoner number (NOMS ID)", example = "A1234AA", required = true)
   @field:NotBlank(message = "The prisoner number for the official visit is mandatory")
   @field:Size(max = 7, message = "Prisoner number must not exceed {max} characters")
-  @Schema(description = "The prisoner number (NOMS ID)", example = "A1234AA")
   val prisonerNumber: String?,
 
+  @Schema(description = "If this visits relates to the current term (booking) in prison true, else false.", example = "true", required = true)
   @field:NotNull(message = "The current term flag is mandatory")
-  @Schema(description = "If this visits relates to the current term (booking) in prison true, else false.", example = "true")
-  val currentTerm: Boolean,
+  val currentTerm: Boolean?,
 
+  @Schema(description = "The date the official visit will take place", example = "2022-12-23", required = true)
   @field:NotNull(message = "The date for the official visit is mandatory")
-  @Schema(description = "The date the official visit will take place", example = "2022-12-23")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val visitDate: LocalDate?,
 
+  @Schema(description = "The start time for this official visit", example = "09:15", required = true)
+  @field:NotNull(message = "The start time is mandatory")
+  @JsonFormat(pattern = "HH:mm")
+  val startTime: LocalTime?,
+
+  @Schema(description = "The end time for this official visit", example = "10:15", required = true)
+  @field:NotNull(message = "The end time is mandatory")
+  @JsonFormat(pattern = "HH:mm")
+  val endTime: LocalTime?,
+
+  @Schema(description = "The DPS location where the visit takes place", example = "aaaa-bbbb-xxxxxxxx-yyyyyyyy", required = true)
   @field:NotNull(message = "The DPS location ID is mandatory")
-  @Schema(description = "The DPS location where the visit takes place", example = "aaaa-bbbb-xxxxxxxx-yyyyyyyy")
-  val dpsLocationId: UUID,
+  val dpsLocationId: UUID?,
 
   @Schema(description = "The visit status code from NOMIS (reference data)", example = "SCH")
   @field:NotNull(message = "The status code from NOMIS is mandatory")
-  val visitStatusCode: CodedValue,
+  val visitStatusCode: CodedValue?,
 
   @Schema(description = "The visit type code from NOMIS expected to be O for all(reference data)", example = "O")
   @field:NotNull(message = "The visit type code is mandatory")
-  val visitTypeCode: CodedValue,
+  val visitTypeCode: CodedValue?,
 
   @Schema(description = "The comment text from NOMIS", example = "This is a comment", nullable = true)
   val commentText: String? = null,
@@ -94,18 +109,17 @@ data class MigrateVisitRequest(
 
 @Schema(description = "The details of an official visitor")
 data class MigrateVisitor(
-  @field:NotNull(message = "The NOMIS offender visit visitor ID is mandatory")
   @Schema(description = "The NOMIS offender visit visitor ID", example = "133232")
-  val offenderVisitVisitorId: Long,
+  @field:NotNull(message = "The NOMIS offender visit visitor ID is mandatory")
+  val offenderVisitVisitorId: Long?,
 
-  @field:NotNull(message = "The NOMIS person ID is mandatory")
   @Schema(description = "The NOMIS person ID (same as contactId) for this visitor", example = "13989898")
-  val personId: Long,
+  @field:NotNull(message = "The NOMIS person ID is mandatory")
+  val personId: Long?,
 
   @Schema(description = "If this visits relates to the current term (booking) in prison true, else false.", example = "true", nullable = true)
   val groupLeaderFlag: Boolean? = false,
 
-  @field:NotNull(message = "The current term flag is mandatory")
   @Schema(description = "If this visits relates to the current term (booking) in prison true, else false.", example = "true", nullable = true)
   val assistedVisitFlag: Boolean? = false,
 
@@ -134,8 +148,8 @@ data class MigrateVisitor(
 data class CodedValue(
   @Schema(description = "A coded value from NOMIS reference data", maxLength = 12, example = "CODE")
   @field:Size(max = 12, message = "Coded values must be <= 12 characters")
-  val code: String,
+  val code: String?,
 
   @Schema(description = "The description for this coded value in NOMIS", example = "Description")
-  val description: String,
+  val description: String?,
 )

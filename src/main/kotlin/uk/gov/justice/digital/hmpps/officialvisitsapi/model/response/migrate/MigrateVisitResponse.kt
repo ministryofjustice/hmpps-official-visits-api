@@ -9,4 +9,7 @@ data class MigrateVisitResponse(
 
   @Schema(description = "The list of ID pairs for each visitor on this visit")
   val visitors: List<IdPair> = emptyList(),
+
+  @Schema(description = "The pair of IDs for the prisoner on this visit. NOMS ID is used as the NOMIS ID, as it has no other ID")
+  val prisoner: IdPair,
 )

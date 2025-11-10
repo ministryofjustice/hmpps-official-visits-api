@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
@@ -32,12 +33,14 @@ class MigrateVisitServiceTest {
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val officialVisitorRepository: OfficialVisitorRepository = mock()
+  private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
 
   val migrationService = MigrationService(
     prisonTimeSlotRepository,
     prisonVisitSlotRepository,
     officialVisitRepository,
     officialVisitorRepository,
+    prisonerVisitedRepository,
   )
 
   private val aUsername = "TEST"
