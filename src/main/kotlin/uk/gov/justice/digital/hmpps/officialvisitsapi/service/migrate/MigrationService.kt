@@ -80,9 +80,9 @@ class MigrationService(
         PrisonVisitSlotEntity(
           prisonTimeSlotId = timeSlotId,
           dpsLocationId = slot.dpsLocationId!!,
-          maxAdults = slot.maxAdults!!,
-          maxGroups = slot.maxGroups!!,
-          maxVideoSessions = slot.maxVideoSessions ?: 0,
+          maxAdults = slot.maxAdults,
+          maxGroups = slot.maxGroups,
+          maxVideoSessions = slot.maxVideoSessions,
           createdTime = slot.createDateTime ?: LocalDateTime.now(),
           createdBy = slot.createUsername ?: "MIGRATION",
           updatedTime = slot.modifyDateTime,
@@ -133,7 +133,7 @@ class MigrationService(
         createdBy = request.createUsername ?: "MIGRATION",
         updatedTime = request.modifyDateTime,
         updatedBy = request.modifyUsername,
-        officialVisitId = request.offenderVisitId!!,
+        offenderVisitId = request.offenderVisitId!!,
       ),
     )
 
@@ -155,7 +155,7 @@ class MigrationService(
         OfficialVisitorEntity(
           officialVisit = dpsVisit,
           contactId = visitor.personId,
-          visitorTypeCode = "O", // TODO: Get from contacts
+          visitorTypeCode = "CONTACT",
           contactTypeCode = "O", // TODO: Get from contacts
           leadVisitor = visitor.groupLeaderFlag ?: false,
           assistedVisit = visitor.assistedVisitFlag ?: false,

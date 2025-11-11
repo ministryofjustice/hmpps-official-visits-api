@@ -20,11 +20,11 @@ data class PrisonVisitSlotEntity(
 
   val dpsLocationId: UUID,
 
-  val maxAdults: Int,
+  val maxAdults: Int? = null,
 
-  val maxGroups: Int,
+  val maxGroups: Int? = null,
 
-  val maxVideoSessions: Int,
+  val maxVideoSessions: Int? = null,
 
   @Column(updatable = false)
   val createdTime: LocalDateTime,

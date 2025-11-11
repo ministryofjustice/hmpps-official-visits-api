@@ -13,10 +13,17 @@ import org.mockito.kotlin.reset
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.CodedValue
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitConfigRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.ElementType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.IdPair
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
@@ -26,6 +33,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Optional
 import java.util.UUID
 
 class MigrateVisitServiceTest {
@@ -186,59 +194,239 @@ class MigrateVisitServiceTest {
         }
       }
     }
+
+    private fun migrateVisitConfigRequest(prisonCode: String, dayCode: String, timeSlotSeq: Int) = MigrateVisitConfigRequest(
+      prisonCode = prisonCode,
+      dayCode = dayCode,
+      timeSlotSeq = timeSlotSeq,
+      startTime = slotStart,
+      endTime = slotEnd,
+      effectiveDate = aDateTime.toLocalDate(),
+      createDateTime = aDateTime,
+      createUsername = aUsername,
+      visitSlots = listOf(
+        MigrateVisitSlot(
+          agencyVisitSlotId = 1L,
+          dpsLocationId = UUID.fromString("aa0df03b-7864-47d5-9729-0301b74ecbe2"),
+          maxGroups = 8,
+          maxAdults = 16,
+          maxVideoSessions = 16,
+          createDateTime = aDateTime,
+          createUsername = aUsername,
+        ),
+        MigrateVisitSlot(
+          agencyVisitSlotId = 2L,
+          dpsLocationId = UUID.fromString("bb0df03b-7864-47d5-9729-0301b74ecbe2"),
+          maxGroups = null,
+          maxAdults = null,
+          maxVideoSessions = 8,
+          createDateTime = aDateTime,
+          createUsername = aUsername,
+        ),
+      ),
+    )
+
+    private fun visitSlotEntities(request: MigrateVisitConfigRequest) = listOf(
+      PrisonVisitSlotEntity(
+        prisonVisitSlotId = 1L,
+        prisonTimeSlotId = 1L,
+        dpsLocationId = request.visitSlots[0].dpsLocationId!!,
+        maxAdults = request.visitSlots[0].maxAdults,
+        maxGroups = request.visitSlots[0].maxGroups,
+        maxVideoSessions = request.visitSlots[0].maxVideoSessions,
+        createdBy = aUsername,
+        createdTime = aDateTime,
+      ),
+      PrisonVisitSlotEntity(
+        prisonVisitSlotId = 2L,
+        prisonTimeSlotId = 1L,
+        dpsLocationId = request.visitSlots[1].dpsLocationId!!,
+        maxAdults = request.visitSlots[1].maxAdults,
+        maxGroups = request.visitSlots[1].maxGroups,
+        maxVideoSessions = request.visitSlots[1].maxVideoSessions,
+        createdBy = aUsername,
+        createdTime = aDateTime,
+      ),
+    )
   }
 
-  private fun migrateVisitConfigRequest(prisonCode: String, dayCode: String, timeSlotSeq: Int) = MigrateVisitConfigRequest(
-    prisonCode = prisonCode,
-    dayCode = dayCode,
-    timeSlotSeq = timeSlotSeq,
-    startTime = slotStart,
-    endTime = slotEnd,
-    effectiveDate = aDateTime.toLocalDate(),
-    createDateTime = aDateTime,
-    createUsername = aUsername,
-    visitSlots = listOf(
-      MigrateVisitSlot(
-        agencyVisitSlotId = 1L,
-        dpsLocationId = UUID.fromString("aa0df03b-7864-47d5-9729-0301b74ecbe2"),
-        maxGroups = 8,
-        maxAdults = 16,
-        maxVideoSessions = 16,
-        createDateTime = aDateTime,
-        createUsername = aUsername,
-      ),
-      MigrateVisitSlot(
-        agencyVisitSlotId = 2L,
-        dpsLocationId = UUID.fromString("bb0df03b-7864-47d5-9729-0301b74ecbe2"),
-        maxGroups = 4,
-        maxAdults = 8,
-        maxVideoSessions = 8,
-        createDateTime = aDateTime,
-        createUsername = aUsername,
-      ),
-    ),
-  )
+  @Nested
+  inner class Visit {
+    @Test
+    fun `should migrate one visit with two visitors`() {
+      val request = migrateVisitRequest(prisonCode = "MDI", prisonVisitSlotId = 1L)
 
-  private fun visitSlotEntities(request: MigrateVisitConfigRequest) = listOf(
-    PrisonVisitSlotEntity(
-      prisonVisitSlotId = 1L,
-      prisonTimeSlotId = 1L,
-      dpsLocationId = request.visitSlots[0].dpsLocationId!!,
-      maxAdults = request.visitSlots[0].maxAdults!!,
-      maxGroups = request.visitSlots[0].maxGroups!!,
-      maxVideoSessions = request.visitSlots[0].maxVideoSessions!!,
+      // Create the stubbed values
+      val visitSlotEntity = PrisonVisitSlotEntity(
+        prisonVisitSlotId = 1L,
+        prisonTimeSlotId = 1L,
+        dpsLocationId = UUID.randomUUID(),
+        maxAdults = 8,
+        maxGroups = 4,
+        maxVideoSessions = 2,
+        createdTime = aDateTime,
+        createdBy = aUsername,
+      )
+      val visitEntity = visitEntity(request, visitSlotEntity)
+      val prisonerVisitedEntity = prisonerVisitedEntity(request, visitEntity)
+      val visitorEntities = visitorEntities(request, visitEntity)
+
+      // Stub the values returned
+      whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
+      whenever(officialVisitRepository.saveAndFlush(any())).thenReturn(visitEntity)
+      whenever(prisonerVisitedRepository.saveAndFlush(any())).thenReturn(prisonerVisitedEntity)
+      whenever(officialVisitorRepository.saveAndFlush(any()))
+        .thenReturn(visitorEntities[0])
+        .thenReturn(visitorEntities[1])
+
+      // Capture the values saved for visits and visitors
+      val visitCaptor = argumentCaptor<OfficialVisitEntity>()
+      val visitorCaptor = argumentCaptor<OfficialVisitorEntity>()
+
+      val result = migrationService.migrateVisit(request)
+
+      // Check responses generated
+      assertThat(result.visit).isEqualTo(IdPair(elementType = ElementType.OFFICIAL_VISIT, 1L, 1L))
+      assertThat(result.prisoner).isEqualTo(IdPair(elementType = ElementType.PRISONER_VISITED, 222, 1L))
+      assertThat(result.visitors).containsAll(
+        listOf(
+          IdPair(elementType = ElementType.OFFICIAL_VISITOR, 1L, 1L),
+          IdPair(elementType = ElementType.OFFICIAL_VISITOR, 2L, 2L),
+        ),
+      )
+
+      // Get the captured values saved
+      verify(officialVisitRepository).saveAndFlush(visitCaptor.capture())
+      verify(officialVisitorRepository, times(2)).saveAndFlush(visitorCaptor.capture())
+
+      // Check the visit details saved
+      with(visitCaptor.firstValue) {
+        assertThat(this)
+          .extracting("prisonCode", "prisonerNumber", "visitDate", "startTime", "endTime", "dpsLocationId", "createdBy", "createdTime", "offenderVisitId")
+          .contains(
+            request.prisonCode,
+            request.prisonerNumber,
+            request.visitDate,
+            request.startTime,
+            request.endTime,
+            request.dpsLocationId,
+            request.createUsername,
+            request.createDateTime,
+            request.offenderVisitId,
+          )
+      }
+
+      // Check the visitors details saved
+      for (i in 0..1) {
+        with(visitorCaptor.allValues[i]) {
+          assertThat(this)
+            .extracting("contactId", "prisonerContactId", "leadVisitor", "assistedVisit", "createdBy", "createdTime")
+            .contains(
+              visitorEntities[i].contactId,
+              visitorEntities[i].prisonerContactId,
+              visitorEntities[i].leadVisitor,
+              visitorEntities[i].assistedVisit,
+              visitorEntities[i].createdBy,
+              visitorEntities[i].createdTime,
+            )
+        }
+      }
+    }
+
+    private fun migrateVisitRequest(prisonCode: String, prisonVisitSlotId: Long) = MigrateVisitRequest(
+      offenderVisitId = 1,
+      prisonVisitSlotId = prisonVisitSlotId,
+      prisonCode = prisonCode,
+      offenderBookId = 222,
+      prisonerNumber = "A1234AA",
+      visitDate = today().plusDays(1),
+      startTime = slotStart,
+      endTime = slotEnd,
+      dpsLocationId = UUID.randomUUID(),
+      currentTerm = true,
+      visitStatusCode = CodedValue("ACTIVE", "Active"),
+      visitTypeCode = CodedValue("OFFI", "Official"),
+      commentText = "A comment",
+      visitorConcernText = "Concern text",
+      searchTypeCode = CodedValue("RUB_A", "Pat down search"),
+      eventOutcomeCode = CodedValue("COMPLETE", "Complete"),
+      outcomeReasonCode = CodedValue("COMPLETE", "Completed"),
+      overrideBanStaffUsername = "XXX",
+      createDateTime = aDateTime,
+      createUsername = aUsername,
+      visitors = listOf(
+        MigrateVisitor(
+          offenderVisitVisitorId = 1,
+          personId = 11111,
+          groupLeaderFlag = true,
+          assistedVisitFlag = false,
+          commentText = "comment1",
+          createDateTime = aDateTime,
+          createUsername = aUsername,
+        ),
+        MigrateVisitor(
+          offenderVisitVisitorId = 2,
+          personId = 22222,
+          groupLeaderFlag = false,
+          assistedVisitFlag = true,
+          commentText = "comment2",
+          createDateTime = aDateTime,
+          createUsername = aUsername,
+        ),
+      ),
+    )
+
+    private fun visitEntity(request: MigrateVisitRequest, visitSlot: PrisonVisitSlotEntity) = OfficialVisitEntity(
+      officialVisitId = 1L,
+      prisonVisitSlot = visitSlot,
+      prisonCode = request.prisonCode!!,
+      prisonerNumber = request.prisonerNumber!!,
+      visitStatusCode = "ACTIVE",
+      visitTypeCode = "IN_PERSON",
+      visitDate = request.visitDate!!,
+      startTime = request.startTime!!,
+      endTime = request.endTime!!,
+      dpsLocationId = request.dpsLocationId!!,
+      currentTerm = request.currentTerm!!,
+      createdBy = aUsername,
+      offenderVisitId = request.offenderVisitId!!,
+    )
+
+    private fun prisonerVisitedEntity(request: MigrateVisitRequest, visit: OfficialVisitEntity) = PrisonerVisitedEntity(
+      prisonerVisitedId = 1L,
+      officialVisit = visit,
+      prisonerNumber = request.prisonerNumber!!,
       createdBy = aUsername,
       createdTime = aDateTime,
-    ),
-    PrisonVisitSlotEntity(
-      prisonVisitSlotId = 2L,
-      prisonTimeSlotId = 1L,
-      dpsLocationId = request.visitSlots[1].dpsLocationId!!,
-      maxAdults = request.visitSlots[1].maxAdults!!,
-      maxGroups = request.visitSlots[1].maxGroups!!,
-      maxVideoSessions = request.visitSlots[1].maxVideoSessions!!,
-      createdBy = aUsername,
-      createdTime = aDateTime,
-    ),
-  )
+    )
+
+    private fun visitorEntities(request: MigrateVisitRequest, visit: OfficialVisitEntity) = listOf(
+      OfficialVisitorEntity(
+        officialVisitorId = 1L,
+        officialVisit = visit,
+        visitorTypeCode = "CONTACT",
+        contactId = request.visitors[0].personId,
+        prisonerContactId = null,
+        contactTypeCode = "O",
+        leadVisitor = true,
+        assistedVisit = false,
+        createdBy = aUsername,
+        createdTime = aDateTime,
+        offenderVisitVisitorId = request.visitors[0].offenderVisitVisitorId!!,
+      ),
+      OfficialVisitorEntity(
+        officialVisitorId = 2L,
+        officialVisit = visit,
+        visitorTypeCode = "CONTACT",
+        contactId = request.visitors[1].personId,
+        prisonerContactId = null,
+        contactTypeCode = "S",
+        leadVisitor = false,
+        assistedVisit = true,
+        createdBy = aUsername,
+        createdTime = aDateTime,
+        offenderVisitVisitorId = request.visitors[1].offenderVisitVisitorId!!,
+      ),
+    )
+  }
 }
