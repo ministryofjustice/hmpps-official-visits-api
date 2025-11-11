@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
@@ -320,10 +321,12 @@ class MigrateVisitServiceTest {
       for (i in 0..1) {
         with(visitorCaptor.allValues[i]) {
           assertThat(this)
-            .extracting("contactId", "prisonerContactId", "leadVisitor", "assistedVisit", "createdBy", "createdTime")
+            .extracting("contactId", "prisonerContactId", "firstName", "lastName", "leadVisitor", "assistedVisit", "createdBy", "createdTime")
             .contains(
               visitorEntities[i].contactId,
               visitorEntities[i].prisonerContactId,
+              visitorEntities[i].firstName,
+              visitorEntities[i].lastName,
               visitorEntities[i].leadVisitor,
               visitorEntities[i].assistedVisit,
               visitorEntities[i].createdBy,
@@ -358,6 +361,10 @@ class MigrateVisitServiceTest {
         MigrateVisitor(
           offenderVisitVisitorId = 1,
           personId = 11111,
+          firstName = "Mary",
+          lastName = "Smith",
+          dateOfBirth = LocalDate.of(2001, 1, 1),
+          relationshipToPrisoner = CodedValue("SIS", "Sister"),
           groupLeaderFlag = true,
           assistedVisitFlag = false,
           commentText = "comment1",
@@ -367,6 +374,10 @@ class MigrateVisitServiceTest {
         MigrateVisitor(
           offenderVisitVisitorId = 2,
           personId = 22222,
+          firstName = "John",
+          lastName = "Smith",
+          dateOfBirth = LocalDate.of(2001, 2, 2),
+          relationshipToPrisoner = CodedValue("BRO", "Brother"),
           groupLeaderFlag = false,
           assistedVisitFlag = true,
           commentText = "comment2",
@@ -406,6 +417,9 @@ class MigrateVisitServiceTest {
         officialVisit = visit,
         visitorTypeCode = "CONTACT",
         contactId = request.visitors[0].personId,
+        firstName = request.visitors[0].firstName,
+        lastName = request.visitors[0].lastName,
+        relationshipCode = request.visitors[0].relationshipToPrisoner?.code,
         prisonerContactId = null,
         contactTypeCode = "O",
         leadVisitor = true,
@@ -419,6 +433,9 @@ class MigrateVisitServiceTest {
         officialVisit = visit,
         visitorTypeCode = "CONTACT",
         contactId = request.visitors[1].personId,
+        firstName = request.visitors[1].firstName,
+        lastName = request.visitors[1].lastName,
+        relationshipCode = request.visitors[1].relationshipToPrisoner?.code,
         prisonerContactId = null,
         contactTypeCode = "S",
         leadVisitor = false,

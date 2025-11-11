@@ -5,6 +5,7 @@ info.app:
 spring:
   application:
     name: hmpps-official-visits-api
+
   http:
     codecs:
       max-in-memory-size: 50MB

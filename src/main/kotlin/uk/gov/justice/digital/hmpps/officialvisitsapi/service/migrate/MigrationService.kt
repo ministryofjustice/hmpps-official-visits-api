@@ -155,15 +155,15 @@ class MigrationService(
         OfficialVisitorEntity(
           officialVisit = dpsVisit,
           contactId = visitor.personId,
-          visitorTypeCode = "CONTACT",
+          visitorTypeCode = "CONTACT", // TODO: Will there be other types? e.g. PRISONER, OPV?
           contactTypeCode = "O", // TODO: Get from contacts
           leadVisitor = visitor.groupLeaderFlag ?: false,
           assistedVisit = visitor.assistedVisitFlag ?: false,
           visitorNotes = visitor.commentText,
-          firstName = null, // TODO: Get from contact
-          lastName = null, // TODO: Get from contact
-          prisonerContactId = null, // TODO: Get from prisoner contact - can we get this for old relationships?
-          relationshipCode = null, // TODO: Get from prisoner contact - can we get this for old relationships?
+          firstName = visitor.firstName,
+          lastName = visitor.lastName,
+          prisonerContactId = null, // TODO: Get from contacts
+          relationshipCode = visitor.relationshipToPrisoner?.code,
           attendanceCode = visitor.eventOutcomeCode?.code, // TODO: Map from event outcome/outcome reason code
           createdBy = visitor.createUsername ?: "MIGRATION",
           createdTime = visitor.createDateTime ?: LocalDateTime.now(),
