@@ -17,4 +17,25 @@ data class OfficialVisitor(
 
   @Schema(description = "The prisoner contact ID for the visitor", example = "123456")
   val prisonerContactId: Long?,
+
+  @Schema(description = "The first name of the contact", example = "Bob")
+  val firstName: String?,
+
+  @Schema(description = "The last name of the contact", example = "Harris")
+  val lastName: String?,
+
+  @Schema(description = "Set to true if this is the lead visitor", example = "false")
+  val leadVisitor: Boolean? = false,
+
+  @Schema(description = "Set to true if this visitor requires an assisted visit", example = "false")
+  val assistedVisit: Boolean? = false,
+
+  @Schema(description = "The email address for this visitor", example = "bob@harris.com")
+  val emailAddress: String? = null,
+
+  @Schema(description = "The phone number for this visitor", example = "09090 9090900")
+  val phoneNumber: String? = null,
+
+  @Schema(description = "Any notes to keep about this visitor", example = "notes")
+  val visitorNotes: String? = null,
 )

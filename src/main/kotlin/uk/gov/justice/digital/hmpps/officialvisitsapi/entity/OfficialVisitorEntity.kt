@@ -27,16 +27,42 @@ class OfficialVisitorEntity(
 
   val contactId: Long? = null,
 
+  val firstName: String? = null,
+
+  val lastName: String? = null,
+
   val prisonerContactId: Long? = null,
+
+  val relationshipCode: String? = null,
 
   val leadVisitor: Boolean = false,
 
   val assistedVisit: Boolean = false,
 
-  val createdBy: String,
-) {
-  val createdTime: LocalDateTime = LocalDateTime.now()
+  val emailAddress: String? = null,
 
+  val phoneNumber: String? = null,
+
+  val visitorNotes: String? = null,
+
+  val attendanceCode: String? = null,
+
+  val attendanceNotes: String? = null,
+
+  val attendanceBy: String? = null,
+
+  val attendanceTime: LocalDateTime? = null,
+
+  val createdBy: String,
+
+  val createdTime: LocalDateTime = LocalDateTime.now(),
+
+  val updatedBy: String? = null,
+
+  val updatedTime: LocalDateTime? = null,
+
+  val offenderVisitVisitorId: Long? = null,
+) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
