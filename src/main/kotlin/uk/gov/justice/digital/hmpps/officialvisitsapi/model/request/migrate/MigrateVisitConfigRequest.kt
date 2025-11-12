@@ -68,7 +68,7 @@ data class MigrateVisitSlot(
   @Schema(description = "The internal location ID from NOMIS. Information only", example = "1090909", nullable = true)
   val internalLocationId: Long? = null,
 
-  @Schema(description = "The internal location ID from NOMIS. Information only", example = "MDI-OFFICIAL_VISITS", nullable = true)
+  @Schema(description = "The location key from NOMIS. Information only", example = "MDI-OFFICIAL_VISITS", nullable = true)
   val locationKey: String? = null,
 
   @Schema(description = "The DPS location ID (mapped from the NOMIS internal location ID)", example = "9485cf4a-750b-4d74-b594-59bacbcda247", required = true)
