@@ -13,13 +13,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
 @Component
-class PersonalRelationshipsApiClient(private val personalRelationshipsApiClient: WebClient) {
+class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClient: WebClient) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
   fun getApprovedContacts(prisonerNumber: String, type: String): List<PrisonerContactSummary> {
-    val pagedModelMono = personalRelationshipsApiClient.get()
+    val pagedModelMono = personalRelationshipsApiWebClient.get()
       .uri { uriBuilder: UriBuilder ->
         uriBuilder
           .path("/prisoner/{prisonerNumber}/contact")
