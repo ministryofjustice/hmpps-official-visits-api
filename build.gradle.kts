@@ -66,7 +66,7 @@ kotlin {
 
 tasks {
   withType<KotlinCompile> {
-    dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel")
+    dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipApiModel")
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
     compilerOptions.freeCompilerArgs.add("-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled")
@@ -99,8 +99,16 @@ tasks.register("buildManageUsersApiModel", GenerateTask::class) {
   configOptions.set(configValues)
   globalProperties.set(mapOf("models" to ""))
 }
+tasks.register("buildPersonalRelationshipApiModel", GenerateTask::class) {
+  generatorName.set("kotlin")
+  inputSpec.set("openapi-specs/personal-relationship-api.json")
+  outputDir.set("$buildDirectory/generated/personalrelationship")
+  modelPackage.set("uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model")
+  configOptions.set(configValues)
+  globalProperties.set(mapOf("models" to ""))
+}
 
-val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi")
+val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi", "personalrelationship")
 
 tasks.register("integrationTest", Test::class) {
   description = "Runs integration tests"
@@ -132,7 +140,7 @@ kotlin {
 }
 
 tasks.named("runKtlintCheckOverMainSourceSet") {
-  dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel")
+  dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipApiModel")
 }
 
 configure<KtlintExtension> {

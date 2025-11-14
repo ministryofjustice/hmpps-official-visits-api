@@ -30,6 +30,7 @@ api:
       locations-inside-prison: http://localhost:8091
       prisoner-search: http://localhost:8092
       manage-users: http://localhost:8093
+      personal-relationship: http://localhost:8094
 
 feature:
   event:

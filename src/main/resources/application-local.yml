@@ -31,3 +31,4 @@ api:
       locations-inside-prison: https://locations-inside-prison-api-dev.hmpps.service.justice.gov.uk
       manage-users: https://manage-users-api-dev.hmpps.service.justice.gov.uk
       prisoner-search: https://prisoner-search-dev.prison.service.justice.gov.uk
+      personal-relationship: https://personal-relationships-api-dev.hmpps.service.justice.gov.uk
