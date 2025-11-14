@@ -8,5 +8,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 
 @Component
 class OfficialVisitFacade(private val officialVisitCreateService: OfficialVisitCreateService) {
+  // TODO check there is still an available slot prior to creation!!
   fun createOfficialVisit(request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = officialVisitCreateService.create(request, user)
 }

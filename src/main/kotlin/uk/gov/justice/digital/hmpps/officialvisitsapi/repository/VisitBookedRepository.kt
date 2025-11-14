@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.repository
 
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
 import java.time.LocalDate
@@ -12,5 +13,13 @@ import java.time.LocalDate
 interface VisitBookedRepository : ReadOnlyRepository<VisitBookedEntity, Long> {
   fun findVisitsBookedByPrisonCode(prisonCode: String): List<VisitBookedEntity>
 
-  fun findVisitBookedEntityByPrisonCodeAndVisitDateBetween(prisonCode: String, from: LocalDate, to: LocalDate): List<VisitBookedEntity>
+  @Query(
+    value = """
+      FROM VisitBookedEntity vbe 
+      WHERE vbe.prisonCode = :prisonCode
+        AND vbe.visitDate BETWEEN :fromDate AND :toDate
+        AND vbe.visitStatusCode != 'CANCELLED'
+    """,
+  )
+  fun findCurrentVisitsBookedBy(prisonCode: String, fromDate: LocalDate, toDate: LocalDate): List<VisitBookedEntity>
 }
