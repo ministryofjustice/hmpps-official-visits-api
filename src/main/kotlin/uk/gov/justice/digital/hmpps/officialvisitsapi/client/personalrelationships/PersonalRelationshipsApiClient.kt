@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
@@ -19,7 +20,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiClient:
   }
 
   fun getApprovedContacts(prisonerNumber: String, type: String): List<PrisonerContactSummary> {
-    var pagedModelMono = personalRelationshipsApiClient.get()
+    val pagedModelMono = personalRelationshipsApiClient.get()
       .uri { uriBuilder: UriBuilder ->
         uriBuilder
           .path("/prisoner/{prisonerNumber}/contact")
@@ -28,7 +29,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiClient:
           .build(prisonerNumber)
       }
       .retrieve()
-      .bodyToMono(typeReference<PagedModel<PrisonerContactSummary>>())
+      .bodyToMono(typeReference<PagedModelPrisonerContactSummary>())
       .doOnError { error ->
         log.info(
           "Error  While fetching approved contacts for  $prisonerNumber in Personal relationship client",
