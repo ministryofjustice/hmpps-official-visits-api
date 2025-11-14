@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AvailableSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitBookedRepository
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Service
@@ -51,11 +52,8 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
     val results = buildList {
       availableSlots.forEach { availableSlot ->
         for (date in fromDate..toDate) {
-          val day = Day.valueOf(availableSlot.dayCode)
-          val dayOfWeek = date.dayOfWeek
-
           // Only add to the list if the slot is on the same day as the date in question, otherwise ignore the slot.
-          if (day.value == dayOfWeek.value) {
+          if (availableSlot.isOnSameDay(date.dayOfWeek)) {
             add(
               AvailableSlot(
                 visitSlotId = availableSlot.prisonVisitSlotId,
@@ -79,6 +77,8 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
 
     results
   }
+
+  private fun AvailableSlotEntity.isOnSameDay(dayOfWeek: DayOfWeek) = Day.valueOf(dayCode).value == dayOfWeek.value
 
   private fun Map<DatedVisit, Int>.groupCount(date: LocalDate, slot: AvailableSlotEntity) = run {
     count { dsc -> dsc.key.date == date && dsc.key.prisonTimeSlotId == slot.prisonTimeSlotId && dsc.key.prisonVisitSlotId == slot.prisonVisitSlotId }
