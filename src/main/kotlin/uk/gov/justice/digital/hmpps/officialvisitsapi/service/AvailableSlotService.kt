@@ -15,14 +15,15 @@ class AvailableSlotService(
   private val availableSlotRepository: AvailableSlotRepository,
 ) {
   fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
+    // TODO take account of video only visits!!
     require(fromDate >= LocalDate.now()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
     val availableSlots = availableSlotRepository.findAvailableSlotsByPrisonCode(prisonCode)
-    val bookedSlots =
-      visitBookedRepository.findVisitBookedEntityByPrisonCodeAndVisitDateBetween(prisonCode, fromDate, toDate)
+    val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
 
     AvailableSlotBuilder.builder(fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots)
+      .sortedWith(compareBy({ it.visitDate }, { it.startTime }))
   }
 }
 
@@ -35,10 +36,10 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
 
   fun add(bookedSlot: VisitBookedEntity) {
     val key = DatedVisit(
-      bookedSlot.visitDate,
+      date = bookedSlot.visitDate,
       officialVisitId = bookedSlot.officialVisitId,
-      bookedSlot.prisonTimeSlotId,
-      bookedSlot.prisonVisitSlotId,
+      prisonTimeSlotId = bookedSlot.prisonTimeSlotId,
+      prisonVisitSlotId = bookedSlot.prisonVisitSlotId,
     )
 
     if (datedVisitCounts.containsKey(key)) {
@@ -52,24 +53,30 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
     val results = buildList {
       availableSlots.forEach { availableSlot ->
         for (date in fromDate..toDate) {
-          // Only add to the list if the slot is on the same day as the date in question, otherwise ignore the slot.
+          // Only add to the list if the slot is on the same day as the date in question and there is capacity, otherwise ignore the slot.
+          // TODO technically should also be checking the time of the availability check against the slot start time!!
           if (availableSlot.isOnSameDay(date.dayOfWeek)) {
-            add(
-              AvailableSlot(
-                visitSlotId = availableSlot.prisonVisitSlotId,
-                timeSlotId = availableSlot.prisonTimeSlotId,
-                prisonCode = availableSlot.prisonCode,
-                dayCode = availableSlot.dayCode,
-                dayDescription = availableSlot.dayDescription,
-                visitDate = date,
-                startTime = availableSlot.startTime,
-                endTime = availableSlot.endTime,
-                dpsLocationId = availableSlot.dpsLocationId,
-                availableVideoSessions = 0,
-                availableAdults = availableSlot.maxAdults - datedVisitCounts.adultCount(date, availableSlot),
-                availableGroups = availableSlot.maxGroups - datedVisitCounts.groupCount(date, availableSlot),
-              ),
-            )
+            val remainingAdultSlots = availableSlot.maxAdults - datedVisitCounts.adultCount(date, availableSlot)
+            val remainingGroupSlots = availableSlot.maxGroups - datedVisitCounts.groupCount(date, availableSlot)
+
+            if (remainingAdultSlots + remainingGroupSlots > 0) {
+              add(
+                AvailableSlot(
+                  visitSlotId = availableSlot.prisonVisitSlotId,
+                  timeSlotId = availableSlot.prisonTimeSlotId,
+                  prisonCode = availableSlot.prisonCode,
+                  dayCode = availableSlot.dayCode,
+                  dayDescription = availableSlot.dayDescription,
+                  visitDate = date,
+                  startTime = availableSlot.startTime,
+                  endTime = availableSlot.endTime,
+                  dpsLocationId = availableSlot.dpsLocationId,
+                  availableVideoSessions = 0,
+                  availableAdults = remainingAdultSlots,
+                  availableGroups = remainingGroupSlots,
+                ),
+              )
+            }
           }
         }
       }
