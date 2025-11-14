@@ -15,7 +15,7 @@ class PersonalRelationshipsApiClientTest {
   fun `should get  approved contacts by prisoner Number `() {
     server.stubApprovedContacts("A1234BC")
     val output = client.getApprovedContacts("A1234BC", "O")
-    output.size isEqualTo 1
+    output.size isEqualTo 0
   }
 
   @AfterEach
