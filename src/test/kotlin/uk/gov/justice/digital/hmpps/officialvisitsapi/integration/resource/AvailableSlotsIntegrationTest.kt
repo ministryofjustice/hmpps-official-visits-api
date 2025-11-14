@@ -75,10 +75,11 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
 
   @Sql("classpath:integration-test-data/availability/friday-visit-seed-data.sql")
   @Test
-  fun `should perform GET with existing Friday visit for slot 7`() {
+  fun `should perform GET with existing Friday visits for slot 7 and 9`() {
     assumingThat(today.dayOfWeek == FRIDAY) {
       val response = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = today, toDate = today)
 
+      // Slot 9 is fully booked so should not be in the response
       response containsExactlyInAnyOrder listOf(
         AvailableSlot(
           visitSlotId = 7,
@@ -107,20 +108,6 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
           availableVideoSessions = 0,
           availableAdults = 10,
           availableGroups = 5,
-        ),
-        AvailableSlot(
-          visitSlotId = 9,
-          timeSlotId = 9,
-          prisonCode = "MDI",
-          dayCode = "FRI",
-          dayDescription = "Friday",
-          visitDate = today,
-          startTime = LocalTime.of(11, 0),
-          endTime = LocalTime.of(12, 0),
-          dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-          availableVideoSessions = 0,
-          availableAdults = 1,
-          availableGroups = 1,
         ),
       )
     }
