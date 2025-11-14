@@ -68,7 +68,7 @@ class MigrationService(
       prisonCode = request.prisonCode,
       dayCode = request.dayCode,
       timeSlotSeq = request.timeSlotSeq,
-      dpsTimeSlotId = 1L,
+      dpsTimeSlotId = timeSlot.prisonTimeSlotId,
       visitSlots = visitSlots.map { IdPair(ElementType.PRISON_VISIT_SLOT, it.first, it.second.prisonVisitSlotId) },
     )
   }

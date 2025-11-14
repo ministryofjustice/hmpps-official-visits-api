@@ -14,7 +14,7 @@ spring:
       minimum-idle: 5
 
   flyway:
-    locations: classpath:/migrations/common,classpath:/migrations/dev
+    locations: classpath:/migrations/common,classpath:/migrations/test
 
 server:
   shutdown: immediate
