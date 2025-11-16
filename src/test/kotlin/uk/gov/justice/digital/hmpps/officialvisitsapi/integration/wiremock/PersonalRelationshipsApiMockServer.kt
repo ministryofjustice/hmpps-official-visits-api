@@ -1,83 +1,25 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
 
 class PersonalRelationshipsApiMockServer : MockServer(8094) {
   fun stubApprovedContacts(prisonerNumber: String) {
-    val jsonResponse = """
-      {
-         "content": [
-          {
-            "prisonerContactId": 123456,
-            "contactId": 654321,
-            "prisonerNumber": "A1234BC",
-            "titleCode": "MR",
-            "titleDescription": "Mr",
-            "lastName": "Doe",
-            "firstName": "John",
-            "middleNames": "William",
-            "dateOfBirth": "1980-01-01",
-            "deceasedDate": "1980-01-01",
-            "relationshipTypeCode": "O",
-            "relationshipTypeDescription": "Friend",
-            "relationshipToPrisonerCode": "FRI",
-            "relationshipToPrisonerDescription": "Friend",
-            "flat": "Flat 1",
-            "property": "123",
-            "street": "Baker Street",
-            "area": "Marylebone",
-            "cityCode": "25343",
-            "cityDescription": "Sheffield",
-            "countyCode": "S.YORKSHIRE",
-            "countyDescription": "South Yorkshire",
-            "postcode": "NW1 6XE",
-            "countryCode": "ENG",
-            "countryDescription": "England",
-            "noFixedAddress": false,
-            "primaryAddress": true,
-            "mailAddress": true,
-            "phoneType": "MOB",
-            "phoneTypeDescription": "Mobile",
-            "phoneNumber": "+1234567890",
-            "extNumber": "123",
-            "isApprovedVisitor": true,
-            "isNextOfKin": false,
-            "isEmergencyContact": true,
-            "isRelationshipActive": true,
-            "currentTerm": true,
-            "comments": "Close family friend",
-            "isStaff": false,
-            "restrictionSummary": {
-              "active": [
-                {
-                  "restrictionType": "string",
-                  "restrictionTypeDescription": "string"
-                }
-              ],
-              "totalActive": 0,
-              "totalExpired": 0
-            }
-          }
-        ],
-        "page": {
-          "size": 0,
-          "number": 0,
-          "totalElements": 0,
-          "totalPages": 0
-        }
-      }
-    """.trimIndent()
     stubFor(
-      get("/prisoner/$prisonerNumber/contact?relationshipType=O&active=true")
+      get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
+        .withQueryParam("relationshipType", equalTo("O"))
+        .withQueryParam( "active", equalTo("true"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
-            .withBody(jsonResponse)
+            .withBody(mapper.writeValueAsString(pagedModelPrisonerContactSummary(prisonerNumber, "O")))
             .withStatus(200),
         ),
     )

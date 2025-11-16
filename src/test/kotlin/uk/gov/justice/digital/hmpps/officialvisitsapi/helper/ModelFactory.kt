@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PageMetadata
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
@@ -152,4 +154,12 @@ fun prisonerContacts(
   extNumber = "",
   comments = "",
   prisonerContactId = 123456,
+)
+
+fun pagedModelPrisonerContactSummary(
+  prisonerNumber: String,
+  type: String,
+) = PagedModelPrisonerContactSummary(
+  listOf(prisonerContacts(prisonerNumber, type)),
+  PageMetadata(1, 1, 5, 1),
 )
