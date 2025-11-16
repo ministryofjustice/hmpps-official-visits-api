@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
-class PersonalRelationshipsApiMockServer : MockServer(8099) {
+class PersonalRelationshipsApiMockServer : MockServer(8094) {
   fun stubApprovedContacts(prisonerNumber: String) {
     val jsonResponse = """
       {
