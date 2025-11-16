@@ -15,7 +15,7 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
     stubFor(
       get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
         .withQueryParam("relationshipType", equalTo("O"))
-        .withQueryParam( "active", equalTo("true"))
+        .withQueryParam("active", equalTo("true"))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
