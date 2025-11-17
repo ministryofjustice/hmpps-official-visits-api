@@ -44,5 +44,5 @@ class WebClientConfiguration(
   fun personalRelationshipsApiHealthWebClient(builder: WebClient.Builder) = builder.healthWebClient(personalRelationshipUri, healthTimeout)
 
   @Bean
-  fun personalRelationshipsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, "personal-relationship", personalRelationshipUri, timeout)
+  fun personalRelationshipsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, "personal-relationships", personalRelationshipUri, timeout)
 }
