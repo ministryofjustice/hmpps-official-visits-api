@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
 
-class ApprovedContact(
+data class ApprovedContact(
 
   /* The unique identifier for the prisoner contact */
   @Schema(description = "The prisoner contact number", example = "1")
