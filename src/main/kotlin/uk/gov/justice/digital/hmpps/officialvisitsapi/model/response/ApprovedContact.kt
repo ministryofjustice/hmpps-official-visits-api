@@ -1,156 +1,149 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDate
 
+@Schema(description = "Describes the details of a prisoner's contact")
 data class ApprovedContact(
 
-  /* The unique identifier for the prisoner contact */
-  @Schema(description = "The prisoner contact number", example = "1")
-  val prisonerContactId: Long = 0,
+  @Schema(description = "The unique identifier for the prisoner contact", example = "123456")
+  val prisonerContactId: Long,
 
-  /* The unique identifier for the prisoner contact */
-  @Schema(description = "The unique identifier for the prisoner contact", example = "1")
-  val contactId: Long = 0,
+  @Schema(description = "The unique identifier for the contact", example = "654321")
+  val contactId: Long,
 
-  @Schema(description = "Prisoner number (NOMS ID)")
+  @Schema(description = "Prisoner number (NOMS ID)", example = "A1234BC")
   val prisonerNumber: String,
 
-  @Schema(description = "The last name of the contact")
-  val lastName: String,
-
-  /* The first name of the contact */
-  @Schema(description = "The first name of the contact")
-  val firstName: String,
-
-  @Schema(description = "Coded value indicating either a social or official contact")
-  val relationshipTypeCode: String,
-
-  @Schema(description = "Relationship type Description")
-  val relationshipTypeDescription: String,
-
-  /* The relationship to the prisoner. A code from SOCIAL_RELATIONSHIP or OFFICIAL_RELATIONSHIP reference data groups depending on the relationship type. */
-
-  @Schema(description = "The relationship to the prisoner. A code from SOCIAL_RELATIONSHIP or OFFICIAL_RELATIONSHIP reference data groups depending on the relationship type.")
-  val relationshipToPrisonerCode: String,
-
-  /* The description of the relationship to the prisoner */
-  @Schema(description = "Relationship type Description")
-  val relationshipToPrisonerDescription: String,
-
-  /* Indicates whether the contact is an approved visitor */
-  @Schema(description = "Indicates whether the contact is an approved visitor")
-  val isApprovedVisitor: Boolean,
-
-  /* Is this contact the prisoner's next of kin? */
-  @Schema(description = "Is this contact the prisoner's next of kin?")
-  val isNextOfKin: Boolean,
-
-  /* Is this contact the prisoner's emergency contact? */
-  @Schema(description = "Is this contact the prisoner's emergency contact?")
-  val isEmergencyContact: Boolean,
-
-  /* Is this prisoner's contact relationship active? */
-  @Schema(description = "Is this prisoner's contact relationship active?")
-  val isRelationshipActive: Boolean,
-
-  /* Is this relationship active for the current booking? */
-  @Schema(description = "Is this relationship active for the current booking?")
-  val currentTerm: Boolean,
-
-  /* Whether the contact is a staff member */
-  @Schema(description = "Whether the contact is a staff member")
-  val isStaff: Boolean,
-
-  /*        The title code for the contact.       This is a coded value (from the group code TITLE in reference data).        */
-  @Schema(description = "The title code for the contact")
+  @Schema(
+    description =
+      """
+      The title code for the contact.
+      This is a coded value (from the group code TITLE in reference data).
+      """,
+    example = "MR",
+    nullable = true,
+  )
   val titleCode: String? = null,
 
-  /* The description of the title code, if present */
-  @Schema(description = "The description of the title code, if present")
+  @Schema(
+    description = "The description of the title code, if present",
+    example = "Mr",
+    nullable = true,
+  )
   val titleDescription: String? = null,
 
-  /* The middle names of the contact, if any */
-  @Schema(description = "The middle names of the contact, if any")
+  @Schema(description = "The last name of the contact", example = "Doe")
+  val lastName: String,
+
+  @Schema(description = "The first name of the contact", example = "John")
+  val firstName: String,
+
+  @Schema(description = "The middle names of the contact, if any", example = "William", nullable = true)
   val middleNames: String? = null,
 
-  /* The date of birth of the contact */
-  @Schema(description = "The date of birth of the contact")
-  val dateOfBirth: java.time.LocalDate? = null,
+  @Schema(description = "The date of birth of the contact", example = "1980-01-01")
+  val dateOfBirth: LocalDate?,
 
-  /* The date the contact deceased, if known */
-  @Schema(description = "The date the contact deceased, if known")
-  val deceasedDate: java.time.LocalDate? = null,
+  @Schema(description = "The date the contact deceased, if known", example = "1980-01-01", nullable = true)
+  val deceasedDate: LocalDate?,
 
-  /* Flat number in the address, if any */
-  @Schema(description = "Flat number in the address, if any")
-  val flat: String? = null,
+  @Schema(
+    description =
+      """
+      Coded value indicating either a social or official contact (mandatory).
+      This is a coded value from the group code CONTACT_TYPE in reference data.
+      Known values are (S) Social or (O) official.
+      """,
+    example = "S",
+  )
+  val relationshipTypeCode: String,
 
-  /* Property name or number */
-  @Schema(description = "Property name or number")
-  val `property`: String? = null,
+  @Schema(description = "The description of the relationship type", example = "Friend")
+  val relationshipTypeDescription: String,
 
-  /* Street name */
-  @Schema(description = "Street Name")
-  val street: String? = null,
+  @Schema(description = "The relationship to the prisoner. A code from SOCIAL_RELATIONSHIP or OFFICIAL_RELATIONSHIP reference data groups depending on the relationship type.", example = "FRI")
+  val relationshipToPrisonerCode: String,
 
-  /* Area or locality, if any */
-  @Schema(description = "Area or locality, if any")
-  val area: String? = null,
+  @Schema(description = "The description of the relationship to the prisoner", example = "Friend")
+  val relationshipToPrisonerDescription: String,
 
-  /* City code */
-  @Schema(description = "City code")
-  val cityCode: String? = null,
+  @Schema(description = "Flat number in the address, if any", example = "Flat 1", nullable = true)
+  val flat: String?,
 
-  /* The description of city code */
-  @Schema(description = "The description of city code")
-  val cityDescription: String? = null,
+  @Schema(description = "Property name or number", example = "123")
+  val property: String?,
 
-  /* County code */
-  @Schema(description = "Country code")
-  val countyCode: String? = null,
+  @Schema(description = "Street name", example = "Baker Street")
+  val street: String?,
 
-  /* The description of county code */
-  @Schema(description = "The description of county code")
-  val countyDescription: String? = null,
+  @Schema(description = "Area or locality, if any", example = "Marylebone", nullable = true)
+  val area: String?,
 
-  /* Postal code */
-  @Schema(description = "Postal code")
-  val postcode: String? = null,
+  @Schema(description = "City code", example = "25343")
+  val cityCode: String?,
 
-  /* Country code */
-  @Schema(description = "Country Code")
-  val countryCode: String? = null,
+  @Schema(description = "The description of city code", example = "Sheffield")
+  val cityDescription: String?,
 
-  /* The description of country code */
-  @Schema(description = "Flag to indicate whether this address indicates no fixed address")
-  val countryDescription: String? = null,
+  @Schema(description = "County code", example = "S.YORKSHIRE")
+  val countyCode: String?,
 
-  /* Flag to indicate whether this address indicates no fixed address */
-  @Schema(description = "Flag to indicate whether this address indicates no fixed address")
-  val noFixedAddress: Boolean? = null,
+  @Schema(description = "The description of county code", example = "South Yorkshire")
+  val countyDescription: String?,
 
-  /* If true this address should be considered as the primary residential address */
-  @Schema(description = "If true this address should be considered as the primary residential address")
-  val primaryAddress: Boolean? = null,
+  @Schema(description = "Postal code", example = "NW1 6XE")
+  val postcode: String?,
 
-  /* If true this address should be considered for sending mail to */
-  @Schema(description = "If true this address should be considered for sending mail to")
-  val mailAddress: Boolean? = null,
+  @Schema(description = "Country code", example = "ENG")
+  val countryCode: String?,
 
-  /* Type of the latest phone number */
-  @Schema(description = "Type of the latest phone number")
-  val phoneType: String? = null,
+  @Schema(description = "The description of country code", example = "England")
+  val countryDescription: String?,
 
-  /* Description of the type of the latest phone number */
-  @Schema(description = "Description of the type of the latest phone number")
-  val phoneTypeDescription: String? = null,
+  @Schema(description = "Flag to indicate whether this address indicates no fixed address", example = "false")
+  val noFixedAddress: Boolean?,
 
-  /* The latest phone number, if there are any */
-  @Schema(description = "The latest phone number, if there are any")
-  val phoneNumber: String? = null,
+  @Schema(description = "If true this address should be considered as the primary residential address", nullable = true, example = "true")
+  val primaryAddress: Boolean?,
 
-  /* The extension number of the latest phone number */
-  @Schema(description = "The extension number of the latest phone number")
-  val extNumber: String? = null,
+  @Schema(description = "If true this address should be considered for sending mail to", nullable = true, example = "true")
+  val mailAddress: Boolean?,
+
+  @Schema(description = "Type of the latest phone number", example = "MOB", nullable = true)
+  val phoneType: String?,
+
+  @Schema(description = "Description of the type of the latest phone number", example = "Mobile", nullable = true)
+  val phoneTypeDescription: String?,
+
+  @Schema(description = "The latest phone number, if there are any", example = "+1234567890", nullable = true)
+  val phoneNumber: String?,
+
+  @Schema(description = "The extension number of the latest phone number", example = "123", nullable = true)
+  val extNumber: String?,
+
+  @Schema(description = "Indicates whether the contact is an approved visitor", example = "true")
+  val isApprovedVisitor: Boolean,
+
+  @Schema(description = "Is this contact the prisoner's next of kin?", example = "false")
+  val isNextOfKin: Boolean,
+
+  @Schema(description = "Is this contact the prisoner's emergency contact?", example = "true")
+  val isEmergencyContact: Boolean,
+
+  @Schema(description = "Is this prisoner's contact relationship active?", example = "true")
+  val isRelationshipActive: Boolean,
+
+  @Schema(description = "Is this relationship active for the current booking?", example = "true")
+  val currentTerm: Boolean,
+
+  @Schema(description = "Any additional comments", example = "Close family friend", nullable = true)
+  val comments: String?,
+
+  @Schema(description = "Whether the contact is a staff member", example = "false", nullable = false)
+  val isStaff: Boolean = false,
+
+  val restrictionSummary: RestrictionsSummary,
 
 )
