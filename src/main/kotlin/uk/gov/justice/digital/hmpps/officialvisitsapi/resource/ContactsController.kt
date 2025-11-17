@@ -23,7 +23,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Personal Relationships contacts")
 @RestController
-@RequestMapping(value = ["prisoner-contact"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(value = ["prisoner"], produces = [MediaType.APPLICATION_JSON_VALUE])
 open class ContactsController(private val contactsService: ContactsService) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -74,16 +74,16 @@ open class ContactsController(private val contactsService: ContactsService) {
       ),
     ],
   )
-  @GetMapping(value = ["/prison/{prisonerNumber}/contact-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @GetMapping(value = ["/{prisonerNumber}/contact-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_CONTACTS__R')")
   fun getApprovedContacts(
     @PathVariable("prisonerNumber", required = true)
-    prisonNumber: String,
+    prisonerNumber: String,
     @Parameter(description = "Relationship Type should be S for social or  O for official", required = false)
     @RequestParam(name = "relationshipType", required = true, defaultValue = "O")
     relationshipType: String,
   ): List<ApprovedContact> {
-    logger.info("Received request for Approved contacts for  prisoner code $prisonNumber")
-    return contactsService.getApprovedContacts(prisonNumber, relationshipType)
+    logger.info("Received request for Approved contacts for  prisoner code $prisonerNumber")
+    return contactsService.getApprovedContacts(prisonerNumber, relationshipType)
   }
 }
