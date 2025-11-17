@@ -19,7 +19,6 @@ fun PrisonerContactSummary.toModel() = ApprovedContact(
   isRelationshipActive = isRelationshipActive,
   currentTerm = currentTerm,
   isStaff = isStaff,
-  restrictionSummary = restrictionSummary,
   titleCode = titleCode,
   titleDescription = titleDescription,
   middleNames = middleNames,

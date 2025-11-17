@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
 
 data class ApprovedContact(
 
@@ -61,9 +60,6 @@ data class ApprovedContact(
   /* Whether the contact is a staff member */
   @Schema(description = "Whether the contact is a staff member")
   val isStaff: Boolean,
-
-  @Schema(description = "Restriction Summary")
-  val restrictionSummary: RestrictionsSummary,
 
   /*        The title code for the contact.       This is a coded value (from the group code TITLE in reference data).        */
   @Schema(description = "The title code for the contact")
