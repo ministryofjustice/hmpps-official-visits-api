@@ -46,12 +46,12 @@ open class ContactsController(private val contactsService: ContactsService) {
   @PreAuthorize("hasAnyRole('ROLE_CONTACTS__R')")
   fun getApprovedContacts(
     @PathVariable("prisonerNumber", required = true)
-    prisonCode: String,
+    prisonNumber: String,
     @Parameter(description = "Type should be S or  O", required = false)
     @RequestParam(name = "type", required = true, defaultValue = "O")
     type: String,
   ): List<PrisonerContactSummary> {
-    logger.info("Received request for Approved contacts for  prison code $prisonCode")
-    return contactsService.getApprovedContacts(prisonCode, type)
+    logger.info("Received request for Approved contacts for  prisoner code $prisonNumber")
+    return contactsService.getApprovedContacts(prisonNumber, type)
   }
 }
