@@ -23,7 +23,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Personal Relationships contacts")
 @RestController
-@RequestMapping(value = ["prisoner"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(value = ["prisoner-contact"], produces = [MediaType.APPLICATION_JSON_VALUE])
 open class ContactsController(private val contactsService: ContactsService) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -74,7 +74,7 @@ open class ContactsController(private val contactsService: ContactsService) {
       ),
     ],
   )
-  @GetMapping(value = ["/{prisonerNumber}/contact-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @GetMapping(value = ["/prison/{prisonerNumber}/contact-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_CONTACTS__R')")
   fun getApprovedContacts(
     @PathVariable("prisonerNumber", required = true)
