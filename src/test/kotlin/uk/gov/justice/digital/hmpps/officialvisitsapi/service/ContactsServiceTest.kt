@@ -7,8 +7,8 @@ import org.mockito.Mockito.mock
 import org.mockito.MockitoAnnotations.openMocks
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContacts
-
 class ContactsServiceTest {
 
   private val personalRelationshipsApiClient: PersonalRelationshipsApiClient = mock()
@@ -25,6 +25,6 @@ class ContactsServiceTest {
       prisonerContacts("ABCD", "O"),
     )
     whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(listOfCodes)
-    assertThat(contactService.getApprovedContacts("ABCD", "O")).isEqualTo(listOfCodes)
+    assertThat(contactService.getApprovedContacts("ABCD", "O").single().relationshipTypeDescription isEqualTo "Friend")
   }
 }

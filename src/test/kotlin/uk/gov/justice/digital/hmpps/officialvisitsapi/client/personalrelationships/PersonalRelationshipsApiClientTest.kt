@@ -16,6 +16,7 @@ class PersonalRelationshipsApiClientTest {
     server.stubApprovedContacts("A1234BC")
     val output = client.getApprovedContacts("A1234BC", "O")
     output.size isEqualTo 1
+    output.single().relationshipTypeDescription isEqualTo "Friend"
   }
 
   @AfterEach

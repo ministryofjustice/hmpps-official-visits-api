@@ -15,7 +15,7 @@ class WebClientConfiguration(
   @param:Value("\${api.base.url.locations-inside-prison}") val locationsInsidePrisonApiBaseUri: String,
   @Value("\${api.base.url.manage-users}") private val manageUsersBaseUri: String,
   @Value("\${api.base.url.prisoner-search}") val prisonerSearchBaseUri: String,
-  @Value("\${api.base.url.personal-relationship}") val personalRelationshipUri: String,
+  @Value("\${api.base.url.personal-relationships}") val personalRelationshipUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
 ) {

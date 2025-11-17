@@ -8,18 +8,19 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 
-class ContentControllerIntegrationTest : IntegrationTestBase() {
+class ContactsControllerIntegrationTest : IntegrationTestBase() {
 
   @Test
-  fun `should perform basic GET with no visits`() {
+  fun `should get all approved contacts for official visits with the valid prisoner number`() {
     personalRelationshipsApi().stubApprovedContacts("A1234BC")
     val response = webTestClient.approvedContents(prisonerNumber = "A1234BC", type = "O")
     response.size isEqualTo 1
+    response.single().prisonerNumber isEqualTo "A1234BC"
   }
 
   private fun WebTestClient.approvedContents(prisonerNumber: String, type: String) = this
     .get()
-    .uri("/prisoner-contact/prison/$prisonerNumber/contact-relationships?type=$type")
+    .uri("/prisoner/$prisonerNumber/contact-relationships?type=$type")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_CONTACTS__R")))
     .exchange()

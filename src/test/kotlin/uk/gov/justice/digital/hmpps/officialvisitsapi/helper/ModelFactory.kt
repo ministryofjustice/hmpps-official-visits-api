@@ -141,7 +141,7 @@ fun prisonerContacts(
   isEmergencyContact = true,
   currentTerm = true,
   isStaff = true,
-  restrictionSummary = RestrictionsSummary(setOf(RestrictionTypeDetails("", "")), 1, 1),
+  restrictionSummary = RestrictionsSummary(setOf(RestrictionTypeDetails("Restricted", "Not allowed")), 1, 1),
   cityDescription = "",
   countyCode = "HM",
   countyDescription = "",

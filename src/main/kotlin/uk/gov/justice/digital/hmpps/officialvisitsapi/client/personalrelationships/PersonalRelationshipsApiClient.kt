@@ -18,13 +18,15 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun getApprovedContacts(prisonerNumber: String, type: String): List<PrisonerContactSummary> {
+  fun getApprovedContacts(prisonerNumber: String, relationshipType: String): List<PrisonerContactSummary> {
     val pagedModelMono = personalRelationshipsApiWebClient.get()
       .uri { uriBuilder: UriBuilder ->
         uriBuilder
           .path("/prisoner/{prisonerNumber}/contact")
           .queryParam("active", true)
-          .queryParam("relationshipType", type)
+          .queryParam("relationshipType", relationshipType)
+          .queryParam("page", 0)
+          .queryParam("size", 100)
           .build(prisonerNumber)
       }
       .retrieve()
@@ -37,6 +39,6 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       }
       .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
       .block()
-    return pagedModelMono?.content?.toList() ?: emptyList<PrisonerContactSummary>()
+    return pagedModelMono?.content?.toList() ?: emptyList()
   }
 }
