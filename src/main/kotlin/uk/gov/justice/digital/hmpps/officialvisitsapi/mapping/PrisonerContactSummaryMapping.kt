@@ -41,7 +41,6 @@ fun PrisonerContactSummary.toModel() = ApprovedContact(
   isEmergencyContact = this.isEmergencyContact,
   isRelationshipActive = this.isRelationshipActive,
   currentTerm = this.currentTerm,
-  comments = this.comments,
   isStaff = this.isStaff,
   restrictionSummary = restrictionSummary,
 )
