@@ -57,6 +57,12 @@ spring:
             client-secret: ${api.client.secret}
             authorization-grant-type: client_credentials
             scope: read
+          personal-relationships:
+            provider: hmpps-auth
+            client-id: ${api.client.id}
+            client-secret: ${api.client.secret}
+            authorization-grant-type: client_credentials
+            scope: read
         provider:
           hmpps-auth:
             token-uri: ${api.base.url.hmpps-auth}/oauth/token

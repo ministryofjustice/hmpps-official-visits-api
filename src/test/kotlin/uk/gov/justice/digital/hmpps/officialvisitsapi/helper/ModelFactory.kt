@@ -3,6 +3,11 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PageMetadata
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PagedModelPrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionTypeDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toIsoDateTime
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
@@ -103,4 +108,58 @@ fun prisoner(
   firstName = firstName,
   lastName = lastName,
   dateOfBirth = LocalDate.of(2000, 1, 1),
+)
+
+fun prisonerContacts(
+  prisonerNumber: String,
+  type: String,
+) = PrisonerContactSummary(
+  contactId = 654321,
+  prisonerNumber = prisonerNumber,
+  titleCode = "MR",
+  titleDescription = "Mr",
+  lastName = "Doe",
+  firstName = "John",
+  middleNames = "William",
+  dateOfBirth = null,
+  deceasedDate = null,
+  relationshipTypeCode = type,
+  relationshipTypeDescription = "Friend",
+  relationshipToPrisonerCode = "FRI",
+  relationshipToPrisonerDescription = "Friend",
+  flat = "Flat 1",
+  property = "123",
+  street = "Baker Street",
+  area = "Marylebone",
+  cityCode = "25343",
+  postcode = "NW1 6XE",
+  countryCode = "ENG",
+  countryDescription = "England",
+  isRelationshipActive = true,
+  isApprovedVisitor = true,
+  isNextOfKin = true,
+  isEmergencyContact = true,
+  currentTerm = true,
+  isStaff = true,
+  restrictionSummary = RestrictionsSummary(setOf(RestrictionTypeDetails("Restricted", "Not allowed")), 1, 1),
+  cityDescription = "",
+  countyCode = "HM",
+  countyDescription = "",
+  noFixedAddress = true,
+  primaryAddress = true,
+  mailAddress = true,
+  phoneType = "",
+  phoneTypeDescription = "",
+  phoneNumber = "",
+  extNumber = "",
+  comments = "",
+  prisonerContactId = 123456,
+)
+
+fun pagedModelPrisonerContactSummary(
+  prisonerNumber: String,
+  type: String,
+) = PagedModelPrisonerContactSummary(
+  listOf(prisonerContacts(prisonerNumber, type)),
+  PageMetadata(1, 1, 5, 1),
 )
