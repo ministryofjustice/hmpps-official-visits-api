@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 
 data class ApprovedContact(
 

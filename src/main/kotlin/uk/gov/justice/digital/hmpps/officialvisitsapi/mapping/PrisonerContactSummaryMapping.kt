@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.mapping
 
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
 
 fun PrisonerContactSummary.toModel() = ApprovedContact(

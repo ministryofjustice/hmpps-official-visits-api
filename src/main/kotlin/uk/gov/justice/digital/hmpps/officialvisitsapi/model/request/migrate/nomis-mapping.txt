@@ -75,3 +75,88 @@ OFFICIAL VISITOR MAPPING
    * Going forward, at the time a visit is booked, we CAN know the person and the relationship, and record this on
      the visit booking.
 
+   * Are there any visit orders OFFENDER_VISIT_ORDER_ID specified on visits of type OFFICIAL in NOMIS?
+
+   * Is CLIENT_UNIQUE_REF ever populated for official visits?
+
+
+   Coded values - OFFENDER_VISITS
+
+   * VISIT_TYPE          - ref domain VISIT_TYPE    --> DPS - its always OFFICIAL - single value, or no value at all.
+
+   * VISIT_STATUS        - ref domain VIS_STS        --> Map to DPS status ACTIVE, CANCELLED, COMPLETED, ATTENDED?
+
+                         Value in the last 12 months:
+                         NORM,411703    -> COMPLETED
+                         SCH,316657     -> ACTIVE
+                         VDE,336        -> ??
+                         OFFEND,1100    -> CANCELLED + reason?
+                         CANC,157382    -> CANCELLED + reason?
+                         VISITOR,1914   -> CANCELLED + reason?
+                         HMPOP,327      -> CANCELLED + reason?
+
+   * SEARCH_TYPE         - ref domain SEARCH_TYPE    -->  Similar DPS reference list?
+
+                         values in last 12 months:
+                         FULL,29835       -> Ref data DPS?
+                         RUB_A,222372
+                         RUB_B,184999
+
+   * RAISED_INCIDENT_TYPE - ref domain INC_TYPE      -->  Not used in NOMIS
+
+   * EVENT_OUTCOME        - ref domain VIS_COMPLETE  --> Not used in NOMIS
+
+   * OUTCOME_REASON_CODE  - ref domain MOVE_CANC_RS  --> Not used in NOMIS
+
+
+   Reference Codes Mapping - Visitors
+
+   * EVENT_OUTCOME - NOMIS codes OUTCOMES??          --> Translate to attendance code?
+
+                 In NOMIS:  EVENT_OUTCOME only values used is ATT and ABS (some nulls).
+
+   * OUTCOME_REASON_CODE - NOMIS codes??             --> Translate to attendance code? Ref codes.
+
+         In NOMIS: OUTCOME_REASON_CODE actually represents the outcome of the actual visit;
+                   since NOMIS creates a dummy OFFENDER_VISIT_VISITORS record (that we won't sync)
+                   that holds the outcome of the visit. Values come from MOVE_CANC_RS domain.
+                   Since this are  properly configurable I would recommend this as reference data.
+                   However, given VSIP and your service is taking over visits entirely these values are
+                   unlikely to ever change in NOMIS.
+
+   * EVENT_STATUS - NOMIS code EVENT_STS??           --> Transate to event status for visitors?
+
+         In NOMIS: It has these values:
+                   NORM,329
+                   EXP,19047043
+                   SCH,113164
+                   COMP,28169146
+                   CANC,7665284
+
+   Restrictions
+
+    * VISIT_RESTRICTION_TYPE - NOMIS codes VST_RST_TYPE  --> We get from personal relationships..
+
+
+I've been having a bit more of a look at the visits screen.  I'd be interested in understanding a bit more the logic behind the form.
+There are three fields at visit level - Cancel Reason, Completion, Attended I can that the first two get saved to OFFENDER_VISITS.VISIT_STATUS,
+OFFENDER_VISIT_VISITORS.EVENT_STATUS and OFFENDER_VISIT_VISITORS.OUTCOME_REASON_CODE , but can't work out what happens to Attended?
+I can also see that OFFENDER_VISIT_VISITORS.EVENT_STATUS seems to get updated automatically by a process once the visit time is passed so
+that the status becomes EXP, but the same doesn't happen to OFFENDER_VISITS.VISIT_STATUS.  Also the Attended field on the visitor gets
+saved to OFFENDER_VISITS.EVENT_OUTCOME, but I don't understand why there are 3 million null values in the table when it looks like there is
+just a checkbox in the front end?
+2 replies
+
+
+Peter Phillips
+:palm_tree:  Jan 12th, 2022 at 4:47 PM
+Thanks, that explains why there are null entries in the OFFENDER_VISITS.EVENT_OUTCOME table - since the null values are for the dummy row
+(where the OFFENDER_BOOK_ID is not null) when the data is initially created.  So Attended at visit level gets written to the dummy row in
+the OFFENDER_VISIT_VISITORS table.
+
+I've now found the view and triggers in bitbucket.  I'm struggling to find any automated process that updates the visit once the time has
+passed to EXP, do you know where about that would be?
+
+Paul Morris
+Jan 13th, 2022 at 11:08 AM
+Its a batch job, FLUSH_SCHEDULES,  the procedure it runs is  tag_schedules.flush_schedules.

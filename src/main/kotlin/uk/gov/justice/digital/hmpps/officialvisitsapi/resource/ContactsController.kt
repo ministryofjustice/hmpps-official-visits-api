@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Personal Relationships contacts")
 @RestController
+@AuthApiResponses
 @RequestMapping(value = ["prisoner"], produces = [MediaType.APPLICATION_JSON_VALUE])
 open class ContactsController(private val contactsService: ContactsService) {
   companion object {
@@ -34,37 +34,17 @@ open class ContactsController(private val contactsService: ContactsService) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "List of all Approved contacts related to the prisoner",
+        description = "List of approved contacts of the prisoner",
         content = [
           Content(
             mediaType = "application/json",
-            array = ArraySchema(schema = Schema(implementation = PrisonerContactSummary::class)),
-          ),
-        ],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorised, requires a valid Oauth2 token",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = ErrorResponse::class),
-          ),
-        ],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Forbidden, requires an appropriate role",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = ErrorResponse::class),
+            array = ArraySchema(schema = Schema(implementation = ApprovedContact::class)),
           ),
         ],
       ),
       ApiResponse(
         responseCode = "404",
-        description = "The Prisoner was not found.",
+        description = "The prisoner was not found.",
         content = [
           Content(
             mediaType = "application/json",
@@ -75,15 +55,15 @@ open class ContactsController(private val contactsService: ContactsService) {
     ],
   )
   @GetMapping(value = ["/{prisonerNumber}/contact-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @PreAuthorize("hasAnyRole('ROLE_CONTACTS__R')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
   fun getApprovedContacts(
     @PathVariable("prisonerNumber", required = true)
     prisonerNumber: String,
-    @Parameter(description = "Relationship Type should be S for social or  O for official", required = false)
+    @Parameter(description = "The relationship type should be S for social or O for official", required = false)
     @RequestParam(name = "relationshipType", required = true, defaultValue = "O")
     relationshipType: String,
   ): List<ApprovedContact> {
-    logger.info("Received request for Approved contacts for  prisoner code $prisonerNumber")
+    logger.info("Received request for approved contacts for prisoner $prisonerNumber of type $relationshipType")
     return contactsService.getApprovedContacts(prisonerNumber, relationshipType)
   }
 }

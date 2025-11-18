@@ -3,11 +3,11 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PageMetadata
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PagedModelPrisonerContactSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionTypeDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.RestrictionsSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toIsoDateTime
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser

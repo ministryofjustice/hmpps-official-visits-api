@@ -21,7 +21,7 @@ class ContactsControllerIntegrationTest : IntegrationTestBase() {
     .get()
     .uri("/prisoner/$prisonerNumber/contact-relationships?relationshipType=O")
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_CONTACTS__R")))
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
