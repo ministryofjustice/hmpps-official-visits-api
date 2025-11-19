@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ReferenceDataItem
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReferenceDataService
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Reference data")
 @RestController
+@AuthApiResponses
 @RequestMapping(value = ["reference-data"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class ReferenceDataController(private val referenceDataService: ReferenceDataService) {
   companion object {
@@ -40,26 +40,6 @@ class ReferenceDataController(private val referenceDataService: ReferenceDataSer
           Content(
             mediaType = "application/json",
             array = ArraySchema(schema = Schema(implementation = ReferenceDataItem::class)),
-          ),
-        ],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorised, requires a valid Oauth2 token",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = ErrorResponse::class),
-          ),
-        ],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Forbidden, requires an appropriate role",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = ErrorResponse::class),
           ),
         ],
       ),

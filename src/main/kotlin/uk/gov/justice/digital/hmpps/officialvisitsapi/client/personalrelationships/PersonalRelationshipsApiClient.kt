@@ -7,8 +7,8 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PagedModelPrisonerContactSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationship.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
