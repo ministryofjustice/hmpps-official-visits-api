@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
@@ -11,25 +12,26 @@ import java.time.LocalDate
 
 @Service
 class AvailableSlotService(
+  private val timeSource: TimeSource,
   private val visitBookedRepository: VisitBookedRepository,
   private val availableSlotRepository: AvailableSlotRepository,
 ) {
   fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
     // TODO take account of video only visits!!
-    require(fromDate >= LocalDate.now()) { "The from date must be on or after today's date" }
+    require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
     val availableSlots = availableSlotRepository.findAvailableSlotsByPrisonCode(prisonCode)
     val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
 
-    AvailableSlotBuilder.builder(fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots)
+    AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots)
       .sortedWith(compareBy({ it.visitDate }, { it.startTime }))
   }
 }
 
-private class AvailableSlotBuilder private constructor(private val fromDate: LocalDate, private val toDate: LocalDate) {
+private class AvailableSlotBuilder private constructor(private val timeSource: TimeSource, private val fromDate: LocalDate, private val toDate: LocalDate) {
   companion object {
-    fun builder(from: LocalDate, to: LocalDate, init: AvailableSlotBuilder.() -> Unit) = AvailableSlotBuilder(from, to).also { it.init() }
+    fun builder(timeSource: TimeSource, from: LocalDate, to: LocalDate, init: AvailableSlotBuilder.() -> Unit) = AvailableSlotBuilder(timeSource, from, to).also { it.init() }
   }
 
   private val datedVisitCounts = mutableMapOf<DatedVisit, Int>()
@@ -54,12 +56,11 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
       availableSlots.forEach { availableSlot ->
         for (date in fromDate..toDate) {
           // Only add to the list if the slot is on the same day as the date in question and there is capacity, otherwise ignore the slot.
-          // TODO technically should also be checking the time of the availability check against the slot start time!!
           if (availableSlot.isOnSameDay(date.dayOfWeek)) {
             val remainingAdultSlots = availableSlot.maxAdults - datedVisitCounts.adultCount(date, availableSlot)
             val remainingGroupSlots = availableSlot.maxGroups - datedVisitCounts.groupCount(date, availableSlot)
 
-            if (remainingAdultSlots + remainingGroupSlots > 0) {
+            if (remainingAdultSlots > 0 && remainingGroupSlots > 0) {
               add(
                 AvailableSlot(
                   visitSlotId = availableSlot.prisonVisitSlotId,
@@ -82,7 +83,8 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
       }
     }
 
-    results
+    // Filter out anything with a start time earlier than now, there should only ever be a handful or less
+    results.filter { it.visitDate.atTime(it.startTime) > timeSource.now() }
   }
 
   private fun AvailableSlotEntity.isOnSameDay(dayOfWeek: DayOfWeek) = Day.valueOf(dayCode).value == dayOfWeek.value
@@ -96,16 +98,16 @@ private class AvailableSlotBuilder private constructor(private val fromDate: Loc
       .map { it.value }
       .sum()
   }
+}
 
-  enum class Day(val value: Int) {
-    MON(1),
-    TUE(2),
-    WED(3),
-    THU(4),
-    FRI(5),
-    SAT(6),
-    SUN(7),
-  }
+enum class Day(val value: Int) {
+  MON(1),
+  TUE(2),
+  WED(3),
+  THU(4),
+  FRI(5),
+  SAT(6),
+  SUN(7),
 }
 
 private data class DatedVisit(
