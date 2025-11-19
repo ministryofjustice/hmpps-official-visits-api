@@ -265,6 +265,45 @@ class AvailableSlotServiceTest {
         .availableAdultsIsEqualTo(3)
         .availableGroupsIsEqualTo(1)
     }
+
+    @Test
+    fun `should be no available slot on Monday afternoon when available adult capacity met`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 2))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          false,
+        )
+
+      freeSlots.size isEqualTo 0
+    }
+
+    @Test
+    fun `should be no available slot on Monday afternoon when available group capacity met`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 2))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), 1))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), 2))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          false,
+        )
+
+      freeSlots.size isEqualTo 0
+    }
   }
 
   private fun service(dateTime: LocalDateTime) = AvailableSlotService({ dateTime }, visitBookedRepository, availableSlotRepository)
@@ -284,8 +323,8 @@ class AvailableSlotServiceTest {
     maxVideoSessions = 1,
   )
 
-  private fun bookedSlot(dateTime: LocalDateTime) = VisitBookedEntity(
-    officialVisitId = -1,
+  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1) = VisitBookedEntity(
+    officialVisitId = officialVisitId,
     prisonCode = MOORLAND,
     dayCode = dateTime.dayOfWeek.toString().take(3).uppercase(),
     dayDescription = dateTime.dayOfWeek.toString(),

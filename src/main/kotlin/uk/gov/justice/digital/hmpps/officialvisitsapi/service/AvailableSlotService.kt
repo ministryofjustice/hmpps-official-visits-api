@@ -60,7 +60,7 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
             val remainingAdultSlots = availableSlot.maxAdults - datedVisitCounts.adultCount(date, availableSlot)
             val remainingGroupSlots = availableSlot.maxGroups - datedVisitCounts.groupCount(date, availableSlot)
 
-            if (remainingAdultSlots + remainingGroupSlots > 0) {
+            if (remainingAdultSlots > 0 && remainingGroupSlots > 0) {
               add(
                 AvailableSlot(
                   visitSlotId = availableSlot.prisonVisitSlotId,
