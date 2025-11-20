@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
-@Tag(name = "Personal Relationships contacts")
+@Tag(name = "Contacts")
 @RestController
 @AuthApiResponses
 @RequestMapping(value = ["prisoner"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -54,7 +54,7 @@ open class ContactsController(private val contactsService: ContactsService) {
       ),
     ],
   )
-  @GetMapping(value = ["/{prisonerNumber}/contact-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @GetMapping(value = ["/{prisonerNumber}/approved-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
   fun getApprovedContacts(
     @PathVariable("prisonerNumber", required = true)

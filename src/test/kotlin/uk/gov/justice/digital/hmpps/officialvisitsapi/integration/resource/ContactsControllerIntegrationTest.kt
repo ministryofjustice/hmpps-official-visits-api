@@ -19,7 +19,7 @@ class ContactsControllerIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.approvedContents(prisonerNumber: String) = this
     .get()
-    .uri("/prisoner/$prisonerNumber/contact-relationships?relationshipType=O")
+    .uri("/prisoner/$prisonerNumber/approved-relationships?relationshipType=O")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
     .exchange()
