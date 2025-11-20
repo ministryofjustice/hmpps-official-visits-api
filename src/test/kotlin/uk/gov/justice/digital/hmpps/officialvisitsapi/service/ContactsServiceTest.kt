@@ -41,15 +41,6 @@ class ContactsServiceTest {
   }
 
   @Test
-  fun `getApprovedContacts should return empty  approved contacts when isRelationshipActive is false `() {
-    val listOfCodes = listOf(
-      prisonerContacts("ABCD", "O", true, true, false, null),
-    )
-    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList<PrisonerContactSummary>())
-    assertThat(contactService.getApprovedContacts("ABCD", "O") isEqualTo emptyList())
-  }
-
-  @Test
   fun `getApprovedContacts should return empty  approved contacts when deceasedDate is not  `() {
     val listOfCodes = listOf(
       prisonerContacts("ABCD", "O", true, true, true, LocalDate.now()),

@@ -25,6 +25,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
           .path("/prisoner/{prisonerNumber}/contact")
           .queryParam("active", true)
           .queryParam("relationshipType", relationshipType)
+          .queryParam("active", true)
           .queryParam("page", 0)
           .queryParam("size", 100)
           .build(prisonerNumber)
