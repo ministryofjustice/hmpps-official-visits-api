@@ -12,6 +12,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.stub
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
@@ -128,7 +129,7 @@ class AvailableSlotServiceTest {
     }
 
     @Test
-    fun `should be one available slot on Monday afternoon`() {
+    fun `should be 1 free slot with 0 available video, 1 group and 1 adult on Monday afternoon`() {
       availableSlots.add(availableSlot(Day.MON, 11))
       availableSlots.add(availableSlot(Day.MON, 12))
       availableSlots.add(availableSlot(Day.MON, 13))
@@ -141,7 +142,14 @@ class AvailableSlotServiceTest {
           false,
         )
 
-      freeSlots.size isEqualTo 1
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(13, 0))
+        .availableAdultsIsEqualTo(1)
+        .availableGroupsIsEqualTo(1)
+        .availableVideosIsEqualTo(0)
     }
 
     @Test
@@ -162,7 +170,7 @@ class AvailableSlotServiceTest {
     }
 
     @Test
-    fun `should be one available slot on Tuesday morning`() {
+    fun `should be 1 free slot with 0 available video, 1 group and 1 adult on Tuesday morning`() {
       availableSlots.add(availableSlot(Day.MON, 10))
       availableSlots.add(availableSlot(Day.MON, 11))
       availableSlots.add(availableSlot(Day.TUE, 11))
@@ -175,7 +183,14 @@ class AvailableSlotServiceTest {
           false,
         )
 
-      freeSlots.size isEqualTo 1
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate().plusDays(1))
+        .dayIsEqualTo(Day.TUE)
+        .startTimeIsEqual(LocalTime.of(11, 0))
+        .availableAdultsIsEqualTo(1)
+        .availableGroupsIsEqualTo(1)
+        .availableVideosIsEqualTo(0)
     }
   }
 
@@ -202,7 +217,7 @@ class AvailableSlotServiceTest {
     }
 
     @Test
-    fun `should be one available slot on Monday afternoon when only one slot free`() {
+    fun `should be 1 free slot with 0 available video, 5 groups and 5 adults on Monday afternoon`() {
       availableSlots.add(availableSlot(Day.MON, 13))
       availableSlots.add(availableSlot(Day.MON, 14))
       availableSlots.add(availableSlot(Day.MON, 15, 5, 5))
@@ -220,8 +235,12 @@ class AvailableSlotServiceTest {
 
       freeSlots
         .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(15, 0))
         .availableAdultsIsEqualTo(5)
         .availableGroupsIsEqualTo(5)
+        .availableVideosIsEqualTo(0)
     }
 
     @Test
@@ -246,8 +265,8 @@ class AvailableSlotServiceTest {
     }
 
     @Test
-    fun `should be one available slot on Monday afternoon when only one slot free with reduced capacity`() {
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 2))
+    fun `should be 1 free slot with 2 available video, 1 group and 3 adults on Monday afternoon`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 2, maxVideo = 2))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
@@ -262,8 +281,12 @@ class AvailableSlotServiceTest {
 
       freeSlots
         .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(15, 0))
         .availableAdultsIsEqualTo(3)
         .availableGroupsIsEqualTo(1)
+        .availableVideosIsEqualTo(2)
     }
 
     @Test
@@ -306,9 +329,101 @@ class AvailableSlotServiceTest {
     }
   }
 
+  @Nested
+  @DisplayName("Available video slots from Monday afternoon onwards when slots are booked")
+  inner class AvailableVideoSlotsFromMondayAfternoonOnwardsWhenSlotsBooked {
+    private val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
+    private val availableSlots: MutableList<AvailableSlotEntity> = mutableListOf()
+    private val bookedSlots: MutableList<VisitBookedEntity> = mutableListOf()
+
+    @BeforeEach
+    fun beforeEach() {
+      availableSlotService = service(mondayAtMidday)
+      availableSlotRepository.stub { on { findAvailableVideoSlotsByPrisonCode(MOORLAND) } doReturn availableSlots }
+      visitBookedRepository.stub {
+        on {
+          findCurrentVisitsBookedBy(
+            eq(MOORLAND),
+            eq(mondayAtMidday.toLocalDate()),
+            any(),
+          )
+        } doReturn bookedSlots
+      }
+    }
+
+    @Test
+    fun `should be 1 free slot with 1 available video, 3 groups and 5 adults on Monday afternoon`() {
+      availableSlots.add(availableSlot(Day.MON, 14, 5, 5, 3))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), officialVisitId = 2, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          true,
+        )
+
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(14, 0))
+        .availableAdultsIsEqualTo(5)
+        .availableGroupsIsEqualTo(3)
+        .availableVideosIsEqualTo(1)
+    }
+
+    @Test
+    fun `should be 1 free slot with 1 available video, 4 groups and 5 adults on Monday afternoon`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          true,
+        )
+
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(15, 0))
+        .availableAdultsIsEqualTo(5)
+        .availableGroupsIsEqualTo(4)
+        .availableVideosIsEqualTo(1)
+    }
+
+    @Test
+    fun `should be no available video slot on Monday afternoon when available video capacity met`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          true,
+        )
+
+      freeSlots.size isEqualTo 0
+    }
+  }
+
   private fun service(dateTime: LocalDateTime) = AvailableSlotService({ dateTime }, visitBookedRepository, availableSlotRepository)
 
-  private fun availableSlot(day: Day, startHour: Int, maxAdults: Int = 1, maxGroups: Int = 1) = AvailableSlotEntity(
+  private fun availableSlot(day: Day, startHour: Int, maxAdults: Int = 1, maxGroups: Int = 1, maxVideo: Int = 0) = AvailableSlotEntity(
     prisonVisitSlotId = startHour.toLong(),
     prisonTimeSlotId = startHour.toLong(),
     prisonCode = MOORLAND,
@@ -320,10 +435,10 @@ class AvailableSlotServiceTest {
     dpsLocationId = UUID.randomUUID(),
     maxAdults = maxAdults,
     maxGroups = maxGroups,
-    maxVideoSessions = 1,
+    maxVideoSessions = maxVideo,
   )
 
-  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1) = VisitBookedEntity(
+  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1, videoOnly: Boolean = false) = VisitBookedEntity(
     officialVisitId = officialVisitId,
     prisonCode = MOORLAND,
     dayCode = dateTime.dayOfWeek.toString().take(3).uppercase(),
@@ -334,7 +449,7 @@ class AvailableSlotServiceTest {
     startTime = dateTime.toLocalTime(),
     endTime = dateTime.toLocalTime(),
     visitStatusCode = "--",
-    visitTypeCode = "--",
+    visitTypeCode = if (videoOnly) VisitType.VIDEO.toString() else VisitType.IN_PERSON.toString(),
     prisonerNumber = "--",
     contactId = -1,
     visitorTypeCode = "--",
@@ -345,6 +460,10 @@ class AvailableSlotServiceTest {
     dpsLocationId = UUID.randomUUID(),
   )
 
+  private fun AvailableSlot.dateIsEqualTo(expected: LocalDate) = also { visitDate isEqualTo expected }
+  private fun AvailableSlot.dayIsEqualTo(expected: Day) = also { dayCode isEqualTo expected.toString() }
+  private fun AvailableSlot.startTimeIsEqual(expected: LocalTime) = also { startTime isEqualTo expected }
   private fun AvailableSlot.availableAdultsIsEqualTo(expected: Int) = also { availableAdults isEqualTo expected }
   private fun AvailableSlot.availableGroupsIsEqualTo(expected: Int) = also { availableGroups isEqualTo expected }
+  private fun AvailableSlot.availableVideosIsEqualTo(expected: Int) = also { availableVideoSessions isEqualTo expected }
 }
