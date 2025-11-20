@@ -113,6 +113,10 @@ fun prisoner(
 fun prisonerContacts(
   prisonerNumber: String,
   type: String,
+  currentTerm: Boolean,
+  isApprovedVisitor: Boolean,
+  isRelationshipActive: Boolean,
+  deceasedDate: LocalDate? = null,
 ) = PrisonerContactSummary(
   contactId = 654321,
   prisonerNumber = prisonerNumber,
@@ -122,7 +126,7 @@ fun prisonerContacts(
   firstName = "John",
   middleNames = "William",
   dateOfBirth = null,
-  deceasedDate = null,
+  deceasedDate = deceasedDate,
   relationshipTypeCode = type,
   relationshipTypeDescription = "Friend",
   relationshipToPrisonerCode = "FRI",
@@ -135,11 +139,11 @@ fun prisonerContacts(
   postcode = "NW1 6XE",
   countryCode = "ENG",
   countryDescription = "England",
-  isRelationshipActive = true,
-  isApprovedVisitor = true,
+  isRelationshipActive = isRelationshipActive,
+  isApprovedVisitor = isApprovedVisitor,
   isNextOfKin = true,
   isEmergencyContact = true,
-  currentTerm = true,
+  currentTerm = currentTerm,
   isStaff = true,
   restrictionSummary = RestrictionsSummary(setOf(RestrictionTypeDetails("Restricted", "Not allowed")), 1, 1),
   cityDescription = "",
@@ -160,6 +164,7 @@ fun pagedModelPrisonerContactSummary(
   prisonerNumber: String,
   type: String,
 ) = PagedModelPrisonerContactSummary(
-  listOf(prisonerContacts(prisonerNumber, type)),
+  listOf(prisonerContacts(prisonerNumber, type, true, true, true, null)),
   PageMetadata(1, 1, 5, 1),
+
 )

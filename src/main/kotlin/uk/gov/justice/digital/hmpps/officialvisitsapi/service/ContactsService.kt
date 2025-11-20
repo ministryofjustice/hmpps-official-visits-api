@@ -8,5 +8,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedCon
 @Service
 class ContactsService(private val personalRelationshipsApiClient: PersonalRelationshipsApiClient) {
 
-  fun getApprovedContacts(prisonerNumber: String, relationshipType: String): List<ApprovedContact> = personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType).toModel()
+  fun getApprovedContacts(prisonerNumber: String, relationshipType: String): List<ApprovedContact> = personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)
+    .filter {
+      it.currentTerm == true && it.isApprovedVisitor == true && it.isRelationshipActive == true && it.deceasedDate == null
+    }.toModel()
 }
