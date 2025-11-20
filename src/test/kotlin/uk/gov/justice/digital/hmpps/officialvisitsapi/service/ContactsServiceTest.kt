@@ -7,7 +7,6 @@ import org.mockito.Mockito.mock
 import org.mockito.MockitoAnnotations.openMocks
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContacts
 import java.time.LocalDate
@@ -36,7 +35,7 @@ class ContactsServiceTest {
     val listOfCodes = listOf(
       prisonerContacts("ABCD", "O", false, true, true, null),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList<PrisonerContactSummary>())
+    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList())
     assertThat(contactService.getApprovedContacts("ABCD", "O") isEqualTo emptyList())
   }
 
@@ -45,7 +44,7 @@ class ContactsServiceTest {
     val listOfCodes = listOf(
       prisonerContacts("ABCD", "O", true, true, true, LocalDate.now()),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList<PrisonerContactSummary>())
+    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList())
     assertThat(contactService.getApprovedContacts("ABCD", "O") isEqualTo emptyList())
   }
 }
