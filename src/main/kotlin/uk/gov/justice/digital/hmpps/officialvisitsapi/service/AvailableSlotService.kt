@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AvailableSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitBookedRepository
@@ -17,15 +18,20 @@ class AvailableSlotService(
   private val availableSlotRepository: AvailableSlotRepository,
 ) {
   fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
-    // TODO take account of video only visits!!
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
-    val availableSlots = availableSlotRepository.findAvailableSlotsByPrisonCode(prisonCode)
+    val availableSlots = getAvailableSlots(prisonCode, videoOnly)
     val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
 
-    AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots)
+    AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
       .sortedWith(compareBy({ it.visitDate }, { it.startTime }))
+  }
+
+  private fun getAvailableSlots(prisonCode: String, videoOnly: Boolean) = if (videoOnly) {
+    availableSlotRepository.findAvailableVideoSlotsByPrisonCode(prisonCode)
+  } else {
+    availableSlotRepository.findAvailableSlotsByPrisonCode(prisonCode)
   }
 }
 
@@ -34,33 +40,35 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
     fun builder(timeSource: TimeSource, from: LocalDate, to: LocalDate, init: AvailableSlotBuilder.() -> Unit) = AvailableSlotBuilder(timeSource, from, to).also { it.init() }
   }
 
-  private val datedVisitCounts = mutableMapOf<DatedVisit, Int>()
+  private val datedInPersonVisits = mutableMapOf<DatedVisit, Int>()
+  private val datedVideoVisits = mutableMapOf<DatedVisit, Int>()
 
   fun add(bookedSlot: VisitBookedEntity) {
-    val key = DatedVisit(
-      date = bookedSlot.visitDate,
-      officialVisitId = bookedSlot.officialVisitId,
-      prisonTimeSlotId = bookedSlot.prisonTimeSlotId,
-      prisonVisitSlotId = bookedSlot.prisonVisitSlotId,
-    )
+    val key = DatedVisit(bookedSlot)
 
-    if (datedVisitCounts.containsKey(key)) {
-      datedVisitCounts[key] = datedVisitCounts[key]!! + 1
-    } else {
-      datedVisitCounts[key] = 1
+    when {
+      bookedSlot.isVisitType(VisitType.IN_PERSON) -> {
+        datedInPersonVisits.computeIfPresent(key) { _, count -> count + 1 }
+        datedInPersonVisits.computeIfAbsent(key) { 1 }
+      }
+      bookedSlot.isVisitType(VisitType.VIDEO) -> {
+        datedVideoVisits.computeIfPresent(key) { _, count -> count + 1 }
+        datedVideoVisits.computeIfAbsent(key) { 1 }
+      }
     }
   }
 
-  fun build(availableSlots: List<AvailableSlotEntity>) = run {
+  fun build(availableSlots: List<AvailableSlotEntity>, videoOnly: Boolean) = run {
     val results = buildList {
       availableSlots.forEach { availableSlot ->
         for (date in fromDate..toDate) {
           // Only add to the list if the slot is on the same day as the date in question and there is capacity, otherwise ignore the slot.
           if (availableSlot.isOnSameDay(date.dayOfWeek)) {
-            val remainingAdultSlots = availableSlot.maxAdults - datedVisitCounts.adultCount(date, availableSlot)
-            val remainingGroupSlots = availableSlot.maxGroups - datedVisitCounts.groupCount(date, availableSlot)
+            val availableAdults = availableSlot.availableAdultsOn(date)
+            val availableGroups = availableSlot.availableGroupsOn(date)
+            val availableVideoSessions = availableSlot.availableVideoSessionsOn(date)
 
-            if (remainingAdultSlots > 0 && remainingGroupSlots > 0) {
+            if ((availableAdults > 0 && availableGroups > 0 && !videoOnly) || (availableGroups > 0 && availableVideoSessions > 0)) {
               add(
                 AvailableSlot(
                   visitSlotId = availableSlot.prisonVisitSlotId,
@@ -72,9 +80,9 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
                   startTime = availableSlot.startTime,
                   endTime = availableSlot.endTime,
                   dpsLocationId = availableSlot.dpsLocationId,
-                  availableVideoSessions = 0,
-                  availableAdults = remainingAdultSlots,
-                  availableGroups = remainingGroupSlots,
+                  availableVideoSessions = availableVideoSessions,
+                  availableAdults = if (videoOnly) availableSlot.maxAdults else availableAdults,
+                  availableGroups = availableGroups,
                 ),
               )
             }
@@ -89,11 +97,17 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
 
   private fun AvailableSlotEntity.isOnSameDay(dayOfWeek: DayOfWeek) = Day.valueOf(dayCode).value == dayOfWeek.value
 
-  private fun Map<DatedVisit, Int>.groupCount(date: LocalDate, slot: AvailableSlotEntity) = run {
+  private fun AvailableSlotEntity.availableAdultsOn(date: LocalDate) = maxAdults - datedInPersonVisits.individualVisitCount(date, this)
+
+  private fun AvailableSlotEntity.availableGroupsOn(date: LocalDate) = maxGroups - datedInPersonVisits.groupVisitCount(date, this) - datedVideoVisits.groupVisitCount(date, this)
+
+  private fun AvailableSlotEntity.availableVideoSessionsOn(date: LocalDate) = maxVideoSessions - datedVideoVisits.individualVisitCount(date, this)
+
+  private fun Map<DatedVisit, Int>.groupVisitCount(date: LocalDate, slot: AvailableSlotEntity) = run {
     count { dsc -> dsc.key.date == date && dsc.key.prisonTimeSlotId == slot.prisonTimeSlotId && dsc.key.prisonVisitSlotId == slot.prisonVisitSlotId }
   }
 
-  private fun Map<DatedVisit, Int>.adultCount(date: LocalDate, slot: AvailableSlotEntity) = run {
+  private fun Map<DatedVisit, Int>.individualVisitCount(date: LocalDate, slot: AvailableSlotEntity) = run {
     filter { dsc -> dsc.key.date == date && dsc.key.prisonTimeSlotId == slot.prisonTimeSlotId && dsc.key.prisonVisitSlotId == slot.prisonVisitSlotId }
       .map { it.value }
       .sum()
@@ -115,7 +129,14 @@ private data class DatedVisit(
   val officialVisitId: Long,
   val prisonTimeSlotId: Long,
   val prisonVisitSlotId: Long,
-)
+) {
+  constructor(vbe: VisitBookedEntity) : this(
+    date = vbe.visitDate,
+    officialVisitId = vbe.officialVisitId,
+    prisonTimeSlotId = vbe.prisonTimeSlotId,
+    prisonVisitSlotId = vbe.prisonVisitSlotId,
+  )
+}
 
 class LocalDateIterator(
   val start: LocalDate,

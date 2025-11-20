@@ -50,4 +50,6 @@ data class VisitBookedEntity(
   val lastName: String? = null,
 
   val dpsLocationId: UUID,
-)
+) {
+  fun isVisitType(visitType: VisitType) = VisitType.valueOf(visitTypeCode) == visitType
+}
