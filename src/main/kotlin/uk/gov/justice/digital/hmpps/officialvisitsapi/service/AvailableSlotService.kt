@@ -81,7 +81,7 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
                   endTime = availableSlot.endTime,
                   dpsLocationId = availableSlot.dpsLocationId,
                   availableVideoSessions = availableVideoSessions,
-                  availableAdults = if (videoOnly) availableSlot.maxAdults else availableAdults,
+                  availableAdults = if (videoOnly) (availableSlot.maxAdults ?: 0) else availableAdults,
                   availableGroups = availableGroups,
                 ),
               )
@@ -97,11 +97,11 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
 
   private fun AvailableSlotEntity.isOnSameDay(dayOfWeek: DayOfWeek) = Day.valueOf(dayCode).value == dayOfWeek.value
 
-  private fun AvailableSlotEntity.availableAdultsOn(date: LocalDate) = maxAdults - datedInPersonVisits.individualVisitCount(date, this)
+  private fun AvailableSlotEntity.availableAdultsOn(date: LocalDate) = (maxAdults ?: 0) - datedInPersonVisits.individualVisitCount(date, this)
 
-  private fun AvailableSlotEntity.availableGroupsOn(date: LocalDate) = maxGroups - datedInPersonVisits.groupVisitCount(date, this) - datedVideoVisits.groupVisitCount(date, this)
+  private fun AvailableSlotEntity.availableGroupsOn(date: LocalDate) = (maxGroups ?: 0) - datedInPersonVisits.groupVisitCount(date, this) - datedVideoVisits.groupVisitCount(date, this)
 
-  private fun AvailableSlotEntity.availableVideoSessionsOn(date: LocalDate) = maxVideoSessions - datedVideoVisits.individualVisitCount(date, this)
+  private fun AvailableSlotEntity.availableVideoSessionsOn(date: LocalDate) = (maxVideoSessions ?: 0) - datedVideoVisits.individualVisitCount(date, this)
 
   private fun Map<DatedVisit, Int>.groupVisitCount(date: LocalDate, slot: AvailableSlotEntity) = run {
     count { dsc -> dsc.key.date == date && dsc.key.prisonTimeSlotId == slot.prisonTimeSlotId && dsc.key.prisonVisitSlotId == slot.prisonVisitSlotId }
