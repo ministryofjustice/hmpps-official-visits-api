@@ -30,9 +30,9 @@ data class AvailableSlotEntity(
 
   val dpsLocationId: UUID,
 
-  val maxAdults: Int,
+  val maxAdults: Int? = 0,
 
-  val maxGroups: Int,
+  val maxGroups: Int? = 0,
 
-  val maxVideoSessions: Int,
+  val maxVideoSessions: Int? = 0,
 )
