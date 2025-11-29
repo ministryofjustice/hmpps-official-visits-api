@@ -25,8 +25,6 @@ data class PrisonerVisitedEntity(
 
   val attendanceCode: String? = null,
 
-  val attendanceNotes: String? = null,
-
   val attendanceBy: String? = null,
 
   val attendanceTime: LocalDateTime? = null,

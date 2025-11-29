@@ -9,7 +9,7 @@
 create table prison_time_slot (
     prison_time_slot_id bigserial NOT NULL CONSTRAINT prison_time_slot_pk PRIMARY KEY,
     prison_code varchar(5) NOT NULL,
-    day_code varchar(3) NOT NULL, -- ref: DAY_CODE
+    day_code varchar(3) NOT NULL,
     start_time time without time zone NOT NULL,
     end_time time without time zone NOT NULL,
     effective_date date NOT NULL,
@@ -99,10 +99,10 @@ create table official_visit (
    prison_code varchar(10) NOT NULL,
    prisoner_number varchar(7) NOT NULL,
    current_term boolean NOT NULL DEFAULT true,
-   private_notes varchar(240),
-   public_notes varchar(240),
+   staff_notes varchar(240), -- for staff (visit comments from NOMIS)
+   prisoner_notes varchar(240), -- for prisoner movement slips
+   visitor_concern_notes varchar(240),
    search_type_code varchar(20),
-   visitor_concern_text varchar(240),
    completion_code varchar(20),
    override_ban_time timestamp,
    override_ban_by varchar(100),
@@ -121,6 +121,7 @@ CREATE INDEX idx_official_visit_5 ON official_visit(visit_type_code);
 CREATE INDEX idx_official_visit_6 ON official_visit(visit_status_code);
 CREATE INDEX idx_official_visit_7 ON official_visit(created_time);
 CREATE INDEX idx_official_visit_8 ON official_visit(offender_visit_id);
+CREATE INDEX idx_official_visit_9 ON official_visit(completion_code);
 
 --
 -- Table prisoner_visited
@@ -131,7 +132,6 @@ create table prisoner_visited (
    official_visit_id bigint NOT NULL references official_visit(official_visit_id),
    prisoner_number varchar(7) NOT NULL, -- denormalized intentionally ease of checking
    attendance_code varchar(20),
-   attendance_notes varchar(240),
    attendance_by varchar(100),
    attendance_time timestamp,
    created_time timestamp NOT NULL,
@@ -153,20 +153,17 @@ create table official_visitor (
    official_visit_id bigint NOT NULL references official_visit(official_visit_id),
    visitor_type_code varchar(20) NOT NULL,
    contact_type_code varchar(20) NOT NULL,
-   first_name varchar(60), -- Lookup from contact if present
-   last_name varchar(60), -- Lookup from contact if present
-   contact_id bigint, -- person_id from NOMIS - mandatory unless visitor is an OPV
-   prisoner_contact_id bigint, -- Only set for DPS visits - null on migration - unless Syscon can send?
-   relationship_code varchar(20), -- Only set for DPS visits - null on migration - unless Syscon can send?
+   first_name varchar(60),
+   last_name varchar(60),
+   contact_id bigint, -- person_id from NOMIS
+   prisoner_contact_id bigint, -- Only set for DPS visits - null on migration
+   relationship_code varchar(20), -- Only set for DPS visits - null on migration
    lead_visitor boolean NOT NULL DEFAULT false,
    assisted_visit boolean NOT NULL DEFAULT false,
-   email_address varchar(160), -- DPS-only - potential to notify lead visitor about this visit
-   phone_number varchar(30), -- DPS-only - potential to notify lead visitor about this visit
    visitor_notes varchar(240),
    attendance_code varchar(20),
-   attendance_notes varchar(240), -- DPS only - no NOMIS equivalent
-   attendance_by varchar(100), -- DPS only - no NOMIS equivalent
-   attendance_time timestamp, -- DPS only - no NOMIS equivalent
+   attendance_by varchar(100), -- DPS only
+   attendance_time timestamp, -- DPS only
    created_time timestamp NOT NULL,
    created_by varchar(100) NOT NULL,
    updated_time timestamp,
@@ -184,28 +181,23 @@ CREATE INDEX idx_official_visitor_8 ON official_visitor(created_by);
 CREATE INDEX idx_official_visitor_9 ON official_visitor(offender_visit_visitor_id);
 
 --
--- Table visitor_equipment
--- Contains the details of equipment brought into the prison by a visitor.
+-- Visitor equipment being brought into the prison
 --
 create table visitor_equipment(
-   visitor_equipment_id bigserial NOT NULL CONSTRAINT visitor_equipment_pk PRIMARY KEY,
-   official_visitor_id bigint NOT NULL references official_visitor(official_visitor_id),
-   category_code varchar(20) NOT NULL, -- ref: EQUIP_CATEGORY, MOBILE, LAPTOP, TABLET
-   model varchar(60),
-   reason varchar(100),
-   approved boolean NOT NULL DEFAULT false,
-   approval_notes varchar(240),
-   approved_time timestamp,
-   approved_by varchar(100),
-   created_time timestamp NOT NULL,
-   created_by varchar(100) NOT NULL,
-   updated_time timestamp,
-   updated_by varchar(100)
+  visitor_equipment_id bigserial NOT NULL CONSTRAINT visitor_equipment_pk PRIMARY KEY,
+  official_visitor_id bigint NOT NULL references official_visitor(official_visitor_id),
+  description varchar(240),
+  approved boolean NOT NULL DEFAULT false,
+  approved_time timestamp,
+  approved_by varchar(100),
+  created_time timestamp NOT NULL,
+  created_by varchar(100) NOT NULL,
+  updated_time timestamp,
+  updated_by varchar(100)
 );
 
 CREATE INDEX idx_visitor_equipment_1 ON visitor_equipment(official_visitor_id);
-CREATE INDEX idx_visitor_equipment_2 ON visitor_equipment(category_code);
-CREATE INDEX idx_visitor_equipment_3 ON visitor_equipment(approved_by);
-CREATE INDEX idx_visitor_equipment_4 ON visitor_equipment(created_time);
+CREATE INDEX idx_visitor_equipment_2 ON visitor_equipment(approved_by);
+CREATE INDEX idx_visitor_equipment_3 ON visitor_equipment(created_time);
 
 -- END --

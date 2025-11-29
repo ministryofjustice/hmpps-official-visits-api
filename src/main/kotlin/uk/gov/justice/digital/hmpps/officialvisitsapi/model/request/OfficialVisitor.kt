@@ -9,7 +9,7 @@ data class OfficialVisitor(
   val visitorTypeCode: String?,
 
   @field:NotBlank(message = "The contact type code for the official visitor is mandatory")
-  @Schema(description = "The contact type code", example = "SOCIAL")
+  @Schema(description = "The contact type code", example = "OFFICIAL")
   val contactTypeCode: String?,
 
   @Schema(description = "The contact ID for the visitor", example = "123456")
@@ -29,12 +29,6 @@ data class OfficialVisitor(
 
   @Schema(description = "Set to true if this visitor requires an assisted visit", example = "false")
   val assistedVisit: Boolean? = false,
-
-  @Schema(description = "The email address for this visitor", example = "bob@harris.com")
-  val emailAddress: String? = null,
-
-  @Schema(description = "The phone number for this visitor", example = "09090 9090900")
-  val phoneNumber: String? = null,
 
   @Schema(description = "Any notes to keep about this visitor", example = "notes")
   val visitorNotes: String? = null,

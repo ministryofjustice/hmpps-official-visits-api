@@ -4,13 +4,13 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(enumAsRef = true)
 enum class ReferenceDataGroup(val displayName: String, val isDocumented: Boolean) {
+  ATTENDANCE("attendance code", true),
   DAY("day of the week", true),
-  CONTACTS("contact type", true),
-  EQUIP_CATEGORY("equipment category", true),
+  CONTACT_TYPE("contact type", true),
   SEARCH_LEVEL("visitor search type", true),
   TEST_TYPE("test type", false),
-  VIS_COMPLETE("visit completion code", true),
-  VIS_LOC_TYPE("visit location type", true),
-  VIS_STS("visit status code", true),
-  VIS_TYPE_CODE("visit type", true),
+  VIS_COMPLETION("visit completion code", true),
+  VIS_STATUS("visit status code", true),
+  VIS_TYPE("visit type code", true),
+  VISITOR_TYPE("visitor type code", true),
 }

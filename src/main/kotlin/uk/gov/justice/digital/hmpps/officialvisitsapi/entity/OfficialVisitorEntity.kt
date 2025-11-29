@@ -39,15 +39,9 @@ class OfficialVisitorEntity(
 
   val assistedVisit: Boolean = false,
 
-  val emailAddress: String? = null,
-
-  val phoneNumber: String? = null,
-
   val visitorNotes: String? = null,
 
   val attendanceCode: String? = null,
-
-  val attendanceNotes: String? = null,
 
   val attendanceBy: String? = null,
 

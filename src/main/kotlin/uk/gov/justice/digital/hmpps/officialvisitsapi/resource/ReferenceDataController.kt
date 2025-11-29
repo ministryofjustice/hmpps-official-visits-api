@@ -48,7 +48,7 @@ class ReferenceDataController(private val referenceDataService: ReferenceDataSer
   @GetMapping(value = ["/group/{groupCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
   fun getReferenceDataByGroup(
-    @Parameter(description = "The group code of the reference codes to load", required = true, example = "VIS_STS")
+    @Parameter(description = "The group code of the reference codes to load", required = true, example = "VIS_STATUS")
     @PathVariable("groupCode", required = true)
     groupCode: ReferenceDataGroup,
     @Parameter(description = "Whether to only return active codes or not, defaults to true", required = false)
