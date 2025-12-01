@@ -121,12 +121,12 @@ class MigrationService(
         startTime = request.startTime!!,
         endTime = request.endTime!!,
         dpsLocationId = request.dpsLocationId!!,
-        visitStatusCode = request.visitStatusCode?.code ?: "ACTIVE", // TODO: Map this value to DPS code
-        visitTypeCode = request.visitTypeCode?.code ?: "IN_PERSON", // TODO: Map this value to DPS code
-        publicNotes = request.commentText,
-        searchTypeCode = request.searchTypeCode?.code, // TODO: Map this value to DPS code
-        visitorConcernText = request.visitorConcernText,
-        completionCode = request.eventOutcomeCode?.code, // TODO: Map this from outcome code and outcome reason code
+        visitStatusCode = request.visitStatusCode?.code ?: "SCHEDULED", // TODO: Map this value to VIS_STATUS codes (SCHEDULED, COMPLETE, EXPIRED or CANCELLED)
+        visitTypeCode = "IN_PERSON", // TODO: From NOMIS its always IN_PERSON, or UNKNOWN - options?
+        staffNotes = request.commentText,
+        searchTypeCode = request.searchTypeCode?.code, // TODO: Should be the same in NOMIS and DPS
+        visitorConcernNotes = request.visitorConcernText,
+        completionCode = request.eventOutcomeCode?.code, // TODO: Map this to one of the VIS_COMPLETION reference codes
         overrideBanBy = request.overrideBanStaffUsername,
         overrideBanTime = null, // TODO: Investigate whether Syscon can send this?
         createdTime = request.createDateTime ?: LocalDateTime.now(),
@@ -156,7 +156,7 @@ class MigrationService(
           officialVisit = dpsVisit,
           contactId = visitor.personId,
           visitorTypeCode = "CONTACT", // TODO: Will there be other types? e.g. PRISONER, OPV?
-          contactTypeCode = "O", // TODO: Get from contacts
+          contactTypeCode = "OFFICIAL", // TODO: Map this from 'O' or 'S' to SOCIAL or OFFICIAL (VISITOR_TYPE reference codes)
           leadVisitor = visitor.groupLeaderFlag ?: false,
           assistedVisit = visitor.assistedVisitFlag ?: false,
           visitorNotes = visitor.commentText,
@@ -164,7 +164,7 @@ class MigrationService(
           lastName = visitor.lastName,
           prisonerContactId = null, // TODO: Get from contacts
           relationshipCode = visitor.relationshipToPrisoner?.code,
-          attendanceCode = visitor.eventOutcomeCode?.code, // TODO: Map from event outcome/outcome reason code
+          attendanceCode = visitor.eventOutcomeCode?.code, // TODO: Map this to ATTENDANCE reference data code
           createdBy = visitor.createUsername ?: "MIGRATION",
           createdTime = visitor.createDateTime ?: LocalDateTime.now(),
           updatedBy = visitor.modifyUsername,
@@ -182,7 +182,7 @@ class MigrationService(
     PrisonerVisitedEntity(
       officialVisit = dpsVisit,
       prisonerNumber = dpsVisit.prisonerNumber,
-      attendanceCode = dpsVisit.completionCode, // TODO: Check this
+      attendanceCode = "ATTENDED", // TODO: Map this to ATTENDANCE reference data (from visit status, outcome code and reason)
       attendanceBy = null, // TODO: Don't think we can get this for migrated visits?
       createdBy = dpsVisit.createdBy,
       createdTime = dpsVisit.createdTime,

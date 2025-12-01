@@ -46,11 +46,13 @@ class CreateOfficialVisitRequest(
   @Schema(description = "The visit type code (VIDEO, IN_PERSON, TELEPHONE)", example = "IN_PERSON")
   val visitTypeCode: String?,
 
-  @Schema(description = "Notes that will not be shared on movement slips", example = "Private note")
-  val privateNotes: String?,
+  @Schema(description = "Notes for staff that will not be shared on movement slips", example = "Staff notes")
+  val staffNotes: String?,
 
-  @Schema(description = "Notes that may be shared on movement slips", example = "Public note")
-  val publicNotes: String?,
+  @Schema(description = "Notes for prisoners that may be shared on movement slips", example = "Prisoner notes")
+  val prisonerNotes: String?,
+
+  // TODO: More values to add here
 
   val officialVisitors: List<OfficialVisitor> = emptyList(),
 )

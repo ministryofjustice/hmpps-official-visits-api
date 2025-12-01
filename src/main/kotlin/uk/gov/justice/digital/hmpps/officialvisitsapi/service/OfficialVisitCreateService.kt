@@ -30,24 +30,22 @@ class OfficialVisitCreateService(
         startTime = request.startTime!!,
         endTime = request.endTime!!,
         dpsLocationId = request.dpsLocationId!!,
-        visitStatusCode = "ACTIVE",
-        visitTypeCode = request.visitTypeCode!!,
-        privateNotes = request.privateNotes,
-        publicNotes = request.publicNotes,
+        visitStatusCode = "SCHEDULED", // TODO: enum value
+        visitTypeCode = request.visitTypeCode!!, // TODO: enum value
+        staffNotes = request.staffNotes,
+        prisonerNotes = request.prisonerNotes,
         createdBy = user.username,
       ).apply {
         request.officialVisitors.forEach {
           addVisitor(
-            visitorTypeCode = it.visitorTypeCode!!,
-            contactTypeCode = it.contactTypeCode!!,
+            visitorTypeCode = it.visitorTypeCode!!, // TODO: enum value
+            contactTypeCode = it.contactTypeCode!!, // TODO: enum value
             contactId = it.contactId,
             prisonerContactId = it.prisonerContactId,
             firstName = it.firstName,
             lastName = it.lastName,
             leadVisitor = it.leadVisitor ?: false,
             assistedVisit = it.assistedVisit ?: false,
-            emailAddress = it.emailAddress,
-            phoneNumber = it.phoneNumber,
             visitorNotes = it.visitorNotes,
             createdBy = user,
           )
