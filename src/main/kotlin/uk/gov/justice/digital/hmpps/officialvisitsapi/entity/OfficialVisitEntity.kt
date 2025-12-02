@@ -47,13 +47,13 @@ class OfficialVisitEntity(
 
   val currentTerm: Boolean = true,
 
-  val privateNotes: String? = null,
+  val staffNotes: String? = null,
 
-  val publicNotes: String? = null,
+  val prisonerNotes: String? = null,
+
+  val visitorConcernNotes: String? = null,
 
   val searchTypeCode: String? = null,
-
-  val visitorConcernText: String? = null,
 
   val completionCode: String? = null,
 
@@ -83,8 +83,6 @@ class OfficialVisitEntity(
     lastName: String? = null,
     leadVisitor: Boolean? = false,
     assistedVisit: Boolean? = false,
-    emailAddress: String? = null,
-    phoneNumber: String? = null,
     visitorNotes: String? = null,
     createdBy: User,
     createdTime: LocalDateTime = LocalDateTime.now(),
@@ -100,8 +98,6 @@ class OfficialVisitEntity(
         lastName = lastName,
         leadVisitor = leadVisitor ?: false,
         assistedVisit = assistedVisit ?: false,
-        emailAddress = emailAddress,
-        phoneNumber = phoneNumber,
         visitorNotes = visitorNotes,
         createdBy = createdBy.username,
         createdTime = createdTime,

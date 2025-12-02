@@ -27,9 +27,9 @@ class ReferenceDataServiceTest {
 
   @Test
   fun `Should return a list of references codes that are active values only`() {
-    val groupCode = ReferenceDataGroup.VIS_TYPE_CODE
+    val groupCode = ReferenceDataGroup.VIS_TYPE
     val listOfCodes = listOf(
-      ReferenceDataEntity(1L, groupCode, "IN_PERSON", "In person", 0, true),
+      ReferenceDataEntity(1L, groupCode, "IN_PERSON", "Attend in person", 0, true),
       ReferenceDataEntity(2L, groupCode, "VIDEO", "Video", 1, true),
       ReferenceDataEntity(3L, groupCode, "TELEPHONE", "Telephone", 2, true),
     )
@@ -43,9 +43,9 @@ class ReferenceDataServiceTest {
 
   @Test
   fun `Should return a list of references codes for active and inactive values`() {
-    val groupCode = ReferenceDataGroup.VIS_TYPE_CODE
+    val groupCode = ReferenceDataGroup.VIS_TYPE
     val listOfCodes = listOf(
-      ReferenceDataEntity(1L, groupCode, "IN_PERSON", "In person", 0, true),
+      ReferenceDataEntity(1L, groupCode, "IN_PERSON", "Attend in person", 0, true),
       ReferenceDataEntity(2L, groupCode, "VIDEO", "Video", 1, true),
       ReferenceDataEntity(3L, groupCode, "TELEPHONE", "Telephone", 2, true),
     )
@@ -80,34 +80,34 @@ class ReferenceDataServiceTest {
 
   @Test
   fun `should return reference code if not enabled and not enabled is allowed`() {
-    val entity = ReferenceDataEntity(1L, ReferenceDataGroup.VIS_COMPLETE, "CANC", "Cancelled", 0, false)
+    val entity = ReferenceDataEntity(1L, ReferenceDataGroup.VIS_COMPLETION, "STAFF_CANCELLED", "Cancelled for operational reasons", 0, false)
 
-    whenever(referenceDataRepository.findByGroupCodeAndCode(ReferenceDataGroup.VIS_COMPLETE, "CANC")).thenReturn(entity)
+    whenever(referenceDataRepository.findByGroupCodeAndCode(ReferenceDataGroup.VIS_COMPLETION, "STAFF_CANCELLED")).thenReturn(entity)
 
-    val code = service.validateReferenceData(ReferenceDataGroup.VIS_COMPLETE, "CANC", allowInactive = true)
+    val code = service.validateReferenceData(ReferenceDataGroup.VIS_COMPLETION, "STAFF_CANCELLED", allowInactive = true)
 
-    assertThat(code).isEqualTo(ReferenceDataItem(1L, ReferenceDataGroup.VIS_COMPLETE, "CANC", "Cancelled", 0, false))
+    assertThat(code).isEqualTo(ReferenceDataItem(1L, ReferenceDataGroup.VIS_COMPLETION, "STAFF_CANCELLED", "Cancelled for operational reasons", 0, false))
   }
 
   @Test
   fun `should throw exception if reference code is not enabled and inactive not allowed`() {
-    val entity = ReferenceDataEntity(1L, ReferenceDataGroup.VIS_COMPLETE, "CANC", "Cancelled", 0, false)
+    val entity = ReferenceDataEntity(1L, ReferenceDataGroup.VIS_COMPLETION, "VISITOR_CANCELLED", "Visitor cancelled", 0, false)
 
-    whenever(referenceDataRepository.findByGroupCodeAndCode(ReferenceDataGroup.VIS_COMPLETE, "CANC")).thenReturn(entity)
+    whenever(referenceDataRepository.findByGroupCodeAndCode(ReferenceDataGroup.VIS_COMPLETION, "VISITOR_CANCELLED")).thenReturn(entity)
 
     val exception = assertThrows<ValidationException> {
-      service.validateReferenceData(ReferenceDataGroup.VIS_COMPLETE, "CANC", allowInactive = false)
+      service.validateReferenceData(ReferenceDataGroup.VIS_COMPLETION, "VISITOR_CANCELLED", allowInactive = false)
     }
 
-    assertThat(exception.message).isEqualTo("Unsupported visit completion code (CANC). This code is no longer active.")
+    assertThat(exception.message).isEqualTo("Unsupported visit completion code (VISITOR_CANCELLED). This code is no longer active.")
   }
 
   @Test
   fun `should throw exception if reference code is not found`() {
-    whenever(referenceDataRepository.findByGroupCodeAndCode(ReferenceDataGroup.VIS_COMPLETE, "UNKNOWN")).thenReturn(null)
+    whenever(referenceDataRepository.findByGroupCodeAndCode(ReferenceDataGroup.VIS_COMPLETION, "UNKNOWN")).thenReturn(null)
 
     val exception = assertThrows<ValidationException> {
-      service.validateReferenceData(ReferenceDataGroup.VIS_COMPLETE, "UNKNOWN", allowInactive = true)
+      service.validateReferenceData(ReferenceDataGroup.VIS_COMPLETION, "UNKNOWN", allowInactive = true)
     }
 
     assertThat(exception.message).isEqualTo("Unsupported visit completion code (UNKNOWN)")

@@ -60,31 +60,21 @@ data class MigrateVisitRequest(
   @field:NotNull(message = "The DPS location ID is mandatory")
   val dpsLocationId: UUID?,
 
-  @Schema(description = "The visit status code from NOMIS (reference data - VIS_STS)", example = "SCH", required = true)
-  @field:NotNull(message = "The status code from NOMIS is mandatory")
+  @Schema(description = "The visit status code from NOMIS", example = "SCH", required = true)
+  @field:NotNull(message = "The visit status code from NOMIS is mandatory")
   val visitStatusCode: CodedValue?,
-
-  @Schema(description = "The visit type code from NOMIS expected to be O for all(reference data - VISIT_TYPE)", example = "O", required = true)
-  @field:NotNull(message = "The visit type code is mandatory")
-  val visitTypeCode: CodedValue?,
 
   @Schema(description = "The comment text from NOMIS", example = "This is a comment", nullable = true)
   val commentText: String? = null,
 
-  @Schema(description = "The search type code from NOMIS (reference data - SEARCH_TYPE)", example = "RUB_A", nullable = true)
+  @Schema(description = "The search type code from NOMIS", example = "RUB_A", nullable = true)
   val searchTypeCode: CodedValue? = null,
 
-  @Schema(description = "The event outcome code NOMIS (reference data - VIS_COMPLETE)", example = "", nullable = true)
+  @Schema(description = "The event outcome code NOMIS", nullable = true)
   val eventOutcomeCode: CodedValue? = null,
 
-  @Schema(description = "The outcome reason code NOMIS (reference data - MOVE_CANC_RS)", example = "", nullable = true)
+  @Schema(description = "The outcome reason code NOMIS", nullable = true)
   val outcomeReasonCode: CodedValue? = null,
-
-  @Schema(description = "The raised indcident type code from NOMIS (reference data - INC_TYPE)", example = "", nullable = true)
-  val raisedIncidentTypeCode: CodedValue? = null,
-
-  @Schema(description = "The raised incident number from NOMIS", example = "1333", nullable = true)
-  val incidentNumber: Long? = null,
 
   @Schema(description = "Concerns raised by the visitor", example = "Visitor concern notes", nullable = true)
   val visitorConcernText: String? = null,
@@ -139,10 +129,10 @@ data class MigrateVisitor(
   @Schema(description = "The comment text from NOMIS", example = "Comment text", nullable = true)
   val commentText: String? = null,
 
-  @Schema(description = "The event outcome code NOMIS (reference data)", example = "", nullable = true)
+  @Schema(description = "The visitor event outcome code from NOMIS", example = "", nullable = true)
   val eventOutcomeCode: CodedValue? = null,
 
-  @Schema(description = "The outcome reason code NOMIS (reference data)", example = "", nullable = true)
+  @Schema(description = "The visitor outcome reason code from NOMIS", example = "", nullable = true)
   val outcomeReasonCode: CodedValue? = null,
 
   @Schema(description = "The data and time the record was created", example = "2022-10-01T16:45:45", required = true)

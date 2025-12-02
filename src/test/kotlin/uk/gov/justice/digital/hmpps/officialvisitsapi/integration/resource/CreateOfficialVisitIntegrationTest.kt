@@ -39,8 +39,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
         endTime = LocalTime.of(11, 0),
         dpsLocationId = UUID.randomUUID(),
         visitTypeCode = "IN_PERSON",
-        privateNotes = "private notes",
-        publicNotes = "public notes",
+        staffNotes = "private notes",
+        prisonerNotes = "public notes",
         officialVisitors = listOf(
           OfficialVisitor(
             visitorTypeCode = "CONTACT",
@@ -68,9 +68,9 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       endTime isEqualTo LocalTime.of(11, 0)
       dpsLocationId isNotEqualTo null
       visitTypeCode isEqualTo "IN_PERSON"
-      visitStatusCode isEqualTo "ACTIVE" // Set on creation
-      privateNotes isEqualTo "private notes"
-      publicNotes isEqualTo "public notes"
+      visitStatusCode isEqualTo "SCHEDULED" // Set on creation
+      staffNotes isEqualTo "private notes"
+      prisonerNotes isEqualTo "public notes"
       createdBy isEqualTo PENTONVILLE_PRISON_USER.username
       createdTime isCloseTo now()
     }
@@ -98,8 +98,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
         endTime = LocalTime.of(11, 0),
         dpsLocationId = UUID.randomUUID(),
         visitTypeCode = "IN_PERSON",
-        privateNotes = "private notes",
-        publicNotes = "public notes",
+        staffNotes = "private notes",
+        prisonerNotes = "public notes",
       ),
       "Prison visit slot with id -99 not found.",
     )
@@ -117,8 +117,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
         endTime = LocalTime.of(11, 0),
         dpsLocationId = UUID.randomUUID(),
         visitTypeCode = "IN_PERSON",
-        privateNotes = "private notes",
-        publicNotes = "public notes",
+        staffNotes = "private notes",
+        prisonerNotes = "public notes",
       ),
       "Prisoner ${PENTONVILLE_PRISONER.number} not found at prison WWI",
     )
