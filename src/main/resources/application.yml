@@ -14,7 +14,15 @@ spring:
     url: 'jdbc:postgresql://${DB_SERVER}/${DB_NAME}?sslmode=${DB_SSL_MODE}'
     username: ${DB_USER}
     password: ${DB_PASS}
-
+    hikari:
+      pool-name: OFFICIAL-VISITS-DB-CP
+      connection-timeout: 15000
+      validation-timeout: 2000
+      maximum-pool-size: 25
+      max-lifetime: 600000
+      leak-detection-threshold: 30000
+      minimum-idle: 8
+      keepalive-time: 10000
   jpa:
     open-in-view: false
     show-sql: false
