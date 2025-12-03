@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.entity
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -11,6 +13,12 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -37,9 +45,11 @@ class OfficialVisitEntity(
 
   val dpsLocationId: UUID,
 
-  val visitStatusCode: String,
+  @Enumerated(EnumType.STRING)
+  val visitStatusCode: VisitStatusType,
 
-  val visitTypeCode: String,
+  @Enumerated(EnumType.STRING)
+  val visitTypeCode: VisitType,
 
   val prisonCode: String,
 
@@ -53,9 +63,11 @@ class OfficialVisitEntity(
 
   val visitorConcernNotes: String? = null,
 
-  val searchTypeCode: String? = null,
+  @Enumerated(EnumType.STRING)
+  val searchTypeCode: SearchLevelType? = null,
 
-  val completionCode: String? = null,
+  @Enumerated(EnumType.STRING)
+  val completionCode: VisitCompletionType? = null,
 
   val overrideBanTime: LocalDateTime? = null,
 
@@ -69,14 +81,19 @@ class OfficialVisitEntity(
 
   val updatedTime: LocalDateTime? = null,
 
+  val offenderBookId: Long? = null,
+
   val offenderVisitId: Long? = null,
+
+  val visitOrderNumber: Long? = null,
 ) {
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
 
   fun addVisitor(
-    visitorTypeCode: String,
-    contactTypeCode: String,
+    visitorTypeCode: VisitorType,
+    relationshipTypeCode: RelationshipType,
+    relationshipCode: String,
     contactId: Long? = null,
     prisonerContactId: Long? = null,
     firstName: String? = null,
@@ -91,7 +108,8 @@ class OfficialVisitEntity(
       OfficialVisitorEntity(
         officialVisit = this,
         visitorTypeCode = visitorTypeCode,
-        contactTypeCode = contactTypeCode,
+        relationshipTypeCode = relationshipTypeCode,
+        relationshipCode = relationshipCode,
         contactId = contactId,
         prisonerContactId = prisonerContactId,
         firstName = firstName,

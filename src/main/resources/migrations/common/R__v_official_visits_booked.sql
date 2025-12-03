@@ -18,7 +18,7 @@ CREATE VIEW v_official_visits_booked AS
          pv.prisoner_number,
          visitor.contact_id,
          visitor.visitor_type_code,
-         visitor.contact_type_code,
+         visitor.relationship_type_code,
          visitor.first_name,
          visitor.last_name,
          visitor.relationship_code,

@@ -9,6 +9,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEnti
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitConfigRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.ElementType
@@ -109,31 +112,32 @@ class MigrationService(
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} not found on offender visit ID ${request.offenderVisitId}")
     }
 
-    // TODO: Get the contact and relationships from the personal relationships API -- CurrentTerm? Old ones?
-
     val visit = officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
         prisonVisitSlot = visitSlot,
-        prisonCode = request.prisonCode,
-        prisonerNumber = request.prisonerNumber,
-        currentTerm = request.currentTerm ?: false,
         visitDate = request.visitDate!!,
         startTime = request.startTime!!,
         endTime = request.endTime!!,
         dpsLocationId = request.dpsLocationId!!,
-        visitStatusCode = request.visitStatusCode?.code ?: "SCHEDULED", // TODO: Map this value to VIS_STATUS codes (SCHEDULED, COMPLETE, EXPIRED or CANCELLED)
-        visitTypeCode = "IN_PERSON", // TODO: From NOMIS its always IN_PERSON, or UNKNOWN - options?
+        visitStatusCode = request.visitStatusCode!!,
+        visitTypeCode = request.visitTypeCode!!,
+        prisonCode = request.prisonCode,
+        prisonerNumber = request.prisonerNumber,
+        currentTerm = request.currentTerm!!,
         staffNotes = request.commentText,
-        searchTypeCode = request.searchTypeCode?.code, // TODO: Should be the same in NOMIS and DPS
+        prisonerNotes = null, // Never supplied
         visitorConcernNotes = request.visitorConcernText,
-        completionCode = request.eventOutcomeCode?.code, // TODO: Map this to one of the VIS_COMPLETION reference codes
+        searchTypeCode = request.searchTypeCode,
+        completionCode = request.visitCompletionCode,
+        overrideBanTime = null, // Never supplied
         overrideBanBy = request.overrideBanStaffUsername,
-        overrideBanTime = null, // TODO: Investigate whether Syscon can send this?
-        createdTime = request.createDateTime ?: LocalDateTime.now(),
         createdBy = request.createUsername ?: "MIGRATION",
-        updatedTime = request.modifyDateTime,
+        createdTime = request.createDateTime ?: LocalDateTime.now(),
         updatedBy = request.modifyUsername,
+        updatedTime = request.modifyDateTime,
+        offenderBookId = request.offenderBookId,
         offenderVisitId = request.offenderVisitId!!,
+        visitOrderNumber = request.visitOrderNumber,
       ),
     )
 
@@ -154,17 +158,17 @@ class MigrationService(
       officialVisitorRepository.saveAndFlush(
         OfficialVisitorEntity(
           officialVisit = dpsVisit,
+          visitorTypeCode = VisitorType.CONTACT,
+          firstName = visitor.firstName,
+          lastName = visitor.lastName,
           contactId = visitor.personId,
-          visitorTypeCode = "CONTACT", // TODO: Will there be other types? e.g. PRISONER, OPV?
-          contactTypeCode = "OFFICIAL", // TODO: Map this from 'O' or 'S' to SOCIAL or OFFICIAL (VISITOR_TYPE reference codes)
+          prisonerContactId = null, // Not supplied via migration
+          relationshipTypeCode = visitor.relationshipTypeCode,
+          relationshipCode = visitor.relationshipToPrisoner,
           leadVisitor = visitor.groupLeaderFlag ?: false,
           assistedVisit = visitor.assistedVisitFlag ?: false,
           visitorNotes = visitor.commentText,
-          firstName = visitor.firstName,
-          lastName = visitor.lastName,
-          prisonerContactId = null, // TODO: Get from contacts
-          relationshipCode = visitor.relationshipToPrisoner?.code,
-          attendanceCode = visitor.eventOutcomeCode?.code, // TODO: Map this to ATTENDANCE reference data code
+          attendanceCode = visitor.attendanceCode,
           createdBy = visitor.createUsername ?: "MIGRATION",
           createdTime = visitor.createDateTime ?: LocalDateTime.now(),
           updatedBy = visitor.modifyUsername,
@@ -182,12 +186,27 @@ class MigrationService(
     PrisonerVisitedEntity(
       officialVisit = dpsVisit,
       prisonerNumber = dpsVisit.prisonerNumber,
-      attendanceCode = "ATTENDED", // TODO: Map this to ATTENDANCE reference data (from visit status, outcome code and reason)
-      attendanceBy = null, // TODO: Don't think we can get this for migrated visits?
+      attendanceCode = mapPrisonerAttendance(request),
       createdBy = dpsVisit.createdBy,
       createdTime = dpsVisit.createdTime,
       updatedBy = dpsVisit.updatedBy,
       updatedTime = dpsVisit.updatedTime,
     ),
   )
+
+  private fun mapPrisonerAttendance(request: MigrateVisitRequest) = when (request.visitCompletionCode) {
+    null,
+    VisitCompletionType.VISITOR_CANCELLED,
+    VisitCompletionType.VISITOR_DENIED,
+    VisitCompletionType.STAFF_CANCELLED,
+    -> null
+
+    VisitCompletionType.PRISONER_REFUSED,
+    -> AttendanceType.ABSENT
+
+    VisitCompletionType.VISITOR_EARLY,
+    VisitCompletionType.NORMAL,
+    VisitCompletionType.PRISONER_EARLY,
+    -> AttendanceType.ATTENDED
+  }
 }

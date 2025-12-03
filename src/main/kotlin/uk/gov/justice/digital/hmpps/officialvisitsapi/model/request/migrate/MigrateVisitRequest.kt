@@ -5,15 +5,16 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
-
-/**
- * Defines the migration request received from the Syscon migration service to pass the data for one official visit
- * from NOMIS into this service and store into its DB.
- */
 
 data class MigrateVisitRequest(
   @Schema(description = "The NOMIS offender visit ID", example = "133232", required = true)
@@ -28,7 +29,7 @@ data class MigrateVisitRequest(
   @field:NotBlank(message = "The prison code is mandatory")
   val prisonCode: String?,
 
-  @Schema(description = "The offender book ID to echo back", example = "74748", required = true)
+  @Schema(description = "The offender book ID to echo back. It will be stored in DPS against the visit.", example = "74748", required = true)
   @field:NotNull(message = "The offender book ID is mandatory")
   val offenderBookId: Long?,
 
@@ -37,7 +38,7 @@ data class MigrateVisitRequest(
   @field:Size(max = 7, message = "Prisoner number must not exceed {max} characters")
   val prisonerNumber: String?,
 
-  @Schema(description = "If this visits relates to the current term (booking) in prison true, else false.", example = "true", required = true)
+  @Schema(description = "If this visits relates to the current or latest term (booking) in prison true, else false.", example = "true", required = true)
   @field:NotNull(message = "The current term flag is mandatory")
   val currentTerm: Boolean?,
 
@@ -56,31 +57,34 @@ data class MigrateVisitRequest(
   @JsonFormat(pattern = "HH:mm")
   val endTime: LocalTime?,
 
-  @Schema(description = "The DPS location where the visit takes place", example = "aaaa-bbbb-xxxxxxxx-yyyyyyyy", required = true)
+  @Schema(description = "The DPS location where the visit takes place.", example = "aaaa-bbbb-xxxxxxxx-yyyyyyyy", required = true)
   @field:NotNull(message = "The DPS location ID is mandatory")
   val dpsLocationId: UUID?,
 
-  @Schema(description = "The visit status code from NOMIS", example = "SCH", required = true)
+  @Schema(description = "The DPS visit status code. The Syscon migration service will map the NOMIS state to a value in this enumerated type.", example = "SCHEDULED", required = true)
   @field:NotNull(message = "The visit status code from NOMIS is mandatory")
-  val visitStatusCode: CodedValue?,
+  val visitStatusCode: VisitStatusType?,
 
-  @Schema(description = "The comment text from NOMIS", example = "This is a comment", nullable = true)
+  @Schema(description = "The DPS visit type code. For migrated NOMIS visits this will default to type UNKNOWN. Other values are IN_PERSON, VIDEO, or TELEPHONE.", example = "UNKNOWN", nullable = true)
+  val visitTypeCode: VisitType? = VisitType.UNKNOWN,
+
+  @Schema(description = "The visit comment text", example = "This is a comment", nullable = true)
   val commentText: String? = null,
 
-  @Schema(description = "The search type code from NOMIS", example = "RUB_A", nullable = true)
-  val searchTypeCode: CodedValue? = null,
+  @Schema(description = "The prisoner search type code. Maps to the same reference code values in both NOMIS and DPS.", example = "RUB_A", nullable = true)
+  val searchTypeCode: SearchLevelType? = null,
 
-  @Schema(description = "The event outcome code NOMIS", nullable = true)
-  val eventOutcomeCode: CodedValue? = null,
+  @Schema(description = "The DPS visit completion code. Default is NORMAL if not supplied.", example = "NORMAL", nullable = true)
+  val visitCompletionCode: VisitCompletionType? = VisitCompletionType.NORMAL,
 
-  @Schema(description = "The outcome reason code NOMIS", nullable = true)
-  val outcomeReasonCode: CodedValue? = null,
-
-  @Schema(description = "Concerns raised by the visitor", example = "Visitor concern notes", nullable = true)
+  @Schema(description = "Visit concern text from NOMIS", example = "I am concerned", nullable = true)
   val visitorConcernText: String? = null,
 
-  @Schema(description = "The staff username who authorised an override for a ban", example = "X3243H", nullable = true)
-  val overrideBanStaffUsername: String?,
+  @Schema(description = "The staff username who authorised an override for a ban for this visit", example = "X3243H", nullable = true)
+  val overrideBanStaffUsername: String? = null,
+
+  @Schema(description = "The visit order number (if present) for the official visit", example = "12344", nullable = true)
+  val visitOrderNumber: Long? = null,
 
   @Schema(description = "The data and time the record was created", example = "2022-10-01T16:45:45", required = true)
   var createDateTime: LocalDateTime? = null,
@@ -117,8 +121,11 @@ data class MigrateVisitor(
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val dateOfBirth: LocalDate? = null,
 
-  @Schema(description = "The coded relationships between this visitor and the prisoner", nullable = true)
-  val relationshipToPrisoner: CodedValue? = null,
+  @Schema(description = "The relationship type OFFICIAL or SOCIAL. Default is null if not known.", example = "OFFICIAL", nullable = true)
+  val relationshipTypeCode: RelationshipType? = null,
+
+  @Schema(description = "The relationship code between visitor and prisoner, from NOMIS reference data. A null value will indicate no relationship.", example = "POL", nullable = true)
+  val relationshipToPrisoner: String? = null,
 
   @Schema(description = "Set to true if this person is the lead visitor. Defaults to false if not supplied.", example = "true", nullable = true)
   val groupLeaderFlag: Boolean? = false,
@@ -126,14 +133,11 @@ data class MigrateVisitor(
   @Schema(description = "Set to true if this person requires assistance at the visit. Defaults to false if not supplied.", example = "true", nullable = true)
   val assistedVisitFlag: Boolean? = false,
 
-  @Schema(description = "The comment text from NOMIS", example = "Comment text", nullable = true)
+  @Schema(description = "The visitor comment text from NOMIS", example = "Some comments", nullable = true)
   val commentText: String? = null,
 
-  @Schema(description = "The visitor event outcome code from NOMIS", example = "", nullable = true)
-  val eventOutcomeCode: CodedValue? = null,
-
-  @Schema(description = "The visitor outcome reason code from NOMIS", example = "", nullable = true)
-  val outcomeReasonCode: CodedValue? = null,
+  @Schema(description = "The visitor attendance code (ATTENDED or ABSENT). A null indicates no attendance was added.", example = "ATTENDED", nullable = true)
+  val attendanceCode: AttendanceType? = null,
 
   @Schema(description = "The data and time the record was created", example = "2022-10-01T16:45:45", required = true)
   var createDateTime: LocalDateTime? = null,
@@ -146,13 +150,4 @@ data class MigrateVisitor(
 
   @Schema(description = "The username who last modified the row", nullable = true, example = "X999X")
   var modifyUsername: String? = null,
-)
-
-data class CodedValue(
-  @Schema(description = "A coded value from NOMIS reference data", maxLength = 12, example = "CODE")
-  @field:Size(max = 12, message = "Coded values must be <= 12 characters")
-  val code: String?,
-
-  @Schema(description = "The description for this coded value in NOMIS", example = "Description")
-  val description: String?,
 )

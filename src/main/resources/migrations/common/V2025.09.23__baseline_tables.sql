@@ -110,7 +110,9 @@ create table official_visit (
    created_by varchar(100) NOT NULL,
    updated_time timestamp,
    updated_by varchar(100),
-   offender_visit_id bigint -- Only set for migrated bookings otherwise null
+   offender_book_id bigint, -- Useful whilst NOMIS is in control of merges and booking moves
+   offender_visit_id bigint, -- Only set for migrated bookings from NOMIS (not used in DPS)
+   visit_order_number bigint -- Only set for migrated bookings from NOMIS (not used in DPS)
 );
 
 CREATE INDEX idx_official_visit_1 ON official_visit(prison_visit_slot_id);
@@ -122,6 +124,8 @@ CREATE INDEX idx_official_visit_6 ON official_visit(visit_status_code);
 CREATE INDEX idx_official_visit_7 ON official_visit(created_time);
 CREATE INDEX idx_official_visit_8 ON official_visit(offender_visit_id);
 CREATE INDEX idx_official_visit_9 ON official_visit(completion_code);
+CREATE INDEX idx_official_visit_10 ON official_visit(offender_book_id);
+CREATE INDEX idx_official_visit_11 ON official_visit(updated_time);
 
 --
 -- Table prisoner_visited
@@ -131,9 +135,7 @@ create table prisoner_visited (
    prisoner_visited_id bigserial NOT NULL CONSTRAINT prisoner_visited_pk PRIMARY KEY,
    official_visit_id bigint NOT NULL references official_visit(official_visit_id),
    prisoner_number varchar(7) NOT NULL, -- denormalized intentionally ease of checking
-   attendance_code varchar(20),
-   attendance_by varchar(100),
-   attendance_time timestamp,
+   attendance_code varchar(20), -- ABSENT or ATTENDED AttendanceType enum
    created_time timestamp NOT NULL,
    created_by varchar(100) NOT NULL,
    updated_time timestamp,
@@ -142,7 +144,8 @@ create table prisoner_visited (
 
 CREATE INDEX idx_prisoner_visited_1 ON prisoner_visited(official_visit_id);
 CREATE INDEX idx_prisoner_visited_2 ON prisoner_visited(prisoner_number);
-CREATE INDEX idx_prisoner_visited_3 ON prisoner_visited(attendance_code);
+CREATE INDEX idx_prisoner_visited_3 ON prisoner_visited(created_time);
+CREATE INDEX idx_prisoner_visited_4 ON prisoner_visited(updated_time);
 
 --
 -- Table official_visitor
@@ -152,33 +155,32 @@ create table official_visitor (
    official_visitor_id bigserial NOT NULL CONSTRAINT official_visitor_pk PRIMARY KEY,
    official_visit_id bigint NOT NULL references official_visit(official_visit_id),
    visitor_type_code varchar(20) NOT NULL,
-   contact_type_code varchar(20) NOT NULL,
    first_name varchar(60),
    last_name varchar(60),
-   contact_id bigint, -- person_id from NOMIS
-   prisoner_contact_id bigint, -- Only set for DPS visits - null on migration
-   relationship_code varchar(20), -- Only set for DPS visits - null on migration
+   contact_id bigint,
+   prisoner_contact_id bigint, -- Null on migrated visits
+   relationship_type_code varchar(20), -- SOCIAL or OFFICIAL
+   relationship_code varchar(20), -- BRO, SIS, POL, POM
    lead_visitor boolean NOT NULL DEFAULT false,
    assisted_visit boolean NOT NULL DEFAULT false,
    visitor_notes varchar(240),
    attendance_code varchar(20),
-   attendance_by varchar(100), -- DPS only
-   attendance_time timestamp, -- DPS only
    created_time timestamp NOT NULL,
    created_by varchar(100) NOT NULL,
    updated_time timestamp,
    updated_by varchar(100),
-   offender_visit_visitor_id bigint -- Only set for migrated visitors, otherwise null
+   offender_visit_visitor_id bigint -- Only set for migrated visitors from NOMIS (not used in DPS)
 );
 
 CREATE INDEX idx_official_visitor_1 ON official_visitor(official_visit_id);
 CREATE INDEX idx_official_visitor_2 ON official_visitor(visitor_type_code);
-CREATE INDEX idx_official_visitor_3 ON official_visitor(contact_type_code);
+CREATE INDEX idx_official_visitor_3 ON official_visitor(relationship_type_code, relationship_code);
 CREATE INDEX idx_official_visitor_4 ON official_visitor(last_name, first_name);
 CREATE INDEX idx_official_visitor_5 ON official_visitor(contact_id);
 CREATE INDEX idx_official_visitor_7 ON official_visitor(created_time);
 CREATE INDEX idx_official_visitor_8 ON official_visitor(created_by);
 CREATE INDEX idx_official_visitor_9 ON official_visitor(offender_visit_visitor_id);
+CREATE INDEX idx_official_visitor_10 ON official_visitor(updated_time);
 
 --
 -- Visitor equipment being brought into the prison

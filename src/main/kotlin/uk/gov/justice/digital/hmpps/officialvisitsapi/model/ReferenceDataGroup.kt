@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 enum class ReferenceDataGroup(val displayName: String, val isDocumented: Boolean) {
   ATTENDANCE("attendance code", true),
   DAY("day of the week", true),
-  CONTACT_TYPE("contact type", true),
+  RELATIONSHIP_TYPE("relationship type", true),
   SEARCH_LEVEL("visitor search type", true),
   TEST_TYPE("test type", false),
   VIS_COMPLETION("visit completion code", true),

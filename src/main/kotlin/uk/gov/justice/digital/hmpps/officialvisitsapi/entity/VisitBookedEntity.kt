@@ -4,6 +4,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.springframework.data.annotation.Immutable
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -41,7 +42,7 @@ data class VisitBookedEntity(
 
   val visitorTypeCode: String? = null,
 
-  val contactTypeCode: String? = null,
+  val relationshipTypeCode: String? = null,
 
   val relationshipCode: String? = null,
 
