@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.RISLEY
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiMockServer
@@ -15,9 +15,9 @@ class PrisonerSearchClientTest {
 
   @Test
   fun `should get matching prisoner`() {
-    server.stubGetPrisoner("123456", RISLEY)
+    server.stubGetPrisoner(PENTONVILLE_PRISONER)
 
-    client.getPrisoner("123456") isEqualTo prisonerSearchPrisoner("123456", RISLEY)
+    client.getPrisoner(PENTONVILLE_PRISONER.number) isEqualTo prisonerSearchPrisoner(prisonerNumber = PENTONVILLE_PRISONER.number, prisonCode = PENTONVILLE_PRISONER.prison, bookingId = PENTONVILLE_PRISONER.bookingId)
   }
 
   @AfterEach

@@ -66,6 +66,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     with(persistedOfficialVisit) {
       prisonCode isEqualTo PENTONVILLE_PRISONER.prison
       prisonerNumber isEqualTo PENTONVILLE_PRISONER.number
+      offenderBookId isEqualTo PENTONVILLE_PRISONER.bookingId
       prisonVisitSlot.prisonVisitSlotId isEqualTo 1
       visitDate isEqualTo today().plusDays(1)
       startTime isEqualTo LocalTime.of(10, 0)

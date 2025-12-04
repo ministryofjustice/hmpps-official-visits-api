@@ -21,8 +21,9 @@ class OfficialVisitCreateService(
     val prisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
 
+    val prisonerDetails = request.getPrisonersDetails()
+
     request
-      .checkPrisonerDetails()
       .checkContactDetails()
       .checkStillAvailable(prisonVisitSlot)
 
@@ -39,6 +40,7 @@ class OfficialVisitCreateService(
         visitTypeCode = request.visitTypeCode!!,
         staffNotes = request.staffNotes,
         prisonerNotes = request.prisonerNotes,
+        offenderBookId = prisonerDetails.bookingId?.toLong(),
         createdBy = user.username,
       ).apply {
         request.officialVisitors.forEach {
@@ -66,7 +68,7 @@ class OfficialVisitCreateService(
     // TODO check prison visit slot is still available prior to persisting.
   }
 
-  private fun CreateOfficialVisitRequest.checkPrisonerDetails() = also {
+  private fun CreateOfficialVisitRequest.getPrisonersDetails() = run {
     prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode!!)
   }
 
