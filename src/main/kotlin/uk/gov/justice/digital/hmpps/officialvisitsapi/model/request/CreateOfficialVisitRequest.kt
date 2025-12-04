@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -42,9 +43,8 @@ class CreateOfficialVisitRequest(
   @Schema(description = "The DPS location ID where the official visit is to take place", example = "aaaa-bbbb-9f9f9f9f-9f9f9f9f")
   val dpsLocationId: UUID?,
 
-  @field:NotBlank(message = "The type code for the official visit is mandatory")
-  @Schema(description = "The visit type code (VIDEO, IN_PERSON, TELEPHONE)", example = "IN_PERSON")
-  val visitTypeCode: String?,
+  @Schema(description = "The visit type code (VIDEO, IN_PERSON, TELEPHONE)", example = "IN_PERSON", required = true)
+  val visitTypeCode: VisitType,
 
   @Schema(description = "Notes for staff that will not be shared on movement slips", example = "Staff notes")
   val staffNotes: String?,

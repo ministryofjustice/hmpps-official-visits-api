@@ -9,10 +9,10 @@ data class ReferenceDataItem(
   @Schema(description = "An internally-generated unique identifier for this reference code.", example = "12345")
   val referenceDataId: Long,
 
-  @Schema(description = "The group name for related reference codes.", example = "VIS_STS")
+  @Schema(description = "The group name for related reference codes.", example = "VIS_STATUS")
   val groupCode: ReferenceDataGroup,
 
-  @Schema(description = "The code for this reference data", example = "SCH")
+  @Schema(description = "The code for this reference data", example = "SCHEDULED")
   val code: String,
 
   @Schema(description = "A fuller description of the reference code", example = "Scheduled")

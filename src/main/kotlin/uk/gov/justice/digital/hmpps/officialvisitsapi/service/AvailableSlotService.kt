@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AvailableSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitBookedRepository

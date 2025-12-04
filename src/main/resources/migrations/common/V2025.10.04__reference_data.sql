@@ -3,9 +3,8 @@
 insert into reference_data (group_code, code, description, display_sequence, enabled)
 values ('VIS_STATUS', 'SCHEDULED' , 'Scheduled', 1, true),
        ('VIS_STATUS', 'CANCELLED' , 'Cancelled', 2, true),
-       ('VIS_STATUS', 'COMPLETED_NORMAL' , 'Completed normally', 3, true),
-       ('VIS_STATUS', 'COMPLETED_ABNORMAL' , 'Completed early', 4, true),
-       ('VIS_STATUS', 'EXPIRED' , 'Expired', 5, true);
+       ('VIS_STATUS', 'COMPLETED' , 'Completed', 3, true),
+       ('VIS_STATUS', 'EXPIRED' , 'Expired', 4, true);
 
 -- Visit completion reason codes
 insert into reference_data (group_code, code, description, display_sequence, enabled)
@@ -26,7 +25,8 @@ values ('ATTENDANCE', 'ATTENDED' , 'Attended', 1, true),
 insert into reference_data (group_code, code, description, display_sequence, enabled)
 values ('VIS_TYPE', 'IN_PERSON' , 'Attend in person', 1, true),
        ('VIS_TYPE', 'VIDEO' , 'Video', 2, true),
-       ('VIS_TYPE', 'TELEPHONE' , 'Telephone', 3, true);
+       ('VIS_TYPE', 'TELEPHONE' , 'Telephone', 3, true),
+       ('VIS_TYPE', 'UNKNOWN' , 'Unknown', 99, false);
 
 -- Visit search level - search applies to the prisoner
 insert into reference_data (group_code, code, description, display_sequence, enabled)
@@ -37,16 +37,16 @@ values ('SEARCH_LEVEL', 'FULL' , 'Full search', 4, true),
        ('SEARCH_LEVEL', 'RUB_B' , 'Rubdown level B', 3, true),
        ('SEARCH_LEVEL', 'STR' , 'Strip search', 99, false);
 
--- Contact types
+-- Relationship types
 insert into reference_data (group_code, code, description, display_sequence, enabled)
-values ('CONTACT_TYPE', 'OFFICIAL' , 'Official', 1, true),
-       ('CONTACT_TYPE', 'SOCIAL' , 'Social / Family', 2, true);
-
+values ('RELATIONSHIP_TYPE', 'OFFICIAL' , 'Official', 1, true),
+       ('RELATIONSHIP_TYPE', 'SOCIAL' , 'Social / Family', 2, true);
 
 -- Visitor type - always 'CONTACT' for now (for use if OPV - official prisoner visitors - come into scope)
 insert into reference_data (group_code, code, description, display_sequence, enabled)
 values ('VISITOR_TYPE', 'CONTACT' , 'Contact', 1, true),
-       ('VISITOR_TYPE', 'OPV' , 'Official prison visitor', 2, true);
+       ('VISITOR_TYPE', 'OPV' , 'Official prison visitor', 2, false),
+       ('VISITOR_TYPE', 'PRISONER' , 'Another prisoner', 3, false);
 
 -- Days of the week
 insert into reference_data (group_code, code, description, display_sequence, enabled)

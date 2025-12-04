@@ -12,10 +12,11 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.stub
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AvailableSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitBookedRepository
@@ -453,7 +454,7 @@ class AvailableSlotServiceTest {
     prisonerNumber = "--",
     contactId = -1,
     visitorTypeCode = "--",
-    contactTypeCode = "--",
+    relationshipTypeCode = RelationshipType.OFFICIAL.toString(),
     relationshipCode = "--",
     firstName = "first name",
     lastName = "last name",

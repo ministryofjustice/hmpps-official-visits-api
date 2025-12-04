@@ -4,6 +4,7 @@ import jakarta.validation.ValidationException
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerValidator
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
@@ -30,20 +31,21 @@ class OfficialVisitCreateService(
         startTime = request.startTime!!,
         endTime = request.endTime!!,
         dpsLocationId = request.dpsLocationId!!,
-        visitStatusCode = "SCHEDULED", // TODO: enum value
-        visitTypeCode = request.visitTypeCode!!, // TODO: enum value
+        visitStatusCode = VisitStatusType.SCHEDULED,
+        visitTypeCode = request.visitTypeCode!!,
         staffNotes = request.staffNotes,
         prisonerNotes = request.prisonerNotes,
         createdBy = user.username,
       ).apply {
         request.officialVisitors.forEach {
           addVisitor(
-            visitorTypeCode = it.visitorTypeCode!!, // TODO: enum value
-            contactTypeCode = it.contactTypeCode!!, // TODO: enum value
-            contactId = it.contactId,
-            prisonerContactId = it.prisonerContactId,
+            visitorTypeCode = it.visitorTypeCode!!,
             firstName = it.firstName,
             lastName = it.lastName,
+            contactId = it.contactId,
+            prisonerContactId = it.prisonerContactId,
+            relationshipTypeCode = it.relationshipTypeCode!!,
+            relationshipCode = it.relationshipCode!!,
             leadVisitor = it.leadVisitor ?: false,
             assistedVisit = it.assistedVisit ?: false,
             visitorNotes = it.visitorNotes,
