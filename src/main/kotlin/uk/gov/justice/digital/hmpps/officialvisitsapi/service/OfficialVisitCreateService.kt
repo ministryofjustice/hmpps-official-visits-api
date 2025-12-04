@@ -4,6 +4,7 @@ import jakarta.validation.ValidationException
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerValidator
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
@@ -20,13 +21,16 @@ class OfficialVisitCreateService(
     val prisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
 
-    prisonerValidator.validatePrisonerAtPrison(request.prisonerNumber!!, request.prisonCode!!)
+    request
+      .checkPrisonerDetails()
+      .checkContactDetails()
+      .checkStillAvailable(prisonVisitSlot)
 
     officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
         prisonVisitSlot = prisonVisitSlot,
-        prisonCode = request.prisonCode,
-        prisonerNumber = request.prisonerNumber,
+        prisonCode = request.prisonCode!!,
+        prisonerNumber = request.prisonerNumber!!,
         visitDate = request.visitDate!!,
         startTime = request.startTime!!,
         endTime = request.endTime!!,
@@ -56,5 +60,20 @@ class OfficialVisitCreateService(
     ).let {
       CreateOfficialVisitResponse(it.officialVisitId)
     }
+  }
+
+  private fun CreateOfficialVisitRequest.checkStillAvailable(prisonVisitSlot: PrisonVisitSlotEntity) = also {
+    // TODO check prison visit slot is still available prior to persisting.
+  }
+
+  private fun CreateOfficialVisitRequest.checkPrisonerDetails() = also {
+    prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode!!)
+  }
+
+  private fun CreateOfficialVisitRequest.checkContactDetails() = also {
+    require(officialVisitors.isNotEmpty()) { "At least one official visitor must be supplied." }
+
+    // TODO check contact is active and is a valid contact for the prisoner
+    // TODO check the contacts relationship to the prison in line with what has supplied in the request
   }
 }

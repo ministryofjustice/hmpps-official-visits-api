@@ -10,7 +10,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
-class CreateOfficialVisitRequest(
+data class CreateOfficialVisitRequest(
   @field:NotNull(message = "The prison visit slot identifier for the official visit is mandatory")
   val prisonVisitSlotId: Long,
 
@@ -43,8 +43,9 @@ class CreateOfficialVisitRequest(
   @Schema(description = "The DPS location ID where the official visit is to take place", example = "aaaa-bbbb-9f9f9f9f-9f9f9f9f")
   val dpsLocationId: UUID?,
 
-  @Schema(description = "The visit type code (VIDEO, IN_PERSON, TELEPHONE)", example = "IN_PERSON", required = true)
-  val visitTypeCode: VisitType,
+  @field:NotNull(message = "Visit type code is mandatory")
+  @Schema(description = "The visit type code", example = "IN_PERSON", required = true)
+  val visitTypeCode: VisitType?,
 
   @Schema(description = "Notes for staff that will not be shared on movement slips", example = "Staff notes")
   val staffNotes: String?,
