@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
@@ -17,6 +18,7 @@ class AvailableSlotService(
   private val visitBookedRepository: VisitBookedRepository,
   private val availableSlotRepository: AvailableSlotRepository,
 ) {
+  @Transactional(readOnly = true)
   fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }

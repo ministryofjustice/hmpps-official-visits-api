@@ -11,20 +11,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPriso
 
 class PrisonerSearchApiMockServer : MockServer(8092) {
 
-  fun stubGetPrisoner(prisoner: Prisoner) = stubGetPrisoner(prisoner.number, prisoner.prison)
-
-  fun stubGetPrisoner(prisonerNumber: String, prisonCode: String = "WWI", lastPrisonCode: String? = null) {
+  fun stubGetPrisoner(prisoner: Prisoner) {
     stubFor(
-      get("/prisoner/$prisonerNumber")
+      get("/prisoner/${prisoner.number}")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(
               mapper.writeValueAsString(
                 prisonerSearchPrisoner(
-                  prisonerNumber = prisonerNumber,
-                  prisonCode = prisonCode,
-                  lastPrisonCode = lastPrisonCode,
+                  prisonerNumber = prisoner.number,
+                  prisonCode = prisoner.prison,
+                  bookingId = prisoner.bookingId,
                 ),
               ),
             )
