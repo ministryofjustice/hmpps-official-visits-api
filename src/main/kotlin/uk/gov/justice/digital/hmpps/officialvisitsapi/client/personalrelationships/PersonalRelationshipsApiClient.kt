@@ -38,4 +38,27 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       .block()
     return pagedModelMono?.content?.toList() ?: emptyList()
   }
+
+  fun getApprovedContacts(prisonerNumber: String): List<PrisonerContactSummary> {
+    val pagedModelMono = personalRelationshipsApiWebClient.get()
+      .uri { uriBuilder: UriBuilder ->
+        uriBuilder
+          .path("/prisoner/{prisonerNumber}/contact")
+          .queryParam("active", true)
+          .queryParam("page", 0)
+          .queryParam("size", 100)
+          .build(prisonerNumber)
+      }
+      .retrieve()
+      .bodyToMono(PagedModelPrisonerContactSummary::class.java)
+      .doOnError { error ->
+        log.info(
+          "Error fetching approved contacts for $prisonerNumber in personal relationship client",
+          error,
+        )
+      }
+      .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
+      .block()
+    return pagedModelMono?.content?.toList() ?: emptyList()
+  }
 }
