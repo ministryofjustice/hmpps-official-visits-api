@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import jakarta.validation.ValidationException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerValidator
@@ -9,7 +10,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEnti
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
@@ -23,7 +26,12 @@ class OfficialVisitCreateService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  private val contactsService: ContactsService,
 ) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   @Transactional
   fun create(request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = run {
     val prisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId)
@@ -33,7 +41,7 @@ class OfficialVisitCreateService(
 
     request
       .checkVisitDateAndTimes()
-      .checkContactDetails()
+      .checkVisitorDetails()
       .checkStillAvailable(prisonVisitSlot)
 
     officialVisitRepository.saveAndFlush(
@@ -51,35 +59,44 @@ class OfficialVisitCreateService(
         prisonerNotes = request.prisonerNotes,
         offenderBookId = prisonerDetails.bookingId?.toLong(),
         createdBy = user.username,
-      ).apply {
-        request.officialVisitors.forEach {
-          addVisitor(
-            visitorTypeCode = it.visitorTypeCode!!,
-            firstName = it.firstName,
-            lastName = it.lastName,
-            contactId = it.contactId,
-            prisonerContactId = it.prisonerContactId,
-            relationshipTypeCode = it.relationshipTypeCode!!,
-            relationshipCode = it.relationshipCode!!,
-            leadVisitor = it.leadVisitor ?: false,
-            assistedVisit = it.assistedVisit ?: false,
-            visitorNotes = it.visitorNotes,
-            createdBy = user,
-          )
-        }
-      },
-    ).also {
-      prisonerVisitedRepository.saveAndFlush(
-        PrisonerVisitedEntity(
-          officialVisit = it,
-          prisonerNumber = it.prisonerNumber,
-          attendanceCode = null,
-          createdBy = user.username,
-        ),
+      ),
+    )
+      .saveVisitors(request.officialVisitors, user)
+      .savePrisoner(request.prisonerNumber)
+      .let {
+        CreateOfficialVisitResponse(it.officialVisitId)
+      }.also {
+        logger.info("Official visit created with ID ${it.officialVisitId}")
+      }
+  }
+
+  private fun OfficialVisitEntity.saveVisitors(officialVisitors: List<OfficialVisitor>, user: User) = apply {
+    officialVisitors.forEach {
+      addVisitor(
+        visitorTypeCode = it.visitorTypeCode!!,
+        firstName = it.firstName,
+        lastName = it.lastName,
+        contactId = it.contactId,
+        prisonerContactId = it.prisonerContactId,
+        relationshipTypeCode = it.relationshipTypeCode!!,
+        relationshipCode = it.relationshipCode!!,
+        leadVisitor = it.leadVisitor ?: false,
+        assistedVisit = it.assistedVisit ?: false,
+        visitorNotes = it.visitorNotes,
+        createdBy = user,
       )
-    }.let {
-      CreateOfficialVisitResponse(it.officialVisitId)
     }
+  }
+
+  private fun OfficialVisitEntity.savePrisoner(prisonNumber: String) = also {
+    prisonerVisitedRepository.saveAndFlush(
+      PrisonerVisitedEntity(
+        officialVisit = it,
+        prisonerNumber = it.prisonerNumber,
+        attendanceCode = null,
+        createdBy = it.createdBy,
+      ),
+    )
   }
 
   private fun CreateOfficialVisitRequest.checkVisitDateAndTimes() = also {
@@ -88,7 +105,7 @@ class OfficialVisitCreateService(
   }
 
   private fun CreateOfficialVisitRequest.checkStillAvailable(prisonVisitSlot: PrisonVisitSlotEntity) = also {
-    val slots = availableSlotService.getAvailableSlotsForPrison(
+    val availableSlots = availableSlotService.getAvailableSlotsForPrison(
       prisonCode = prisonCode!!,
       fromDate = visitDate!!,
       toDate = visitDate,
@@ -96,7 +113,7 @@ class OfficialVisitCreateService(
     )
 
     require(
-      slots.any { it.visitSlotId == prisonVisitSlot.prisonVisitSlotId && it.startTime == startTime && it.dpsLocationId == dpsLocationId },
+      availableSlots.any { it.visitSlotId == prisonVisitSlot.prisonVisitSlotId && it.startTime == startTime && it.dpsLocationId == dpsLocationId },
     ) {
       "Prison visit slot ${prisonVisitSlot.prisonVisitSlotId} is no longer available for the requested date and time."
     }
@@ -106,10 +123,16 @@ class OfficialVisitCreateService(
     prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode!!)
   }
 
-  private fun CreateOfficialVisitRequest.checkContactDetails() = also {
+  private fun CreateOfficialVisitRequest.checkVisitorDetails() = also {
     require(officialVisitors.isNotEmpty()) { "At least one official visitor must be supplied." }
 
-    // TODO check contact is active and is a valid contact for the prisoner
-    // TODO check the contacts relationship to the prison in line with what has supplied in the request
+    val requestedVisitors = officialVisitors.filter { it.visitorTypeCode == VisitorType.CONTACT }.toSet()
+    val approvedVisitors = contactsService.getApprovedContacts(prisonerNumber!!)
+
+    requestedVisitors.forEach { requestedVisitor ->
+      require(approvedVisitors.any { approvedVisitor -> approvedVisitor.contactId == requestedVisitor.contactId && approvedVisitor.prisonerContactId == requestedVisitor.prisonerContactId }) {
+        "Visitor with contact ID ${requestedVisitor.contactId} and prisoner contact ID ${requestedVisitor.prisonerContactId} is not approved for visiting prisoner number $prisonerNumber."
+      }
+    }
   }
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 
 class PersonalRelationshipsApiMockServer : MockServer(8094) {
   fun stubApprovedContacts(prisonerNumber: String) {
@@ -20,6 +21,30 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(mapper.writeValueAsString(pagedModelPrisonerContactSummary(prisonerNumber, "O")))
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubAllApprovedContacts(prisonerNumber: String, contactId: Long = 1, prisonerContactId: Long = 1) {
+    stubFor(
+      get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
+        .withQueryParam("active", equalTo("true"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                pagedModelPrisonerContactSummary(
+                  prisonerContact(
+                    prisonerNumber = prisonerNumber,
+                    type = "O",
+                    contactId = contactId,
+                    prisonerContactId = prisonerContactId,
+                  ),
+                ),
+              ),
+            )
             .withStatus(200),
         ),
     )

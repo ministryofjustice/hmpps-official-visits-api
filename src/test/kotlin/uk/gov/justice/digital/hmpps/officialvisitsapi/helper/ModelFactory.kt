@@ -110,15 +110,17 @@ fun prisoner(
   dateOfBirth = LocalDate.of(2000, 1, 1),
 )
 
-fun prisonerContacts(
+fun prisonerContact(
   prisonerNumber: String,
   type: String,
-  currentTerm: Boolean,
-  isApprovedVisitor: Boolean,
-  isRelationshipActive: Boolean,
+  currentTerm: Boolean = true,
+  isApprovedVisitor: Boolean = true,
+  isRelationshipActive: Boolean = true,
   deceasedDate: LocalDate? = null,
+  contactId: Long = 654321,
+  prisonerContactId: Long = 123456,
 ) = PrisonerContactSummary(
-  contactId = 654321,
+  contactId = contactId,
   prisonerNumber = prisonerNumber,
   titleCode = "MR",
   titleDescription = "Mr",
@@ -157,14 +159,18 @@ fun prisonerContacts(
   phoneNumber = "",
   extNumber = "",
   comments = "",
-  prisonerContactId = 123456,
+  prisonerContactId = prisonerContactId,
 )
 
 fun pagedModelPrisonerContactSummary(
   prisonerNumber: String,
   type: String,
 ) = PagedModelPrisonerContactSummary(
-  listOf(prisonerContacts(prisonerNumber, type, true, true, true, null)),
+  listOf(prisonerContact(prisonerNumber, type, true, true, true, null)),
   PageMetadata(1, 1, 5, 1),
+)
 
+fun pagedModelPrisonerContactSummary(vararg prisonerContacts: PrisonerContactSummary) = PagedModelPrisonerContactSummary(
+  prisonerContacts.toList(),
+  PageMetadata(1, 1, 5, 1),
 )

@@ -3,12 +3,12 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isBool
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isNotEqualTo
@@ -28,6 +28,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
 
+@Sql("classpath:integration-test-data/creation/clean-visit-seed-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Autowired
@@ -35,6 +36,19 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
+
+  private val officialVisitor = OfficialVisitor(
+    visitorTypeCode = VisitorType.CONTACT,
+    relationshipTypeCode = RelationshipType.OFFICIAL,
+    relationshipCode = "POM",
+    contactId = 123,
+    prisonerContactId = 456,
+    firstName = "Bob",
+    lastName = "Smith",
+    leadVisitor = true,
+    assistedVisit = false,
+    visitorNotes = "visitor notes",
+  )
 
   private val nextMondayAt9 = CreateOfficialVisitRequest(
     prisonCode = MOORLAND_PRISONER.prison,
@@ -47,20 +61,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     visitTypeCode = VisitType.IN_PERSON,
     staffNotes = "private notes",
     prisonerNotes = "public notes",
-    officialVisitors = listOf(
-      OfficialVisitor(
-        visitorTypeCode = VisitorType.CONTACT,
-        relationshipTypeCode = RelationshipType.OFFICIAL,
-        relationshipCode = "POM",
-        contactId = 123,
-        prisonerContactId = 456,
-        firstName = "Bob",
-        lastName = "Smith",
-        leadVisitor = true,
-        assistedVisit = false,
-        visitorNotes = "visitor notes",
-      ),
-    ),
+    officialVisitors = listOf(officialVisitor),
   )
 
   private final val nextFridayAt11 = nextMondayAt9.copy(visitDate = next(DayOfWeek.FRIDAY), startTime = LocalTime.of(11, 0), endTime = LocalTime.of(12, 0), prisonVisitSlotId = 9, dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
@@ -68,7 +69,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   @Test
   @Transactional
   fun `should create official visit with one social visitor`() {
-    officialVisitRepository.findAll().isEmpty() isBool true
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
     val officialVisitResponse = webTestClient.create(nextMondayAt9)
     val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
@@ -109,7 +110,14 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should fail to create official visit when no matching contact found`() {
+    webTestClient.badRequest(nextMondayAt9.copy(officialVisitors = listOf(officialVisitor.copy(contactId = 999))), "Visitor with contact ID 999 and prisoner contact ID 456 is not approved for visiting prisoner number ${MOORLAND_PRISONER.number}.")
+  }
+
+  @Test
   fun `should fail to create official visit when slot is no longer available`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+
     webTestClient.create(nextFridayAt11)
     webTestClient.badRequest(nextFridayAt11, "Prison visit slot 9 is no longer available for the requested date and time.")
   }
