@@ -12,8 +12,8 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.health.LocationsInsidePrisonApiHealthPingCheck
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.container.PostgresqlContainer
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -46,8 +46,8 @@ abstract class IntegrationTestBase {
 
   @BeforeEach
   fun `stub default users and prisoners`() {
-    stubUser(PENTONVILLE_PRISON_USER)
-    prisonerSearchApi().stubGetPrisoner(PENTONVILLE_PRISONER)
+    stubUser(MOORLAND_PRISON_USER)
+    prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER)
   }
 
   protected fun stubUser(user: User) {

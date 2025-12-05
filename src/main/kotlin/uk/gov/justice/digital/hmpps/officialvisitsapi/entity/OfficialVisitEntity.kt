@@ -87,6 +87,11 @@ class OfficialVisitEntity(
 
   val visitOrderNumber: Long? = null,
 ) {
+  init {
+    require(visitDate.atTime(startTime) > now()) { "Official visit cannot be scheduled in the past" }
+    require(startTime < endTime) { "Official visit start time must be before end time" }
+  }
+
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
 
@@ -98,11 +103,11 @@ class OfficialVisitEntity(
     prisonerContactId: Long? = null,
     firstName: String? = null,
     lastName: String? = null,
-    leadVisitor: Boolean? = false,
-    assistedVisit: Boolean? = false,
+    leadVisitor: Boolean = false,
+    assistedVisit: Boolean = false,
     visitorNotes: String? = null,
     createdBy: User,
-    createdTime: LocalDateTime = LocalDateTime.now(),
+    createdTime: LocalDateTime = now(),
   ) {
     officialVisitors.add(
       OfficialVisitorEntity(
@@ -114,8 +119,8 @@ class OfficialVisitEntity(
         prisonerContactId = prisonerContactId,
         firstName = firstName,
         lastName = lastName,
-        leadVisitor = leadVisitor ?: false,
-        assistedVisit = assistedVisit ?: false,
+        leadVisitor = leadVisitor,
+        assistedVisit = assistedVisit,
         visitorNotes = visitorNotes,
         createdBy = createdBy.username,
         createdTime = createdTime,

@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships
 
 import org.slf4j.LoggerFactory
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -9,8 +8,6 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
-
-inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
 @Component
 class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClient: WebClient) {
@@ -30,10 +27,10 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
           .build(prisonerNumber)
       }
       .retrieve()
-      .bodyToMono(typeReference<PagedModelPrisonerContactSummary>())
+      .bodyToMono(PagedModelPrisonerContactSummary::class.java)
       .doOnError { error ->
         log.info(
-          "Error  While fetching approved contacts for  $prisonerNumber in Personal relationship client",
+          "Error fetching approved contacts for $prisonerNumber in personal relationship client",
           error,
         )
       }
