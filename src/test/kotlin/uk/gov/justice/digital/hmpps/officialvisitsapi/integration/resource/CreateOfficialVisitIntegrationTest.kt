@@ -39,12 +39,9 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
-    relationshipTypeCode = RelationshipType.OFFICIAL,
     relationshipCode = "POM",
     contactId = 123,
     prisonerContactId = 456,
-    firstName = "Bob",
-    lastName = "Smith",
     leadVisitor = true,
     assistedVisit = false,
     visitorNotes = "visitor notes",
@@ -95,8 +92,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       visitorTypeCode isEqualTo VisitorType.CONTACT
       relationshipTypeCode isEqualTo RelationshipType.OFFICIAL
       relationshipCode isEqualTo "POM"
-      firstName isEqualTo "Bob"
-      lastName isEqualTo "Smith"
+      firstName isEqualTo "John"
+      lastName isEqualTo "Doe"
       leadVisitor isEqualTo true
       assistedVisit isEqualTo false
       visitorNotes isEqualTo "visitor notes"
@@ -140,7 +137,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should fail when visit start time is the end time`() {
+  fun `should fail when visit start time is not before the end time`() {
     webTestClient.badRequest(nextMondayAt9.copy(startTime = nextMondayAt9.endTime), "Official visit start time must be before end time")
   }
 
