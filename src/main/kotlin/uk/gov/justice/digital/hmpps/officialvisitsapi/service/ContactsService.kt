@@ -8,8 +8,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedCon
 @Service
 class ContactsService(private val personalRelationshipsApiClient: PersonalRelationshipsApiClient) {
 
-  fun getApprovedContacts(prisonerNumber: String, relationshipType: String): List<ApprovedContact> = personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)
-    .filter {
-      it.currentTerm && it.isApprovedVisitor && it.deceasedDate == null
-    }.toModel()
+  fun getApprovedContacts(prisonerNumber: String, relationshipType: String): List<ApprovedContact> = run {
+    personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)
+      .filter { it.currentTerm && it.isApprovedVisitor && it.deceasedDate == null }.toModel()
+  }
+
+  fun getApprovedContacts(prisonerNumber: String): List<ApprovedContact> = run {
+    personalRelationshipsApiClient.getApprovedContacts(prisonerNumber)
+      .filter { it.currentTerm && it.isApprovedVisitor && it.deceasedDate == null }.toModel()
+  }
 }
