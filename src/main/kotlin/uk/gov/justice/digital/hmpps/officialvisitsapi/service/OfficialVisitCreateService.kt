@@ -8,11 +8,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Pris
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
@@ -37,12 +39,12 @@ class OfficialVisitCreateService(
     val prisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
 
-    val prisonerDetails = request.getPrisonersDetails()
+    request.checkVisitDateAndTimes()
 
-    request
-      .checkVisitDateAndTimes()
-      .checkVisitorDetails()
-      .checkStillAvailable(prisonVisitSlot)
+    val prisonerDetails = request.getPrisonersDetails()
+    val matchingVisitors = request.getVisitorDetails()
+
+    request.checkStillAvailable(prisonVisitSlot)
 
     officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
@@ -59,10 +61,9 @@ class OfficialVisitCreateService(
         prisonerNotes = request.prisonerNotes,
         offenderBookId = prisonerDetails.bookingId?.toLong(),
         createdBy = user.username,
-      ),
+      ).saveVisitors(request.officialVisitors, matchingVisitors, user),
     )
-      .saveVisitors(request.officialVisitors, user)
-      .savePrisoner(request.prisonerNumber)
+      .savePrisoner()
       .let {
         CreateOfficialVisitResponse(it.officialVisitId)
       }.also {
@@ -70,25 +71,27 @@ class OfficialVisitCreateService(
       }
   }
 
-  private fun OfficialVisitEntity.saveVisitors(officialVisitors: List<OfficialVisitor>, user: User) = apply {
-    officialVisitors.forEach {
+  private fun OfficialVisitEntity.saveVisitors(officialVisitors: List<OfficialVisitor>, matchingVisitors: List<ApprovedContact>, user: User) = apply {
+    officialVisitors.forEach { ov ->
+      val matchingVisitor = matchingVisitors.single { mv -> mv.contactId == ov.contactId && mv.prisonerContactId == ov.prisonerContactId }
+
       addVisitor(
-        visitorTypeCode = it.visitorTypeCode!!,
-        firstName = it.firstName,
-        lastName = it.lastName,
-        contactId = it.contactId,
-        prisonerContactId = it.prisonerContactId,
-        relationshipTypeCode = it.relationshipTypeCode!!,
-        relationshipCode = it.relationshipCode!!,
-        leadVisitor = it.leadVisitor ?: false,
-        assistedVisit = it.assistedVisit ?: false,
-        visitorNotes = it.visitorNotes,
+        visitorTypeCode = ov.visitorTypeCode!!,
+        firstName = matchingVisitor.firstName,
+        lastName = matchingVisitor.lastName,
+        contactId = ov.contactId,
+        prisonerContactId = ov.prisonerContactId,
+        relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL,
+        relationshipCode = ov.relationshipCode!!,
+        leadVisitor = ov.leadVisitor ?: false,
+        assistedVisit = ov.assistedVisit ?: false,
+        visitorNotes = ov.visitorNotes,
         createdBy = user,
       )
     }
   }
 
-  private fun OfficialVisitEntity.savePrisoner(prisonNumber: String) = also {
+  private fun OfficialVisitEntity.savePrisoner() = also {
     prisonerVisitedRepository.saveAndFlush(
       PrisonerVisitedEntity(
         officialVisit = it,
@@ -123,16 +126,20 @@ class OfficialVisitCreateService(
     prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode!!)
   }
 
-  private fun CreateOfficialVisitRequest.checkVisitorDetails() = also {
+  private fun CreateOfficialVisitRequest.getVisitorDetails() = run {
     require(officialVisitors.isNotEmpty()) { "At least one official visitor must be supplied." }
 
     val requestedVisitors = officialVisitors.filter { it.visitorTypeCode == VisitorType.CONTACT }.toSet()
     val approvedVisitors = contactsService.getApprovedContacts(prisonerNumber!!)
 
-    requestedVisitors.forEach { requestedVisitor ->
-      require(approvedVisitors.any { approvedVisitor -> approvedVisitor.contactId == requestedVisitor.contactId && approvedVisitor.prisonerContactId == requestedVisitor.prisonerContactId }) {
+    requestedVisitors.map { requestedVisitor ->
+      val matchingVisitor = approvedVisitors.singleOrNull { approvedVisitor -> approvedVisitor.contactId == requestedVisitor.contactId && approvedVisitor.prisonerContactId == requestedVisitor.prisonerContactId }
+
+      requireNotNull(matchingVisitor) {
         "Visitor with contact ID ${requestedVisitor.contactId} and prisoner contact ID ${requestedVisitor.prisonerContactId} is not approved for visiting prisoner number $prisonerNumber."
       }
+
+      matchingVisitor
     }
   }
 }
