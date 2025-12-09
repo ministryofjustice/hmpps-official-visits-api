@@ -41,4 +41,7 @@ data class AvailableSlot(
 
   @Schema(description = "The available groups for official visit slot")
   val availableGroups: Int,
+
+  @Schema(description = "The description of the location where this slot exists", example = "Legal visits room 8")
+  var locationDescription: String? = null,
 )

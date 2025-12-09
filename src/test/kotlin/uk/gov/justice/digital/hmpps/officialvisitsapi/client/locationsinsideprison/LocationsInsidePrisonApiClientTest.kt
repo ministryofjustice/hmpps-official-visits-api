@@ -3,19 +3,17 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsidepri
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.LocationKeyValue
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialLocationDTO
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.PageNonResidentialLocationDTO
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pentonvilleLocation
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.wandsworthLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.LocationsInsidePrisonApiMockServer
 import java.util.UUID
 
 class LocationsInsidePrisonApiClientTest {
-
   private val locationKey = "WWI-A-1-001"
   private val locationId = UUID.randomUUID()
   private val server = LocationsInsidePrisonApiMockServer().also { it.start() }
@@ -30,39 +28,47 @@ class LocationsInsidePrisonApiClientTest {
   }
 
   @Test
-  fun `should get matching location by key`() {
-    server.stubGetLocationByKey(location(WANDSWORTH, locationKeySuffix = "A-1-001"))
+  fun `should return non-residential summary of visit locations`() {
+    val locationWandsworth = location(WANDSWORTH, locationKeySuffix = "A-1-001")
+    server.stubGetNonResidentialOfficialVisitLocationsAtPrison(WANDSWORTH, fakeNonResidentialSummary(WANDSWORTH, "WWI-A-1-001"))
+    client.getNonResidentialOfficialVisitLocationsAtPrison(WANDSWORTH)?.locations?.content?.first()?.key isEqualTo locationWandsworth.key
 
-    client.getLocationByKey(locationKey)!!.key isEqualTo locationKey
-  }
-
-  @Test
-  fun `should get matching location by list of keys`() {
-    server.stubPostLocationByKeys(listOf(LocationKeyValue(locationKey, locationId)))
-
-    client.getLocationsByKeys(setOf(locationKey)).single().key isEqualTo locationKey
-  }
-
-  @Test
-  fun `should only return leaf level video link locations`() {
-    server.stubVideoLinkLocationsAtPrison(listOf(LocationKeyValue(wandsworthLocation.key, locationId)), leafLevel = true)
-    client.getVideoLinkLocationsAtPrison(WANDSWORTH).single().key isEqualTo wandsworthLocation.key
-
-    server.stubVideoLinkLocationsAtPrison(listOf(LocationKeyValue(pentonvilleLocation.key, UUID.randomUUID())), leafLevel = false)
-    client.getVideoLinkLocationsAtPrison(PENTONVILLE) hasSize 0
-  }
-
-  @Test
-  fun `should return all non-residential locations`() {
-    server.stubNonResidentialAppointmentLocationsAtPrison(WANDSWORTH, wandsworthLocation.copy(leafLevel = false))
-    client.getNonResidentialAppointmentLocationsAtPrison(WANDSWORTH).single().key isEqualTo wandsworthLocation.key
-
-    server.stubNonResidentialAppointmentLocationsAtPrison(PENTONVILLE, pentonvilleLocation.copy(leafLevel = false))
-    client.getNonResidentialAppointmentLocationsAtPrison(PENTONVILLE).single().key isEqualTo pentonvilleLocation.key
+    val locationPentonville = location(PENTONVILLE, locationKeySuffix = "B-2-002")
+    server.stubGetNonResidentialOfficialVisitLocationsAtPrison(PENTONVILLE, fakeNonResidentialSummary(PENTONVILLE, "PVI-B-2-002"))
+    client.getNonResidentialOfficialVisitLocationsAtPrison(PENTONVILLE)?.locations?.content?.first()?.key isEqualTo locationPentonville.key
   }
 
   @AfterEach
   fun after() {
     server.stop()
   }
+
+  private fun fakeNonResidentialSummary(prisonCode: String, key: String) = NonResidentialSummary(
+    prisonId = prisonCode,
+    locations = PageNonResidentialLocationDTO(
+      totalElements = 1,
+      totalPages = 1,
+      number = 1,
+      first = true,
+      last = true,
+      numberOfElements = 1,
+      empty = false,
+      content = listOf(
+        NonResidentialLocationDTO(
+          id = locationId,
+          prisonId = prisonCode,
+          localName = "A name",
+          code = "Code",
+          pathHierarchy = "A-1-1-1",
+          locationType = NonResidentialLocationDTO.LocationType.VISITS,
+          permanentlyInactive = false,
+          usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
+          usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
+          status = NonResidentialLocationDTO.Status.ACTIVE,
+          level = 3,
+          key = key,
+        ),
+      ),
+    ),
+  )
 }

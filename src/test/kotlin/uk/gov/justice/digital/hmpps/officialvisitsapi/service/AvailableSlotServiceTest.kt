@@ -10,6 +10,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.stub
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialLocationDTO
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -28,6 +29,7 @@ import java.util.UUID
 class AvailableSlotServiceTest {
   private val visitBookedRepository: VisitBookedRepository = mock()
   private val availableSlotRepository: AvailableSlotRepository = mock()
+  private val locationsService: LocationsService = mock()
   private lateinit var availableSlotService: AvailableSlotService
 
   @Nested
@@ -35,6 +37,15 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(LocalDateTime.now())
+
+      // This is only used to decorate available slots with location descriptions
+      locationsService.stub {
+        on {
+          getOfficialVisitLocationsAtPrison(
+            eq(MOORLAND),
+          )
+        } doReturn officialVisitLocations()
+      }
     }
 
     @Test
@@ -422,7 +433,12 @@ class AvailableSlotServiceTest {
     }
   }
 
-  private fun service(dateTime: LocalDateTime) = AvailableSlotService({ dateTime }, visitBookedRepository, availableSlotRepository)
+  private fun service(dateTime: LocalDateTime) = AvailableSlotService(
+    { dateTime },
+    visitBookedRepository,
+    availableSlotRepository,
+    locationsService,
+  )
 
   private fun availableSlot(day: Day, startHour: Int, maxAdults: Int = 1, maxGroups: Int = 1, maxVideo: Int = 0) = AvailableSlotEntity(
     prisonVisitSlotId = startHour.toLong(),
@@ -459,6 +475,23 @@ class AvailableSlotServiceTest {
     firstName = "first name",
     lastName = "last name",
     dpsLocationId = UUID.randomUUID(),
+  )
+
+  private fun officialVisitLocations() = listOf(
+    NonResidentialLocationDTO(
+      id = UUID.randomUUID(),
+      prisonId = MOORLAND,
+      localName = "A name",
+      code = "Code",
+      pathHierarchy = "A-1-1-1",
+      locationType = NonResidentialLocationDTO.LocationType.VISITS,
+      permanentlyInactive = false,
+      usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
+      usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
+      status = NonResidentialLocationDTO.Status.ACTIVE,
+      level = 3,
+      key = "A-1-1-1",
+    ),
   )
 
   private fun AvailableSlot.dateIsEqualTo(expected: LocalDate) = also { visitDate isEqualTo expected }

@@ -1,10 +1,14 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.junit.jupiter.api.Assumptions.assumingThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialLocationDTO
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.PageNonResidentialLocationDTO
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
@@ -20,6 +24,15 @@ import java.util.UUID
 class AvailableSlotsIntegrationTest : IntegrationTestBase() {
 
   private val today = LocalDate.now()
+
+  @BeforeEach
+  fun setup() {
+    // Stub locations so descriptions are added to AvailableSlot responses
+    locationsInsidePrisonApi().stubGetNonResidentialOfficialVisitLocationsAtPrison(
+      MOORLAND,
+      fakeNonResidentialSummary(MOORLAND),
+    )
+  }
 
   @Test
   fun `should perform basic GET with no visits`() {
@@ -42,6 +55,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         availableVideoSessions = 4,
         availableAdults = 10,
         availableGroups = 5,
+        locationDescription = "Location description A",
       ),
       AvailableSlot(
         visitSlotId = 8,
@@ -56,6 +70,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         availableVideoSessions = 4,
         availableAdults = 10,
         availableGroups = 5,
+        locationDescription = "Location description B",
       ),
       AvailableSlot(
         visitSlotId = 9,
@@ -70,6 +85,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         availableVideoSessions = 1,
         availableAdults = 1,
         availableGroups = 1,
+        locationDescription = "Location description A",
       ),
     )
   }
@@ -94,6 +110,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
           availableVideoSessions = 0,
           availableAdults = 9,
           availableGroups = 4,
+          locationDescription = "Location description A",
         ),
         AvailableSlot(
           visitSlotId = 8,
@@ -108,6 +125,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
           availableVideoSessions = 0,
           availableAdults = 10,
           availableGroups = 5,
+          locationDescription = "Location description B",
         ),
       )
     }
@@ -123,4 +141,47 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBodyList(AvailableSlot::class.java)
     .returnResult().responseBody!!
+
+  private fun fakeNonResidentialSummary(prisonCode: String) = NonResidentialSummary(
+    prisonId = prisonCode,
+    locations = PageNonResidentialLocationDTO(
+      totalElements = 2,
+      totalPages = 1,
+      number = 1,
+      first = true,
+      last = true,
+      numberOfElements = 2,
+      empty = false,
+      content = listOf(
+        NonResidentialLocationDTO(
+          id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+          prisonId = prisonCode,
+          localName = "Location description A",
+          code = "LOC-A",
+          pathHierarchy = "A-1-1-1",
+          locationType = NonResidentialLocationDTO.LocationType.VISITS,
+          permanentlyInactive = false,
+          usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
+          usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
+          status = NonResidentialLocationDTO.Status.ACTIVE,
+          level = 3,
+          key = "A-1-1-1",
+        ),
+        NonResidentialLocationDTO(
+          id = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
+          prisonId = prisonCode,
+          localName = "Location description B",
+          code = "LOC-B",
+          pathHierarchy = "B-1-1-1",
+          locationType = NonResidentialLocationDTO.LocationType.VISITS,
+          permanentlyInactive = false,
+          usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
+          usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
+          status = NonResidentialLocationDTO.Status.ACTIVE,
+          level = 3,
+          key = "B-1-1-1",
+        ),
+      ),
+    ),
+  )
 }

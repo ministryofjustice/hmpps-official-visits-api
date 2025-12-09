@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
@@ -17,7 +18,12 @@ class AvailableSlotService(
   private val timeSource: TimeSource,
   private val visitBookedRepository: VisitBookedRepository,
   private val availableSlotRepository: AvailableSlotRepository,
+  private val locationService: LocationsService,
 ) {
+  private companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
+  }
+
   @Transactional(readOnly = true)
   fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
@@ -26,14 +32,34 @@ class AvailableSlotService(
     val availableSlots = getAvailableSlots(prisonCode, videoOnly)
     val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
 
-    AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
+    val sortedSlots = AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
       .sortedWith(compareBy({ it.visitDate }, { it.startTime }))
+
+    decorateWithLocationDescription(prisonCode, sortedSlots)
   }
 
   private fun getAvailableSlots(prisonCode: String, videoOnly: Boolean) = if (videoOnly) {
     availableSlotRepository.findAvailableVideoSlotsByPrisonCode(prisonCode)
   } else {
     availableSlotRepository.findAvailableSlotsByPrisonCode(prisonCode)
+  }
+
+  private fun decorateWithLocationDescription(prisonCode: String, slots: List<AvailableSlot>): List<AvailableSlot> {
+    val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
+    log.info("Found ${slots.size} visit locations for prison $prisonCode")
+
+    val decoratedSlots = slots.map { slot ->
+      val location = activeVisitLocations?.find { location -> location.id == slot.dpsLocationId }
+      if (location == null) {
+        log.info("Unmatched location for visit ${slot.dpsLocationId} for $prisonCode is not in locations list")
+      } else {
+        slot.locationDescription = location.localName
+        log.info("Matched location for visit ${slot.dpsLocationId} for $prisonCode found ${location.localName}")
+      }
+      slot
+    }
+
+    return decoratedSlots
   }
 }
 
