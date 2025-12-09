@@ -197,6 +197,8 @@ class MigrationService(
   private fun mapPrisonerAttendance(request: MigrateVisitRequest) = when (request.visitCompletionCode) {
     null,
     VisitCompletionType.VISITOR_CANCELLED,
+    VisitCompletionType.VISITOR_NO_SHOW,
+    VisitCompletionType.PRISONER_CANCELLED,
     VisitCompletionType.VISITOR_DENIED,
     VisitCompletionType.STAFF_CANCELLED,
     -> null
@@ -205,6 +207,7 @@ class MigrationService(
     -> AttendanceType.ABSENT
 
     VisitCompletionType.VISITOR_EARLY,
+    VisitCompletionType.STAFF_EARLY,
     VisitCompletionType.NORMAL,
     VisitCompletionType.PRISONER_EARLY,
     -> AttendanceType.ATTENDED
