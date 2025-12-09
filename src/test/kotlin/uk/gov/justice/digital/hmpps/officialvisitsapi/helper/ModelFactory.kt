@@ -60,6 +60,7 @@ fun prisonerSearchPrisoner(
   lastName: String = "Bloggs",
   bookingId: Long = -1,
   lastPrisonCode: String? = null,
+  cellLocation: String = "Location",
 ) = Prisoner(
   prisonerNumber = prisonerNumber,
   prisonId = prisonCode,
@@ -68,6 +69,9 @@ fun prisonerSearchPrisoner(
   bookingId = bookingId.toString(),
   dateOfBirth = LocalDate.of(2000, 1, 1),
   lastPrisonId = lastPrisonCode,
+  cellLocation = cellLocation,
+  middleNames = "middle Name",
+  offenderBookId = "1234",
 )
 
 fun userDetails(
@@ -108,6 +112,11 @@ fun prisoner(
   firstName = firstName,
   lastName = lastName,
   dateOfBirth = LocalDate.of(2000, 1, 1),
+  cellLocation = "Location",
+  middleNames = "middle Name",
+  offenderBookId = "1234",
+  attendanceCode = "ATTENDANCE",
+  attendanceCodeDescription = "ATTENDANCE",
 )
 
 fun prisonerContact(

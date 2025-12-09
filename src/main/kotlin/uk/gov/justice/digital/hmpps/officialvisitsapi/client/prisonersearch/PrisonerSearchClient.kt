@@ -41,4 +41,8 @@ data class Prisoner(
   val dateOfBirth: LocalDate,
   val bookingId: String? = null,
   val lastPrisonId: String? = null,
+  val cellLocation: String? = null,
+  val middleNames: String? = null,
+  val offenderBookId: String? = null,
+  val locationDescription: String? = null,
 )
