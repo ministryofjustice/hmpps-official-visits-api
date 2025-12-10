@@ -112,11 +112,6 @@ fun prisoner(
   firstName = firstName,
   lastName = lastName,
   dateOfBirth = LocalDate.of(2000, 1, 1),
-  cellLocation = "Location",
-  middleNames = "middle Name",
-  offenderBookId = "1234",
-  attendanceCode = "ATTENDANCE",
-  attendanceCodeDescription = "ATTENDANCE",
 )
 
 fun prisonerContact(

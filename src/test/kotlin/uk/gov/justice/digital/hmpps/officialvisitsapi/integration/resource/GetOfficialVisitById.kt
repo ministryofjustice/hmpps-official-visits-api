@@ -63,8 +63,8 @@ class GetOfficialVisitById : IntegrationTestBase() {
   fun `should create official visit with one social visitor and return official visit by id`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
     val response = webTestClient.create(nextMondayAt9)
-    val prisonerVisit = prisonerVisitedRepository.findByOfficialVisitId(response.officialVisitId).orElse(null)
-    prisonerVisit.officialVisit.officialVisitId isEqualTo response.officialVisitId
+    val prisonerVisit = prisonerVisitedRepository.findByOfficialVisitId(response.officialVisitId)
+    prisonerVisit!!.officialVisit.officialVisitId isEqualTo response.officialVisitId
     val officialVisitDetails = webTestClient.getOfficialVisitsByIdAndPrisonCode(response.officialVisitId, MOORLAND_PRISONER.prison)
     assertThat(officialVisitDetails).isNotNull
     officialVisitDetails.prisonCode isEqualTo MOORLAND_PRISONER.prison

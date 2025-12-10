@@ -6,12 +6,12 @@ import org.mockito.kotlin.verify
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 
 class OfficialVisitFacadeTest {
   private val request: CreateOfficialVisitRequest = mock()
   private val service: OfficialVisitCreateService = mock()
-  private val officialVisitService: OfficialVisitService = mock()
+  private val officialVisitService: OfficialVisitsRetrievalService = mock()
   private val facade = OfficialVisitFacade(service, officialVisitService)
 
   @Test

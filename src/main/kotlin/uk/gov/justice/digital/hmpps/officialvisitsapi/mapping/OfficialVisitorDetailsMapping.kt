@@ -7,11 +7,15 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReferenceDataServi
 
 fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService) = OfficialVisitorDetails(
   visitorTypeCode = this.visitorTypeCode,
+  visitorTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
+    ?: this.attendanceCode.toString(),
   firstName = this.firstName,
   lastName = this.lastName,
   contactId = this.contactId,
   prisonerContactId = this.prisonerContactId,
   relationshipTypeCode = this.relationshipTypeCode,
+  relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.VISITOR_TYPE, this.visitorTypeCode.toString())?.description
+    ?: this.attendanceCode.toString(),
   relationshipCode = this.relationshipCode,
   leadVisitor = this.leadVisitor,
   assistedVisit = this.assistedVisit,

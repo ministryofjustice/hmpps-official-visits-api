@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -61,8 +60,8 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
 
   @GetMapping("/prison/{prisonCode}/id/{officialVisitId}")
   @Operation(
-    summary = "Get Official visit",
-    description = "Gets a Official visit by  id and prison code",
+    summary = "Get an official visit by prison code and ID",
+    description = "Get the full details of an official visit, its visitors and prisoner details",
   )
   @ApiResponses(
     value = [
@@ -89,14 +88,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       name = "prisonCode",
       description = "The prison code",
       example = "MIC",
+      required = true,
     ) prisonCode: String,
     @PathVariable("officialVisitId") @Parameter(
       name = "officialVisitId",
       description = "The id of the Official visit",
       example = "123456",
+      required = true,
     ) officialVisitId: Long,
-  ): ResponseEntity<Any> {
-    val officialVisit = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
-    return ResponseEntity.ok(officialVisit)
-  }
+  ): OfficialVisitDetails = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
 }
