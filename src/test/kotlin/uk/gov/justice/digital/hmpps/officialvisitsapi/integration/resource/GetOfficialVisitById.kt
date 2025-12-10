@@ -98,7 +98,7 @@ class GetOfficialVisitById : IntegrationTestBase() {
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"))).exchange()
     .expectStatus().is4xxClientError
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody().jsonPath("$.userMessage").isEqualTo("Entity not found : Official visit with id $officialVisitId and prison code $prisonCode not found")
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
   private fun WebTestClient.getOfficialVisitsByIdAndPrisonCode(officialVisitId: Long, prisonCode: String) = this
     .get()
