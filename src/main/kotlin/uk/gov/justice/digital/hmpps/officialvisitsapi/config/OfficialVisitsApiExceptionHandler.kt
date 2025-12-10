@@ -55,7 +55,7 @@ class OfficialVisitsApiExceptionHandler {
     .body(
       ErrorResponse(
         status = NOT_FOUND,
-        userMessage = "Entity not found : ${e.message}",
+        userMessage = e.message,
         developerMessage = e.message,
       ),
     ).also { log.info("Entity not found exception: {}", e.message) }
