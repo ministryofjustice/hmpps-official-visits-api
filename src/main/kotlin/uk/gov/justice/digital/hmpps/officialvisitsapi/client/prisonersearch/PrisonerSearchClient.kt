@@ -45,4 +45,5 @@ data class Prisoner(
   val middleNames: String? = null,
   val offenderBookId: String? = null,
   val locationDescription: String? = null,
+  val prisonName: String? = null,
 )

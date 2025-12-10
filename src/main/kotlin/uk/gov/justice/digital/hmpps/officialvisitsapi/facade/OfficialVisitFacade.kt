@@ -12,5 +12,5 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 class OfficialVisitFacade(private val officialVisitCreateService: OfficialVisitCreateService, private val officialVisitService: OfficialVisitService) {
   // TODO check there is still an available slot prior to creation!!
   fun createOfficialVisit(request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = officialVisitCreateService.create(request, user)
-  fun getOfficialVisitById(officialVisitId: Long): OfficialVisitDetails = officialVisitService.getOfficialVisitById(officialVisitId)
+  fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, officialVisitId: Long): OfficialVisitDetails = officialVisitService.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
 }

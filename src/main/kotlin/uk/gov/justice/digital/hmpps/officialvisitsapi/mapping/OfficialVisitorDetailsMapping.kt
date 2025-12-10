@@ -23,7 +23,7 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService) = 
   updatedTime = this.updatedTime,
   offenderVisitVisitorId = this.offenderVisitVisitorId,
   attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
-    ?: "",
+    ?: this.attendanceCode.toString(),
 )
 
 fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService) = map { it.toModel(referenceDataService) }

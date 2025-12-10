@@ -23,7 +23,7 @@ class OfficialVisitFacadeTest {
 
   @Test
   fun `should delegate to service to fetch official visits based on Id`() {
-    facade.getOfficialVisitById(1L)
-    verify(officialVisitService).getOfficialVisitById(1L)
+    facade.getOfficialVisitByPrisonCodeAndId("MIC", 1L)
+    verify(officialVisitService).getOfficialVisitByPrisonCodeAndId("MIC", 1L)
   }
 }

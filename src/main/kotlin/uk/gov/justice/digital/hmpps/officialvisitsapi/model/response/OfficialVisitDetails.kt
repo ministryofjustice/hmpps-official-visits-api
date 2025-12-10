@@ -14,32 +14,32 @@ import java.util.UUID
 class OfficialVisitDetails(
 
   @Schema(description = "The official visit id", example = "1")
-  val officialVisitId: Long,
+  val officialVisitId: Long?,
 
   @Schema(description = "The prisoner code")
-  val prisonCode: String,
+  val prisonCode: String?,
   @Schema(description = "The Official visit prison description")
   val prisonDescription: String?,
   @Schema(description = "The Official visit status type ")
-  val visitStatus: VisitStatusType,
+  val visitStatus: VisitStatusType?,
   @Schema(description = "The Official visit status description", example = "Visit Status")
   val visitStatusDescription: String,
   @Schema(description = "The Official visit visit type", example = "AP")
-  val visitTypeCode: VisitType,
+  val visitTypeCode: VisitType?,
   @Schema(description = "The Official visit type description")
   val visitTypeDescription: String, // from reference_data
   @Schema(description = "The Official visit date")
-  val visitDate: LocalDate,
+  val visitDate: LocalDate?,
   @Schema(description = "The Official visit start time")
-  val startTime: LocalTime,
+  val startTime: LocalTime?,
   @Schema(description = "The Official visit end time")
-  val endTime: LocalTime,
+  val endTime: LocalTime?,
   @Schema(description = "The Official visit Location Id")
   val dpsLocationId: UUID,
   @Schema(description = "The Official visit location description")
   val locationDescription: String?,
   @Schema(description = "The Official visit - visitor slot slot identifier for the official visit takes place")
-  val visitSlotId: Long,
+  val visitSlotId: Long?,
   @Schema(description = "The Official visit - staff notes")
   val staffNotes: String?,
   @Schema(description = "The Official visit - prisoner notes")
@@ -55,9 +55,9 @@ class OfficialVisitDetails(
   @Schema(description = "The Official visit search type")
   val searchTypeDescription: String?, // from reference data
   @Schema(description = "The Official visit creation time")
-  val createdTime: LocalDateTime,
+  val createdTime: LocalDateTime?,
   @Schema(description = "The Official visit created by User")
-  val createdBy: String,
+  val createdBy: String?,
   @Schema(description = "The Official visit updated date time")
   val updatedTime: LocalDateTime?,
   @Schema(description = "The Official visit updated by user")

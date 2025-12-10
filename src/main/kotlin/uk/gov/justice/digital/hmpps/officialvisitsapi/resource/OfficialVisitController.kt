@@ -59,10 +59,10 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     httpRequest: HttpServletRequest,
   ): CreateOfficialVisitResponse = facade.createOfficialVisit(request, httpRequest.getLocalRequestContext().user)
 
-  @GetMapping("/{officialVisitId}")
+  @GetMapping("/prison/{prisonCode}/id/{officialVisitId}")
   @Operation(
     summary = "Get Official visit",
-    description = "Gets a Official visit by  id",
+    description = "Gets a Official visit by  id and prison code",
   )
   @ApiResponses(
     value = [
@@ -85,13 +85,18 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   )
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
   fun getOfficialVisits(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MIC",
+    ) prisonCode: String,
     @PathVariable("officialVisitId") @Parameter(
       name = "officialVisitId",
       description = "The id of the Official visit",
       example = "123456",
     ) officialVisitId: Long,
   ): ResponseEntity<Any> {
-    val officialVisit = facade.getOfficialVisitById(officialVisitId)
+    val officialVisit = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
     return ResponseEntity.ok(officialVisit)
   }
 }

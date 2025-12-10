@@ -55,7 +55,7 @@ class GetOfficialVisitById : IntegrationTestBase() {
 
   @Test
   fun `should return error message  with  invalid official visit Id`() {
-    webTestClient.getOfficialVisitsByInvalidId(9999L)
+    webTestClient.getOfficialVisitsByInvalidId(9999L, MOORLAND_PRISONER.prison)
   }
 
   @Test
@@ -65,7 +65,7 @@ class GetOfficialVisitById : IntegrationTestBase() {
     val response = webTestClient.create(nextMondayAt9)
     val prisonerVisit = prisonerVisitedRepository.findByOfficialVisitId(response.officialVisitId).orElse(null)
     prisonerVisit.officialVisit.officialVisitId isEqualTo response.officialVisitId
-    val officialVisitDetails = webTestClient.getOfficialVisitsById(response.officialVisitId)
+    val officialVisitDetails = webTestClient.getOfficialVisitsByIdAndPrisonCode(response.officialVisitId, MOORLAND_PRISONER.prison)
     assertThat(officialVisitDetails).isNotNull
     officialVisitDetails.prisonCode isEqualTo MOORLAND_PRISONER.prison
   }
@@ -82,18 +82,18 @@ class GetOfficialVisitById : IntegrationTestBase() {
     .expectBody(CreateOfficialVisitResponse::class.java)
     .returnResult().responseBody!!
 
-  private fun WebTestClient.getOfficialVisitsByInvalidId(officialVisitId: Long) = this
+  private fun WebTestClient.getOfficialVisitsByInvalidId(officialVisitId: Long, prisonCode: String) = this
     .get()
-    .uri("/official-visit/$officialVisitId")
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"))).exchange()
     .expectStatus().is4xxClientError
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody().jsonPath("$.userMessage").isEqualTo("Entity not found : Official visit with id $officialVisitId not found")
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Entity not found : Official visit with id $officialVisitId and prison code $prisonCode not found")
 
-  private fun WebTestClient.getOfficialVisitsById(officialVisitId: Long) = this
+  private fun WebTestClient.getOfficialVisitsByIdAndPrisonCode(officialVisitId: Long, prisonCode: String) = this
     .get()
-    .uri("/official-visit/$officialVisitId")
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
     .exchange()
