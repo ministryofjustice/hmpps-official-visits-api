@@ -67,7 +67,16 @@ class GetOfficialVisitById : IntegrationTestBase() {
     prisonerVisit!!.officialVisit.officialVisitId isEqualTo response.officialVisitId
     val officialVisitDetails = webTestClient.getOfficialVisitsByIdAndPrisonCode(response.officialVisitId, MOORLAND_PRISONER.prison)
     assertThat(officialVisitDetails).isNotNull
-    officialVisitDetails.prisonCode isEqualTo MOORLAND_PRISONER.prison
+    with(officialVisitDetails) {
+      officialVisitId isEqualTo response.officialVisitId
+      prisonCode isEqualTo MOORLAND_PRISONER.prison
+      dpsLocationId isEqualTo UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
+      visitTypeCode isEqualTo VisitType.IN_PERSON
+      staffNotes isEqualTo "private notes"
+      prisonerNotes isEqualTo "public notes"
+      startTime isEqualTo LocalTime.of(9, 0)
+      endTime isEqualTo LocalTime.of(10, 0)
+    }
   }
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
