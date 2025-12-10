@@ -8,7 +8,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialSummary
 import java.util.UUID
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
@@ -32,22 +31,18 @@ class LocationsInsidePrisonClient(private val locationsInsidePrisonApiWebClient:
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block()
 
-  fun getNonResidentialOfficialVisitLocationsAtPrison(prisonCode: String): NonResidentialSummary? = locationsInsidePrisonApiWebClient.get()
+  fun getOfficialVisitLocationsAtPrison(prisonCode: String, serviceType: String = "OFFICIAL_VISITS"): List<Location> = locationsInsidePrisonApiWebClient.get()
     .uri { uriBuilder: UriBuilder ->
       uriBuilder
-        .path("/locations/non-residential/summary/{prisonCode}")
-        .queryParam("status", "ACTIVE")
-        .queryParam("locationType", "VISITS")
-        .queryParam("serviceType", "OFFICIAL_VISITS")
+        .path("/locations/non-residential/prison/{prisonCode}/service/{serviceType}")
         .queryParam("sortByLocalName", true)
         .queryParam("formatLocalName", true)
-        .queryParam("page", 0)
-        .queryParam("pageSize", 200)
-        .build(prisonCode)
+        .queryParam("filterParents", true)
+        .build(prisonCode, serviceType)
     }
     .retrieve()
-    .bodyToMono(NonResidentialSummary::class.java)
+    .bodyToMono(typeReference<List<Location>>())
     .doOnError { error -> log.info("Error looking up non-residential appointment locations by prison code $prisonCode in locations inside prison client", error) }
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
-    .block()
+    .block() ?: emptyList()
 }

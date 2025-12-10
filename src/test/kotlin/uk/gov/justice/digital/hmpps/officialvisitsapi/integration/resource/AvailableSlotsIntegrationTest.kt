@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialLocationDTO
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.PageNonResidentialLocationDTO
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
@@ -17,21 +15,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTes
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import java.time.DayOfWeek.FRIDAY
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
 @Sql("classpath:integration-test-data/availability/clean-visit-seed-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class AvailableSlotsIntegrationTest : IntegrationTestBase() {
-
   private val today = LocalDate.now()
 
   @BeforeEach
   fun setup() {
-    // Stub locations so descriptions are added to AvailableSlot responses
-    locationsInsidePrisonApi().stubGetNonResidentialOfficialVisitLocationsAtPrison(
-      MOORLAND,
-      fakeNonResidentialSummary(MOORLAND),
-    )
+    // Stub locations so localName descriptions are added to AvailableSlot responses
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, fakeOfficialVisitLocations())
   }
 
   @Test
@@ -142,46 +137,46 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
     .expectBodyList(AvailableSlot::class.java)
     .returnResult().responseBody!!
 
-  private fun fakeNonResidentialSummary(prisonCode: String) = NonResidentialSummary(
-    prisonId = prisonCode,
-    locations = PageNonResidentialLocationDTO(
-      totalElements = 2,
-      totalPages = 1,
-      number = 1,
-      first = true,
-      last = true,
-      numberOfElements = 2,
-      empty = false,
-      content = listOf(
-        NonResidentialLocationDTO(
-          id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-          prisonId = prisonCode,
-          localName = "Location description A",
-          code = "LOC-A",
-          pathHierarchy = "A-1-1-1",
-          locationType = NonResidentialLocationDTO.LocationType.VISITS,
-          permanentlyInactive = false,
-          usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
-          usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
-          status = NonResidentialLocationDTO.Status.ACTIVE,
-          level = 3,
-          key = "A-1-1-1",
-        ),
-        NonResidentialLocationDTO(
-          id = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
-          prisonId = prisonCode,
-          localName = "Location description B",
-          code = "LOC-B",
-          pathHierarchy = "B-1-1-1",
-          locationType = NonResidentialLocationDTO.LocationType.VISITS,
-          permanentlyInactive = false,
-          usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
-          usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
-          status = NonResidentialLocationDTO.Status.ACTIVE,
-          level = 3,
-          key = "B-1-1-1",
-        ),
-      ),
+  private fun fakeOfficialVisitLocations() = listOf(
+    Location(
+      id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+      prisonId = MOORLAND,
+      localName = "Location description A",
+      code = "LOC-A",
+      pathHierarchy = "A-1-1-1",
+      locationType = Location.LocationType.VISITS,
+      permanentlyInactive = false,
+      status = Location.Status.ACTIVE,
+      level = 3,
+      key = "A-1-1-1",
+      active = true,
+      locked = false,
+      isResidential = false,
+      leafLevel = true,
+      topLevelId = UUID.randomUUID(),
+      deactivatedByParent = false,
+      lastModifiedBy = "XXX",
+      lastModifiedDate = LocalDateTime.now().minusDays(1),
+    ),
+    Location(
+      id = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
+      prisonId = MOORLAND,
+      localName = "Location description B",
+      code = "LOC-B",
+      pathHierarchy = "B-1-1-1",
+      locationType = Location.LocationType.VISITS,
+      permanentlyInactive = false,
+      status = Location.Status.ACTIVE,
+      level = 3,
+      key = "B-1-1-1",
+      active = true,
+      locked = false,
+      isResidential = false,
+      leafLevel = true,
+      topLevelId = UUID.randomUUID(),
+      deactivatedByParent = false,
+      lastModifiedBy = "XXX",
+      lastModifiedDate = LocalDateTime.now().minusDays(1),
     ),
   )
 }

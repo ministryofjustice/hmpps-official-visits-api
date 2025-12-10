@@ -10,7 +10,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.stub
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialLocationDTO
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -478,19 +478,25 @@ class AvailableSlotServiceTest {
   )
 
   private fun officialVisitLocations() = listOf(
-    NonResidentialLocationDTO(
+    Location(
       id = UUID.randomUUID(),
       prisonId = MOORLAND,
       localName = "A name",
       code = "Code",
       pathHierarchy = "A-1-1-1",
-      locationType = NonResidentialLocationDTO.LocationType.VISITS,
+      locationType = Location.LocationType.VISITS,
       permanentlyInactive = false,
-      usedByGroupedServices = listOf(NonResidentialLocationDTO.UsedByGroupedServices.OFFICIAL_VISITS),
-      usedByServices = listOf(NonResidentialLocationDTO.UsedByServices.OFFICIAL_VISITS),
-      status = NonResidentialLocationDTO.Status.ACTIVE,
+      status = Location.Status.ACTIVE,
       level = 3,
       key = "A-1-1-1",
+      active = true,
+      locked = false,
+      isResidential = false,
+      leafLevel = true,
+      topLevelId = UUID.randomUUID(),
+      deactivatedByParent = false,
+      lastModifiedBy = "XXX",
+      lastModifiedDate = LocalDateTime.now().minusDays(1),
     ),
   )
 

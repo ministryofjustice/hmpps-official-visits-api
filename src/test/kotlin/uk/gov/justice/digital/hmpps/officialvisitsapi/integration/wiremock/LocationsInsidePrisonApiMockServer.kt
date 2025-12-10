@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
 
 class LocationsInsidePrisonApiMockServer : MockServer(8091) {
@@ -23,16 +22,17 @@ class LocationsInsidePrisonApiMockServer : MockServer(8091) {
     )
   }
 
-  fun stubGetNonResidentialOfficialVisitLocationsAtPrison(
+  fun stubGetOfficialVisitLocationsAtPrison(
     prisonCode: String = WANDSWORTH,
-    locationSummary: NonResidentialSummary,
+    locations: List<Location> = emptyList(),
+    serviceType: String = "OFFICIAL_VISITS",
   ) {
     stubFor(
-      get("/locations/non-residential/summary/$prisonCode?status=ACTIVE&locationType=VISITS&serviceType=OFFICIAL_VISITS&sortByLocalName=true&formatLocalName=true&page=0&pageSize=200")
+      get("/locations/non-residential/prison/$prisonCode/service/$serviceType?sortByLocalName=true&formatLocalName=true&filterParents=true")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(locationSummary))
+            .withBody(mapper.writeValueAsString(locations))
             .withStatus(200),
         ),
     )
