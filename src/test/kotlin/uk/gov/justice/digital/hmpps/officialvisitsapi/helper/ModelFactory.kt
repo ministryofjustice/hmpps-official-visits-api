@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
-import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toIsoDateTime
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import java.time.LocalDate
@@ -47,9 +46,10 @@ fun location(prisonCode: String, locationKeySuffix: String, active: Boolean = tr
   isResidential = false,
   localName = localName,
   lastModifiedBy = "test user",
-  lastModifiedDate = LocalDateTime.now().toIsoDateTime(),
+  lastModifiedDate = LocalDateTime.now(),
   level = 2,
   leafLevel = true,
+  locked = false,
   status = Location.Status.ACTIVE,
 )
 
