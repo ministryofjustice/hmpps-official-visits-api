@@ -17,8 +17,6 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService) = 
   relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
-  relationshipDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
-    ?: this.relationshipTypeCode.toString(),
   leadVisitor = this.leadVisitor,
   assistedVisit = this.assistedVisit,
   visitorNotes = this.visitorNotes,

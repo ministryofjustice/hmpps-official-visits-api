@@ -35,9 +35,6 @@ data class OfficialVisitorDetails(
   @Schema(description = "The Official visitor relationship code")
   val relationshipCode: String?,
 
-  @Schema(description = "The Official visitor relationship description")
-  val relationshipDescription: String?,
-
   @Schema(description = "The Official visitor - is lead visitor")
   val leadVisitor: Boolean,
 
@@ -49,6 +46,9 @@ data class OfficialVisitorDetails(
 
   @Schema(description = "The Official visitor attendance type")
   val attendanceCode: AttendanceType?,
+
+  @Schema(description = "The Official visitor attendance description")
+  val attendanceDescription: String?,
 
   @Schema(description = "The Official visitor created by user")
   val createdBy: String,
@@ -65,6 +65,4 @@ data class OfficialVisitorDetails(
   @Schema(description = "The Official visitor offender visit visitor id")
   val offenderVisitVisitorId: Long?,
 
-  @Schema(description = "The Official visitor attendance description")
-  val attendanceDescription: String?,
 )
