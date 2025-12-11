@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Pris
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
@@ -60,10 +61,10 @@ class OfficialVisitCreateService(
         staffNotes = request.staffNotes,
         prisonerNotes = request.prisonerNotes,
         offenderBookId = prisonerDetails.bookingId?.toLong(),
+        searchTypeCode = request.searchTypeCode,
         createdBy = user.username,
-      ).saveVisitors(request.officialVisitors, matchingVisitors, user),
-    )
-      .savePrisoner()
+      ).addVisitorsAndAnyEquipment(request.officialVisitors, matchingVisitors, user),
+    ).savePrisonerBeingVisited()
       .let {
         CreateOfficialVisitResponse(it.officialVisitId)
       }.also {
@@ -71,27 +72,35 @@ class OfficialVisitCreateService(
       }
   }
 
-  private fun OfficialVisitEntity.saveVisitors(officialVisitors: List<OfficialVisitor>, matchingVisitors: List<ApprovedContact>, user: User) = apply {
+  private fun OfficialVisitEntity.addVisitorsAndAnyEquipment(officialVisitors: List<OfficialVisitor>, matchingVisitors: List<ApprovedContact>, user: User) = apply {
     officialVisitors.forEach { ov ->
       val matchingVisitor = matchingVisitors.single { mv -> mv.contactId == ov.contactId && mv.prisonerContactId == ov.prisonerContactId }
 
       addVisitor(
         visitorTypeCode = ov.visitorTypeCode!!,
-        firstName = matchingVisitor.firstName,
-        lastName = matchingVisitor.lastName,
-        contactId = ov.contactId,
-        prisonerContactId = ov.prisonerContactId,
         relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL,
         relationshipCode = ov.relationshipCode!!,
+        contactId = ov.contactId,
+        prisonerContactId = ov.prisonerContactId,
+        firstName = matchingVisitor.firstName,
+        lastName = matchingVisitor.lastName,
         leadVisitor = ov.leadVisitor ?: false,
         assistedVisit = ov.assistedVisit ?: false,
-        visitorNotes = ov.visitorNotes,
+        assistedNotes = ov.assistedNotes,
         createdBy = user,
-      )
+      ).apply {
+        ov.visitorEquipment?.description?.let { description ->
+          visitorEquipment = VisitorEquipmentEntity(
+            officialVisitor = this,
+            description = description,
+            createdBy = user.username,
+          )
+        }
+      }
     }
   }
 
-  private fun OfficialVisitEntity.savePrisoner() = also {
+  private fun OfficialVisitEntity.savePrisonerBeingVisited() = also {
     prisonerVisitedRepository.saveAndFlush(
       PrisonerVisitedEntity(
         officialVisit = it,

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import java.time.LocalDate
 import java.time.LocalTime
@@ -47,13 +48,16 @@ data class CreateOfficialVisitRequest(
   @Schema(description = "The visit type code", example = "IN_PERSON", required = true)
   val visitTypeCode: VisitType?,
 
+  @field:Size(max = 240, message = "The staff notes should not exceed {max} characters")
   @Schema(description = "Notes for staff that will not be shared on movement slips", example = "Staff notes")
   val staffNotes: String?,
 
+  @field:Size(max = 240, message = "The prisoner notes should not exceed {max} characters")
   @Schema(description = "Notes for prisoners that may be shared on movement slips", example = "Prisoner notes")
   val prisonerNotes: String?,
 
-  // TODO: More values to add here
+  @Schema(description = "Search type code relates to the search that will be done on the prisoner after the visit", example = "FULL")
+  val searchTypeCode: SearchLevelType? = null,
 
-  val officialVisitors: List<OfficialVisitor> = emptyList(),
+  val officialVisitors: List<OfficialVisitor>,
 )
