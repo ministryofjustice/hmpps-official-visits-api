@@ -17,12 +17,12 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService) = 
   relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
+  attendanceCode = attendanceCode,
   attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
     ?: this.attendanceCode.toString(),
   leadVisitor = this.leadVisitor,
   assistedVisit = this.assistedVisit,
   visitorNotes = this.visitorNotes,
-  attendanceCode = attendanceCode,
   createdBy = this.createdBy,
   createdTime = this.createdTime,
   updatedBy = this.updatedBy,
