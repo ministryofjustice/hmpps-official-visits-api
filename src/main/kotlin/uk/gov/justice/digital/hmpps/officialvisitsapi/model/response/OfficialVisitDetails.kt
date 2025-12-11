@@ -88,5 +88,5 @@ class OfficialVisitDetails(
   val officialVisitors: List<OfficialVisitorDetails>?,
 
   @Schema(description = "The Prisoner Information")
-  val prisoner: PrisonerVisitedDetails?,
+  val prisonerVisited: PrisonerVisitedDetails?,
 )

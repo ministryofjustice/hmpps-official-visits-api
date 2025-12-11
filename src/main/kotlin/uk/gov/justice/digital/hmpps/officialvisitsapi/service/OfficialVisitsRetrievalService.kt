@@ -23,7 +23,7 @@ class OfficialVisitsRetrievalService(
   @Transactional(readOnly = true)
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, id: Long): OfficialVisitDetails {
     val officialVisitEntity = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
-      .orElseThrow { EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found") }
+      ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
 
     val prisoner = prisonerSearchClient.getPrisoner(officialVisitEntity.prisonerNumber)
     val prisonerVisitedEntity = prisonerVisitedRepository.findByOfficialVisitId(id)
@@ -73,7 +73,7 @@ class OfficialVisitsRetrievalService(
     updatedTime = officialVisitEntity.updatedTime,
     updatedBy = officialVisitEntity.updatedBy,
     officialVisitors = officialVisitEntity.officialVisitors().toModel(referenceDataService),
-    prisoner = PrisonerVisitedDetails(
+    prisonerVisited = PrisonerVisitedDetails(
       prisonerNumber = prisoner.prisonerNumber,
       prisonCode = prisoner.prisonId!!,
       firstName = prisoner.firstName,
