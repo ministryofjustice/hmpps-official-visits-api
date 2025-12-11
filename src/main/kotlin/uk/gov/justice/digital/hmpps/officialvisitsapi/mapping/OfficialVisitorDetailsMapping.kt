@@ -17,6 +17,8 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService) = 
   relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
+  attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
+    ?: this.attendanceCode.toString(),
   leadVisitor = this.leadVisitor,
   assistedVisit = this.assistedVisit,
   visitorNotes = this.visitorNotes,
@@ -26,8 +28,6 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService) = 
   updatedBy = this.updatedBy,
   updatedTime = this.updatedTime,
   offenderVisitVisitorId = this.offenderVisitVisitorId,
-  attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
-    ?: this.attendanceCode.toString(),
 )
 
 fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService) = map { it.toModel(referenceDataService) }
