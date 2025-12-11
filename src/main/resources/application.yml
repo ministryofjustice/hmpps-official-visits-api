@@ -18,10 +18,10 @@ spring:
       pool-name: OFFICIAL-VISITS-DB-CP
       connection-timeout: 15000
       validation-timeout: 2000
-      maximum-pool-size: 25
-      max-lifetime: 600000
-      leak-detection-threshold: 30000
-      minimum-idle: 8
+      maximum-pool-size: 9
+      max-lifetime: 240000
+      leak-detection-threshold: 15000
+      minimum-idle: 2
       keepalive-time: 10000
   jpa:
     open-in-view: false
