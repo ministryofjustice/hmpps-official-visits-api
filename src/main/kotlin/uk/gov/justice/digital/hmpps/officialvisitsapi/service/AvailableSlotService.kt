@@ -46,17 +46,16 @@ class AvailableSlotService(
 
   private fun decorateWithLocationDescription(prisonCode: String, slots: List<AvailableSlot>): List<AvailableSlot> {
     val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
-    log.info("Found ${slots.size} visit locations for prison $prisonCode")
+    log.info("Found ${slots.size} official visit locations for prison $prisonCode")
 
     val decoratedSlots = slots.map { slot ->
       val location = activeVisitLocations?.find { location -> location.id == slot.dpsLocationId }
       if (location == null) {
-        log.info("Unmatched location for visit ${slot.dpsLocationId} for $prisonCode is not in locations list")
+        log.error("Unmatched location for visit ${slot.dpsLocationId} for $prisonCode is not in the official visits locations")
+        slot.copy(locationDescription = "** unknown **")
       } else {
-        slot.locationDescription = location.localName
-        log.info("Matched location for visit ${slot.dpsLocationId} for $prisonCode found ${location.localName}")
+        slot.copy(locationDescription = location.localName)
       }
-      slot
     }
 
     return decoratedSlots

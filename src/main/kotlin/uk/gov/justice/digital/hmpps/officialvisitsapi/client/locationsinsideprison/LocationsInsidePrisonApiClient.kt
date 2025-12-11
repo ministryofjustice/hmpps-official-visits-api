@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison
 
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -8,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.CacheConfiguration
 import java.util.UUID
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
@@ -31,6 +33,7 @@ class LocationsInsidePrisonClient(private val locationsInsidePrisonApiWebClient:
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block()
 
+  @Cacheable(CacheConfiguration.OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE)
   fun getOfficialVisitLocationsAtPrison(prisonCode: String, serviceType: String = "OFFICIAL_VISITS"): List<Location> = locationsInsidePrisonApiWebClient.get()
     .uri { uriBuilder: UriBuilder ->
       uriBuilder
