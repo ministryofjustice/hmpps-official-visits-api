@@ -12,15 +12,19 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.OfficialVisitFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 
 @Tag(name = "Official visits")
 @RestController
@@ -53,4 +57,44 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     request: CreateOfficialVisitRequest,
     httpRequest: HttpServletRequest,
   ): CreateOfficialVisitResponse = facade.createOfficialVisit(request, httpRequest.getLocalRequestContext().user)
+
+  @GetMapping("/prison/{prisonCode}/id/{officialVisitId}")
+  @Operation(
+    summary = "Get an official visit by prison code and ID",
+    description = "Get the full details of an official visit, its visitors and prisoner details",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit found",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = OfficialVisitDetails::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No Official visit found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun getOfficialVisits(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MIC",
+      required = true,
+    ) prisonCode: String,
+    @PathVariable("officialVisitId") @Parameter(
+      name = "officialVisitId",
+      description = "The id of the Official visit",
+      example = "123456",
+      required = true,
+    ) officialVisitId: Long,
+  ): OfficialVisitDetails = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
 }
