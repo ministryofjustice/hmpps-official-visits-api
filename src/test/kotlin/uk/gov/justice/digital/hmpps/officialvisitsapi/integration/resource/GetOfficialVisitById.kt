@@ -78,7 +78,7 @@ class GetOfficialVisitById : IntegrationTestBase() {
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
     .post()
-    .uri("/official-visit")
+    .uri("/official-visit/prison/${request.prisonCode}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
