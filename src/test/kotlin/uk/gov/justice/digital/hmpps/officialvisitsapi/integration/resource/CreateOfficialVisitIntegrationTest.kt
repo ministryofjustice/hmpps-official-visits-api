@@ -8,7 +8,8 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isNotEqualTo
@@ -26,6 +27,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquip
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
@@ -51,7 +53,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   )
 
   private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonCode = MOORLAND_PRISONER.prison,
     prisonerNumber = MOORLAND_PRISONER.number,
     prisonVisitSlotId = 1,
     visitDate = next(DayOfWeek.MONDAY),
@@ -196,27 +197,27 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should fail when prisoner not at prison`() {
-    webTestClient.badRequest(nextMondayAt9.copy(prisonCode = WANDSWORTH), "Prisoner ${MOORLAND_PRISONER.number} not found at prison WWI")
+    webTestClient.badRequest(nextMondayAt9, "Prisoner ${MOORLAND_PRISONER.number} not found at prison $PENTONVILLE", PENTONVILLE_PRISON_USER)
   }
 
-  private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
+  private fun WebTestClient.create(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${request.prisonCode}")
+    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isCreated
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody(CreateOfficialVisitResponse::class.java)
     .returnResult().responseBody!!
 
-  private fun WebTestClient.badRequest(request: CreateOfficialVisitRequest, errorMessage: String) = this
+  private fun WebTestClient.badRequest(request: CreateOfficialVisitRequest, errorMessage: String, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${request.prisonCode}")
+    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isBadRequest
     .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)

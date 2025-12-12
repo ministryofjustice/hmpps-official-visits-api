@@ -16,9 +16,9 @@ class OfficialVisitFacadeTest {
 
   @Test
   fun `should delegate to service on create`() {
-    facade.createOfficialVisit(request, PENTONVILLE_PRISON_USER)
+    facade.createOfficialVisit("MDI", request, PENTONVILLE_PRISON_USER)
 
-    verify(service).create(request, PENTONVILLE_PRISON_USER)
+    verify(service).create("MDI", request, PENTONVILLE_PRISON_USER)
   }
 
   @Test

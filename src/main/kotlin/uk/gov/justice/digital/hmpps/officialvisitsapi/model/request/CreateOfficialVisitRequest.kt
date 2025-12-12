@@ -15,11 +15,6 @@ data class CreateOfficialVisitRequest(
   @field:NotNull(message = "The prison visit slot identifier for the official visit is mandatory")
   val prisonVisitSlotId: Long,
 
-  @field:NotBlank(message = "The prison code for the official visit is mandatory")
-  @field:Size(max = 3, message = "Prison code must not exceed {max} characters")
-  @Schema(description = "The prison code for the prisoner", example = "PVI")
-  val prisonCode: String?,
-
   @field:NotBlank(message = "The prisoner number for the official visit is mandatory")
   @field:Size(max = 7, message = "Prisoner number must not exceed {max} characters")
   @Schema(description = "The prisoner number (NOMIS ID)", example = "A1234AA")

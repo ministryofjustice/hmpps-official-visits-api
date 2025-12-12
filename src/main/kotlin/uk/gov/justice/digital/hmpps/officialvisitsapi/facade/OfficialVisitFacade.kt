@@ -10,6 +10,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 
 @Component
 class OfficialVisitFacade(private val officialVisitCreateService: OfficialVisitCreateService, private val officialVisitService: OfficialVisitsRetrievalService) {
-  fun createOfficialVisit(request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = officialVisitCreateService.create(request, user)
+  fun createOfficialVisit(prisonCode: String, request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = officialVisitCreateService.create(prisonCode, request, user)
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, officialVisitId: Long): OfficialVisitDetails = officialVisitService.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
 }

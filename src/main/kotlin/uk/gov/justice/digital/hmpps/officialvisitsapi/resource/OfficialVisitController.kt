@@ -62,7 +62,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     @Parameter(description = "The request with the official visit details", required = true)
     request: CreateOfficialVisitRequest,
     httpRequest: HttpServletRequest,
-  ): CreateOfficialVisitResponse = facade.createOfficialVisit(request, httpRequest.getLocalRequestContext().user)
+  ): CreateOfficialVisitResponse = facade.createOfficialVisit(prisonCode, request, httpRequest.getLocalRequestContext().user)
 
   @GetMapping("/prison/{prisonCode}/id/{officialVisitId}")
   @Operation(
