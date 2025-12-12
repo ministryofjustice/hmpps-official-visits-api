@@ -16,11 +16,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
@@ -44,7 +46,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     prisonerContactId = 456,
     leadVisitor = true,
     assistedVisit = false,
-    visitorNotes = "visitor notes",
+    assistedNotes = "visitor notes",
+    visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
   private val nextMondayAt9 = CreateOfficialVisitRequest(
@@ -58,6 +61,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     visitTypeCode = VisitType.IN_PERSON,
     staffNotes = "private notes",
     prisonerNotes = "public notes",
+    searchTypeCode = SearchLevelType.PAT,
     officialVisitors = listOf(officialVisitor),
   )
 
@@ -65,7 +69,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   @Transactional
-  fun `should create official visit with one social visitor`() {
+  fun `should create official unassisted visit with one social visitor and equipment`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
     val officialVisitResponse = webTestClient.create(nextMondayAt9)
@@ -84,6 +88,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       visitStatusCode isEqualTo VisitStatusType.SCHEDULED
       staffNotes isEqualTo "private notes"
       prisonerNotes isEqualTo "public notes"
+      visitorConcernNotes isEqualTo null
+      searchTypeCode isEqualTo SearchLevelType.PAT
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
     }
@@ -96,7 +102,54 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       lastName isEqualTo "Doe"
       leadVisitor isEqualTo true
       assistedVisit isEqualTo false
+      visitorNotes isEqualTo null
+      visitorEquipment!!.description isEqualTo "Bringing secure laptop"
+    }
+
+    with(prisonerVisitedRepository.findAll().single { it.officialVisit == persistedOfficialVisit }) {
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      createdBy isEqualTo MOORLAND_PRISON_USER.username
+      createdTime isCloseTo now()
+    }
+  }
+
+  @Test
+  @Transactional
+  fun `should create official assisted visit with one social visitor and no equipment`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+
+    val officialVisitResponse = webTestClient.create(nextMondayAt9.copy(officialVisitors = listOf(officialVisitor.copy(assistedVisit = true, visitorEquipment = null))))
+    val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
+
+    with(persistedOfficialVisit) {
+      prisonCode isEqualTo MOORLAND_PRISONER.prison
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      offenderBookId isEqualTo MOORLAND_PRISONER.bookingId
+      prisonVisitSlot.prisonVisitSlotId isEqualTo 1
+      visitDate isEqualTo next(DayOfWeek.MONDAY)
+      startTime isEqualTo LocalTime.of(9, 0)
+      endTime isEqualTo LocalTime.of(10, 0)
+      dpsLocationId isNotEqualTo null
+      visitTypeCode isEqualTo VisitType.IN_PERSON
+      visitStatusCode isEqualTo VisitStatusType.SCHEDULED
+      staffNotes isEqualTo "private notes"
+      prisonerNotes isEqualTo "public notes"
+      visitorConcernNotes isEqualTo null
+      searchTypeCode isEqualTo SearchLevelType.PAT
+      createdBy isEqualTo MOORLAND_PRISON_USER.username
+      createdTime isCloseTo now()
+    }
+
+    with(persistedOfficialVisit.officialVisitors().single()) {
+      visitorTypeCode isEqualTo VisitorType.CONTACT
+      relationshipTypeCode isEqualTo RelationshipType.OFFICIAL
+      relationshipCode isEqualTo "POM"
+      firstName isEqualTo "John"
+      lastName isEqualTo "Doe"
+      leadVisitor isEqualTo true
+      assistedVisit isEqualTo true
       visitorNotes isEqualTo "visitor notes"
+      visitorEquipment isEqualTo null
     }
 
     with(prisonerVisitedRepository.findAll().single { it.officialVisit == persistedOfficialVisit }) {

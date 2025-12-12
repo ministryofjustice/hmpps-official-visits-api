@@ -100,27 +100,25 @@ class OfficialVisitEntity(
     lastName: String? = null,
     leadVisitor: Boolean = false,
     assistedVisit: Boolean = false,
-    visitorNotes: String? = null,
+    assistedNotes: String? = null,
     createdBy: User,
     createdTime: LocalDateTime = now(),
-  ) {
-    officialVisitors.add(
-      OfficialVisitorEntity(
-        officialVisit = this,
-        visitorTypeCode = visitorTypeCode,
-        relationshipTypeCode = relationshipTypeCode,
-        relationshipCode = relationshipCode,
-        contactId = contactId,
-        prisonerContactId = prisonerContactId,
-        firstName = firstName,
-        lastName = lastName,
-        leadVisitor = leadVisitor,
-        assistedVisit = assistedVisit,
-        visitorNotes = visitorNotes,
-        createdBy = createdBy.username,
-        createdTime = createdTime,
-      ),
-    )
+  ): OfficialVisitorEntity = run {
+    OfficialVisitorEntity(
+      officialVisit = this,
+      visitorTypeCode = visitorTypeCode,
+      relationshipTypeCode = relationshipTypeCode,
+      relationshipCode = relationshipCode,
+      contactId = contactId,
+      prisonerContactId = prisonerContactId,
+      firstName = firstName,
+      lastName = lastName,
+      leadVisitor = leadVisitor,
+      assistedVisit = assistedVisit,
+      visitorNotes = assistedNotes.takeIf { assistedVisit }, // assisted notes are only applicable when assistedVisit == true
+      createdBy = createdBy.username,
+      createdTime = createdTime,
+    ).also(officialVisitors::add)
   }
 
   fun officialVisitors(): List<OfficialVisitorEntity> = officialVisitors.toList()

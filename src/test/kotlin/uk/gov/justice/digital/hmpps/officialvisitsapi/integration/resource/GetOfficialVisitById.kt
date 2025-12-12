@@ -35,7 +35,6 @@ class GetOfficialVisitById : IntegrationTestBase() {
     prisonerContactId = 456,
     leadVisitor = true,
     assistedVisit = false,
-    visitorNotes = "visitor notes",
   )
 
   private val nextMondayAt9 = CreateOfficialVisitRequest(
