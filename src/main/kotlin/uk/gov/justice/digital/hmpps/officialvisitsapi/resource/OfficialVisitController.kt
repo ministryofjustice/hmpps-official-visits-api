@@ -47,10 +47,16 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       ),
     ],
   )
-  @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(path = ["/prison/{prisonCode}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__RW')")
   fun createOfficialVisit(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
     @Valid
     @RequestBody
     @Parameter(description = "The request with the official visit details", required = true)
