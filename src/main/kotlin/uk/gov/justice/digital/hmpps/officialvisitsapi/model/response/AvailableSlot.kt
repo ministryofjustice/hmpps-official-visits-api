@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 import java.time.LocalTime
@@ -25,9 +26,11 @@ data class AvailableSlot(
   val visitDate: LocalDate,
 
   @Schema(description = "The start time for the official visit slot")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val startTime: LocalTime,
 
   @Schema(description = "The end time for the official visit slot")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val endTime: LocalTime,
 
   @Schema(description = "The DPS location where the official visit takes place for the slot", example = "aaaa-bbbb-xxxxxxxx-yyyyyyyy")
