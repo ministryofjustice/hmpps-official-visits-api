@@ -38,7 +38,6 @@ class GetOfficialVisitById : IntegrationTestBase() {
   )
 
   private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonCode = MOORLAND_PRISONER.prison,
     prisonerNumber = MOORLAND_PRISONER.number,
     prisonVisitSlotId = 1,
     visitDate = next(DayOfWeek.MONDAY),
@@ -78,7 +77,7 @@ class GetOfficialVisitById : IntegrationTestBase() {
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
     .post()
-    .uri("/official-visit/prison/${request.prisonCode}")
+    .uri("/official-visit/prison/${MOORLAND_PRISON_USER.activeCaseLoadId}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

@@ -36,21 +36,21 @@ class OfficialVisitCreateService(
   }
 
   @Transactional
-  fun create(request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = run {
+  fun create(prisonCode: String, request: CreateOfficialVisitRequest, user: User): CreateOfficialVisitResponse = run {
     val prisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
 
     request.checkVisitDateAndTimes()
 
-    val prisonerDetails = request.getPrisonersDetails()
+    val prisonerDetails = request.getPrisonersDetails(prisonCode)
     val matchingVisitors = request.getVisitorDetails()
 
-    request.checkStillAvailable(prisonVisitSlot)
+    request.checkStillAvailable(prisonCode, prisonVisitSlot)
 
     officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
         prisonVisitSlot = prisonVisitSlot,
-        prisonCode = request.prisonCode!!,
+        prisonCode = prisonCode,
         prisonerNumber = request.prisonerNumber!!,
         visitDate = request.visitDate!!,
         startTime = request.startTime!!,
@@ -116,9 +116,9 @@ class OfficialVisitCreateService(
     require(startTime!! < endTime) { "Official visit start time must be before end time" }
   }
 
-  private fun CreateOfficialVisitRequest.checkStillAvailable(prisonVisitSlot: PrisonVisitSlotEntity) = also {
+  private fun CreateOfficialVisitRequest.checkStillAvailable(prisonCode: String, prisonVisitSlot: PrisonVisitSlotEntity) = also {
     val availableSlots = availableSlotService.getAvailableSlotsForPrison(
-      prisonCode = prisonCode!!,
+      prisonCode = prisonCode,
       fromDate = visitDate!!,
       toDate = visitDate,
       videoOnly = visitTypeCode!! == VisitType.VIDEO,
@@ -131,8 +131,8 @@ class OfficialVisitCreateService(
     }
   }
 
-  private fun CreateOfficialVisitRequest.getPrisonersDetails() = run {
-    prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode!!)
+  private fun CreateOfficialVisitRequest.getPrisonersDetails(prisonCode: String) = run {
+    prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode)
   }
 
   private fun CreateOfficialVisitRequest.getVisitorDetails() = run {
