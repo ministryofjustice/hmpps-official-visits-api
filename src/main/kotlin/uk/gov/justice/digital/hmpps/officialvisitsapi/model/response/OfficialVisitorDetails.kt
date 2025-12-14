@@ -35,6 +35,9 @@ data class OfficialVisitorDetails(
   @Schema(description = "The Official visitor relationship code")
   val relationshipCode: String?,
 
+  @Schema(description = "The Official visitor relationship Description")
+  val relationshipDescription: String?,
+
   @Schema(description = "The Official visitor - is lead visitor")
   val leadVisitor: Boolean,
 

@@ -6,8 +6,10 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.typeReference
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCode
 
 @Component
 class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClient: WebClient) {
@@ -61,4 +63,14 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       .block()
     return pagedModelMono?.content?.toList() ?: emptyList()
   }
+
+  fun getReferenceDataByGroup(groupCode: String): List<ReferenceCode>? = personalRelationshipsApiWebClient.get()
+    .uri { uriBuilder: UriBuilder ->
+      uriBuilder
+        .path("/reference-codes/group/{groupCode}")
+        .build(groupCode)
+    }
+    .retrieve()
+    .bodyToMono(typeReference<List<ReferenceCode>>())
+    .block()
 }
