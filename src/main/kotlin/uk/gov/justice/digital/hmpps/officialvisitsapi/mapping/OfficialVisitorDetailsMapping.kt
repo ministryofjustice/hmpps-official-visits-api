@@ -16,16 +16,16 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   contactId = this.contactId,
   prisonerContactId = this.prisonerContactId,
   relationshipTypeCode = this.relationshipTypeCode,
-  relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode!!.toString())?.description
+  referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
   relationshipDescription = personalRelationshipsRDService.getReferenceDataByCode(getRelationShipCode(this.relationshipTypeCode.toString()), this.relationshipCode!!)?.description,
+  attendanceCode = this.attendanceCode,
   attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
     ?: this.attendanceCode.toString(),
   leadVisitor = this.leadVisitor,
   assistedVisit = this.assistedVisit,
   visitorNotes = this.visitorNotes,
-  attendanceCode = attendanceCode,
   createdBy = this.createdBy,
   createdTime = this.createdTime,
   updatedBy = this.updatedBy,
