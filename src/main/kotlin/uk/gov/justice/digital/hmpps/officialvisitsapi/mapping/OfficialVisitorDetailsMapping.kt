@@ -16,7 +16,7 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   contactId = this.contactId,
   prisonerContactId = this.prisonerContactId,
   relationshipTypeCode = this.relationshipTypeCode,
-  referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
+  relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
   relationshipDescription = personalRelationshipsRDService.getReferenceDataByCode(getRelationShipCode(this.relationshipTypeCode.toString()), this.relationshipCode!!)?.description,
