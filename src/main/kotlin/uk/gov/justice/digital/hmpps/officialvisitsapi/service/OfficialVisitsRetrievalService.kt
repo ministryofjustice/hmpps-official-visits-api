@@ -19,7 +19,7 @@ class OfficialVisitsRetrievalService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val referenceDataService: ReferenceDataService,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  private val personalRelationshipsRDService: PersonalRelationshipsRDService,
+  private val personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
 ) {
 
   @Transactional(readOnly = true)
@@ -32,7 +32,7 @@ class OfficialVisitsRetrievalService(
       officialVisitEntity,
       prisoner,
       prisonerVisitedEntity,
-      personalRelationshipsRDService,
+      personalRelationshipsReferenceDataService,
     )
   }
 
@@ -40,7 +40,7 @@ class OfficialVisitsRetrievalService(
     officialVisitEntity: OfficialVisitEntity?,
     prisoner: uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner?,
     prisonerVisitedEntity: PrisonerVisitedEntity?,
-    personalRelationshipsRDService: PersonalRelationshipsRDService,
+    personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
   ): OfficialVisitDetails = OfficialVisitDetails(
     officialVisitId = officialVisitEntity!!.officialVisitId,
     prisonCode = officialVisitEntity.prisonCode,
@@ -80,7 +80,7 @@ class OfficialVisitsRetrievalService(
     updatedTime = officialVisitEntity.updatedTime,
     updatedBy = officialVisitEntity.updatedBy,
     officialVisitors = officialVisitEntity.officialVisitors()
-      .toModel(referenceDataService, personalRelationshipsRDService),
+      .toModel(referenceDataService, personalRelationshipsReferenceDataService),
     prisonerVisited = PrisonerVisitedDetails(
       prisonerNumber = prisoner.prisonerNumber,
       prisonCode = prisoner.prisonId!!,

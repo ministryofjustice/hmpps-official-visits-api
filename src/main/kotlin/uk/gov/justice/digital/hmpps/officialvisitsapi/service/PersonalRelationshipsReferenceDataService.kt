@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 
 @Service
-class PersonalRelationshipsRDService(
+class PersonalRelationshipsReferenceDataService(
   private val personalRelationshipsApiClient: PersonalRelationshipsApiClient,
 ) {
   fun getReferenceDataByGroupCode(groupCode: ReferenceCodeGroup): List<ReferenceCode>? = run {

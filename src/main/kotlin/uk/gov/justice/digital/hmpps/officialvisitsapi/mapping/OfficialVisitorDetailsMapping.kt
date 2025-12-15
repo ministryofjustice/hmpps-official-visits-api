@@ -4,10 +4,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationshipsRDService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationshipsReferenceDataService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReferenceDataService
 
-fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, personalRelationshipsRDService: PersonalRelationshipsRDService) = OfficialVisitorDetails(
+fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService) = OfficialVisitorDetails(
   visitorTypeCode = this.visitorTypeCode,
   visitorTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.VISITOR_TYPE, this.visitorTypeCode.toString())?.description
     ?: this.visitorTypeCode.toString(),
@@ -19,7 +19,7 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
-  relationshipDescription = personalRelationshipsRDService.getReferenceDataByCode(getRelationShipCode(this.relationshipTypeCode.toString()), this.relationshipCode!!)?.description,
+  relationshipDescription = personalRelationshipsReferenceDataService.getReferenceDataByCode(getRelationShipCode(this.relationshipTypeCode.toString()), this.relationshipCode!!)?.description,
   attendanceCode = this.attendanceCode,
   attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
     ?: this.attendanceCode.toString(),
@@ -33,7 +33,7 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   offenderVisitVisitorId = this.offenderVisitVisitorId,
 )
 
-fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService, personalRelationshipsRDService: PersonalRelationshipsRDService) = map { it.toModel(referenceDataService, personalRelationshipsRDService) }
+fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService) = map { it.toModel(referenceDataService, personalRelationshipsReferenceDataService) }
 
 private fun getRelationShipCode(relationshipTypeCode: String?) = if (relationshipTypeCode == "OFFICIAL") {
   ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString()

@@ -11,9 +11,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 
-class PersonalRelationshipsRDServiceTest {
+class PersonalRelationshipsReferenceDataServiceTest {
   private val personalRelationshipsApiClient: PersonalRelationshipsApiClient = mock()
-  private val personalRelationshipsRDService = PersonalRelationshipsRDService(personalRelationshipsApiClient)
+  private val personalRelationshipsReferenceDataService = PersonalRelationshipsReferenceDataService(personalRelationshipsApiClient)
 
   @BeforeEach
   fun setUp() {
@@ -33,7 +33,7 @@ class PersonalRelationshipsRDServiceTest {
       ),
     )
     whenever(personalRelationshipsApiClient.getReferenceDataByGroup(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString())).thenReturn(listOfCodes)
-    assertThat(personalRelationshipsRDService.getReferenceDataByGroupCode(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP)?.single()?.description isEqualTo "description")
+    assertThat(personalRelationshipsReferenceDataService.getReferenceDataByGroupCode(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP)?.single()?.description isEqualTo "description")
   }
 
   @Test
@@ -49,6 +49,6 @@ class PersonalRelationshipsRDServiceTest {
       ),
     )
     whenever(personalRelationshipsApiClient.getReferenceDataByGroup(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString())).thenReturn(listOfCodes)
-    assertThat(personalRelationshipsRDService.getReferenceDataByCode(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString(), "TEST")?.description isEqualTo "description")
+    assertThat(personalRelationshipsReferenceDataService.getReferenceDataByCode(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString(), "TEST")?.description isEqualTo "description")
   }
 }
