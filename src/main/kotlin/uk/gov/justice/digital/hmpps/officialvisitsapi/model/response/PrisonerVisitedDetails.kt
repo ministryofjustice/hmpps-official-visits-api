@@ -25,12 +25,12 @@ data class PrisonerVisitedDetails(
   @Schema(description = "Prisoner middle name")
   val middleNames: String?,
 
-  @Schema(description = "Prisoner offender boo id")
-  val offenderBookId: String?,
+  @Schema(description = "Prisoner offender booking id")
+  val offenderBookId: Long?,
 
-  @Schema(description = "Prisoner attendance code ")
+  @Schema(description = "Prisoner attendance code")
   val attendanceCode: String?,
 
-  @Schema(description = "Prisoner attendance code ")
+  @Schema(description = "Prisoner attendance code description")
   val attendanceCodeDescription: String?,
 )
