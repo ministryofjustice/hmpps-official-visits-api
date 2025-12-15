@@ -6,6 +6,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.U
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCode
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
@@ -177,4 +179,15 @@ fun pagedModelPrisonerContactSummary(
 fun pagedModelPrisonerContactSummary(vararg prisonerContacts: PrisonerContactSummary) = PagedModelPrisonerContactSummary(
   prisonerContacts.toList(),
   PageMetadata(1, 1, 5, 1),
+)
+
+fun referenceCode() = listOf(
+  ReferenceCode(
+    referenceCodeId = 1,
+    groupCode = ReferenceCodeGroup.OFFICIAL_RELATIONSHIP,
+    code = "POM",
+    description = "Description",
+    displayOrder = 1,
+    isActive = true,
+  ),
 )

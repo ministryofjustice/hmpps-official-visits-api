@@ -19,21 +19,28 @@ class OfficialVisitsRetrievalService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val referenceDataService: ReferenceDataService,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  private val personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
 ) {
+
   @Transactional(readOnly = true)
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, id: Long): OfficialVisitDetails {
     val officialVisitEntity = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
-
     val prisoner = prisonerSearchClient.getPrisoner(officialVisitEntity.prisonerNumber)
     val prisonerVisitedEntity = prisonerVisitedRepository.findByOfficialVisitId(id)
-    return populateOfficialVisitDetails(officialVisitEntity, prisoner, prisonerVisitedEntity)
+    return populateOfficialVisitDetails(
+      officialVisitEntity,
+      prisoner,
+      prisonerVisitedEntity,
+      personalRelationshipsReferenceDataService,
+    )
   }
 
   private fun populateOfficialVisitDetails(
     officialVisitEntity: OfficialVisitEntity?,
     prisoner: uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner?,
     prisonerVisitedEntity: PrisonerVisitedEntity?,
+    personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
   ): OfficialVisitDetails = OfficialVisitDetails(
     officialVisitId = officialVisitEntity!!.officialVisitId,
     prisonCode = officialVisitEntity.prisonCode,
@@ -72,7 +79,8 @@ class OfficialVisitsRetrievalService(
     createdBy = officialVisitEntity.createdBy,
     updatedTime = officialVisitEntity.updatedTime,
     updatedBy = officialVisitEntity.updatedBy,
-    officialVisitors = officialVisitEntity.officialVisitors().toModel(referenceDataService),
+    officialVisitors = officialVisitEntity.officialVisitors()
+      .toModel(referenceDataService, personalRelationshipsReferenceDataService),
     prisonerVisited = PrisonerVisitedDetails(
       prisonerNumber = prisoner.prisonerNumber,
       prisonCode = prisoner.prisonId!!,

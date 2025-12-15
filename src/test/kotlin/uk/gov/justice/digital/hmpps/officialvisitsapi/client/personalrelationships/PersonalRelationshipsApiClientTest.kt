@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationsh
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PersonalRelationshipsApiMockServer
 
@@ -17,6 +18,14 @@ class PersonalRelationshipsApiClientTest {
     val output = client.getApprovedContacts("A1234BC", "O")
     output.size isEqualTo 1
     output.single().relationshipTypeDescription isEqualTo "Friend"
+  }
+
+  @Test
+  fun `should get  list of  reference codes by reference group `() {
+    server.stubReferenceGroup()
+    val output = client.getReferenceDataByGroup(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString())
+    output?.size isEqualTo 1
+    output?.single()?.groupCode isEqualTo ReferenceCodeGroup.OFFICIAL_RELATIONSHIP
   }
 
   @AfterEach
