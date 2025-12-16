@@ -48,7 +48,7 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
   fun getAllOfficialVisits(
     @Parameter(hidden = true)
     pageable: Pageable,
-    @RequestParam(name = "currentTerm", required = true, defaultValue = "true")
-    currentTerm: Boolean,
+    @RequestParam(name = "currentTerm", required = true, defaultValue = "false")
+    currentTerm: Boolean = false,
   ): PagedModel<SyncOfficialVisitId> = officialVisitReconciliationService.getOfficialVisitsIds(currentTerm, pageable)
 }
