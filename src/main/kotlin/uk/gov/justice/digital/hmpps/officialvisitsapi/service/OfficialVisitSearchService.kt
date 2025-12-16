@@ -27,7 +27,12 @@ class OfficialVisitSearchService(private val officialVisitSummaryRepository: Off
       request.visitStatuses.takeIf { !it.isNullOrEmpty() }?.toSet(),
       request.locationIds.takeIf { !it.isNullOrEmpty() }?.toSet(),
       Pageable.ofSize(size).withPage(page),
-    ).map { ov ->
+    )
+
+    val prisonNumbers = results.map { it.prisonerNumber }.toSet()
+    val locations = results.map { it.dpsLocationId }.toSet()
+
+    val response = results.map { ov ->
       // TODO pull in prisoner and location details
 
       OfficialVisitSummarySearchResponse(
@@ -69,6 +74,6 @@ class OfficialVisitSearchService(private val officialVisitSummaryRepository: Off
       )
     }
 
-    PagedModel(results)
+    PagedModel(response)
   }
 }

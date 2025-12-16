@@ -25,6 +25,3 @@ select ov.official_visit_id,
   ov.offender_book_id,
   (select count(1) from official_visitor ov2 where ov2.official_visit_id = ov.official_visit_id) as number_of_visitors
   from official_visit ov
-where ov.visit_date between '2025-12-01' and '2025-12-31'
-  and ov.visit_type_code in ('VIDEO', 'IN_PERSON')
-  and ov.visit_status_code in ('SCHEDULED')
