@@ -12,6 +12,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   fun findByOfficialVisitIdAndPrisonCode(officialVisitId: Long, prisonCode: String): OfficialVisitEntity?
 
-  @Query("SELECT ov.officialVisitId from OfficialVisitEntity ov and ov.currentTerm = :currentTerm")
+  @Query("SELECT ov.officialVisitId from OfficialVisitEntity ov WHERE ov.currentTerm = :currentTerm")
   fun findAllOfficialVisitIds(currentTerm: Boolean, pageable: Pageable): Page<SyncOfficialVisitId>
 }
