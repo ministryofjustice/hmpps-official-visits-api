@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.time.DayOfWeek
@@ -59,7 +58,7 @@ class GetOfficialVisitById : IntegrationTestBase() {
   fun `should create official visit with one social visitor and return official visit by id`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
     personalRelationshipsApi().stubReferenceGroup()
-    val response = webTestClient.create(nextMondayAt9)
+    val response = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     val prisonerVisit = prisonerVisitedRepository.findByOfficialVisitId(response.officialVisitId)
     prisonerVisit!!.officialVisit.officialVisitId isEqualTo response.officialVisitId
     val officialVisitDetails = webTestClient.getOfficialVisitsByIdAndPrisonCode(response.officialVisitId, MOORLAND_PRISONER.prison)
@@ -75,18 +74,6 @@ class GetOfficialVisitById : IntegrationTestBase() {
       endTime isEqualTo LocalTime.of(10, 0)
     }
   }
-
-  private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
-    .post()
-    .uri("/official-visit/prison/${MOORLAND_PRISON_USER.activeCaseLoadId}")
-    .bodyValue(request)
-    .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-    .exchange()
-    .expectStatus().isCreated
-    .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody(CreateOfficialVisitResponse::class.java)
-    .returnResult().responseBody!!
 
   private fun WebTestClient.getOfficialVisitsByInvalidId(officialVisitId: Long, prisonCode: String) = this
     .get()

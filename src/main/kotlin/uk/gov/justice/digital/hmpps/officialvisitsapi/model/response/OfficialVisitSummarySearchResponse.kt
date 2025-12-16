@@ -60,6 +60,7 @@ data class OfficialVisitSummarySearchResponse(
 
   val visitorConcernNotes: String?,
 
+  @Schema(description = "The number of visitors attending the official visit", example = "2")
   val numberOfVisitors: Int,
 
   @Schema(description = "The official visit completion type", example = "VISITOR_CANCELLED")
@@ -81,26 +82,5 @@ data class OfficialVisitSummarySearchResponse(
   val updatedTime: LocalDateTime?,
 
   @Schema(description = "The details of the prisoner being visited")
-  val prisoner: PrisonerVisitedSummary,
-)
-
-data class PrisonerVisitedSummary(
-  @Schema(description = "The prisoner number of the visited prisoner", example = "1")
-  val prisonerNumber: String,
-
-  @Schema(description = "The first name of the visited prisoner", example = "Jon")
-  val firstName: String,
-
-  @Schema(description = "The last name of the visited prisoner", example = "Doe")
-  val lastName: String,
-
-  @Schema(description = "The middles names (if any) of the visited prisoner", example = "David")
-  val middleNames: String?,
-
-  @Schema(description = "The date of birth of the visited prisoner", example = "2000-12-01")
-  val dateOfBirth: LocalDate?,
-
-  val cellLocation: String,
-
-  val offenderBookId: Long,
+  val prisoner: PrisonerVisitedDetails,
 )

@@ -110,7 +110,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @Operation(summary = "Endpoint to search fo official visit summaries for given search criteria.")
   @PostMapping(path = ["/prison/{prisonCode}/find-by-criteria"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__RW')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
   fun findByCriteria(
     @PathVariable("prisonCode") @Parameter(
       name = "prisonCode",

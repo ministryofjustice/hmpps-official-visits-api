@@ -17,14 +17,14 @@ data class OfficialVisitSummarySearchRequest(
   val endDate: LocalDate?,
 
   @Schema(description = "The visit types to search for", examples = ["IN_PERSON", "VIDEO"])
-  val visitTypes: List<VisitType> = emptyList(),
+  val visitTypes: List<VisitType>?,
 
   @Schema(description = "The visit statuses to search for", examples = ["SCHEDULED", "COMPLETED"])
-  val visitStatuses: List<VisitStatusType>,
+  val visitStatuses: List<VisitStatusType>?,
 
   @Schema(description = "The prisoner numbers to search for", examples = ["G9190VP", "G9190VP"])
-  val prisonerNumbers: List<String> = emptyList(),
+  val prisonerNumbers: List<String>?,
 
   @Schema(description = "The location identifiers to search for", examples = ["aaaa-bbbb-9f9f9f9f-9f9f9f9f"])
-  val locationIds: List<UUID> = emptyList(),
+  val locationIds: List<UUID>?,
 )
