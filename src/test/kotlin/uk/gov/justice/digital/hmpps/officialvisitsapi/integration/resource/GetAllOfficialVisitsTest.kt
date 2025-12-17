@@ -42,6 +42,8 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
     officialVisitors = listOf(officialVisitor),
   )
 
+  private final val nextFridayAt11 = nextMondayAt9.copy(visitDate = next(DayOfWeek.FRIDAY), startTime = LocalTime.of(11, 0), endTime = LocalTime.of(12, 0), prisonVisitSlotId = 9, dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
+
   @Test
   fun `should return zero official visit ids`() {
     webTestClient.getOfficialVisitsIdsNoResult()
@@ -56,6 +58,7 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
     )
     personalRelationshipsApi().stubReferenceGroup()
     webTestClient.create(nextMondayAt9)
+    webTestClient.create(nextFridayAt11)
     webTestClient.getOfficialVisitsIds()
   }
 
@@ -85,7 +88,7 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
 
   private fun WebTestClient.getOfficialVisitsIds() = this
     .get()
-    .uri("/reconcile/official-visits/identifiers?currentTerm=true&currentPage=0&pageSize=10")
+    .uri("/reconcile/official-visits/identifiers?currentTerm=true&page=0&size=1")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
@@ -94,5 +97,6 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
     .expectBody()
     .jsonPath("$.content").isArray
     .jsonPath("$.content[0].officialVisitId").isEqualTo(1L)
-    .jsonPath("$.page.totalElements").isEqualTo(1)
+    .jsonPath("$.page.totalElements").isEqualTo(2)
+    .jsonPath("$.page.totalPages").isEqualTo(2)
 }

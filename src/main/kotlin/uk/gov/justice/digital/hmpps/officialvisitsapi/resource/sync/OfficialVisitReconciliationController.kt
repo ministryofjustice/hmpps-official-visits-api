@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springdoc.core.converters.models.PageableAsQueryParam
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import org.springframework.data.web.PageableDefault
 import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -44,9 +46,10 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
   )
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
-  @PageableAsQueryParam
+  @PageableAsQueryParam()
   fun getAllOfficialVisits(
     @Parameter(hidden = true)
+    @PageableDefault(size = 200, page = 0, direction = Sort.Direction.ASC)
     pageable: Pageable,
     @RequestParam(name = "currentTerm", required = true, defaultValue = "false")
     currentTerm: Boolean = false,
