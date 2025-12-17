@@ -76,7 +76,7 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
 
   private fun WebTestClient.getOfficialVisitsIdsNoResult() = this
     .get()
-    .uri("/reconcile/official-visits/identifiers?currentTerm=false&currentPage=0&pageSize=10")
+    .uri("/reconcile/official-visits/identifiers?currentTerm=false&page=0&size=10")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
