@@ -37,7 +37,7 @@ data class SyncOfficialVisit(
   val statusCode: VisitStatusType,
 
   @Schema(description = "The Official visit outcome status")
-  val outcomeCode: VisitCompletionType? = null,
+  val completionCode: VisitCompletionType? = null,
 
   @Schema(description = "The offender book id")
   val offenderBookId: Long? = null,
