@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
@@ -16,9 +17,11 @@ data class SyncOfficialVisit(
   val visitDate: LocalDate,
 
   @Schema(description = "The Official visit start time")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val startTime: LocalTime,
 
   @Schema(description = "The Official visit end time")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val endTime: LocalTime,
 
   @Schema(description = "The prisoner visit slotid")
@@ -30,8 +33,8 @@ data class SyncOfficialVisit(
   @Schema(description = "The prisoner code")
   val prisonCode: String,
 
-  @Schema(description = "The Official visit prisoner Name")
-  val prisonerNumber: String?,
+  @Schema(description = "The Official visit prisoner number")
+  val prisonerNumber: String,
 
   @Schema(description = "The Official visit status type")
   val statusCode: VisitStatusType,

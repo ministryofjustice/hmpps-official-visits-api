@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -76,6 +77,19 @@ class GetOfficialVisitById : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `should return official visit by id for reconciliation`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    personalRelationshipsApi().stubReferenceGroup()
+    webTestClient.create(nextMondayAt9)
+    webTestClient.getOfficialVisitsById()
+  }
+
+  @Test
+  fun `should return error message for invalid official visit id for reconciliation`() {
+    webTestClient.getOfficialVisitsByInvalidId()
+  }
+
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
     .post()
     .uri("/official-visit/prison/${MOORLAND_PRISON_USER.activeCaseLoadId}")
@@ -107,4 +121,25 @@ class GetOfficialVisitById : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody(OfficialVisitDetails::class.java)
     .returnResult().responseBody!!
+
+  private fun WebTestClient.getOfficialVisitsById() = this
+    .get()
+    .uri("/reconcile/official-visits/id/1")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody(SyncOfficialVisit::class.java)
+    .returnResult().responseBody!!
+
+  private fun WebTestClient.getOfficialVisitsByInvalidId() = this
+    .get()
+    .uri("/reconcile/official-visits/id/999")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+    .expectStatus().is4xxClientError
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id 999 not found")
 }

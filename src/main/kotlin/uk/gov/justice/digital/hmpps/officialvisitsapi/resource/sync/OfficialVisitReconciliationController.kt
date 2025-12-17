@@ -77,5 +77,5 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
   fun getOfficialVisitsById(
     @PathVariable(name = "officialVisitId", required = true)
     officialVisitId: Long,
-  ): SyncOfficialVisit = officialVisitReconciliationService.getOfficialVisitsById(officialVisitId)
+  ): SyncOfficialVisit = officialVisitReconciliationService.getOfficialVisitById(officialVisitId)
 }

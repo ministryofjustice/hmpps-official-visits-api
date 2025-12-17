@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
@@ -11,12 +12,17 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 
 @Service
+@Transactional(readOnly = true)
 class OfficialVisitReconciliationService(
   private val officialVisitRepository: OfficialVisitRepository,
 ) {
 
   fun getOfficialVisitsIds(currentTerm: Boolean, pageable: Pageable): PagedModel<SyncOfficialVisitId> = PagedModel(officialVisitRepository.findAllOfficialVisitIds(currentTerm, pageable).toModelIds())
 
-  @Transactional(readOnly = true)
-  fun getOfficialVisitsById(officialVisitId: Long): SyncOfficialVisit = officialVisitRepository.findById(officialVisitId).get().toSyncModel()
+  fun getOfficialVisitById(officialVisitId: Long): SyncOfficialVisit {
+    val syncOfficialVisit = officialVisitRepository.findById(officialVisitId).orElseThrow {
+      EntityNotFoundException("Official visit with id $officialVisitId not found")
+    }
+    return syncOfficialVisit.toSyncModel()
+  }
 }
