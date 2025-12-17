@@ -74,7 +74,6 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
   )
   @GetMapping(value = ["/official-visits/id/{officialVisitId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
-  @PageableAsQueryParam()
   fun getOfficialVisitsById(
     @PathVariable(name = "officialVisitId", required = true)
     officialVisitId: Long,
