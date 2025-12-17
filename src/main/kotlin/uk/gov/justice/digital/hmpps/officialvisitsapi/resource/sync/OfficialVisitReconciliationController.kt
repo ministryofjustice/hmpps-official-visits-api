@@ -16,9 +16,11 @@ import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.OfficialVisitReconciliationService
@@ -54,4 +56,27 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
     @RequestParam(name = "currentTerm", required = true, defaultValue = "false")
     currentTerm: Boolean = false,
   ): PagedModel<SyncOfficialVisitId> = officialVisitReconciliationService.getOfficialVisitsIds(currentTerm, pageable)
+
+  @Operation(summary = "Endpoint to return the official visit details for reconciliation")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit details for reconciliation based on official visit IDs",
+        content = [
+          Content(
+            mediaType = "application/json",
+            array = ArraySchema(schema = Schema(implementation = SyncOfficialVisit::class)),
+          ),
+        ],
+      ),
+    ],
+  )
+  @GetMapping(value = ["/official-visits/id/{officialVisitId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PageableAsQueryParam()
+  fun getOfficialVisitsById(
+    @PathVariable(name = "officialVisitId", required = true)
+    officialVisitId: Long,
+  ): SyncOfficialVisit = officialVisitReconciliationService.getOfficialVisitsById(officialVisitId)
 }
