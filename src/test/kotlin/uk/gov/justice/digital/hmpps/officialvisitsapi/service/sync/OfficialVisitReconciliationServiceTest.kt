@@ -9,7 +9,6 @@ import org.mockito.kotlin.whenever
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 
 class OfficialVisitReconciliationServiceTest {
@@ -25,7 +24,7 @@ class OfficialVisitReconciliationServiceTest {
   fun `Get all official visits Ids`() {
     val pageable = PageRequest.of(0, 10)
 
-    val result = listOf<SyncOfficialVisitId>(SyncOfficialVisitId(officialVisitId = 1L))
+    val result = listOf<Long>(1L)
     val pageOfficialVisitsIds = PageImpl(result, pageable, 1)
 
     whenever(officialVisitRepository.findAllOfficialVisitIds(false, pageable)).thenReturn(pageOfficialVisitsIds)
