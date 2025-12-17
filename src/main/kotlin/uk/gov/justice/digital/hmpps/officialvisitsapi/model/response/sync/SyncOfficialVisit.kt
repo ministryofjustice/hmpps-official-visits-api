@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import java.time.LocalDate
 import java.time.LocalTime
@@ -36,7 +37,7 @@ data class SyncOfficialVisit(
   val statusCode: VisitStatusType,
 
   @Schema(description = "The Official visit outcome status")
-  val outcomeCode: VisitStatusType,
+  val outcomeCode: VisitCompletionType? = null,
 
   @Schema(description = "The offender book id")
   val offenderBookId: Long? = null,
