@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toModelIds
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
@@ -15,5 +16,7 @@ class OfficialVisitReconciliationService(
 ) {
 
   fun getOfficialVisitsIds(currentTerm: Boolean, pageable: Pageable): PagedModel<SyncOfficialVisitId> = PagedModel(officialVisitRepository.findAllOfficialVisitIds(currentTerm, pageable).toModelIds())
+
+  @Transactional(readOnly = true)
   fun getOfficialVisitsById(officialVisitId: Long): SyncOfficialVisit = officialVisitRepository.findById(officialVisitId).get().toSyncModel()
 }
