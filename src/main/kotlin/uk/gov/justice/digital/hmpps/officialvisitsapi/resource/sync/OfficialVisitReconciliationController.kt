@@ -43,7 +43,7 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
     ],
   )
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
   @PageableAsQueryParam
   fun getAllOfficialVisits(
     @Parameter(hidden = true)

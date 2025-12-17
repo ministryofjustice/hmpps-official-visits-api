@@ -75,7 +75,7 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
     .get()
     .uri("/reconcile/official-visits/identifiers?currentTerm=false&currentPage=0&pageSize=10")
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -87,7 +87,7 @@ class GetAllOfficialVisitsTest : IntegrationTestBase() {
     .get()
     .uri("/reconcile/official-visits/identifiers?currentTerm=true&currentPage=0&pageSize=10")
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
