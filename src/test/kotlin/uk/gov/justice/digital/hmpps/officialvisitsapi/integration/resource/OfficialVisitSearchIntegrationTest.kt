@@ -1,13 +1,14 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -51,31 +52,75 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     officialVisitors = listOf(officialVisitor),
   )
 
+  private val nextWednesdayAt9 = nextMondayAt9.copy(prisonVisitSlotId = 4, visitDate = next(DayOfWeek.WEDNESDAY), startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 0))
+
   @Test
-  @Transactional
-  fun `should find official visits by criteria`() {
+  fun `should find official visits by criteria over multiple pages`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+    testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
-    val results = webTestClient.search(
-      OfficialVisitSummarySearchRequest(
-        startDate = next(DayOfWeek.MONDAY),
-        endDate = next(DayOfWeek.MONDAY),
-        visitTypes = emptyList(),
-        visitStatuses = emptyList(),
-        prisonerNumbers = listOf(MOORLAND_PRISONER.number),
-        locationIds = emptyList(),
-      ),
-      MOORLAND_PRISON_USER,
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      startDate = next(DayOfWeek.MONDAY),
+      endDate = next(DayOfWeek.WEDNESDAY),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      prisonerNumbers = listOf(MOORLAND_PRISONER.number),
+      locationIds = emptyList(),
     )
 
-    results.content.single()
+    val pageOne = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 0, 1)
+
+    with(pageOne) {
+      content.single().visitSlotId isEqualTo 1
+      page.size isEqualTo 1
+      page.number isEqualTo 0
+      page.totalElements isEqualTo 2
+      page.totalPages isEqualTo 2
+    }
+
+    val pageTwo = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 1, 1)
+
+    with(pageTwo) {
+      content.single().visitSlotId isEqualTo 4
+      page.size isEqualTo 1
+      page.number isEqualTo 1
+      page.totalElements isEqualTo 2
+      page.totalPages isEqualTo 2
+    }
   }
 
-  fun WebTestClient.search(request: OfficialVisitSummarySearchRequest, prisonUser: PrisonUser) = webTestClient
+  @Test
+  fun `should find official all visits by criteria on one page`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+
+    testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+    testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
+
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      startDate = next(DayOfWeek.MONDAY),
+      endDate = next(DayOfWeek.WEDNESDAY),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      prisonerNumbers = listOf(MOORLAND_PRISONER.number),
+      locationIds = emptyList(),
+    )
+
+    val onePageOnly = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 0, 2)
+
+    with(onePageOnly) {
+      assertThat(content).extracting("visitSlotId").containsExactlyInAnyOrder(1L, 4L)
+      page.size isEqualTo 2
+      page.number isEqualTo 0
+      page.totalElements isEqualTo 2
+      page.totalPages isEqualTo 1
+    }
+  }
+
+  fun WebTestClient.search(request: OfficialVisitSummarySearchRequest, prisonUser: PrisonUser, page: Int = 0, size: Int = 1) = webTestClient
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=0&size=10")
+    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

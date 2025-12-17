@@ -16,19 +16,9 @@ import java.util.UUID
 @Repository
 interface OfficialVisitSummaryRepository : ReadOnlyRepository<OfficialVisitSummaryEntity, Long> {
 
-  // The WHERE clauses for the two queries must be the same when using Pageable.
   @Query(
     value = """
       SELECT ovs
-        FROM OfficialVisitSummaryEntity ovs
-       WHERE ovs.prisonCode = :prisonCode
-         AND ovs.visitDate BETWEEN :startDate AND :endDate
-         AND (:prisonerNumbers is null or ovs.prisonerNumber IN :prisonerNumbers)
-         AND (:visitTypes is null or ovs.visitTypeCode IN :visitTypes)
-         AND (:visitStatusTypes is null or ovs.visitStatusCode IN :visitStatusTypes)
-    """,
-    countQuery = """
-      SELECT count(ovs)
         FROM OfficialVisitSummaryEntity ovs
        WHERE ovs.prisonCode = :prisonCode
          AND ovs.visitDate BETWEEN :startDate AND :endDate
