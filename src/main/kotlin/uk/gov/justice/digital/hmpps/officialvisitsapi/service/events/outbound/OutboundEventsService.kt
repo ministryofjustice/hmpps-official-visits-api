@@ -4,8 +4,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 
 @Service
 class OutboundEventsService(
@@ -26,6 +27,9 @@ class OutboundEventsService(
     source: Source = Source.DPS,
     user: User,
   ) {
+    // Explicit cast to PrisonUser, which has an extra attribute for activeCaseLoadId
+    val prisonUser = (user as PrisonUser)
+
     if (featureSwitches.isEnabled(outboundEvent)) {
       log.info("Sending event $outboundEvent source $source identifier $identifier secondIdentifier ${secondIdentifier ?: "N/A"} noms $noms contactId ${contactId ?: "N/A"} ")
 
@@ -36,7 +40,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitInfo(identifier, source, user.username, user.activeCaseLoadId),
+            VisitInfo(identifier, source, prisonUser.username, prisonUser.activeCaseLoadId),
             PersonReference(noms),
           )
         }
@@ -47,7 +51,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitorInfo(identifier, secondIdentifier ?: 0, source, user.username, user.activeCaseLoadId),
+            VisitorInfo(identifier, secondIdentifier ?: 0, source, prisonUser.username, prisonUser.activeCaseLoadId),
             contactId?.let { PersonReference(contactId = it) },
           )
         }
@@ -56,7 +60,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            PrisonerInfo(identifier, secondIdentifier ?: 0, source, user.username, user.activeCaseLoadId),
+            PrisonerInfo(identifier, secondIdentifier ?: 0, source, prisonUser.username, prisonUser.activeCaseLoadId),
             PersonReference(noms),
           )
         }
@@ -67,7 +71,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            TimeSlotInfo(identifier, source, user.username, user.activeCaseLoadId),
+            TimeSlotInfo(identifier, source, prisonUser.username, prisonUser.activeCaseLoadId),
           )
         }
 
@@ -77,7 +81,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitSlotInfo(identifier, source, user.username, user.activeCaseLoadId),
+            VisitSlotInfo(identifier, source, prisonUser.username, prisonUser.activeCaseLoadId),
           )
         }
       }

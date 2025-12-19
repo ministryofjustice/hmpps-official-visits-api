@@ -15,7 +15,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.StandardTelemetryEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
 import java.time.LocalDateTime
@@ -28,7 +28,7 @@ class OutboundEventsServiceTest {
   private val outboundEventsService = OutboundEventsService(publisher, featureSwitches, telemetryService)
   private val eventCaptor = argumentCaptor<OutboundHMPPSDomainEvent>()
   private val telemetryCaptor = argumentCaptor<StandardTelemetryEvent>()
-  private val aUser = User("test-user", "BMI")
+  private val aUser = PrisonUser(activeCaseLoadId = "BMI", username = "test-user", name = "Test User")
 
   @Test
   fun `official visit created event is published`() {
@@ -189,7 +189,7 @@ class OutboundEventsServiceTest {
   @Test
   fun `events are not published for any outbound event when not enabled`() {
     featureSwitches.stub { on { isEnabled(any<OutboundEvent>(), any()) } doReturn false }
-    OutboundEvent.entries.forEach { outboundEventsService.send(it, 1L, 1L, user = User.SYS_USER) }
+    OutboundEvent.entries.forEach { outboundEventsService.send(it, 1L, 1L, user = aUser) }
     verifyNoInteractions(publisher)
   }
 
@@ -200,7 +200,7 @@ class OutboundEventsServiceTest {
     whenever(publisher.send(any())).thenThrow(RuntimeException("Boom!"))
 
     // Exceptions are logged and swallowed by the publisher
-    outboundEventsService.send(event, 1L, null, noms = "A1111AA", user = User.SYS_USER)
+    outboundEventsService.send(event, 1L, null, noms = "A1111AA", user = aUser)
 
     verify(publisher).send(any())
   }
