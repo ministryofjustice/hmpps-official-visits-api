@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.U
 import uk.gov.justice.digital.hmpps.officialvisitsapi.health.LocationsInsidePrisonApiHealthPingCheck
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.TestApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.container.PostgresqlContainer
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -41,6 +42,8 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var webTestClient: WebTestClient
 
+  protected lateinit var testAPIClient: TestApiClient
+
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
@@ -48,6 +51,7 @@ abstract class IntegrationTestBase {
   fun `stub default users and prisoners`() {
     stubUser(MOORLAND_PRISON_USER)
     prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER)
+    testAPIClient = TestApiClient(webTestClient, jwtAuthHelper)
   }
 
   protected fun stubUser(user: User) {

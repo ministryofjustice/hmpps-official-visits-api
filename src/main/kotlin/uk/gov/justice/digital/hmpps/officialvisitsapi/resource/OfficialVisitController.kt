@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -23,8 +24,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.E
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.OfficialVisitFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
 
 @Tag(name = "Official visits")
 @RestController
@@ -103,4 +106,33 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       required = true,
     ) officialVisitId: Long,
   ): OfficialVisitDetails = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
+
+  @Operation(summary = "Endpoint to search fo official visit summaries for given search criteria.")
+  @PostMapping(path = ["/prison/{prisonCode}/find-by-criteria"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun findByCriteria(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request with the official visit summary search details", required = true)
+    request: OfficialVisitSummarySearchRequest,
+    @Parameter(
+      description = "Zero-based page index (0..N)",
+      name = "page",
+      schema = Schema(type = "integer", defaultValue = "0"),
+    )
+    page: Int = 0,
+    @Parameter(
+      description = "The size of the page to be returned",
+      name = "size",
+      schema = Schema(type = "integer", defaultValue = "10"),
+    )
+    size: Int = 20,
+  ): PagedModel<OfficialVisitSummarySearchResponse> = facade.searchForOfficialVisitSummaries(prisonCode, request, page, size)
 }

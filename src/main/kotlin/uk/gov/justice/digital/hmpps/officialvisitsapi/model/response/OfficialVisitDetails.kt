@@ -15,10 +15,10 @@ class OfficialVisitDetails(
   @Schema(description = "The official visit id", example = "1")
   val officialVisitId: Long,
 
-  @Schema(description = "The prisoner code")
+  @Schema(description = "The prison code", example = "MDI")
   val prisonCode: String,
 
-  @Schema(description = "The Official visit prison description")
+  @Schema(description = "The official visit prison description", example = "Moorland (HMP & YOI)")
   val prisonDescription: String?,
 
   @Schema(description = "The Official visit status type ")
