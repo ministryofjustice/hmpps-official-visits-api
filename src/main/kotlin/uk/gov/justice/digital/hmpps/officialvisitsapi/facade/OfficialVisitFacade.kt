@@ -26,6 +26,7 @@ class OfficialVisitFacade(
   ): CreateOfficialVisitResponse = officialVisitCreateService.create(prisonCode, request, user).also { creationResult ->
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_CREATED,
+      prisonCode = prisonCode,
       identifier = creationResult.officialVisitId,
       noms = request.prisonerNumber!!,
       user = user,

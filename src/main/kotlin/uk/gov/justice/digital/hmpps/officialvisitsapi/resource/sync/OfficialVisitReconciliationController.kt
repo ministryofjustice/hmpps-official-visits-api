@@ -23,18 +23,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.OfficialVisitReconciliationService
 
-@Tag(name = "Official visits Reconciliation")
+@Tag(name = "Reconciliation")
 @RestController
 @RequestMapping(value = ["reconcile"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @AuthApiResponses
 class OfficialVisitReconciliationController(private val officialVisitReconciliationService: OfficialVisitReconciliationService) {
 
-  @Operation(summary = "Endpoint to return the all the official visit ids for reconciliation")
+  @Operation(summary = "Endpoint to return a paged list of all official visit IDs")
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "List of  paged list of DPS visit IDs for the current term",
+        description = "A page of official visit IDs",
         content = [
           Content(
             mediaType = "application/json",
@@ -46,7 +46,7 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
   )
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
-  @PageableAsQueryParam()
+  @PageableAsQueryParam
   fun getAllOfficialVisits(
     @Parameter(hidden = true)
     @PageableDefault(size = 200, page = 0, direction = Sort.Direction.ASC)

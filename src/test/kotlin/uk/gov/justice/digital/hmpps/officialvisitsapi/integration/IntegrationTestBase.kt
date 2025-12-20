@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -34,6 +35,7 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestConfiguration::class)
 abstract class IntegrationTestBase {
 
   @Autowired
@@ -45,10 +47,14 @@ abstract class IntegrationTestBase {
   protected lateinit var testAPIClient: TestApiClient
 
   @Autowired
+  protected lateinit var stubEvents: StubOutboundEventsPublisher
+
+  @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @BeforeEach
-  fun `stub default users and prisoners`() {
+  fun `stub default users and prisoners and reset stubbed events`() {
+    stubEvents.reset()
     stubUser(MOORLAND_PRISON_USER)
     prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER)
     testAPIClient = TestApiClient(webTestClient, jwtAuthHelper)

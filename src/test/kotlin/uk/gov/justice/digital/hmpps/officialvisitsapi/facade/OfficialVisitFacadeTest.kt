@@ -62,6 +62,7 @@ class OfficialVisitFacadeTest {
 
     verify(outboundEventsService).send(
       outboundEvent = OutboundEvent.VISIT_CREATED,
+      MOORLAND,
       identifier = 1L,
       secondIdentifier = 0L,
       noms = "A1234AA",
