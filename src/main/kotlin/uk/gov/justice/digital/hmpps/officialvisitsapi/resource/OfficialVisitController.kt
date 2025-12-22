@@ -92,7 +92,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
-  fun getOfficialVisits(
+  fun getOfficialVisitByPrisonCodeAndId(
     @PathVariable("prisonCode") @Parameter(
       name = "prisonCode",
       description = "The prison code",

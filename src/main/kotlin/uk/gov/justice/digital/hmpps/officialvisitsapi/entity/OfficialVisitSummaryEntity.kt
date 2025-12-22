@@ -58,7 +58,7 @@ data class OfficialVisitSummaryEntity(
 
   val updatedTime: LocalDateTime?,
 
-  val offenderBookId: Long,
+  val offenderBookId: Long?,
 
   val numberOfVisitors: Int,
 )
