@@ -5,24 +5,24 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 
 data class SyncOfficialVisitor(
-  @Schema(description = "The official visitor id", example = "1")
+  @Schema(description = "The internal official visitor ID", example = "1")
   val officialVisitorId: Long,
 
-  @Schema(description = "The official contact id")
+  @Schema(description = "The contact ID of the person visiting", example = "123")
   val contactId: Long? = null,
 
-  @Schema(description = "The official visitor first Name")
+  @Schema(description = "The visitor first Name", example = "John")
   val firstName: String? = null,
 
-  @Schema(description = "The official visitor last Name")
+  @Schema(description = "The visitor last Name", example = "Smith")
   val lastName: String? = null,
 
-  @Schema(description = "The official visitor relationship type")
+  @Schema(description = "The relationship type for this visitor (OFFICIAL or SOCIAL)", example = "OFFICIAL")
   val relationshipType: RelationshipType?,
 
-  @Schema(description = "The official visitor relationship code")
+  @Schema(description = "The visitor relationship code", example = "POM")
   val relationshipCode: String?,
 
-  @Schema(description = "The official visitor attendance code")
+  @Schema(description = "The visitor attendance code, either ABSENT, ATTENDED or null if not recorded.", example = "ABSENT")
   val attendanceCode: AttendanceType?,
 )

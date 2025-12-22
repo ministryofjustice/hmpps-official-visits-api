@@ -15,6 +15,6 @@ fun OfficialVisitEntity.toSyncModel(): SyncOfficialVisit = SyncOfficialVisit(
   statusCode = this.visitStatusCode,
   completionCode = this.completionCode,
   offenderBookId = this.offenderBookId,
-  offenderVisitId = this.officialVisitId,
+  offenderVisitId = this.offenderVisitId,
   visitors = this.officialVisitors().toSyncModel(),
 )

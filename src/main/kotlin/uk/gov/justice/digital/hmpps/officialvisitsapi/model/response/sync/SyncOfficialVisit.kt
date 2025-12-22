@@ -10,43 +10,43 @@ import java.util.UUID
 
 data class SyncOfficialVisit(
 
-  @Schema(description = "The official visit id", example = "1")
+  @Schema(description = "The internal official visit ID", example = "1")
   val officialVisitId: Long,
 
-  @Schema(description = "The Official visit date")
+  @Schema(description = "The visit date", example = "2020-01-02", required = true)
   val visitDate: LocalDate,
 
-  @Schema(description = "The Official visit start time")
+  @Schema(description = "The visit start time", example = "09:15")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val startTime: LocalTime,
 
-  @Schema(description = "The Official visit end time")
+  @Schema(description = "The visit end time", example = "10:15")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val endTime: LocalTime,
 
-  @Schema(description = "The prisoner visit slotid")
+  @Schema(description = "The visit slot ID", example = "12345")
   val prisonVisitSlotId: Long,
 
-  @Schema(description = "The Official visit Location Id")
+  @Schema(description = "The DPS location ID where the visit is taking place", example = "aaa-ddd-bbb-123455632323")
   val dpsLocationId: UUID,
 
-  @Schema(description = "The prisoner code")
+  @Schema(description = "The prison establishment code", example = "MDI", required = true)
   val prisonCode: String,
 
-  @Schema(description = "The Official visit prisoner number")
+  @Schema(description = "The prisoner number", example = "A1111AA", required = true)
   val prisonerNumber: String,
 
-  @Schema(description = "The Official visit status type")
+  @Schema(description = "The visit status code", example = "SCHEDULED", required = true)
   val statusCode: VisitStatusType,
 
-  @Schema(description = "The Official visit outcome status")
+  @Schema(description = "The visit completion code", example = "NORMAL")
   val completionCode: VisitCompletionType? = null,
 
-  @Schema(description = "The offender book id")
+  @Schema(description = "The offender booking ID in NOMIS", example = "12345")
   val offenderBookId: Long? = null,
 
-  @Schema(description = "The offender visit id")
-  val offenderVisitId: Long,
+  @Schema(description = "The offender visit ID in NOMIS (only present for migrated bookings)", example = "12345")
+  val offenderVisitId: Long? = null,
 
   @Schema(description = "The offender visitor details")
   val visitors: List<SyncOfficialVisitor>,
