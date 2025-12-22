@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -72,7 +71,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
     personalRelationshipsApi().stubReferenceGroup()
 
-    val response = webTestClient.create(nextMondayAt9)
+    val response = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
     val visitDetail = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND_PRISONER.prison, response.officialVisitId)
 
@@ -91,18 +90,6 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
       endTime isEqualTo nextMondayAt9.endTime
     }
   }
-
-  private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
-    .post()
-    .uri("/official-visit/prison/${MOORLAND_PRISON_USER.activeCaseLoadId}")
-    .bodyValue(request)
-    .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-    .exchange()
-    .expectStatus().isCreated
-    .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody(CreateOfficialVisitResponse::class.java)
-    .returnResult().responseBody!!
 
   private fun WebTestClient.getOfficialVisitByInvalidPrisonAndId(prisonCode: String, officialVisitId: Long) = this
     .get()
