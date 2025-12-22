@@ -10,10 +10,11 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReconciliationService
 
-class OfficialVisitReconciliationServiceTest {
+class ReconciliationServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val officialVisitReconciliationService = OfficialVisitReconciliationService(officialVisitRepository)
+  private val reconciliationService = ReconciliationService(officialVisitRepository)
 
   @BeforeEach
   fun setUp() {
@@ -29,6 +30,6 @@ class OfficialVisitReconciliationServiceTest {
 
     whenever(officialVisitRepository.findAllOfficialVisitIds(false, pageable)).thenReturn(pageOfficialVisitsIds)
 
-    assertThat(officialVisitReconciliationService.getOfficialVisitsIds(false, pageable).content.single().officialVisitId isEqualTo 1)
+    assertThat(reconciliationService.getOfficialVisitIds(false, pageable).content.single().officialVisitId isEqualTo 1)
   }
 }

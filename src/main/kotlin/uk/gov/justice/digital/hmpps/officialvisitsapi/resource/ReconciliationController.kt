@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.resource.sync
+package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -22,14 +22,13 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitId
-import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.OfficialVisitReconciliationService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReconciliationService
 
 @Tag(name = "Reconciliation")
 @RestController
 @RequestMapping(value = ["reconcile"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @AuthApiResponses
-class OfficialVisitReconciliationController(private val officialVisitReconciliationService: OfficialVisitReconciliationService) {
+class ReconciliationController(private val officialVisitReconciliationService: ReconciliationService) {
 
   @Operation(summary = "Endpoint to return a paged list of all official visit IDs")
   @ApiResponses(
@@ -49,13 +48,13 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
   @PageableAsQueryParam
-  fun getAllOfficialVisits(
+  fun getAllOfficialVisitIds(
     @Parameter(hidden = true)
     @PageableDefault(size = 200, page = 0, direction = Sort.Direction.ASC)
     pageable: Pageable,
     @RequestParam(name = "currentTerm", required = true, defaultValue = "false")
     currentTerm: Boolean = false,
-  ): PagedModel<SyncOfficialVisitId> = officialVisitReconciliationService.getOfficialVisitsIds(currentTerm, pageable)
+  ): PagedModel<SyncOfficialVisitId> = officialVisitReconciliationService.getOfficialVisitIds(currentTerm, pageable)
 
   @Operation(summary = "Endpoint to return the official visit details for reconciliation")
   @ApiResponses(
@@ -72,9 +71,9 @@ class OfficialVisitReconciliationController(private val officialVisitReconciliat
       ),
     ],
   )
-  @GetMapping(value = ["/official-visits/id/{officialVisitId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @GetMapping(value = ["/official-visit/id/{officialVisitId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
-  fun getOfficialVisitsById(
+  fun getOfficialVisitById(
     @PathVariable(name = "officialVisitId", required = true)
     officialVisitId: Long,
   ): SyncOfficialVisit = officialVisitReconciliationService.getOfficialVisitById(officialVisitId)
