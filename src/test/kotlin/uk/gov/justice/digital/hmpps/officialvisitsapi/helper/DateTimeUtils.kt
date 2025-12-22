@@ -9,4 +9,4 @@ fun today(): LocalDate = LocalDate.now()
 
 fun now(): LocalDateTime = LocalDateTime.now()
 
-fun next(dayOfWeek: DayOfWeek): LocalDate = today().with(TemporalAdjusters.next(dayOfWeek))
+fun LocalDate.next(dayOfWeek: DayOfWeek): LocalDate = this.with(TemporalAdjusters.next(dayOfWeek))

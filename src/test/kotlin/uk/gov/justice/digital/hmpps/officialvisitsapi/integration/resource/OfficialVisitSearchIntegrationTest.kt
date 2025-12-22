@@ -1,15 +1,18 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
-import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
@@ -24,7 +27,6 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
 
-@Sql("classpath:integration-test-data/creation/clean-visit-seed-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
   private val officialVisitor = OfficialVisitor(
@@ -38,10 +40,12 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
+  private final val startDate = today().next(DayOfWeek.MONDAY)
+
   private val nextMondayAt9 = CreateOfficialVisitRequest(
     prisonerNumber = MOORLAND_PRISONER.number,
     prisonVisitSlotId = 1,
-    visitDate = next(DayOfWeek.MONDAY),
+    visitDate = startDate,
     startTime = LocalTime.of(9, 0),
     endTime = LocalTime.of(10, 0),
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
@@ -52,7 +56,24 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     officialVisitors = listOf(officialVisitor),
   )
 
-  private val nextWednesdayAt9 = nextMondayAt9.copy(prisonVisitSlotId = 4, visitDate = next(DayOfWeek.WEDNESDAY), startTime = LocalTime.of(9, 0), endTime = LocalTime.of(10, 0))
+  private val nextWednesdayAt9 = nextMondayAt9.copy(
+    prisonVisitSlotId = 4,
+    visitDate = startDate.next(DayOfWeek.WEDNESDAY),
+    startTime = LocalTime.of(9, 0),
+    endTime = LocalTime.of(10, 0),
+  )
+
+  @BeforeEach
+  @Transactional
+  fun setupTest() {
+    clearAllVisitData()
+  }
+
+  @AfterEach
+  @Transactional
+  fun tearDown() {
+    clearAllVisitData()
+  }
 
   @Test
   fun `should find official visits by criteria over multiple pages`() {
@@ -62,8 +83,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
     val searchRequest = OfficialVisitSummarySearchRequest(
-      startDate = next(DayOfWeek.MONDAY),
-      endDate = next(DayOfWeek.WEDNESDAY),
+      startDate = startDate,
+      endDate = startDate.next(DayOfWeek.WEDNESDAY),
       visitTypes = emptyList(),
       visitStatuses = emptyList(),
       prisonerNumbers = listOf(MOORLAND_PRISONER.number),
@@ -99,8 +120,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
     val searchRequest = OfficialVisitSummarySearchRequest(
-      startDate = next(DayOfWeek.MONDAY),
-      endDate = next(DayOfWeek.WEDNESDAY),
+      startDate = startDate,
+      endDate = startDate.next(DayOfWeek.WEDNESDAY),
       visitTypes = emptyList(),
       visitStatuses = emptyList(),
       prisonerNumbers = listOf(MOORLAND_PRISONER.number),

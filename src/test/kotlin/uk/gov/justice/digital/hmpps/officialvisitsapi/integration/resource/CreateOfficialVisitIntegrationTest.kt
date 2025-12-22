@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isNotEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -25,8 +26,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
@@ -36,14 +35,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
 
-@Sql("classpath:integration-test-data/creation/clean-visit-seed-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var officialVisitRepository: OfficialVisitRepository
-
-  @Autowired
-  private lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
 
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
@@ -56,10 +48,12 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
+  private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
+
   private val nextMondayAt9 = CreateOfficialVisitRequest(
     prisonerNumber = MOORLAND_PRISONER.number,
     prisonVisitSlotId = 1,
-    visitDate = next(DayOfWeek.MONDAY),
+    visitDate = visitDateInTheFuture,
     startTime = LocalTime.of(9, 0),
     endTime = LocalTime.of(10, 0),
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
@@ -71,12 +65,24 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   )
 
   private final val nextFridayAt11 = nextMondayAt9.copy(
-    visitDate = next(DayOfWeek.FRIDAY),
+    visitDate = visitDateInTheFuture.next(DayOfWeek.FRIDAY),
     startTime = LocalTime.of(11, 0),
     endTime = LocalTime.of(12, 0),
     prisonVisitSlotId = 9,
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
   )
+
+  @BeforeEach
+  @Transactional
+  fun setupTest() {
+    clearAllVisitData()
+  }
+
+  @AfterEach
+  @Transactional
+  fun tearDown() {
+    clearAllVisitData()
+  }
 
   @Test
   @Transactional
@@ -91,7 +97,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
       offenderBookId isEqualTo MOORLAND_PRISONER.bookingId
       prisonVisitSlot.prisonVisitSlotId isEqualTo 1
-      visitDate isEqualTo next(DayOfWeek.MONDAY)
+      visitDate isEqualTo visitDateInTheFuture
       startTime isEqualTo LocalTime.of(9, 0)
       endTime isEqualTo LocalTime.of(10, 0)
       dpsLocationId isNotEqualTo null
@@ -143,7 +149,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
       offenderBookId isEqualTo MOORLAND_PRISONER.bookingId
       prisonVisitSlot.prisonVisitSlotId isEqualTo 1
-      visitDate isEqualTo next(DayOfWeek.MONDAY)
+      visitDate isEqualTo visitDateInTheFuture
       startTime isEqualTo LocalTime.of(9, 0)
       endTime isEqualTo LocalTime.of(10, 0)
       dpsLocationId isNotEqualTo null
