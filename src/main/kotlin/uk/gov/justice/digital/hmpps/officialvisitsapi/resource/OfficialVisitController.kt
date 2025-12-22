@@ -86,7 +86,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No Official visit found",
+        description = "No official visit found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -101,13 +101,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     ) prisonCode: String,
     @PathVariable("officialVisitId") @Parameter(
       name = "officialVisitId",
-      description = "The id of the Official visit",
+      description = "The official visit ID",
       example = "123456",
       required = true,
     ) officialVisitId: Long,
   ): OfficialVisitDetails = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
 
-  @Operation(summary = "Endpoint to search fo official visit summaries for given search criteria.")
+  @Operation(summary = "Endpoint to search for official visit summaries for given search criteria.")
   @PostMapping(path = ["/prison/{prisonCode}/find-by-criteria"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")

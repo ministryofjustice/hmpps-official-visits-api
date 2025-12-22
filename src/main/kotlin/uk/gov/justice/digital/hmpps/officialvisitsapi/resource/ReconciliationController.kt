@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -31,20 +30,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReconciliationServ
 class ReconciliationController(private val officialVisitReconciliationService: ReconciliationService) {
 
   @Operation(summary = "Endpoint to return a paged list of all official visit IDs")
-  @ApiResponses(
-    value = [
-      ApiResponse(
-        responseCode = "200",
-        description = "A page of official visit IDs",
-        content = [
-          Content(
-            mediaType = "application/json",
-            array = ArraySchema(schema = Schema(implementation = SyncOfficialVisitId::class)),
-          ),
-        ],
-      ),
-    ],
-  )
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
   @PageableAsQueryParam
@@ -56,16 +41,16 @@ class ReconciliationController(private val officialVisitReconciliationService: R
     currentTerm: Boolean = false,
   ): PagedModel<SyncOfficialVisitId> = officialVisitReconciliationService.getOfficialVisitIds(currentTerm, pageable)
 
-  @Operation(summary = "Endpoint to return the official visit details for reconciliation")
+  @Operation(summary = "Endpoint to return one official visit by ID for reconciliation")
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Official visit details for reconciliation based on official visit IDs",
+        description = "Official visit details",
         content = [
           Content(
             mediaType = "application/json",
-            array = ArraySchema(schema = Schema(implementation = SyncOfficialVisit::class)),
+            schema = Schema(implementation = SyncOfficialVisit::class),
           ),
         ],
       ),
