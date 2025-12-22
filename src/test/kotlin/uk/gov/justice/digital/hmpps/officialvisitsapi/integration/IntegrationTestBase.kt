@@ -23,6 +23,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Locat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.ManageUsersApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PersonalRelationshipsApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
@@ -52,6 +55,15 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
+  @Autowired
+  protected lateinit var officialVisitRepository: OfficialVisitRepository
+
+  @Autowired
+  protected lateinit var officialVisitorRepository: OfficialVisitorRepository
+
+  @Autowired
+  protected lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
+
   @BeforeEach
   fun `stub default users and prisoners and reset stubbed events`() {
     stubEvents.reset()
@@ -78,11 +90,18 @@ abstract class IntegrationTestBase {
     personalRelationshipsApi().stubHealthPing(status)
   }
 
+  protected fun clearAllVisitData() {
+    prisonerVisitedRepository.deleteAll()
+    officialVisitorRepository.deleteAll()
+    officialVisitRepository.deleteAll()
+  }
+
   protected fun prisonerSearchApi() = PrisonerSearchApiExtension.server
 
   protected fun locationsInsidePrisonApi() = LocationsInsidePrisonApiExtension.server
 
   protected fun manageUsersApi() = ManageUsersApiExtension.server
+
   protected fun personalRelationshipsApi() = PersonalRelationshipsApiExtension.server
 
   companion object {
