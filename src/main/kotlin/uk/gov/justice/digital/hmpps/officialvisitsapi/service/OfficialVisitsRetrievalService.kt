@@ -88,7 +88,7 @@ class OfficialVisitsRetrievalService(
       lastName = prisoner.lastName,
       dateOfBirth = prisoner.dateOfBirth,
       middleNames = prisoner.middleNames,
-      offenderBookId = prisoner.offenderBookId,
+      offenderBookId = prisoner.offenderBookId?.toLong(),
       cellLocation = prisoner.cellLocation,
       attendanceCode = prisonerVisitedEntity?.attendanceCode.toString(),
       attendanceCodeDescription = referenceDataService.getReferenceDataByGroupAndCode(

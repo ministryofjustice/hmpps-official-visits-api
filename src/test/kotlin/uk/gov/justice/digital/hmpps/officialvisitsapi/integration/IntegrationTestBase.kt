@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.U
 import uk.gov.justice.digital.hmpps.officialvisitsapi.health.LocationsInsidePrisonApiHealthPingCheck
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.TestApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.container.PostgresqlContainer
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -21,6 +23,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Locat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.ManageUsersApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PersonalRelationshipsApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
@@ -33,6 +38,7 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestConfiguration::class)
 abstract class IntegrationTestBase {
 
   @Autowired
@@ -41,13 +47,29 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var webTestClient: WebTestClient
 
+  protected lateinit var testAPIClient: TestApiClient
+
+  @Autowired
+  protected lateinit var stubEvents: StubOutboundEventsPublisher
+
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
+  @Autowired
+  protected lateinit var officialVisitRepository: OfficialVisitRepository
+
+  @Autowired
+  protected lateinit var officialVisitorRepository: OfficialVisitorRepository
+
+  @Autowired
+  protected lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
+
   @BeforeEach
-  fun `stub default users and prisoners`() {
+  fun `stub default users and prisoners and reset stubbed events`() {
+    stubEvents.reset()
     stubUser(MOORLAND_PRISON_USER)
     prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER)
+    testAPIClient = TestApiClient(webTestClient, jwtAuthHelper)
   }
 
   protected fun stubUser(user: User) {
@@ -68,11 +90,18 @@ abstract class IntegrationTestBase {
     personalRelationshipsApi().stubHealthPing(status)
   }
 
+  protected fun clearAllVisitData() {
+    prisonerVisitedRepository.deleteAll()
+    officialVisitorRepository.deleteAll()
+    officialVisitRepository.deleteAll()
+  }
+
   protected fun prisonerSearchApi() = PrisonerSearchApiExtension.server
 
   protected fun locationsInsidePrisonApi() = LocationsInsidePrisonApiExtension.server
 
   protected fun manageUsersApi() = ManageUsersApiExtension.server
+
   protected fun personalRelationshipsApi() = PersonalRelationshipsApiExtension.server
 
   companion object {

@@ -1,11 +1,12 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumingThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -19,22 +20,27 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
-@Sql("classpath:integration-test-data/availability/clean-visit-seed-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class AvailableSlotsIntegrationTest : IntegrationTestBase() {
   private val today = LocalDate.now()
 
   @BeforeEach
-  fun setup() {
-    // Stub locations so localName descriptions are added to AvailableSlot responses
+  @Transactional
+  fun setupTest() {
+    clearAllVisitData()
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, fakeOfficialVisitLocations())
+  }
+
+  @AfterEach
+  @Transactional
+  fun tearDown() {
+    clearAllVisitData()
   }
 
   @Test
   fun `should perform basic GET with no visits`() {
-    val nextFriday = next(FRIDAY)
+    val nextFriday = today.next(FRIDAY)
 
-    val response =
-      webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
+    val response = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
 
     response containsExactlyInAnyOrder listOf(
       AvailableSlot(
