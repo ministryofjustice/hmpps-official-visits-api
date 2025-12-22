@@ -15,7 +15,8 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.StandardTelemetryEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
 import java.time.LocalDateTime
@@ -28,15 +29,15 @@ class OutboundEventsServiceTest {
   private val outboundEventsService = OutboundEventsService(publisher, featureSwitches, telemetryService)
   private val eventCaptor = argumentCaptor<OutboundHMPPSDomainEvent>()
   private val telemetryCaptor = argumentCaptor<StandardTelemetryEvent>()
-  private val aUser = User("test-user", "BMI")
+  private val aUser = MOORLAND_PRISON_USER
 
   @Test
   fun `official visit created event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_CREATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISIT_CREATED, 1L, null, noms = "A1111AA", user = aUser)
+    outboundEventsService.send(OutboundEvent.VISIT_CREATED, MOORLAND, 1L, null, noms = "A1111AA", user = aUser)
     verify(
       expectedEventType = "official-visits-api.visit.created",
-      expectedAdditionalInformation = VisitInfo(officialVisitId = 1L, source = Source.DPS, "test-user", "BMI"),
+      expectedAdditionalInformation = VisitInfo(officialVisitId = 1L, source = Source.DPS, aUser.username, MOORLAND),
       expectedPersonReference = PersonReference(nomsNumber = "A1111AA"),
       expectedDescription = "An official visit has been created",
     )
@@ -45,10 +46,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `official visit updated event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_UPDATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISIT_UPDATED, 1L, null, "A1111AA", user = aUser)
+    outboundEventsService.send(OutboundEvent.VISIT_UPDATED, MOORLAND, 1L, null, "A1111AA", user = aUser)
     verify(
       expectedEventType = "official-visits-api.visit.updated",
-      expectedAdditionalInformation = VisitInfo(officialVisitId = 1L, source = Source.DPS, "test-user", "BMI"),
+      expectedAdditionalInformation = VisitInfo(officialVisitId = 1L, source = Source.DPS, aUser.username, MOORLAND),
       expectedPersonReference = PersonReference(nomsNumber = "A1111AA"),
       expectedDescription = "An official visit has been updated",
     )
@@ -57,10 +58,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `official visit cancelled event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_CANCELLED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISIT_CANCELLED, 1L, null, noms = "A1111AA", user = aUser)
+    outboundEventsService.send(OutboundEvent.VISIT_CANCELLED, MOORLAND, 1L, null, noms = "A1111AA", user = aUser)
     verify(
       expectedEventType = "official-visits-api.visit.cancelled",
-      expectedAdditionalInformation = VisitInfo(officialVisitId = 1L, source = Source.DPS, "test-user", "BMI"),
+      expectedAdditionalInformation = VisitInfo(officialVisitId = 1L, source = Source.DPS, aUser.username, MOORLAND),
       expectedPersonReference = PersonReference(nomsNumber = "A1111AA"),
       expectedDescription = "An official visit has been cancelled",
     )
@@ -69,10 +70,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `visitor added to an official visit event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISITOR_CREATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISITOR_CREATED, 1L, 1L, contactId = 1L, user = aUser)
+    outboundEventsService.send(OutboundEvent.VISITOR_CREATED, MOORLAND, 1L, 1L, contactId = 1L, user = aUser)
     verify(
       expectedEventType = "official-visits-api.visitor.created",
-      expectedAdditionalInformation = VisitorInfo(officialVisitId = 1L, officialVisitorId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = VisitorInfo(officialVisitId = 1L, officialVisitorId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = PersonReference(contactId = 1L),
       expectedDescription = "A visitor has been added to an official visit",
     )
@@ -81,10 +82,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `visitor updated on an official visit event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISITOR_UPDATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISITOR_UPDATED, 1L, 1L, contactId = 1L, user = aUser)
+    outboundEventsService.send(OutboundEvent.VISITOR_UPDATED, MOORLAND, 1L, 1L, contactId = 1L, user = aUser)
     verify(
       expectedEventType = "official-visits-api.visitor.updated",
-      expectedAdditionalInformation = VisitorInfo(officialVisitId = 1L, officialVisitorId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = VisitorInfo(officialVisitId = 1L, officialVisitorId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = PersonReference(contactId = 1L),
       expectedDescription = "A visitor on an official visit has been updated",
     )
@@ -93,10 +94,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `visitor removed from an official visit event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISITOR_DELETED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISITOR_DELETED, 1L, 1L, contactId = 1L, user = aUser)
+    outboundEventsService.send(OutboundEvent.VISITOR_DELETED, MOORLAND, 1L, 1L, contactId = 1L, user = aUser)
     verify(
       expectedEventType = "official-visits-api.visitor.deleted",
-      expectedAdditionalInformation = VisitorInfo(officialVisitId = 1L, officialVisitorId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = VisitorInfo(officialVisitId = 1L, officialVisitorId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = PersonReference(contactId = 1L),
       expectedDescription = "A visitor has been removed from an official visit",
     )
@@ -105,10 +106,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `prisoner updated on an official visit event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.PRISONER_UPDATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.PRISONER_UPDATED, 1L, 1L, noms = "A1111AA", user = aUser)
+    outboundEventsService.send(OutboundEvent.PRISONER_UPDATED, MOORLAND, 1L, 1L, noms = "A1111AA", user = aUser)
     verify(
       expectedEventType = "official-visits-api.prisoner.updated",
-      expectedAdditionalInformation = PrisonerInfo(officialVisitId = 1L, prisonerVisitedId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = PrisonerInfo(officialVisitId = 1L, prisonerVisitedId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = PersonReference(nomsNumber = "A1111AA"),
       expectedDescription = "A prisoner on an official visit has been updated",
     )
@@ -117,10 +118,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `time slot created event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_CREATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.TIME_SLOT_CREATED, 1L, null, noms = "", user = aUser)
+    outboundEventsService.send(OutboundEvent.TIME_SLOT_CREATED, MOORLAND, 1L, null, noms = "", user = aUser)
     verify(
       expectedEventType = "official-visits-api.time-slot.created",
-      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = null,
       expectedDescription = "An official visit time slot has been created",
     )
@@ -129,10 +130,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `time slot updated event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_UPDATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.TIME_SLOT_UPDATED, 1L, null, noms = "", user = aUser)
+    outboundEventsService.send(OutboundEvent.TIME_SLOT_UPDATED, MOORLAND, 1L, null, noms = "", user = aUser)
     verify(
       expectedEventType = "official-visits-api.time-slot.updated",
-      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = null,
       expectedDescription = "An official visit time slot has been updated",
     )
@@ -141,10 +142,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `time slot deleted event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.TIME_SLOT_DELETED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.TIME_SLOT_DELETED, 1L, null, noms = "", user = aUser)
+    outboundEventsService.send(OutboundEvent.TIME_SLOT_DELETED, MOORLAND, 1L, null, noms = "", user = aUser)
     verify(
       expectedEventType = "official-visits-api.time-slot.deleted",
-      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = TimeSlotInfo(timeSlotId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = null,
       expectedDescription = "An official visit time slot has been deleted",
     )
@@ -153,10 +154,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `visit slot created event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_SLOT_CREATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISIT_SLOT_CREATED, 1L, null, noms = "", user = aUser)
+    outboundEventsService.send(OutboundEvent.VISIT_SLOT_CREATED, MOORLAND, 1L, null, noms = "", user = aUser)
     verify(
       expectedEventType = "official-visits-api.visit-slot.created",
-      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = null,
       expectedDescription = "An official visit slot has been created",
     )
@@ -165,10 +166,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `visit slot amended event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_SLOT_UPDATED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISIT_SLOT_UPDATED, 1L, null, noms = "", user = aUser)
+    outboundEventsService.send(OutboundEvent.VISIT_SLOT_UPDATED, MOORLAND, 1L, null, noms = "", user = aUser)
     verify(
       expectedEventType = "official-visits-api.visit-slot.updated",
-      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = null,
       expectedDescription = "An official visit slot has been updated",
     )
@@ -177,10 +178,10 @@ class OutboundEventsServiceTest {
   @Test
   fun `visit slot deleted event is published`() {
     featureSwitches.stub { on { isEnabled(OutboundEvent.VISIT_SLOT_DELETED) } doReturn true }
-    outboundEventsService.send(OutboundEvent.VISIT_SLOT_DELETED, 1L, null, noms = "", user = aUser)
+    outboundEventsService.send(OutboundEvent.VISIT_SLOT_DELETED, MOORLAND, 1L, null, noms = "", user = aUser)
     verify(
       expectedEventType = "official-visits-api.visit-slot.deleted",
-      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = "test-user", prisonId = "BMI"),
+      expectedAdditionalInformation = VisitSlotInfo(visitSlotId = 1L, source = Source.DPS, username = aUser.username, prisonId = MOORLAND),
       expectedPersonReference = null,
       expectedDescription = "An official visit slot has been deleted",
     )
@@ -189,7 +190,7 @@ class OutboundEventsServiceTest {
   @Test
   fun `events are not published for any outbound event when not enabled`() {
     featureSwitches.stub { on { isEnabled(any<OutboundEvent>(), any()) } doReturn false }
-    OutboundEvent.entries.forEach { outboundEventsService.send(it, 1L, 1L, user = User.SYS_USER) }
+    OutboundEvent.entries.forEach { outboundEventsService.send(it, MOORLAND, 1L, 1L, user = aUser) }
     verifyNoInteractions(publisher)
   }
 
@@ -200,7 +201,7 @@ class OutboundEventsServiceTest {
     whenever(publisher.send(any())).thenThrow(RuntimeException("Boom!"))
 
     // Exceptions are logged and swallowed by the publisher
-    outboundEventsService.send(event, 1L, null, noms = "A1111AA", user = User.SYS_USER)
+    outboundEventsService.send(event, MOORLAND, 1L, null, noms = "A1111AA", user = aUser)
 
     verify(publisher).send(any())
   }

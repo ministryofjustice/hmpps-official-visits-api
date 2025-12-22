@@ -4,8 +4,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 
 @Service
 class OutboundEventsService(
@@ -19,6 +19,7 @@ class OutboundEventsService(
 
   fun send(
     outboundEvent: OutboundEvent,
+    prisonCode: String,
     identifier: Long,
     secondIdentifier: Long? = 0,
     noms: String = "",
@@ -36,7 +37,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitInfo(identifier, source, user.username, user.activeCaseLoadId),
+            VisitInfo(identifier, source, user.username, prisonCode),
             PersonReference(noms),
           )
         }
@@ -47,7 +48,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitorInfo(identifier, secondIdentifier ?: 0, source, user.username, user.activeCaseLoadId),
+            VisitorInfo(identifier, secondIdentifier ?: 0, source, user.username, prisonCode),
             contactId?.let { PersonReference(contactId = it) },
           )
         }
@@ -56,7 +57,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            PrisonerInfo(identifier, secondIdentifier ?: 0, source, user.username, user.activeCaseLoadId),
+            PrisonerInfo(identifier, secondIdentifier ?: 0, source, user.username, prisonCode),
             PersonReference(noms),
           )
         }
@@ -67,7 +68,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            TimeSlotInfo(identifier, source, user.username, user.activeCaseLoadId),
+            TimeSlotInfo(identifier, source, user.username, prisonCode),
           )
         }
 
@@ -77,7 +78,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitSlotInfo(identifier, source, user.username, user.activeCaseLoadId),
+            VisitSlotInfo(identifier, source, user.username, prisonCode),
           )
         }
       }

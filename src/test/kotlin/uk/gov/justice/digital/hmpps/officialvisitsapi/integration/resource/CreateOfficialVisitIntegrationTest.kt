@@ -28,6 +28,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOffic
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
@@ -66,7 +70,13 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     officialVisitors = listOf(officialVisitor),
   )
 
-  private final val nextFridayAt11 = nextMondayAt9.copy(visitDate = next(DayOfWeek.FRIDAY), startTime = LocalTime.of(11, 0), endTime = LocalTime.of(12, 0), prisonVisitSlotId = 9, dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
+  private final val nextFridayAt11 = nextMondayAt9.copy(
+    visitDate = next(DayOfWeek.FRIDAY),
+    startTime = LocalTime.of(11, 0),
+    endTime = LocalTime.of(12, 0),
+    prisonVisitSlotId = 9,
+    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+  )
 
   @Test
   @Transactional
@@ -112,6 +122,12 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
     }
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_CREATED,
+      additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
+      personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
+    )
   }
 
   @Test
@@ -158,29 +174,44 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
     }
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_CREATED,
+      additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
+      personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
+    )
   }
 
   @Test
   fun `should fail to create official visit when no matching contact found`() {
     webTestClient.badRequest(nextMondayAt9.copy(officialVisitors = listOf(officialVisitor.copy(contactId = 999))), "Visitor with contact ID 999 and prisoner contact ID 456 is not approved for visiting prisoner number ${MOORLAND_PRISONER.number}.")
+
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   @Test
   fun `should fail to create official visit when slot is no longer available`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
+    // Create a visit and ignore/reset the stubbed event
     webTestClient.create(nextFridayAt11)
+    stubEvents.reset()
+
+    // Create another visit at the same time
     webTestClient.badRequest(nextFridayAt11, "Prison visit slot 9 is no longer available for the requested date and time.")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   @Test
   fun `should fail when no official visitors are provided`() {
     webTestClient.badRequest(nextMondayAt9.copy(officialVisitors = emptyList()), "At least one official visitor must be supplied.")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   @Test
   fun `should fail when unknown prison visit slot id`() {
     webTestClient.badRequest(nextMondayAt9.copy(prisonVisitSlotId = -99), "Prison visit slot with id -99 not found.")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   @Test
@@ -188,16 +219,19 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     val beforeNow = now().minusMinutes(1)
 
     webTestClient.badRequest(nextMondayAt9.copy(visitDate = beforeNow.toLocalDate(), startTime = beforeNow.toLocalTime()), "Official visit cannot be scheduled in the past")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   @Test
   fun `should fail when visit start time is not before the end time`() {
     webTestClient.badRequest(nextMondayAt9.copy(startTime = nextMondayAt9.endTime), "Official visit start time must be before end time")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   @Test
   fun `should fail when prisoner not at prison`() {
     webTestClient.badRequest(nextMondayAt9, "Prisoner ${MOORLAND_PRISONER.number} not found at prison $PENTONVILLE", PENTONVILLE_PRISON_USER)
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumingThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -19,15 +20,18 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
-@Sql("classpath:integration-test-data/availability/clean-visit-seed-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class AvailableSlotsIntegrationTest : IntegrationTestBase() {
   private val today = LocalDate.now()
 
   @BeforeEach
+  @Sql("classpath:integration-test-data/availability/clean-visit-seed-data.sql")
   fun setup() {
-    // Stub locations so localName descriptions are added to AvailableSlot responses
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, fakeOfficialVisitLocations())
   }
+
+  @AfterEach
+  @Sql("classpath:integration-test-data/availability/clean-visit-seed-data.sql")
+  fun tearDown() {}
 
   @Test
   fun `should perform basic GET with no visits`() {

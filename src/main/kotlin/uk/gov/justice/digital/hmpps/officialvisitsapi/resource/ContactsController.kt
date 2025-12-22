@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,11 +23,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 @RestController
 @AuthApiResponses
 @RequestMapping(value = ["prisoner"], produces = [MediaType.APPLICATION_JSON_VALUE])
-open class ContactsController(private val contactsService: ContactsService) {
-  companion object {
-    private val logger = LoggerFactory.getLogger(this::class.java)
-  }
-
+class ContactsController(private val contactsService: ContactsService) {
   @Operation(summary = "Get the approved contacts for a prisoner for official or social visits")
   @ApiResponses(
     value = [
@@ -62,8 +57,5 @@ open class ContactsController(private val contactsService: ContactsService) {
     @Parameter(description = "The relationship type should be S for social or O for official", required = false)
     @RequestParam(name = "relationshipType", required = true, defaultValue = "O")
     relationshipType: String,
-  ): List<ApprovedContact> {
-    logger.info("Received request for approved contacts for prisoner $prisonerNumber of type $relationshipType")
-    return contactsService.getApprovedContacts(prisonerNumber, relationshipType)
-  }
+  ): List<ApprovedContact> = contactsService.getApprovedContacts(prisonerNumber, relationshipType)
 }

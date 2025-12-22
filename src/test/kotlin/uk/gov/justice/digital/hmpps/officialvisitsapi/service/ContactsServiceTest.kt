@@ -12,9 +12,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import java.time.LocalDate
 
 class ContactsServiceTest {
-
   private val personalRelationshipsApiClient: PersonalRelationshipsApiClient = mock()
   private val contactService = ContactsService(personalRelationshipsApiClient)
+  private val prisonerNumber = "A1234AA"
+  private val relationshipType = "O"
 
   @BeforeEach
   fun setUp() {
@@ -24,27 +25,27 @@ class ContactsServiceTest {
   @Test
   fun `getApprovedContacts should return approved contacts for valid prisonerNumber and relationship type`() {
     val listOfCodes = listOf(
-      prisonerContact("ABCD", "O", true, true, true, null),
+      prisonerContact(prisonerNumber, relationshipType, true, true, true, null),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(listOfCodes)
-    assertThat(contactService.getApprovedContacts("ABCD", "O").single().relationshipTypeDescription isEqualTo "Friend")
+    whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(listOfCodes)
+    assertThat(contactService.getApprovedContacts(prisonerNumber, relationshipType).single().relationshipTypeDescription isEqualTo "Friend")
   }
 
   @Test
   fun `getApprovedContacts should return empty  approved contacts when currentTerm is false `() {
     val listOfCodes = listOf(
-      prisonerContact("ABCD", "O", false, true, true, null),
+      prisonerContact(prisonerNumber, relationshipType, false, true, true, null),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList())
-    assertThat(contactService.getApprovedContacts("ABCD", "O") isEqualTo emptyList())
+    whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(emptyList())
+    assertThat(contactService.getApprovedContacts(prisonerNumber, relationshipType) isEqualTo emptyList())
   }
 
   @Test
   fun `getApprovedContacts should return empty  approved contacts when deceasedDate is not  `() {
     val listOfCodes = listOf(
-      prisonerContact("ABCD", "O", true, true, true, LocalDate.now()),
+      prisonerContact(prisonerNumber, relationshipType, true, true, true, LocalDate.now()),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts("ABCD", "O")).thenReturn(emptyList())
-    assertThat(contactService.getApprovedContacts("ABCD", "O") isEqualTo emptyList())
+    whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(emptyList())
+    assertThat(contactService.getApprovedContacts(prisonerNumber, relationshipType) isEqualTo emptyList())
   }
 }
