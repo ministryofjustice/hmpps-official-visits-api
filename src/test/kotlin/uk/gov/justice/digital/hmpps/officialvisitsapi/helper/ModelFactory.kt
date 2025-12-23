@@ -63,6 +63,7 @@ fun prisonerSearchPrisoner(
   bookingId: Long = -1,
   lastPrisonCode: String? = null,
   cellLocation: String = "Location",
+  prisonName: String = "A prison",
 ) = Prisoner(
   prisonerNumber = prisonerNumber,
   prisonId = prisonCode,
@@ -74,6 +75,7 @@ fun prisonerSearchPrisoner(
   cellLocation = cellLocation,
   middleNames = "middle Name",
   offenderBookId = "1234",
+  prisonName = prisonName,
 )
 
 fun userDetails(

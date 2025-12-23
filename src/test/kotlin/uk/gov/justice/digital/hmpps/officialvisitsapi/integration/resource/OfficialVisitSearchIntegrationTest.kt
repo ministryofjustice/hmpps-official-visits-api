@@ -8,10 +8,13 @@ import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -67,6 +70,25 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
+
+    // Stub for matching approved contact
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+
+    // Stub for matching prisoner
+    prisonerSearchApi().stubSearchPrisonersByPrisonerNumbers(
+      idsBeingSearchFor = listOf(MOORLAND_PRISONER.number),
+      prisonersToReturn = listOf(
+        prisonerSearchPrisoner(prisonerNumber = MOORLAND_PRISONER.number, prisonCode = MOORLAND, firstName = "Bob", lastName = "Harris", prisonName = "Moorland HMP"),
+      ),
+    )
+
+    // Stub for matching locations
+    locationsInsidePrisonApi().stubLocationsByKeys(
+      locationIds = listOf(UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
+      locationsToReturn = listOf(
+        location(prisonCode = MOORLAND, locationKeySuffix = MOORLAND, localName = "Visit place", id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
+      ),
+    )
   }
 
   @AfterEach
@@ -77,8 +99,6 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should find official visits by criteria over multiple pages`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
@@ -114,8 +134,6 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should find official all visits by criteria on one page`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 

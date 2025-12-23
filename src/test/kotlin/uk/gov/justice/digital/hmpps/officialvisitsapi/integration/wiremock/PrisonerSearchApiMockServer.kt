@@ -1,13 +1,17 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.post
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerNumbers
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner as SearchPrisoner
 
 class PrisonerSearchApiMockServer : MockServer(8092) {
 
@@ -26,6 +30,19 @@ class PrisonerSearchApiMockServer : MockServer(8092) {
                 ),
               ),
             )
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubSearchPrisonersByPrisonerNumbers(idsBeingSearchFor: List<String>, prisonersToReturn: List<SearchPrisoner>) {
+    stubFor(
+      post("/prisoner-search/prisoner-numbers")
+        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbers(idsBeingSearchFor)), true, true))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(mapper.writeValueAsString(prisonersToReturn))
             .withStatus(200),
         ),
     )

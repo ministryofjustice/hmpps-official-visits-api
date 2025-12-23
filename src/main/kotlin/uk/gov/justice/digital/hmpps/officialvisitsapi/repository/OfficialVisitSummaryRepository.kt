@@ -24,7 +24,8 @@ interface OfficialVisitSummaryRepository : ReadOnlyRepository<OfficialVisitSumma
          AND ovs.visitDate BETWEEN :startDate AND :endDate
          AND (:prisonerNumbers is null or ovs.prisonerNumber IN :prisonerNumbers)
          AND (:visitTypes is null or ovs.visitTypeCode IN :visitTypes)
-         AND (:visitStatusTypes is null or ovs.visitStatusCode IN :visitStatusTypes)
+         AND (:visitStatuses is null or ovs.visitStatusCode IN :visitStatuses)
+         AND (:locationIds is null or ovs.dpsLocationId IN :locationIds)
     """,
   )
   fun findOfficialVisitSummaryEntityBy(
@@ -33,8 +34,8 @@ interface OfficialVisitSummaryRepository : ReadOnlyRepository<OfficialVisitSumma
     startDate: LocalDate,
     endDate: LocalDate,
     visitTypes: Collection<VisitType>?,
-    visitStatusTypes: Collection<VisitStatusType>?,
-    locationsId: Collection<UUID>?,
+    visitStatuses: Collection<VisitStatusType>?,
+    locationIds: Collection<UUID>?,
     pageable: Pageable,
   ): Page<OfficialVisitSummaryEntity>
 }
