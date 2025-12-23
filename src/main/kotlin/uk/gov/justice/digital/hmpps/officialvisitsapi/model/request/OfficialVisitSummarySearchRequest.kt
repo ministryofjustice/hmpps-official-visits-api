@@ -16,10 +16,10 @@ data class OfficialVisitSummarySearchRequest(
   @Schema(description = "The latest date the official visits will end", example = "2022-12-23")
   val endDate: LocalDate?,
 
-  @Schema(description = "The visit types to search for", examples = ["IN_PERSON", "VIDEO"])
+  @Schema(description = "The visit types to search for", examples = ["IN_PERSON", "VIDEO", "TELEPHONE", "UNKNOWN"])
   val visitTypes: List<VisitType>?,
 
-  @Schema(description = "The visit statuses to search for", examples = ["SCHEDULED", "COMPLETED"])
+  @Schema(description = "The visit statuses to search for", examples = ["SCHEDULED", "COMPLETED", "CANCELLED", "EXPIRED"])
   val visitStatuses: List<VisitStatusType>?,
 
   @Schema(description = "The prisoner numbers to search for", examples = ["G9190VP", "G9190VP"])
