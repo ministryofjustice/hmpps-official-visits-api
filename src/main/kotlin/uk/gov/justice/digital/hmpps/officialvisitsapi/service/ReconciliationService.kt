@@ -14,7 +14,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 @Service
 @Transactional(readOnly = true)
 class ReconciliationService(private val officialVisitRepository: OfficialVisitRepository) {
-  fun getOfficialVisitIds(currentTerm: Boolean, pageable: Pageable): PagedModel<SyncOfficialVisitId> = PagedModel(officialVisitRepository.findAllOfficialVisitIds(currentTerm, pageable).toModelIds())
+  fun getOfficialVisitIds(currentTermOnly: Boolean, pageable: Pageable): PagedModel<SyncOfficialVisitId> = PagedModel(
+    // When currentTermOnly is false, this intentionally passes a null value into the repository method so the parameter is ignored.
+    officialVisitRepository.findAllOfficialVisitIds(currentTermOnly.takeIf { it }, pageable).toModelIds(),
+  )
 
   fun getOfficialVisitById(officialVisitId: Long): SyncOfficialVisit {
     val syncOfficialVisit = officialVisitRepository.findById(officialVisitId).orElseThrow {

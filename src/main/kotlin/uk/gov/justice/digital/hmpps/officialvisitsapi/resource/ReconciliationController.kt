@@ -27,19 +27,27 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReconciliationServ
 @RestController
 @RequestMapping(value = ["reconcile"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @AuthApiResponses
-class ReconciliationController(private val officialVisitReconciliationService: ReconciliationService) {
+class ReconciliationController(private val reconciliationService: ReconciliationService) {
 
   @Operation(summary = "Endpoint to return a paged list of all official visit IDs")
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
   @PageableAsQueryParam
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "A paginated list of all official visit IDs",
+      ),
+    ],
+  )
   fun getAllOfficialVisitIds(
     @Parameter(hidden = true)
     @PageableDefault(size = 200, page = 0, direction = Sort.Direction.ASC)
     pageable: Pageable,
-    @RequestParam(name = "currentTerm", required = true, defaultValue = "false")
-    currentTerm: Boolean = false,
-  ): PagedModel<SyncOfficialVisitId> = officialVisitReconciliationService.getOfficialVisitIds(currentTerm, pageable)
+    @RequestParam(name = "currentTermOnly", defaultValue = "true")
+    currentTermOnly: Boolean = true,
+  ): PagedModel<SyncOfficialVisitId> = reconciliationService.getOfficialVisitIds(currentTermOnly, pageable)
 
   @Operation(summary = "Endpoint to return one official visit by ID for reconciliation")
   @ApiResponses(
@@ -61,5 +69,5 @@ class ReconciliationController(private val officialVisitReconciliationService: R
   fun getOfficialVisitById(
     @PathVariable(name = "officialVisitId", required = true)
     officialVisitId: Long,
-  ): SyncOfficialVisit = officialVisitReconciliationService.getOfficialVisitById(officialVisitId)
+  ): SyncOfficialVisit = reconciliationService.getOfficialVisitById(officialVisitId)
 }

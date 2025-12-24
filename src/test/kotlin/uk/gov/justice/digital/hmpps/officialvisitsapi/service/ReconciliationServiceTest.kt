@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -10,7 +10,6 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReconciliationService
 
 class ReconciliationServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
@@ -28,7 +27,7 @@ class ReconciliationServiceTest {
     val result = listOf<Long>(1L)
     val pageOfficialVisitsIds = PageImpl(result, pageable, 1)
 
-    whenever(officialVisitRepository.findAllOfficialVisitIds(false, pageable)).thenReturn(pageOfficialVisitsIds)
+    whenever(officialVisitRepository.findAllOfficialVisitIds(null, pageable)).thenReturn(pageOfficialVisitsIds)
 
     assertThat(reconciliationService.getOfficialVisitIds(false, pageable).content.single().officialVisitId isEqualTo 1)
   }
