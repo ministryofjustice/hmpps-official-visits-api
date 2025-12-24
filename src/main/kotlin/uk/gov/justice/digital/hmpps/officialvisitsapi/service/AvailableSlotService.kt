@@ -49,7 +49,7 @@ class AvailableSlotService(
     log.info("Found ${slots.size} official visit locations for prison $prisonCode")
 
     val decoratedSlots = slots.map { slot ->
-      val location = activeVisitLocations?.find { location -> location.id == slot.dpsLocationId }
+      val location = activeVisitLocations.find { location -> location.id == slot.dpsLocationId }
       if (location == null) {
         log.error("Unmatched location for visit ${slot.dpsLocationId} for $prisonCode is not in the official visits locations")
         slot.copy(locationDescription = "** unknown **")

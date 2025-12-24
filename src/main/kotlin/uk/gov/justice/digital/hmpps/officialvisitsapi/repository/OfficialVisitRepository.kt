@@ -11,6 +11,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   fun findByOfficialVisitIdAndPrisonCode(officialVisitId: Long, prisonCode: String): OfficialVisitEntity?
 
-  @Query("SELECT ov.officialVisitId from OfficialVisitEntity ov WHERE ov.currentTerm = :currentTerm")
-  fun findAllOfficialVisitIds(currentTerm: Boolean, pageable: Pageable): Page<Long>
+  @Query("SELECT ov.officialVisitId FROM OfficialVisitEntity ov WHERE (:currentTermOnly is null OR ov.currentTerm = :currentTermOnly)")
+  fun findAllOfficialVisitIds(currentTermOnly: Boolean?, pageable: Pageable): Page<Long>
 }

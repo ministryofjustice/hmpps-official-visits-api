@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 
 @Service
+@Transactional(readOnly = true)
 class OfficialVisitsRetrievalService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
@@ -21,66 +23,49 @@ class OfficialVisitsRetrievalService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
 ) {
-
-  @Transactional(readOnly = true)
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, id: Long): OfficialVisitDetails {
-    val officialVisitEntity = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
+    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
-    val prisoner = prisonerSearchClient.getPrisoner(officialVisitEntity.prisonerNumber)
-    val prisonerVisitedEntity = prisonerVisitedRepository.findByOfficialVisitId(id)
-    return populateOfficialVisitDetails(
-      officialVisitEntity,
-      prisoner,
-      prisonerVisitedEntity,
-      personalRelationshipsReferenceDataService,
-    )
+
+    val prisoner = prisonerSearchClient.getPrisoner(ove.prisonerNumber)
+      ?: throw EntityNotFoundException("Prisoner not found ${ove.prisonerNumber}")
+
+    val pve = prisonerVisitedRepository.findByOfficialVisitId(id)
+      ?: throw EntityNotFoundException("Prisoner visited not found for visit ID $id")
+
+    return populateOfficialVisitDetails(ove, prisoner, pve)
   }
 
   private fun populateOfficialVisitDetails(
-    officialVisitEntity: OfficialVisitEntity?,
-    prisoner: uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner?,
-    prisonerVisitedEntity: PrisonerVisitedEntity?,
-    personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
+    ove: OfficialVisitEntity,
+    prisoner: Prisoner,
+    pve: PrisonerVisitedEntity,
   ): OfficialVisitDetails = OfficialVisitDetails(
-    officialVisitId = officialVisitEntity!!.officialVisitId,
-    prisonCode = officialVisitEntity.prisonCode,
-    prisonDescription = prisoner!!.prisonName,
-    visitStatus = officialVisitEntity.visitStatusCode,
-    visitStatusDescription = referenceDataService.getReferenceDataByGroupAndCode(
-      ReferenceDataGroup.VIS_STATUS,
-      officialVisitEntity.visitStatusCode.toString(),
-    )?.description
-      ?: officialVisitEntity.visitStatusCode.toString(),
-    visitTypeCode = officialVisitEntity.visitTypeCode,
-    visitTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(
-      ReferenceDataGroup.VIS_TYPE,
-      officialVisitEntity.visitTypeCode.toString(),
-    )?.description ?: officialVisitEntity.visitTypeCode.toString(),
-    visitDate = officialVisitEntity.visitDate,
-    startTime = officialVisitEntity.startTime,
-    endTime = officialVisitEntity.endTime,
-    dpsLocationId = officialVisitEntity.dpsLocationId,
+    officialVisitId = ove.officialVisitId,
+    prisonCode = ove.prisonCode,
+    prisonDescription = prisoner.prisonName ?: "Unknown",
+    visitStatus = ove.visitStatusCode,
+    visitStatusDescription = getReferenceDescription(ReferenceDataGroup.VIS_STATUS, ove.visitStatusCode.name)!!,
+    visitTypeCode = ove.visitTypeCode,
+    visitTypeDescription = getReferenceDescription(ReferenceDataGroup.VIS_TYPE, ove.visitTypeCode.name)!!,
+    visitDate = ove.visitDate,
+    startTime = ove.startTime,
+    endTime = ove.endTime,
+    dpsLocationId = ove.dpsLocationId,
     locationDescription = prisoner.locationDescription,
-    visitSlotId = officialVisitEntity.prisonVisitSlot.prisonVisitSlotId,
-    staffNotes = officialVisitEntity.staffNotes,
-    prisonerNotes = officialVisitEntity.prisonerNotes,
-    visitorConcernNotes = officialVisitEntity.visitorConcernNotes,
-    completionCode = officialVisitEntity.completionCode,
-    completionDescription = referenceDataService.getReferenceDataByGroupAndCode(
-      ReferenceDataGroup.VIS_COMPLETION,
-      officialVisitEntity.completionCode.toString(),
-    )?.description ?: officialVisitEntity.completionCode.toString(),
-    searchTypeCode = officialVisitEntity.searchTypeCode,
-    searchTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(
-      ReferenceDataGroup.SEARCH_LEVEL,
-      officialVisitEntity.searchTypeCode.toString(),
-    )?.description ?: officialVisitEntity.searchTypeCode.toString(),
-    createdTime = officialVisitEntity.createdTime,
-    createdBy = officialVisitEntity.createdBy,
-    updatedTime = officialVisitEntity.updatedTime,
-    updatedBy = officialVisitEntity.updatedBy,
-    officialVisitors = officialVisitEntity.officialVisitors()
-      .toModel(referenceDataService, personalRelationshipsReferenceDataService),
+    visitSlotId = ove.prisonVisitSlot.prisonVisitSlotId,
+    staffNotes = ove.staffNotes,
+    prisonerNotes = ove.prisonerNotes,
+    visitorConcernNotes = ove.visitorConcernNotes,
+    completionCode = ove.completionCode,
+    completionDescription = getReferenceDescription(ReferenceDataGroup.VIS_COMPLETION, ove.completionCode?.name),
+    searchTypeCode = ove.searchTypeCode,
+    searchTypeDescription = getReferenceDescription(ReferenceDataGroup.SEARCH_LEVEL, ove.searchTypeCode?.name),
+    createdTime = ove.createdTime,
+    createdBy = ove.createdBy,
+    updatedTime = ove.updatedTime,
+    updatedBy = ove.updatedBy,
+    officialVisitors = ove.officialVisitors().toModel(referenceDataService, personalRelationshipsReferenceDataService),
     prisonerVisited = PrisonerVisitedDetails(
       prisonerNumber = prisoner.prisonerNumber,
       prisonCode = prisoner.prisonId!!,
@@ -90,11 +75,12 @@ class OfficialVisitsRetrievalService(
       middleNames = prisoner.middleNames,
       offenderBookId = prisoner.offenderBookId?.toLong(),
       cellLocation = prisoner.cellLocation,
-      attendanceCode = prisonerVisitedEntity?.attendanceCode.toString(),
-      attendanceCodeDescription = referenceDataService.getReferenceDataByGroupAndCode(
-        ReferenceDataGroup.ATTENDANCE,
-        prisonerVisitedEntity?.attendanceCode.toString(),
-      )?.description ?: prisonerVisitedEntity?.attendanceCode.toString(),
+      attendanceCode = pve.attendanceCode?.name,
+      attendanceCodeDescription = getReferenceDescription(ReferenceDataGroup.ATTENDANCE, pve.attendanceCode?.name),
     ),
   )
+
+  private fun getReferenceDescription(group: ReferenceDataGroup, code: String?) = code?.let {
+    referenceDataService.getReferenceDataByGroupAndCode(group, code)?.description ?: code
+  }
 }

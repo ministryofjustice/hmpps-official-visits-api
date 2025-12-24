@@ -104,7 +104,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Get all IDS - with results across two pages`() {
+  fun `Get all IDS - with results across two page with currentTermOnly defaulted to true`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
     personalRelationshipsApi().stubReferenceGroup()
 
@@ -112,6 +112,17 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     webTestClient.create(nextFridayAt11)
 
     webTestClient.getOfficialVisitIdsPaged()
+  }
+
+  @Test
+  fun `Get all IDS - single page with currentTermOnly set to false`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    personalRelationshipsApi().stubReferenceGroup()
+
+    webTestClient.create(nextMondayAt9)
+    webTestClient.create(nextFridayAt11)
+
+    webTestClient.getOfficialVisitIdsAll()
   }
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
@@ -149,7 +160,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.getOfficialVisitIdsEmpty() = this
     .get()
-    .uri("/reconcile/official-visits/identifiers?currentTerm=true&page=0&size=1")
+    .uri("/reconcile/official-visits/identifiers?&page=0&size=1")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
@@ -162,7 +173,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.getOfficialVisitIdsPaged() = this
     .get()
-    .uri("/reconcile/official-visits/identifiers?currentTerm=true&page=0&size=1")
+    .uri("/reconcile/official-visits/identifiers?&page=0&size=1")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
@@ -171,5 +182,18 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     .expectBody()
     .consumeWith(System.out::println)
     .jsonPath("$.content.length()").isEqualTo(1)
+    .jsonPath("$.page.totalElements").isEqualTo(2)
+
+  private fun WebTestClient.getOfficialVisitIdsAll() = this
+    .get()
+    .uri("/reconcile/official-visits/identifiers?currentTermOnly=false&page=0&size=5")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody()
+    .consumeWith(System.out::println)
+    .jsonPath("$.content.length()").isEqualTo(2)
     .jsonPath("$.page.totalElements").isEqualTo(2)
 }
