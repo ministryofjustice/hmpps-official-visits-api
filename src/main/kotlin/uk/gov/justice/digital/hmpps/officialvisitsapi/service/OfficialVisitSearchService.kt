@@ -6,6 +6,7 @@ import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.LocationsInsidePrisonClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVisitedDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitSummaryRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import java.util.*
 
 @Service
 @Transactional(readOnly = true)
@@ -44,10 +46,9 @@ class OfficialVisitSearchService(
     val prisonerDetails = prisonerSearchClient.findByPrisonerNumbers(prisonerNumbers.toList(), prisonerNumbers.size)
     val prisonerMap = prisonerDetails.associateBy { it.prisonerNumber }
 
-    // Get the locations for visits on this page of results
-    val locations = results.map { it.dpsLocationId }.toSet()
-    val locationDetails = locationsInsidePrisonClient.getLocationsByIds(locations.toList())
-    val locationMap = locationDetails.associateBy { it.id }
+    // Get the locations for visits for this prison (it's a cacheable endpoint)
+    val locations = locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode)
+    val locationMap = locations.map { LocationDescription(it.id, it.localName, it.locationType, it.key) }.associateBy { it.id }
 
     // Enrich the page of results
     val response = results.map { ov ->
@@ -79,7 +80,7 @@ class OfficialVisitSearchService(
         startTime = ov.startTime,
         endTime = ov.endTime,
         dpsLocationId = ov.dpsLocationId,
-        locationDescription = location?.localName ?: "Unknown",
+        locationDescription = location?.localName ?: location?.key ?: "Unknown",
         visitSlotId = ov.prisonVisitSlotId,
         staffNotes = ov.staffNotes,
         prisonerNotes = ov.prisonerNotes,
@@ -112,4 +113,11 @@ class OfficialVisitSearchService(
   private fun getReferenceDescription(group: ReferenceDataGroup, code: String?) = code?.let {
     referenceDataService.getReferenceDataByGroupAndCode(group, code)?.description ?: "Reference code $code not found"
   }
+
+  private data class LocationDescription(
+    val id: UUID,
+    val localName: String?,
+    val locationType: Location.LocationType,
+    val key: String?,
+  )
 }

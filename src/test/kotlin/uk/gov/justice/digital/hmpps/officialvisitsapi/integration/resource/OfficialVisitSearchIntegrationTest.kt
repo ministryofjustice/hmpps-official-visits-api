@@ -71,10 +71,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
   fun setupTest() {
     clearAllVisitData()
 
-    // Stub for matching approved contact
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
-    // Stub for matching prisoner
     prisonerSearchApi().stubSearchPrisonersByPrisonerNumbers(
       idsBeingSearchFor = listOf(MOORLAND_PRISONER.number),
       prisonersToReturn = listOf(
@@ -82,11 +80,10 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    // Stub for matching locations
-    locationsInsidePrisonApi().stubLocationsByKeys(
-      locationIds = listOf(UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
-      locationsToReturn = listOf(
-        location(prisonCode = MOORLAND, locationKeySuffix = MOORLAND, localName = "Visit place", id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
+      prisonCode = MOORLAND,
+      locations = listOf(
+        location(prisonCode = MOORLAND, locationKeySuffix = "1-1", localName = "Visit place", id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
       ),
     )
   }
@@ -150,6 +147,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
     with(onePageOnly) {
       assertThat(content).extracting("visitSlotId").containsExactlyInAnyOrder(1L, 4L)
+      assertThat(content).extracting("locationDescription").containsOnly("Visit place")
       page.size isEqualTo 2
       page.number isEqualTo 0
       page.totalElements isEqualTo 2
