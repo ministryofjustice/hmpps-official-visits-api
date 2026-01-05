@@ -18,3 +18,5 @@ fun OfficialVisitEntity.toSyncModel(): SyncOfficialVisit = SyncOfficialVisit(
   offenderVisitId = this.offenderVisitId,
   visitors = this.officialVisitors().toSyncModel(),
 )
+
+fun List<OfficialVisitEntity>.toSyncModel(): List<SyncOfficialVisit> = map { it.toSyncModel() }

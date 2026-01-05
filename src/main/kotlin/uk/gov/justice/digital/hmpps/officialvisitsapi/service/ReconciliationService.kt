@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import java.time.LocalDate
 
 @Service
 @Transactional(readOnly = true)
@@ -25,4 +26,5 @@ class ReconciliationService(private val officialVisitRepository: OfficialVisitRe
     }
     return syncOfficialVisit.toSyncModel()
   }
+  fun getAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate, toDate: LocalDate): List<SyncOfficialVisit> = officialVisitRepository.findAllPrisonerVisits(prisonerNumber, currentTerm, fromDate, toDate).toSyncModel()
 }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import java.time.LocalDate
 
 @Repository
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
@@ -13,4 +14,15 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
 
   @Query("SELECT ov.officialVisitId FROM OfficialVisitEntity ov WHERE (:currentTermOnly is null OR ov.currentTerm = :currentTermOnly)")
   fun findAllOfficialVisitIds(currentTermOnly: Boolean?, pageable: Pageable): Page<Long>
+
+  @Query(
+    """
+    SELECT ov 
+    FROM OfficialVisitEntity ov 
+    WHERE ov.prisonerNumber = :prisonerNumber
+    AND ov.currentTerm = :currentTerm
+    AND ov.visitDate BETWEEN :fromDate AND :toDate
+    """,
+  )
+  fun findAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate, toDate: LocalDate): List<OfficialVisitEntity>
 }
