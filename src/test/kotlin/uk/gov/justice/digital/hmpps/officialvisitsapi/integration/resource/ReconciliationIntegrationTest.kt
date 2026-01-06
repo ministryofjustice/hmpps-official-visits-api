@@ -62,6 +62,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
   }
 
   @AfterEach
@@ -72,8 +73,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `Get one by ID - should return an official visit for reconciliation`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-    personalRelationshipsApi().stubReferenceGroup()
     val visit = webTestClient.create(nextMondayAt9)
 
     val response = webTestClient.getOfficialVisitById(visit.officialVisitId)
@@ -106,9 +105,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `Get all IDS - with results across two page with currentTermOnly defaulted to true`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-    personalRelationshipsApi().stubReferenceGroup()
-
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
@@ -117,9 +113,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `Get all IDS - single page with currentTermOnly set to false`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-    personalRelationshipsApi().stubReferenceGroup()
-
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
@@ -128,9 +121,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `Get all official visits between the visit dates and  currentTermOnly set to true`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-    personalRelationshipsApi().stubReferenceGroup()
-
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
@@ -170,9 +160,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `Get two official visits list with only toDate and  currentTermOnly set to true`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-    personalRelationshipsApi().stubReferenceGroup()
-
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
@@ -182,9 +169,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `Get two official visits list with null toDate and fromDate and  currentTermOnly set to true`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-    personalRelationshipsApi().stubReferenceGroup()
-
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
