@@ -124,7 +124,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY))
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY), true)
     officialVisits.size isEqualTo 2
     with(officialVisits.first()) {
       prisonCode isEqualTo MOORLAND_PRISONER.prison
@@ -153,8 +153,17 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Get all official visits between the visit dates and  currentTermOnly set to false`() {
+    webTestClient.create(nextMondayAt9)
+    webTestClient.create(nextFridayAt11)
+
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY), false)
+    officialVisits.size isEqualTo 2
+  }
+
+  @Test
   fun `Get empty official visits list between the  invalid visit dates and  currentTermOnly set to true`() {
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY))
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY), true)
     officialVisits.size isEqualTo 0
   }
 
@@ -168,7 +177,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Get two official visits list with null toDate and fromDate and  currentTermOnly set to true`() {
+  fun `Get All official visits list with null toDate and fromDate and  currentTermOnly set to false`() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
@@ -248,9 +257,9 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     .jsonPath("$.content.length()").isEqualTo(2)
     .jsonPath("$.page.totalElements").isEqualTo(2)
 
-  private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String, fromDate: LocalDate?, toDate: LocalDate?) = this
+  private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String, fromDate: LocalDate?, toDate: LocalDate?, currentTerm: Boolean) = this
     .get()
-    .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=true&fromDate=$fromDate&toDate=$toDate")
+    .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=$currentTerm&fromDate=$fromDate&toDate=$toDate")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()
@@ -261,7 +270,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String) = this
     .get()
-    .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=true")
+    .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=false")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()

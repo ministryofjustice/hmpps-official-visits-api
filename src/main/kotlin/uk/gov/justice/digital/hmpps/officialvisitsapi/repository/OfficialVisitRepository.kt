@@ -20,7 +20,7 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     SELECT ov 
     FROM OfficialVisitEntity ov 
     WHERE ov.prisonerNumber = :prisonerNumber
-    AND ov.currentTerm = :currentTerm
+    AND (:currentTerm = false OR ov.currentTerm = true)
     AND CAST(:fromDate as date) IS NULL OR ov.visitDate >= :fromDate
     AND CAST(:toDate as date) IS NULL OR ov.visitDate <= :toDate
     ORDER BY ov.visitDate, ov.startTime
