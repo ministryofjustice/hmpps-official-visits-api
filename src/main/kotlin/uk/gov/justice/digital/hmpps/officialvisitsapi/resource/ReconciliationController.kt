@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReconciliationService
+import java.time.LocalDate
 
 @Tag(name = "Reconciliation")
 @RestController
@@ -70,4 +72,36 @@ class ReconciliationController(private val reconciliationService: Reconciliation
     @PathVariable(name = "officialVisitId", required = true)
     officialVisitId: Long,
   ): SyncOfficialVisit = reconciliationService.getOfficialVisitById(officialVisitId)
+
+  @Operation(summary = "Endpoint to return all official visits for a prisoner between the specified  visit dates and  current term")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "List of all Official visit details",
+        content = [
+          Content(
+            mediaType = "application/json",
+            array = ArraySchema(schema = Schema(implementation = SyncOfficialVisit::class)),
+          ),
+        ],
+      ),
+    ],
+  )
+  @GetMapping(value = ["/prisoner/{prisonerNumber}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  fun getAllOfficialVisitForPrisoner(
+    @Parameter(description = "The prisoner Number", required = true)
+    @PathVariable(name = "prisonerNumber", required = true)
+    prisonerNumber: String,
+    @Parameter(description = "Is current term only?")
+    @RequestParam(name = "currentTermOnly", defaultValue = "true")
+    currentTermOnly: Boolean = true,
+    @Parameter(description = "The from date in ISO format (YYYY-MM-DD).")
+    @RequestParam(name = "fromDate", required = false)
+    fromDate: LocalDate?,
+    @Parameter(description = "The to date in ISO format (YYYY-MM-DD).")
+    @RequestParam(name = "toDate", required = false)
+    toDate: LocalDate?,
+  ): List<SyncOfficialVisit> = reconciliationService.getAllPrisonerVisits(prisonerNumber, currentTermOnly, fromDate, toDate)
 }
