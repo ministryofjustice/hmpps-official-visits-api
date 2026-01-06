@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -81,7 +82,7 @@ class ReconciliationController(private val reconciliationService: Reconciliation
         content = [
           Content(
             mediaType = "application/json",
-            schema = Schema(implementation = SyncOfficialVisit::class),
+            array = ArraySchema(schema = Schema(implementation = SyncOfficialVisit::class)),
           ),
         ],
       ),
@@ -97,10 +98,10 @@ class ReconciliationController(private val reconciliationService: Reconciliation
     @RequestParam(name = "currentTermOnly", defaultValue = "true")
     currentTermOnly: Boolean = true,
     @Parameter(description = "The from date in ISO format (YYYY-MM-DD).")
-    @RequestParam(name = "fromDate", required = true)
-    fromDate: LocalDate,
+    @RequestParam(name = "fromDate", required = false)
+    fromDate: LocalDate?,
     @Parameter(description = "The to date in ISO format (YYYY-MM-DD).")
-    @RequestParam(name = "toDate", required = true)
-    toDate: LocalDate,
+    @RequestParam(name = "toDate", required = false)
+    toDate: LocalDate?,
   ): List<SyncOfficialVisit> = reconciliationService.getAllPrisonerVisits(prisonerNumber, currentTermOnly, fromDate, toDate)
 }

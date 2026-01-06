@@ -21,8 +21,10 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     FROM OfficialVisitEntity ov 
     WHERE ov.prisonerNumber = :prisonerNumber
     AND ov.currentTerm = :currentTerm
-    AND ov.visitDate BETWEEN :fromDate AND :toDate
-    """,
+    AND CAST(:fromDate as date) IS NULL OR ov.visitDate >= :fromDate
+    AND CAST(:toDate as date) IS NULL OR ov.visitDate <= :toDate
+    ORDER BY ov.visitDate, ov.startTime
+   """,
   )
-  fun findAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate, toDate: LocalDate): List<OfficialVisitEntity>
+  fun findAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate?, toDate: LocalDate?): List<OfficialVisitEntity>
 }

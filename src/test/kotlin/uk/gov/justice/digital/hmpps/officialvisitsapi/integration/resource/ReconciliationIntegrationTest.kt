@@ -137,12 +137,28 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY))
     officialVisits.size isEqualTo 2
     with(officialVisits.first()) {
-      prisonVisitSlotId isEqualTo 1
-      visitDate isEqualTo visitDateInTheFuture
+      prisonCode isEqualTo MOORLAND_PRISONER.prison
+      dpsLocationId isEqualTo UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
+      visitDate isEqualTo nextMondayAt9.visitDate
+      startTime isEqualTo nextMondayAt9.startTime
+      endTime isEqualTo nextMondayAt9.endTime
+      visitors.size isEqualTo 1
+      with(visitors.first()) {
+        contactId isEqualTo nextMondayAt9.officialVisitors.first().contactId
+        relationshipCode isEqualTo nextMondayAt9.officialVisitors.first().relationshipCode
+      }
     }
     with(officialVisits.last()) {
       prisonVisitSlotId isEqualTo 9
       visitDate isEqualTo visitDateInTheFuture.next(DayOfWeek.FRIDAY)
+      visitors.size isEqualTo 1
+      dpsLocationId isEqualTo UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
+      startTime isEqualTo LocalTime.of(11, 0)
+      endTime isEqualTo LocalTime.of(12, 0)
+      with(visitors.first()) {
+        contactId isEqualTo nextMondayAt9.officialVisitors.first().contactId
+        relationshipCode isEqualTo nextMondayAt9.officialVisitors.first().relationshipCode
+      }
     }
   }
 
@@ -150,6 +166,30 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   fun `Get empty official visits list between the  invalid visit dates and  currentTermOnly set to true`() {
     val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY))
     officialVisits.size isEqualTo 0
+  }
+
+  @Test
+  fun `Get two official visits list with only toDate and  currentTermOnly set to true`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    personalRelationshipsApi().stubReferenceGroup()
+
+    webTestClient.create(nextMondayAt9)
+    webTestClient.create(nextFridayAt11)
+
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture.next(DayOfWeek.FRIDAY))
+    officialVisits.size isEqualTo 2
+  }
+
+  @Test
+  fun `Get two official visits list with null toDate and fromDate and  currentTermOnly set to true`() {
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    personalRelationshipsApi().stubReferenceGroup()
+
+    webTestClient.create(nextMondayAt9)
+    webTestClient.create(nextFridayAt11)
+
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number)
+    officialVisits.size isEqualTo 2
   }
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
@@ -224,9 +264,31 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     .jsonPath("$.content.length()").isEqualTo(2)
     .jsonPath("$.page.totalElements").isEqualTo(2)
 
-  private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String, fromDate: LocalDate, toDate: LocalDate) = this
+  private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String, fromDate: LocalDate?, toDate: LocalDate?) = this
     .get()
     .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=true&fromDate=$fromDate&toDate=$toDate")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBodyList(SyncOfficialVisit::class.java)
+    .returnResult().responseBody!!
+
+  private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String) = this
+    .get()
+    .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=true")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBodyList(SyncOfficialVisit::class.java)
+    .returnResult().responseBody!!
+
+  private fun WebTestClient.getAllOfficialVisitForPrisoner(prisonerNumber: String, toDate: LocalDate?) = this
+    .get()
+    .uri("/reconcile/prisoner/$prisonerNumber?currentTermOnly=true&toDate=$toDate")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
     .exchange()

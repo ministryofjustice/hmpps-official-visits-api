@@ -26,5 +26,6 @@ class ReconciliationService(private val officialVisitRepository: OfficialVisitRe
     }
     return syncOfficialVisit.toSyncModel()
   }
-  fun getAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate, toDate: LocalDate): List<SyncOfficialVisit> = officialVisitRepository.findAllPrisonerVisits(prisonerNumber, currentTerm, fromDate, toDate).toSyncModel()
+
+  fun getAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate?, toDate: LocalDate?): List<SyncOfficialVisit> = officialVisitRepository.findAllPrisonerVisits(prisonerNumber, currentTerm, fromDate, toDate).toSyncModel()
 }
