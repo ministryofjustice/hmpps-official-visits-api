@@ -177,6 +177,15 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Get empty official visits list when invalid prisoner code is passed`() {
+    webTestClient.create(nextMondayAt9)
+    webTestClient.create(nextFridayAt11)
+
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner("123", visitDateInTheFuture.next(DayOfWeek.FRIDAY))
+    officialVisits.size isEqualTo 0
+  }
+
+  @Test
   fun `Get All official visits list with null toDate and fromDate and  currentTermOnly set to false`() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
