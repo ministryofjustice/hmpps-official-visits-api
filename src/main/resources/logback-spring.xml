@@ -40,4 +40,7 @@
     <appender-ref ref="consoleAppender"/>
   </root>
 
+  <logger name="org.hibernate.orm.connections.pooling" additivity="false" level="WARN">
+    <appender-ref ref="consoleAppender"/>
+  </logger>
 </configuration>
