@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PagedPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerNumbers
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
@@ -28,6 +29,22 @@ class PrisonerSearchApiMockServer : MockServer(8092) {
                   prisonCode = prisoner.prison,
                   bookingId = prisoner.bookingId,
                 ),
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubFindPrisonersBySearchTerm(prisonCode: String, searchTerm: String, vararg prisoners: Prisoner) {
+    stubFor(
+      get("/prison/$prisonCode/prisoners?term=$searchTerm&page=0&size=200")
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                PagedPrisoner(content = prisoners.toList().map { prisonerSearchPrisoner(prisonCode = prisonCode, prisonerNumber = it.number, bookingId = it.bookingId) }),
               ),
             )
             .withStatus(200),
