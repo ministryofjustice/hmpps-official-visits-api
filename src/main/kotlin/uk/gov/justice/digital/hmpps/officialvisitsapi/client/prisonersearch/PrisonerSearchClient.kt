@@ -6,7 +6,9 @@ import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
 import java.time.LocalDate
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
@@ -42,6 +44,21 @@ class PrisonerSearchClient(private val prisonerSearchApiWebClient: WebClient) {
         .block() ?: emptyList()
     }
   }
+
+  fun findPrisonersBySearchTerm(prisonCode: String, searchTerm: String) = prisonerSearchApiWebClient
+    .get()
+    .uri { uriBuilder: UriBuilder ->
+      uriBuilder
+        .path("/prison/{prisonCode}/prisoners")
+        .queryParam("term", searchTerm)
+        .queryParam("page", 0)
+        .queryParam("size", 200)
+        .build(prisonCode)
+    }
+    .retrieve()
+    .bodyToMono(typeReference<PagedPrisoner>())
+    .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
+    .block()?.content?.toList() ?: emptyList()
 }
 
 data class PrisonerNumbers(val prisonerNumbers: List<String>)
@@ -68,4 +85,10 @@ data class Prisoner(
   val offenderBookId: String? = null,
   val locationDescription: String? = null,
   val prisonName: String? = null,
+)
+
+// TODO: Matt use generated when replace Prisoner above with generated version
+data class PagedPrisoner(
+  val content: List<Prisoner>? = null,
+  val page: PageMetadata? = null,
 )
