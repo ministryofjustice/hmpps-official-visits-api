@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -73,13 +72,6 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
-    prisonerSearchApi().stubSearchPrisonersByPrisonerNumbers(
-      idsBeingSearchFor = listOf(MOORLAND_PRISONER.number),
-      prisonersToReturn = listOf(
-        prisonerSearchPrisoner(prisonerNumber = MOORLAND_PRISONER.number, prisonCode = MOORLAND, firstName = "Bob", lastName = "Harris", prisonName = "Moorland HMP"),
-      ),
-    )
-
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
       prisonCode = MOORLAND,
       locations = listOf(
@@ -95,14 +87,14 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should find official visits by criteria over multiple pages`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number, MOORLAND_PRISONER)
+  fun `should find official visits by search term name and dates over multiple pages`() {
+    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.name, MOORLAND_PRISONER)
 
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
     val searchRequest = OfficialVisitSummarySearchRequest(
-      searchTerm = MOORLAND_PRISONER.number,
+      searchTerm = "    ${MOORLAND_PRISONER.name}    ",
       startDate = startDate,
       endDate = startDate.next(DayOfWeek.WEDNESDAY),
       visitTypes = emptyList(),
@@ -132,14 +124,14 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should find official all visits by criteria on one page`() {
+  fun `should find official all visits by search term prisoner number and dates on one page`() {
     prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number, MOORLAND_PRISONER)
 
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
     val searchRequest = OfficialVisitSummarySearchRequest(
-      searchTerm = MOORLAND_PRISONER.number,
+      searchTerm = "    ${MOORLAND_PRISONER.number}    ",
       startDate = startDate,
       endDate = startDate.next(DayOfWeek.WEDNESDAY),
       visitTypes = emptyList(),
@@ -159,6 +151,47 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `should fail on invalid search terms`() {
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      startDate = startDate,
+      endDate = startDate.next(DayOfWeek.WEDNESDAY),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      locationIds = emptyList(),
+    )
+
+    webTestClient.badSearch(searchRequest.copy(searchTerm = ""), MOORLAND_PRISON_USER, "Search term must be a minimum of 2 characters if provided")
+    webTestClient.badSearch(searchRequest.copy(searchTerm = "x"), MOORLAND_PRISON_USER, "Search term must be a minimum of 2 characters if provided")
+  }
+
+  @Test
+  fun `should fail on invalid page criteria`() {
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      startDate = startDate,
+      endDate = startDate.next(DayOfWeek.WEDNESDAY),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      locationIds = emptyList(),
+    )
+
+    webTestClient.badSearch(searchRequest, MOORLAND_PRISON_USER, "Page number must be greater than or equal to zero", page = -1)
+    webTestClient.badSearch(searchRequest, MOORLAND_PRISON_USER, "Page size must be greater than zero", size = 0)
+  }
+
+  @Test
+  fun `should fail on invalid dates`() {
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      startDate = startDate,
+      endDate = startDate.minusDays(1),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      locationIds = emptyList(),
+    )
+
+    webTestClient.badSearch(searchRequest, MOORLAND_PRISON_USER, "End date must be on or after the start date")
+  }
+
   fun WebTestClient.search(request: OfficialVisitSummarySearchRequest, prisonUser: PrisonUser, page: Int = 0, size: Int = 1) = webTestClient
     .post()
     .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
@@ -170,6 +203,17 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody(SearchResponse::class.java)
     .returnResult().responseBody!!
+
+  fun WebTestClient.badSearch(request: OfficialVisitSummarySearchRequest, prisonUser: PrisonUser, errorMessage: String, page: Int = 0, size: Int = 1) = webTestClient
+    .post()
+    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isBadRequest
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
 
   data class SearchResponse(
     val content: List<OfficialVisitSummarySearchResponse>,
