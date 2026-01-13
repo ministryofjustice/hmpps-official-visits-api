@@ -30,9 +30,11 @@ class OfficialVisitSearchService(
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
 
+    val prisoners = request.searchTerm?.takeIf { it.isNotBlank() }?.let { st -> prisonerSearchClient.findPrisonersBySearchTerm(prisonCode, st) } ?: emptyList()
+
     val results = officialVisitSummaryRepository.findOfficialVisitSummaryEntityBy(
       prisonCode = prisonCode,
-      prisonerNumbers = request.prisonerNumbers.takeIf { !it.isNullOrEmpty() }?.toSet(),
+      prisonerNumbers = prisoners.map { it.prisonerNumber }.toSet(),
       startDate = request.startDate!!,
       endDate = request.endDate,
       visitTypes = request.visitTypes.takeIf { !it.isNullOrEmpty() }?.toSet(),
@@ -42,9 +44,8 @@ class OfficialVisitSearchService(
     )
 
     // Get the prisoner details for the full page of results
-    val prisonerNumbers = results.map { it.prisonerNumber }.toSet()
-    val prisonerDetails = prisonerSearchClient.findByPrisonerNumbers(prisonerNumbers.toList(), prisonerNumbers.size)
-    val prisonerMap = prisonerDetails.associateBy { it.prisonerNumber }
+    val matchingPrisoners = prisoners.filter { it.prisonerNumber in results.map { ov -> ov.prisonerNumber } }.distinctBy { it.prisonerNumber }
+    val prisonerMap = matchingPrisoners.associateBy { it.prisonerNumber }
 
     // Get the locations for visits for this prison (it's a cacheable endpoint)
     val locations = locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode)

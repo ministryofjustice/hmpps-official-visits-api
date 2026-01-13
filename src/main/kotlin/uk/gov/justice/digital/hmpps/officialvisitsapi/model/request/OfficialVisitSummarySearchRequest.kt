@@ -8,6 +8,9 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class OfficialVisitSummarySearchRequest(
+  @Schema(description = "The search term can be a prisoner number, name or partial name.", example = "Smith")
+  val searchTerm: String? = null,
+
   @field:NotNull(message = "The start date for search mandatory")
   @Schema(description = "The earliest date the official visits will start", example = "2022-12-23")
   val startDate: LocalDate?,
@@ -23,7 +26,7 @@ data class OfficialVisitSummarySearchRequest(
   val visitStatuses: List<VisitStatusType>?,
 
   @Schema(description = "The prisoner numbers to search for", examples = ["G9190VP", "G9190VP"])
-  val prisonerNumbers: List<String>?,
+  val prisonerNumbers: List<String>? = emptyList(),
 
   @Schema(description = "The location identifiers to search for", examples = ["aaaa-bbbb-9f9f9f9f-9f9f9f9f"])
   val locationIds: List<UUID>?,
