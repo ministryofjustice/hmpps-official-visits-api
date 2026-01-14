@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class OfficialVisitSummarySearchRequest(
-  @Schema(description = "The search term can be a prisoner number, name or partial name.", example = "Smith")
+  @Schema(description = "The search term can be a prisoner number, name or partial name.  Must be a minimum of 2 characters or not provided.", example = "Smith")
   val searchTerm: String? = null,
 
   @field:NotNull(message = "The start date for search mandatory")

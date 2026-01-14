@@ -30,7 +30,9 @@ class OfficialVisitSearchService(
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
 
-    val prisoners = request.searchTerm?.takeIf { it.isNotBlank() }?.let { st -> prisonerSearchClient.findPrisonersBySearchTerm(prisonCode, st) } ?: emptyList()
+    val mayBeSearchTerm = request.searchTerm?.trim()
+    require(mayBeSearchTerm == null || mayBeSearchTerm.length >= 2) { "Search term must be a minimum of 2 characters if provided" }
+    val prisoners = mayBeSearchTerm?.let { st -> prisonerSearchClient.findPrisonersBySearchTerm(prisonCode, mayBeSearchTerm) } ?: emptyList()
 
     val results = officialVisitSummaryRepository.findOfficialVisitSummaryEntityBy(
       prisonCode = prisonCode,
