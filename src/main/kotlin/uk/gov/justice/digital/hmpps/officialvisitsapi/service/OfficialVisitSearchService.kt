@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import jakarta.persistence.EntityNotFoundException
-import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +16,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVisitedDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitSummaryRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import java.util.*
+import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
@@ -25,7 +27,7 @@ class OfficialVisitSearchService(
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
 ) {
-  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int) = run {
+  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
     require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
@@ -34,15 +36,20 @@ class OfficialVisitSearchService(
     require(mayBeSearchTerm == null || mayBeSearchTerm.length >= 2) { "Search term must be a minimum of 2 characters if provided" }
     val prisoners = mayBeSearchTerm?.let { st -> prisonerSearchClient.findPrisonersBySearchTerm(prisonCode, mayBeSearchTerm) } ?: emptyList()
 
+    // Avoid an unnecessary query if no prisoners found in search above
+    if (mayBeSearchTerm != null && prisoners.isEmpty()) {
+      return PagedModel(Page.empty())
+    }
+
     val results = officialVisitSummaryRepository.findOfficialVisitSummaryEntityBy(
       prisonCode = prisonCode,
-      prisonerNumbers = prisoners.map { it.prisonerNumber }.toSet(),
+      prisonerNumbers = mayBeSearchTerm?.let { prisoners.map { it.prisonerNumber }.toSet() },
       startDate = request.startDate!!,
       endDate = request.endDate,
       visitTypes = request.visitTypes.takeIf { !it.isNullOrEmpty() }?.toSet(),
       visitStatuses = request.visitStatuses.takeIf { !it.isNullOrEmpty() }?.toSet(),
       locationIds = request.locationIds.takeIf { !it.isNullOrEmpty() }?.toSet(),
-      pageable = Pageable.ofSize(size).withPage(page),
+      pageable = PageRequest.of(page, size, Sort.by("visitDate", "startTime").ascending()),
     )
 
     // Get the prisoner details for the full page of results

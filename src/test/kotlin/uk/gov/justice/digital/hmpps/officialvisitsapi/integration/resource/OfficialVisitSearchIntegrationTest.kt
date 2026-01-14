@@ -124,14 +124,41 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should find official all visits by search term prisoner number and dates on one page`() {
+  fun `should find ordered official all visits by search term prisoner number and dates on one page`() {
+    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number, MOORLAND_PRISONER)
+
+    testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
+    testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      searchTerm = "    ${MOORLAND_PRISONER.number}    ",
+      startDate = startDate,
+      endDate = startDate.next(DayOfWeek.WEDNESDAY),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      locationIds = emptyList(),
+    )
+
+    val onePageOnly = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 0, 2)
+
+    with(onePageOnly) {
+      assertThat(content).extracting("visitSlotId").containsExactly(1L, 4L)
+      assertThat(content).extracting("locationDescription").containsOnly("Visit place")
+      page.size isEqualTo 2
+      page.number isEqualTo 0
+      page.totalElements isEqualTo 2
+      page.totalPages isEqualTo 1
+    }
+  }
+
+  @Test
+  fun `should find official all visits by dates on one page`() {
     prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number, MOORLAND_PRISONER)
 
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
     val searchRequest = OfficialVisitSummarySearchRequest(
-      searchTerm = "    ${MOORLAND_PRISONER.number}    ",
       startDate = startDate,
       endDate = startDate.next(DayOfWeek.WEDNESDAY),
       visitTypes = emptyList(),
@@ -147,6 +174,33 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       page.size isEqualTo 2
       page.number isEqualTo 0
       page.totalElements isEqualTo 2
+      page.totalPages isEqualTo 1
+    }
+  }
+
+  @Test
+  fun `should find zero official all visits by search term and dates on one page`() {
+    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number)
+
+    testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+    testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
+
+    val searchRequest = OfficialVisitSummarySearchRequest(
+      searchTerm = "    UNKNOWN    ",
+      startDate = startDate,
+      endDate = startDate.next(DayOfWeek.WEDNESDAY),
+      visitTypes = emptyList(),
+      visitStatuses = emptyList(),
+      locationIds = emptyList(),
+    )
+
+    val onePageOnly = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 0, 2)
+
+    with(onePageOnly) {
+      content isEqualTo emptyList()
+      page.size isEqualTo 0
+      page.number isEqualTo 0
+      page.totalElements isEqualTo 0
       page.totalPages isEqualTo 1
     }
   }
