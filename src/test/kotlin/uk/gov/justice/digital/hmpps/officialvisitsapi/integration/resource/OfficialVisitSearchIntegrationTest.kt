@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -153,7 +154,16 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should find official all visits by dates on one page`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number, MOORLAND_PRISONER)
+    prisonerSearchApi().stubSearchPrisonersByPrisonerNumbers(
+      listOf(MOORLAND_PRISONER.number),
+      listOf(
+        prisonerSearchPrisoner(
+          prisonCode = MOORLAND,
+          prisonerNumber = MOORLAND_PRISONER.number,
+          firstName = MOORLAND_PRISONER.name,
+        ),
+      ),
+    )
 
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)

@@ -52,8 +52,17 @@ class OfficialVisitSearchService(
       pageable = PageRequest.of(page, size, Sort.by("visitDate", "startTime").ascending()),
     )
 
+    if (results.isEmpty) {
+      return PagedModel(Page.empty())
+    }
+
+    val matchingPrisoners = if (prisoners.isNotEmpty()) {
+      prisoners.filter { it.prisonerNumber in results.map { ov -> ov.prisonerNumber } }.distinctBy { it.prisonerNumber }
+    } else {
+      results.map { it.prisonerNumber }.toSet().let { prisonerSearchClient.findByPrisonerNumbers(it.toList(), it.size) }
+    }
+
     // Get the prisoner details for the full page of results
-    val matchingPrisoners = prisoners.filter { it.prisonerNumber in results.map { ov -> ov.prisonerNumber } }.distinctBy { it.prisonerNumber }
     val prisonerMap = matchingPrisoners.associateBy { it.prisonerNumber }
 
     // Get the locations for visits for this prison (it's a cacheable endpoint)
