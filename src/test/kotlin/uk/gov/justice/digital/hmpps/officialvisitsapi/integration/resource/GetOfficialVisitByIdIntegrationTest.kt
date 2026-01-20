@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
@@ -70,6 +71,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
   fun `should get an official visit by prison code and ID`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
     personalRelationshipsApi().stubReferenceGroup()
+    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
 
     val response = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
@@ -81,6 +83,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
       prisonCode isEqualTo MOORLAND_PRISONER.prison
       prisonerVisited?.prisonerNumber isEqualTo nextMondayAt9.prisonerNumber
       dpsLocationId isEqualTo nextMondayAt9.dpsLocationId
+      locationDescription isEqualTo moorlandLocation.localName
       visitTypeCode isEqualTo nextMondayAt9.visitTypeCode
       visitStatus isEqualTo VisitStatusType.SCHEDULED
       staffNotes isEqualTo nextMondayAt9.staffNotes

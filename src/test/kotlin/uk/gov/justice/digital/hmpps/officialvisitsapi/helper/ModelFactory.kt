@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.Prisoner as ModelPri
 
 val birminghamLocation = location(prisonCode = BIRMINGHAM, locationKeySuffix = "ABCEDFG", localName = "Birmingham room")
 val inactiveBirminghamLocation = location(prisonCode = BIRMINGHAM, locationKeySuffix = "HIJLKLM", active = false)
-val moorlandLocation = location(prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG")
+val moorlandLocation = location(prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG", localName = "Moorland area 1")
 val pentonvilleLocation = location(prisonCode = PENTONVILLE, locationKeySuffix = "ABCDEFG", localName = "Pentonville room 3")
 val risleyLocation = location(prisonCode = RISLEY, locationKeySuffix = "ABCDEFG", localName = "Risley room")
 val wandsworthLocation = location(prisonCode = WANDSWORTH, locationKeySuffix = "ABCEDFG", localName = "Wandsworth room")
