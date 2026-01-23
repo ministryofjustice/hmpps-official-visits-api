@@ -7,4 +7,5 @@ val CONTACT_MOORLAND_PRISONER = prisonerContact(
   type = "O",
   firstName = "John",
   lastName = "Doe",
+  phoneNumber = "0987654321",
 )
