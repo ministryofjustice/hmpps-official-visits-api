@@ -31,7 +31,7 @@ class StubOutboundEventsPublisher(private val receivedEvents: MutableList<Outbou
 
   fun assertHasEvent(event: OutboundEvent, additionalInfo: AdditionalInformation) {
     assertThat(receivedEvents)
-      .extracting(OutboundHMPPSDomainEvent::eventType, OutboundHMPPSDomainEvent::additionalInformation, OutboundHMPPSDomainEvent::personReference)
+      .extracting(OutboundHMPPSDomainEvent::eventType, OutboundHMPPSDomainEvent::additionalInformation)
       .contains(tuple(event.eventType, additionalInfo))
   }
 
