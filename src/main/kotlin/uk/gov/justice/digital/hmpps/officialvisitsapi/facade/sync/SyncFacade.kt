@@ -1,0 +1,66 @@
+package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync
+
+import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
+
+/**
+ * This class is a facade over the sync services as a thin layer
+ * which is called by the sync controllers and in-turn calls the sync
+ * service methods.
+ *
+ * Each method provides two purposes:
+ * - To call the underlying sync services and apply the changes in a transactional method.
+ * - To generate a domain event to inform subscribed services what has happened.
+ *
+ * All events generated as a result of a sync operation should generate domain events with the
+ * additionalInformation source = "NOMIS", which indicates that the actual source of the
+ * original change was NOMIS.
+ *
+ * This is important, as the Syscon sync service will ignore domain events with
+ * a source of NOMIS, but will action those with a source of DPS for changes which
+ * originate within this service via the UI or local processes.
+ */
+
+@Service
+class SyncFacade(
+  val syncTimeSlotService: SyncTimeSlotService,
+  val outboundEventsService: OutboundEventsService,
+  val userService: UserService,
+) {
+  fun getTimeSlotById(prisonTimeSlotId: Long) = syncTimeSlotService.getPrisonTimeSlotById(prisonTimeSlotId)
+
+  fun createTimeSlot(request: SyncCreateTimeSlotRequest) = syncTimeSlotService.createPrisonTimeSlot(request)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.TIME_SLOT_CREATED,
+        prisonCode = it.prisonCode,
+        identifier = it.prisonTimeSlotId,
+        source = Source.NOMIS,
+        user = userOrDefault(request.createdBy),
+      )
+    }
+
+  fun updateTimeSlot(prisonTimeSlotId: Long, request: SyncUpdateTimeSlotRequest) = syncTimeSlotService.updatePrisonTimeSlot(prisonTimeSlotId, request)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.TIME_SLOT_UPDATED,
+        prisonCode = it.prisonCode,
+        identifier = it.prisonTimeSlotId,
+        source = Source.NOMIS,
+        user = userOrDefault(request.updatedBy),
+      )
+    }
+
+  // TODO: Add facade methods and event generation for the other sync requests here
+
+  private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()
+
+  private fun enrichIfPossible(username: String): User? = userService.getUser(username)
+}

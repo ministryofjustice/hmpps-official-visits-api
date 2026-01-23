@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitConfigRequest
@@ -53,7 +54,7 @@ class MigrationService(
     val timeSlot = prisonTimeSlotRepository.saveAndFlush(
       PrisonTimeSlotEntity(
         prisonCode = request.prisonCode,
-        dayCode = request.dayCode,
+        dayCode = DayType.valueOf(request.dayCode),
         startTime = request.startTime,
         endTime = request.endTime,
         effectiveDate = request.effectiveDate,
