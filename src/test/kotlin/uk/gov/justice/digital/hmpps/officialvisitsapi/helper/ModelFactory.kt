@@ -18,21 +18,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.Prisoner as ModelPrisoner
 
-val birminghamLocation = location(prisonCode = BIRMINGHAM, locationKeySuffix = "ABCEDFG", localName = "Birmingham room")
-val inactiveBirminghamLocation = location(prisonCode = BIRMINGHAM, locationKeySuffix = "HIJLKLM", active = false)
 val moorlandLocation = location(prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG", localName = "Moorland area 1")
-val pentonvilleLocation = location(prisonCode = PENTONVILLE, locationKeySuffix = "ABCDEFG", localName = "Pentonville room 3")
-val risleyLocation = location(prisonCode = RISLEY, locationKeySuffix = "ABCDEFG", localName = "Risley room")
-val wandsworthLocation = location(prisonCode = WANDSWORTH, locationKeySuffix = "ABCEDFG", localName = "Wandsworth room")
-
-val allLocations = setOf(
-  birminghamLocation,
-  inactiveBirminghamLocation,
-  moorlandLocation,
-  pentonvilleLocation,
-  risleyLocation,
-  wandsworthLocation,
-)
 
 fun location(prisonCode: String, locationKeySuffix: String, active: Boolean = true, localName: String? = null, id: UUID = UUID.randomUUID()) = Location(
   id = id,
@@ -127,13 +113,15 @@ fun prisonerContact(
   deceasedDate: LocalDate? = null,
   contactId: Long = 654321,
   prisonerContactId: Long = 123456,
+  firstName: String = "John",
+  lastName: String = "Doe",
 ) = PrisonerContactSummary(
   contactId = contactId,
   prisonerNumber = prisonerNumber,
   titleCode = "MR",
   titleDescription = "Mr",
-  lastName = "Doe",
-  firstName = "John",
+  lastName = lastName,
+  firstName = firstName,
   middleNames = "William",
   dateOfBirth = null,
   deceasedDate = deceasedDate,

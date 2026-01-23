@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.referenceCode
@@ -26,6 +27,7 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
         ),
     )
   }
+
   fun stubReferenceGroup() {
     stubFor(
       get(urlPathEqualTo("/reference-codes/group/OFFICIAL_RELATIONSHIP"))
@@ -37,6 +39,7 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
         ),
     )
   }
+
   fun stubAllApprovedContacts(prisonerNumber: String, contactId: Long = 1, prisonerContactId: Long = 1) {
     stubFor(
       get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
@@ -54,6 +57,23 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
                     prisonerContactId = prisonerContactId,
                   ),
                 ),
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubAllApprovedContact(contact: PrisonerContactSummary) {
+    stubFor(
+      get(urlPathEqualTo("/prisoner/${contact.prisonerNumber}/contact"))
+        .withQueryParam("active", equalTo("true"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                pagedModelPrisonerContactSummary(contact),
               ),
             )
             .withStatus(200),
