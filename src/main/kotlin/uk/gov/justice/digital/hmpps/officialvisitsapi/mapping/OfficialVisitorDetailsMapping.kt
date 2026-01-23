@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationshipsReferenceDataService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReferenceDataService
 
@@ -31,6 +32,8 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   updatedBy = this.updatedBy,
   updatedTime = this.updatedTime,
   offenderVisitVisitorId = this.offenderVisitVisitorId,
+  visitorEquipment = this.visitorEquipment?.let { VisitorEquipment(it.description) },
+  assistanceNotes = this.visitorNotes,
 )
 
 fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService) = map { it.toModel(referenceDataService, personalRelationshipsReferenceDataService) }
