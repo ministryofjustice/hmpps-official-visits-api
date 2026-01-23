@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.sync
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ti
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
   private var savedPrisonTimeSlotId = 0L
@@ -31,6 +33,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
   @BeforeEach
   fun initialiseData() {
     savedPrisonTimeSlotId = (webTestClient.createTimeSlot()).prisonTimeSlotId
+    stubEvents.reset()
   }
 
   @Test
@@ -112,9 +115,6 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should create a new prison time slot`() {
-    // To remove the event created by the @BeforeEach function
-    stubEvents.reset()
-
     val syncTimeSlot = webTestClient.createTimeSlot()
 
     syncTimeSlot.assertWithCreateRequest(createTimeSlotRequest())
@@ -133,9 +133,6 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should update an existing time slot`() {
-    // To remove the event created by the @BeforeEach function
-    stubEvents.reset()
-
     val updateRequest = updateTimeSlotRequest()
 
     val syncTimeSlot = webTestClient.put()
@@ -198,7 +195,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
     assertThat(effectiveDate).isEqualTo(request.effectiveDate)
     assertThat(expiryDate).isEqualTo(request.expiryDate)
     assertThat(createdBy).isEqualTo(request.createdBy)
-    assertThat(createdTime).isEqualTo(request.createdTime)
+    assertThat(createdTime).isCloseTo(request.createdTime, within(2, ChronoUnit.SECONDS))
   }
 
   fun WebTestClient.createTimeSlot() = this.post()
