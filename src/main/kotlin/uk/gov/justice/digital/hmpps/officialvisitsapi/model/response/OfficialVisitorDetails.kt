@@ -68,4 +68,11 @@ data class OfficialVisitorDetails(
   @Schema(description = "The Official visitor offender visit visitor id")
   val offenderVisitVisitorId: Long?,
 
+  @Schema(description = "Equipment the visitor may bring")
+  val visitorEquipment: VisitorEquipment?,
+)
+
+data class VisitorEquipment(
+  @Schema(description = "A description of the equipment the visitor will bring", example = "Laptop")
+  val description: String,
 )

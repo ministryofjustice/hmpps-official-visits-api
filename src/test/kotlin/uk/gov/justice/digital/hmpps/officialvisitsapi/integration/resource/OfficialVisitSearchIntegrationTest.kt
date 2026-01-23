@@ -89,13 +89,13 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should find official visits by search term name and dates over multiple pages`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.name, MOORLAND_PRISONER)
+    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
 
     testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
     testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
     val searchRequest = OfficialVisitSummarySearchRequest(
-      searchTerm = "    ${MOORLAND_PRISONER.name}    ",
+      searchTerm = "    ${MOORLAND_PRISONER.firstName}    ",
       startDate = startDate,
       endDate = startDate.next(DayOfWeek.WEDNESDAY),
       visitTypes = emptyList(),
@@ -160,7 +160,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         prisonerSearchPrisoner(
           prisonCode = MOORLAND,
           prisonerNumber = MOORLAND_PRISONER.number,
-          firstName = MOORLAND_PRISONER.name,
+          firstName = MOORLAND_PRISONER.firstName,
         ),
       ),
     )

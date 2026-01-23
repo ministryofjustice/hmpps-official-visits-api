@@ -1,12 +1,12 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -29,10 +30,11 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
     relationshipCode = "POM",
-    contactId = 123,
-    prisonerContactId = 456,
+    contactId = CONTACT_MOORLAND_PRISONER.contactId,
+    prisonerContactId = CONTACT_MOORLAND_PRISONER.prisonerContactId,
     leadVisitor = true,
     assistedVisit = false,
+    visitorEquipment = VisitorEquipment("Laptop"),
   )
 
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
@@ -69,15 +71,13 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should get an official visit by prison code and ID`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    personalRelationshipsApi().stubAllApprovedContact(CONTACT_MOORLAND_PRISONER)
     personalRelationshipsApi().stubReferenceGroup()
     locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
 
     val response = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-
     val visitDetail = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND_PRISONER.prison, response.officialVisitId)
 
-    assertThat(visitDetail).isNotNull
     with(visitDetail) {
       officialVisitId isEqualTo response.officialVisitId
       prisonCode isEqualTo MOORLAND_PRISONER.prison
@@ -91,6 +91,12 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
       visitDate isEqualTo visitDateInTheFuture
       startTime isEqualTo nextMondayAt9.startTime
       endTime isEqualTo nextMondayAt9.endTime
+    }
+
+    with(visitDetail.officialVisitors!!.single()) {
+      firstName isEqualTo CONTACT_MOORLAND_PRISONER.firstName
+      lastName isEqualTo CONTACT_MOORLAND_PRISONER.lastName
+      visitorEquipment!!.description isEqualTo "Laptop"
     }
   }
 
