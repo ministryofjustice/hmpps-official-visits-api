@@ -33,6 +33,7 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   updatedTime = this.updatedTime,
   offenderVisitVisitorId = this.offenderVisitVisitorId,
   visitorEquipment = this.visitorEquipment?.let { VisitorEquipment(it.description) },
+  assistanceNotes = this.visitorNotes,
 )
 
 fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService) = map { it.toModel(referenceDataService, personalRelationshipsReferenceDataService) }

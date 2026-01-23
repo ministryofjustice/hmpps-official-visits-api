@@ -70,6 +70,9 @@ data class OfficialVisitorDetails(
 
   @Schema(description = "Equipment the visitor may bring")
   val visitorEquipment: VisitorEquipment?,
+
+  @Schema(description = "Notes on whether the visitor requires any assistance", example = "Wheelchair access required")
+  val assistanceNotes: String?,
 )
 
 data class VisitorEquipment(

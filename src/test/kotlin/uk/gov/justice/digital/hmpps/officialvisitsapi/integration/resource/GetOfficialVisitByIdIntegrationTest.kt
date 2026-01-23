@@ -33,8 +33,9 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
     contactId = CONTACT_MOORLAND_PRISONER.contactId,
     prisonerContactId = CONTACT_MOORLAND_PRISONER.prisonerContactId,
     leadVisitor = true,
-    assistedVisit = false,
+    assistedVisit = true,
     visitorEquipment = VisitorEquipment("Laptop"),
+    assistedNotes = "Wheelchair access needed",
   )
 
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
@@ -97,6 +98,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
       firstName isEqualTo CONTACT_MOORLAND_PRISONER.firstName
       lastName isEqualTo CONTACT_MOORLAND_PRISONER.lastName
       visitorEquipment!!.description isEqualTo "Laptop"
+      assistanceNotes isEqualTo "Wheelchair access needed"
     }
   }
 
