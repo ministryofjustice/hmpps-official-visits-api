@@ -118,9 +118,9 @@ class OfficialVisitsRetrievalService(
       { contact -> contact.id },
       { contact ->
         if (contact.phoneNumbers.isEmpty()) {
-          contact.addresses.singleOrNull { it.primaryAddress || it.mailFlag }?.phoneNumbers?.maxBy { it.createdTime }?.phoneNumber
+          contact.addresses.singleOrNull { it.primaryAddress || it.mailFlag }?.phoneNumbers?.maxByOrNull { it.createdTime }?.phoneNumber
         } else {
-          contact.phoneNumbers.maxBy { it.createdTime }.phoneNumber
+          contact.phoneNumbers.maxByOrNull { it.createdTime }?.phoneNumber
         }
       },
     )
@@ -130,7 +130,7 @@ class OfficialVisitsRetrievalService(
     associateBy(
       { contact -> contact.id },
       { contact ->
-        contact.emailAddresses.takeIf { emailAddresses -> emailAddresses.isNotEmpty() }?.maxBy { it.createdTime }?.emailAddress
+        contact.emailAddresses.takeIf { emailAddresses -> emailAddresses.isNotEmpty() }?.maxByOrNull { it.createdTime }?.emailAddress
       },
     )
   }
