@@ -73,6 +73,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should get an official visit by prison code and ID`() {
     personalRelationshipsApi().stubAllApprovedContact(CONTACT_MOORLAND_PRISONER)
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
     personalRelationshipsApi().stubReferenceGroup()
     locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
 
@@ -99,6 +100,8 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
       lastName isEqualTo CONTACT_MOORLAND_PRISONER.lastName
       visitorEquipment!!.description isEqualTo "Laptop"
       assistanceNotes isEqualTo "Wheelchair access needed"
+      phoneNumber isEqualTo CONTACT_MOORLAND_PRISONER.phoneNumber
+      emailAddress isEqualTo "contact@email.address"
     }
   }
 

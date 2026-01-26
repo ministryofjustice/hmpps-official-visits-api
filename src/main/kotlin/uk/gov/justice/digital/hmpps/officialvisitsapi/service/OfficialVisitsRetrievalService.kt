@@ -4,10 +4,14 @@ import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.LocationsInsidePrisonClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.VisitorContactInformation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
@@ -24,6 +28,7 @@ class OfficialVisitsRetrievalService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
+  private val personalRelationshipsApiClient: PersonalRelationshipsApiClient,
 ) {
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, id: Long): OfficialVisitDetails {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
@@ -44,6 +49,7 @@ class OfficialVisitsRetrievalService(
     pve: PrisonerVisitedEntity,
   ): OfficialVisitDetails = run {
     val officialVisitLocation = locationsInsidePrisonClient.getLocationById(ove.dpsLocationId)
+    val visitorContactInformation = visitorContactInformation(ove)
 
     OfficialVisitDetails(
       officialVisitId = ove.officialVisitId,
@@ -70,7 +76,7 @@ class OfficialVisitsRetrievalService(
       createdBy = ove.createdBy,
       updatedTime = ove.updatedTime,
       updatedBy = ove.updatedBy,
-      officialVisitors = ove.officialVisitors().toModel(referenceDataService, personalRelationshipsReferenceDataService),
+      officialVisitors = ove.officialVisitors().toModel(referenceDataService, personalRelationshipsReferenceDataService, visitorContactInformation),
       prisonerVisited = PrisonerVisitedDetails(
         prisonerNumber = prisoner.prisonerNumber,
         prisonCode = prisoner.prisonId!!,
@@ -88,5 +94,44 @@ class OfficialVisitsRetrievalService(
 
   private fun getReferenceDescription(group: ReferenceDataGroup, code: String?) = code?.let {
     referenceDataService.getReferenceDataByGroupAndCode(group, code)?.description ?: code
+  }
+
+  private fun visitorContactInformation(ove: OfficialVisitEntity): VisitorContactInformation = run {
+    val (visitorPhoneNumbers, visitorEmailAddresses) = run {
+      ove.officialVisitors().getVisitorsDetails().let { it.getVisitorsMainPhoneNumber() to it.getVisitorsMainEmailAddress() }
+    }
+
+    object : VisitorContactInformation {
+      override fun phoneNumber(visitorContactId: Long): String? = visitorPhoneNumbers[visitorContactId]
+      override fun emailAddress(visitorContactId: Long): String? = visitorEmailAddresses[visitorContactId]
+    }
+  }
+
+  private fun List<OfficialVisitorEntity>.getVisitorsDetails(): List<ContactDetails> = run {
+    filter { visitor -> visitor.contactId != null }
+      .map { visitor -> personalRelationshipsApiClient.getContactById(visitor.contactId!!) ?: throw EntityNotFoundException("Contact not found") }
+  }
+
+  // Strictly speaking, it would be better if the personal relationship API provided easier access to this information instead of putting (fragile) logic in the service here to try and work it out.
+  private fun List<ContactDetails>.getVisitorsMainPhoneNumber() = run {
+    associateBy(
+      { contact -> contact.id },
+      { contact ->
+        if (contact.phoneNumbers.isEmpty()) {
+          contact.addresses.singleOrNull { it.primaryAddress || it.mailFlag }?.phoneNumbers?.maxBy { it.createdTime }?.phoneNumber
+        } else {
+          contact.phoneNumbers.maxBy { it.createdTime }.phoneNumber
+        }
+      },
+    )
+  }
+
+  private fun List<ContactDetails>.getVisitorsMainEmailAddress() = run {
+    associateBy(
+      { contact -> contact.id },
+      { contact ->
+        contact.emailAddresses.takeIf { emailAddresses -> emailAddresses.isNotEmpty() }?.maxBy { it.createdTime }?.emailAddress
+      },
+    )
   }
 }
