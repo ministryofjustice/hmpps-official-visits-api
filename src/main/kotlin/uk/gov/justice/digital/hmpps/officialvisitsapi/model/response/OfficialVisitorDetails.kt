@@ -73,12 +73,6 @@ data class OfficialVisitorDetails(
 
   @Schema(description = "Notes on whether the visitor requires any assistance", example = "Wheelchair access required")
   val assistanceNotes: String?,
-
-  @Schema(description = "The visitors phone number if present")
-  val phoneNumber: String?,
-
-  @Schema(description = "The visitors email address if present")
-  val emailAddress: String?,
 )
 
 data class VisitorEquipment(

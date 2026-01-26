@@ -8,11 +8,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactEmailDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactPhoneDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.referenceCode
@@ -78,69 +74,6 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
             .withBody(
               mapper.writeValueAsString(
                 pagedModelPrisonerContactSummary(contact),
-              ),
-            )
-            .withStatus(200),
-        ),
-    )
-  }
-
-  fun stubForContactById(contact: PrisonerContactSummary, emailAddress: String? = null) {
-    stubFor(
-      get(urlPathEqualTo("/contact/${contact.contactId}"))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
-                ContactDetails(
-                  id = contact.contactId,
-                  lastName = "first name",
-                  firstName = "last name",
-                  isStaff = false,
-                  interpreterRequired = false,
-                  addresses = emptyList(),
-                  phoneNumbers = contact.phoneNumber?.let {
-                    listOf(
-                      ContactPhoneDetails(
-                        contactPhoneId = 1,
-                        contactId = contact.contactId,
-                        phoneType = "",
-                        phoneTypeDescription = "",
-                        phoneNumber = contact.phoneNumber,
-                        createdBy = "integration test",
-                        createdTime = now(),
-                      ),
-                    )
-                  } ?: emptyList(),
-                  emailAddresses = emailAddress?.let {
-                    listOf(
-                      ContactEmailDetails(
-                        contactEmailId = 1,
-                        contactId = contact.contactId,
-                        emailAddress = emailAddress,
-                        createdBy = "integration test",
-                        createdTime = now(),
-                      ),
-                    )
-                  } ?: emptyList(),
-                  identities = emptyList(),
-                  employments = emptyList(),
-                  createdBy = "integration test",
-                  createdTime = now(),
-                  titleCode = "title code",
-                  titleDescription = "title description",
-                  middleNames = null,
-                  dateOfBirth = null,
-                  deceasedDate = null,
-                  languageCode = null,
-                  languageDescription = null,
-                  domesticStatusCode = null,
-                  domesticStatusDescription = null,
-                  genderCode = null,
-                  genderDescription = null,
-                  staff = null,
-                ),
               ),
             )
             .withStatus(200),
