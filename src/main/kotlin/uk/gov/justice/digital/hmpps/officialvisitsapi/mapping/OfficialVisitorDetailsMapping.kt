@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitorEqui
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationshipsReferenceDataService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReferenceDataService
 
-fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService) = OfficialVisitorDetails(
+fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService, visitorContactInformation: VisitorContactInformation) = OfficialVisitorDetails(
   visitorTypeCode = this.visitorTypeCode,
   visitorTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.VISITOR_TYPE, this.visitorTypeCode.toString())?.description
     ?: this.visitorTypeCode.toString(),
@@ -34,12 +34,23 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   offenderVisitVisitorId = this.offenderVisitVisitorId,
   visitorEquipment = this.visitorEquipment?.let { VisitorEquipment(it.description) },
   assistanceNotes = this.visitorNotes,
+  phoneNumber = this.contactId?.let { visitorContactInformation.phoneNumber(it) },
+  emailAddress = this.contactId?.let { visitorContactInformation.emailAddress(it) },
 )
 
-fun List<OfficialVisitorEntity>.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService) = map { it.toModel(referenceDataService, personalRelationshipsReferenceDataService) }
+fun List<OfficialVisitorEntity>.toModel(
+  referenceDataService: ReferenceDataService,
+  personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
+  visitorContactInformation: VisitorContactInformation,
+) = map { it.toModel(referenceDataService, personalRelationshipsReferenceDataService, visitorContactInformation) }
 
 private fun getRelationShipCode(relationshipTypeCode: String?) = if (relationshipTypeCode == "OFFICIAL") {
   ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString()
 } else {
   ReferenceCodeGroup.SOCIAL_RELATIONSHIP.toString()
+}
+
+interface VisitorContactInformation {
+  fun phoneNumber(visitorContactId: Long): String?
+  fun emailAddress(visitorContactId: Long): String?
 }
