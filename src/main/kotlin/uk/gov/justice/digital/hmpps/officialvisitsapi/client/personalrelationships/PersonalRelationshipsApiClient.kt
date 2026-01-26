@@ -7,7 +7,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.typeReference
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCode
@@ -16,19 +15,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClient: WebClient) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
-  }
-
-  fun getContactById(contactId: Long): ContactDetails? = run {
-    personalRelationshipsApiWebClient.get()
-      .uri { uriBuilder: UriBuilder ->
-        uriBuilder
-          .path("/contact/{contactId}")
-          .build(contactId)
-      }
-      .retrieve()
-      .bodyToMono(ContactDetails::class.java)
-      .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
-      .block()
   }
 
   fun getApprovedContacts(prisonerNumber: String, relationshipType: String): List<PrisonerContactSummary> {
@@ -77,7 +63,6 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       .block()
     return pagedModelMono?.content?.toList() ?: emptyList()
   }
-
   fun getReferenceDataByGroup(groupCode: String): List<ReferenceCode>? = personalRelationshipsApiWebClient.get()
     .uri { uriBuilder: UriBuilder ->
       uriBuilder

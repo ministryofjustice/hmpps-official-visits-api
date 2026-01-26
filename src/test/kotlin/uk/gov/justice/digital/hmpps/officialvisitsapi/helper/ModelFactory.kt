@@ -115,7 +115,6 @@ fun prisonerContact(
   prisonerContactId: Long = 123456,
   firstName: String = "John",
   lastName: String = "Doe",
-  phoneNumber: String? = null,
 ) = PrisonerContactSummary(
   contactId = contactId,
   prisonerNumber = prisonerNumber,
@@ -153,7 +152,7 @@ fun prisonerContact(
   mailAddress = true,
   phoneType = "",
   phoneTypeDescription = "",
-  phoneNumber = phoneNumber,
+  phoneNumber = "",
   extNumber = "",
   comments = "",
   prisonerContactId = prisonerContactId,
