@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEnti
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
@@ -82,7 +83,7 @@ class MigrateVisitServiceTest {
       val timeSlotEntity = PrisonTimeSlotEntity(
         prisonTimeSlotId = 1L,
         prisonCode = "MDI",
-        dayCode = "TUE",
+        dayCode = DayType.TUE,
         startTime = slotStart,
         endTime = slotEnd,
         effectiveDate = aDateTime.toLocalDate(),
@@ -123,7 +124,7 @@ class MigrateVisitServiceTest {
           .extracting("prisonCode", "dayCode", "startTime", "endTime", "effectiveDate", "expiryDate", "createdBy", "createdTime")
           .contains(
             request.prisonCode,
-            request.dayCode,
+            DayType.valueOf(request.dayCode!!),
             request.startTime,
             request.endTime,
             request.effectiveDate,
