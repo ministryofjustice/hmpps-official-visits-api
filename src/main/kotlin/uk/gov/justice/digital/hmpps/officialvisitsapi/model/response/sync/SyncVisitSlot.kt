@@ -10,7 +10,7 @@ data class SyncVisitSlot(
   val visitSlotId: Long,
 
   @Schema(description = "Prison Code")
-  val prisonCode: String? = null,
+  val prisonCode: String,
 
   @Schema(description = "Prison time slot Id", required = true)
   val prisonTimeSlotId: Long,
