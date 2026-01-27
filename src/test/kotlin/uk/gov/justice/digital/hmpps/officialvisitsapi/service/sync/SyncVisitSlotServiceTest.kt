@@ -80,7 +80,7 @@ class SyncVisitSlotServiceTest {
     verify(prisonVisitSlotRepository).saveAndFlush(visitSlotCaptor.capture())
     visitSlotCaptor.firstValue.assertWithResponse(created)
     created.assertWithCreateRequest(request)
-
+    verify(prisonTimeSlotRepository).findById(1L)
     verify(prisonVisitSlotRepository).saveAndFlush(any())
   }
 
@@ -95,7 +95,7 @@ class SyncVisitSlotServiceTest {
     assertThrows<RuntimeException> {
       syncVisitSlotService.createPrisonVisitSlot(request)
     }
-
+    verify(prisonTimeSlotRepository).findById(1L)
     verify(prisonVisitSlotRepository).saveAndFlush(any())
   }
 
@@ -115,6 +115,7 @@ class SyncVisitSlotServiceTest {
     verify(prisonVisitSlotRepository).saveAndFlush(visitSlotCaptor.capture())
 
     visitSlotCaptor.firstValue.assertWithResponse(updated)
+    verify(prisonTimeSlotRepository).findById(1L)
     verify(prisonVisitSlotRepository).findById(1L)
   }
 
