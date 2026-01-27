@@ -2,13 +2,16 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 
 /**
  * This class is a facade over the sync services as a thin layer
@@ -31,6 +34,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotS
 @Service
 class SyncFacade(
   val syncTimeSlotService: SyncTimeSlotService,
+  val syncVisitSlotService: SyncVisitSlotService,
   val outboundEventsService: OutboundEventsService,
   val userService: UserService,
 ) {
@@ -53,6 +57,30 @@ class SyncFacade(
         outboundEvent = OutboundEvent.TIME_SLOT_UPDATED,
         prisonCode = it.prisonCode,
         identifier = it.prisonTimeSlotId,
+        source = Source.NOMIS,
+        user = userOrDefault(request.updatedBy),
+      )
+    }
+
+  fun getVisitSlotById(prisonVisitSlotId: Long) = syncVisitSlotService.getPrisonVisitSlotById(prisonVisitSlotId)
+
+  fun createVisitSlot(request: SyncCreateVisitSlotRequest) = syncVisitSlotService.createPrisonVisitSlot(request)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,
+        prisonCode = it.prisonCode!!,
+        identifier = it.visitSlotId,
+        source = Source.NOMIS,
+        user = userOrDefault(request.createdBy),
+      )
+    }
+
+  fun updateVisitSlot(prisonVisitSlotId: Long, request: SyncUpdateVisitSlotRequest) = syncVisitSlotService.updatePrisonVisitSlot(prisonVisitSlotId, request)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
+        prisonCode = it.prisonCode!!,
+        identifier = it.visitSlotId,
         source = Source.NOMIS,
         user = userOrDefault(request.updatedBy),
       )

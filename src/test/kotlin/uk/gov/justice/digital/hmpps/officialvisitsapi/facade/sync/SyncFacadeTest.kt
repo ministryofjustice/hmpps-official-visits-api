@@ -12,27 +12,34 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.reset
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.UUID
 
 class SyncFacadeTest {
   private val syncTimeSlotService: SyncTimeSlotService = mock()
+  private val syncVisitSlotService: SyncVisitSlotService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
   private val userService: UserService = mock()
 
-  private val facade = SyncFacade(syncTimeSlotService, outboundEventsService, userService)
+  private val facade = SyncFacade(syncTimeSlotService, syncVisitSlotService, outboundEventsService, userService)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
@@ -59,7 +66,7 @@ class SyncFacadeTest {
 
     @AfterEach
     fun afterEach() {
-      reset(userService, syncTimeSlotService)
+      reset(userService, syncTimeSlotService, syncVisitSlotService)
     }
 
     @Test
@@ -128,6 +135,63 @@ class SyncFacadeTest {
       )
     }
 
+    @Test
+    fun `should send a domain event when a visit slot is created`() {
+      val request = createVisitSlotRequest()
+      val response = syncVisitResponse(prisonVisitSlotId = 1L)
+
+      whenever(syncVisitSlotService.createPrisonVisitSlot(request)).thenReturn(response)
+
+      val result = facade.createVisitSlot(request)
+
+      verify(syncVisitSlotService).createPrisonVisitSlot(request)
+
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,
+        prisonCode = "MDI",
+        identifier = result.visitSlotId,
+        source = Source.NOMIS,
+        user = PrisonUser("MDI", "Test", "Test User"),
+      )
+    }
+
+    @Test
+    fun `should not send a domain event if failed to create the visit slot`() {
+      val request = createVisitSlotRequest()
+      val expectedException = RuntimeException("Bang!")
+
+      whenever(syncVisitSlotService.createPrisonVisitSlot(request)).thenThrow(expectedException)
+
+      val exception = assertThrows<RuntimeException> {
+        facade.createVisitSlot(request)
+      }
+
+      assertThat(exception.message).isEqualTo(expectedException.message)
+
+      verify(syncVisitSlotService).createPrisonVisitSlot(request)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `should send a domain event when a visit slot is updated`() {
+      val request = updateVisitSlotRequest()
+      val response = syncVisitResponse(prisonVisitSlotId = 1L)
+
+      whenever(syncVisitSlotService.updatePrisonVisitSlot(prisonVisitSlotId = 1L, request = request)).thenReturn(response)
+
+      val result = facade.updateVisitSlot(1L, request)
+
+      verify(syncVisitSlotService).updatePrisonVisitSlot(1L, request)
+
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
+        prisonCode = "MDI",
+        identifier = result.visitSlotId,
+        source = Source.NOMIS,
+        user = PrisonUser("MDI", "Test", "Test User"),
+      )
+    }
+
     private fun createTimeSlotRequest() = SyncCreateTimeSlotRequest(
       prisonCode = "MDI",
       dayCode = DayType.MON,
@@ -162,6 +226,33 @@ class SyncFacadeTest {
       createdTime = createdTime,
       updatedBy = "Test",
       updatedTime = updatedTime,
+    )
+
+    private fun createVisitSlotRequest() = SyncCreateVisitSlotRequest(
+      prisonTimeSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+      maxAdults = 10,
+      createdBy = "Test",
+      createdTime = createdTime,
+    )
+
+    private fun updateVisitSlotRequest() = SyncUpdateVisitSlotRequest(
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+      updatedBy = "Test",
+      maxAdults = 15,
+      updatedTime = updatedTime,
+    )
+
+    private fun syncVisitResponse(prisonVisitSlotId: Long) = SyncVisitSlot(
+      visitSlotId = prisonVisitSlotId,
+      prisonTimeSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+      maxAdults = 10,
+      createdBy = "Test",
+      createdTime = createdTime,
+      updatedBy = "Test",
+      updatedTime = updatedTime,
+      prisonCode = "MDI",
     )
   }
 }
