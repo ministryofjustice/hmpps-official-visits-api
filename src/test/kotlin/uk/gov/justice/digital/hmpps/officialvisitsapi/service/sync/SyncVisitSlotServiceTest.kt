@@ -6,7 +6,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
-import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
@@ -81,7 +80,7 @@ class SyncVisitSlotServiceTest {
     visitSlotCaptor.firstValue.assertWithResponse(created)
     created.assertWithCreateRequest(request)
     verify(prisonTimeSlotRepository).findById(1L)
-    verify(prisonVisitSlotRepository).saveAndFlush(any())
+    verify(prisonVisitSlotRepository).saveAndFlush(request.toEntity())
   }
 
   @Test
@@ -96,7 +95,7 @@ class SyncVisitSlotServiceTest {
       syncVisitSlotService.createPrisonVisitSlot(request)
     }
     verify(prisonTimeSlotRepository).findById(1L)
-    verify(prisonVisitSlotRepository).saveAndFlush(any())
+    verify(prisonVisitSlotRepository).saveAndFlush(request.toEntity())
   }
 
   @Test
@@ -107,7 +106,7 @@ class SyncVisitSlotServiceTest {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(request.toEntity()))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
 
-    whenever(prisonVisitSlotRepository.saveAndFlush(any())).thenReturn(request.toEntity())
+    whenever(prisonVisitSlotRepository.saveAndFlush(request.toEntity())).thenReturn(request.toEntity())
 
     val updated = syncVisitSlotService.updatePrisonVisitSlot(1L, request)
 
