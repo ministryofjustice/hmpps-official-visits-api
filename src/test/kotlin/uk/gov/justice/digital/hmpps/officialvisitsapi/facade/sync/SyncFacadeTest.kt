@@ -140,7 +140,7 @@ class SyncFacadeTest {
       val request = createVisitSlotRequest()
       val response = syncVisitResponse(prisonVisitSlotId = 1L)
 
-      whenever(syncVisitSlotService.createPrisonVisitSlot(any())).thenReturn(response)
+      whenever(syncVisitSlotService.createPrisonVisitSlot(request)).thenReturn(response)
 
       val result = facade.createVisitSlot(request)
 
@@ -160,7 +160,7 @@ class SyncFacadeTest {
       val request = createVisitSlotRequest()
       val expectedException = RuntimeException("Bang!")
 
-      whenever(syncVisitSlotService.createPrisonVisitSlot(any())).thenThrow(expectedException)
+      whenever(syncVisitSlotService.createPrisonVisitSlot(request)).thenThrow(expectedException)
 
       val exception = assertThrows<RuntimeException> {
         facade.createVisitSlot(request)
@@ -177,7 +177,7 @@ class SyncFacadeTest {
       val request = updateVisitSlotRequest()
       val response = syncVisitResponse(prisonVisitSlotId = 1L)
 
-      whenever(syncVisitSlotService.updatePrisonVisitSlot(prisonVisitSlotId = any(), request = any())).thenReturn(response)
+      whenever(syncVisitSlotService.updatePrisonVisitSlot(prisonVisitSlotId = 1L, request = request)).thenReturn(response)
 
       val result = facade.updateVisitSlot(1L, request)
 
