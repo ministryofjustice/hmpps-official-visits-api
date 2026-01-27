@@ -241,7 +241,6 @@ class SyncFacadeTest {
       updatedBy = "Test",
       maxAdults = 15,
       updatedTime = updatedTime,
-      prisonTimeSlotId = 1L,
     )
 
     private fun syncVisitResponse(prisonVisitSlotId: Long) = SyncVisitSlot(

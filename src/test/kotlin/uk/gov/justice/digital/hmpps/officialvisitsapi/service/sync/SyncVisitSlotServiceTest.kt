@@ -171,7 +171,6 @@ class SyncVisitSlotServiceTest {
     maxAdults = 10,
     updatedBy = "Test",
     updatedTime = updatedTime,
-    prisonTimeSlotId = 1L,
   )
 
   fun SyncUpdateVisitSlotRequest.toEntity() = PrisonVisitSlotEntity(

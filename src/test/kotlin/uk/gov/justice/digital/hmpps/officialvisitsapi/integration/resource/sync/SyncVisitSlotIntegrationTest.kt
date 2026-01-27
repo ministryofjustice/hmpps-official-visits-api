@@ -116,7 +116,6 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
     updatedBy = "Test",
     maxAdults = 15,
     updatedTime = updatedTime,
-    prisonTimeSlotId = 1L,
   )
 
   fun WebTestClient.createVisitSlot() = this.post()

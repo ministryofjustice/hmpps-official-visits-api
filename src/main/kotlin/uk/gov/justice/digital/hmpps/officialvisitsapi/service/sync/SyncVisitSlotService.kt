@@ -26,14 +26,13 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
     val changedVisitSlotEntity = visitSlotEntity.copy(
       dpsLocationId = request.dpsLocationId,
-      prisonTimeSlotId = request.prisonTimeSlotId,
       maxAdults = request.maxAdults,
       maxGroups = request.maxGroups,
       updatedBy = request.updatedBy,
       updatedTime = request.updatedTime,
     )
     val timeSlotEntity = prisonTimeSlotRepository.findById(changedVisitSlotEntity.prisonTimeSlotId)
-      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${request.prisonTimeSlotId} was not found for visit slot") }
+      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${changedVisitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
 
     return prisonVisitSlotRepository.saveAndFlush(changedVisitSlotEntity).toSyncModel(timeSlotEntity.prisonCode)
   }

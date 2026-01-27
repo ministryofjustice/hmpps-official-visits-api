@@ -6,10 +6,6 @@ import java.util.UUID
 
 @Schema(description = "Request to Update a new prison visit slot for official visits")
 data class SyncUpdateVisitSlotRequest(
-
-  @Schema(description = "Prison time slot Id")
-  val prisonTimeSlotId: Long,
-
   @Schema(description = "The DPS location ID where the visit is taking place", example = "aaa-ddd-bbb-123455632323")
   val dpsLocationId: UUID,
 
