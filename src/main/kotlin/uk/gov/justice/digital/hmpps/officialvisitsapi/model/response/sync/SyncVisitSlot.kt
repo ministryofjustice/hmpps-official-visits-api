@@ -9,7 +9,7 @@ data class SyncVisitSlot(
   @Schema(description = "Prison visit slot Id", required = true)
   val visitSlotId: Long,
 
-  @Schema(description = "Prison Code", required = true)
+  @Schema(description = "Prison Code")
   val prisonCode: String? = null,
 
   @Schema(description = "Prison time slot Id", required = true)
@@ -28,7 +28,7 @@ data class SyncVisitSlot(
   val createdBy: String,
 
   @Schema(description = "The timestamp of when this slot was created", example = "2024-01-01T00:00:00Z")
-  val createdTime: LocalDateTime = LocalDateTime.now(),
+  val createdTime: LocalDateTime,
 
   @Schema(description = "User who Updated the entry", example = "admin", required = true)
   val updatedBy: String? = null,

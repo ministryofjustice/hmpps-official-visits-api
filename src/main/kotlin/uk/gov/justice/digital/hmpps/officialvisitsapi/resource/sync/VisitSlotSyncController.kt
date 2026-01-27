@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -23,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
+@Tag(name = "Synchronisation")
 @RestController
 @RequestMapping(value = ["/sync"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitSlotSyncController(val syncFacade: SyncFacade) {
@@ -46,7 +48,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No prison time slot with this ID was found",
+        description = "No prison visit slot with this ID was found",
       ),
     ],
   )
@@ -85,7 +87,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
-  fun syncCreateTimeSlot(
+  fun syncCreateVisitSlot(
     @Valid @RequestBody request: SyncCreateVisitSlotRequest,
   ): SyncVisitSlot = syncFacade.createVisitSlot(request)
 

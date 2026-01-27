@@ -49,7 +49,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should update an existing time slot`() {
+  fun `should update an existing visit slot`() {
     val updateRequest = updateVisitSlotRequest()
 
     val syncVisitSlot = webTestClient.put()
@@ -80,7 +80,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should get an existing time slot by ID`() {
+  fun `should get an existing visit slot by ID`() {
     val syncVisitSlot = webTestClient.get()
       .uri("/sync/visit-slot/{prisonVisitSlotId}", savedPrisonVisitSlotId)
       .accept(MediaType.APPLICATION_JSON)
@@ -93,7 +93,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     syncVisitSlot.assertWithCreateRequest(createVisitSlotRequest())
-    assertThat(syncVisitSlot.prisonTimeSlotId).isGreaterThan(0)
+    assertThat(syncVisitSlot.visitSlotId).isGreaterThan(0)
   }
 
   private fun SyncVisitSlot.assertWithCreateRequest(request: SyncCreateVisitSlotRequest) {
@@ -116,6 +116,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
     updatedBy = "Test",
     maxAdults = 15,
     updatedTime = updatedTime,
+    prisonTimeSlotId = 1L,
   )
 
   fun WebTestClient.createVisitSlot() = this.post()

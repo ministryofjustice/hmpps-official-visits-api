@@ -18,9 +18,6 @@ data class SyncCreateVisitSlotRequest(
   @Schema(description = "Maximum groups allowed in the visit slot")
   val maxGroups: Int? = null,
 
-  @Schema(description = "Maximum Video sessions allowed in the visit slot")
-  val maxVideoSessions: Int? = null,
-
   @Schema(description = "User who created the entry", example = "admin", required = true)
   val createdBy: String,
 

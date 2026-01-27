@@ -35,7 +35,6 @@ fun SyncCreateVisitSlotRequest.toEntity() = PrisonVisitSlotEntity(
   dpsLocationId = this.dpsLocationId,
   maxAdults = this.maxAdults,
   maxGroups = this.maxGroups,
-  maxVideoSessions = this.maxVideoSessions,
   createdTime = this.createdTime,
   createdBy = this.createdBy,
 )

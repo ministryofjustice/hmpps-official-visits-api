@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.reset
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
@@ -148,7 +149,7 @@ class SyncFacadeTest {
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,
         prisonCode = "MDI",
-        identifier = result.prisonTimeSlotId,
+        identifier = result.visitSlotId,
         source = Source.NOMIS,
         user = PrisonUser("MDI", "Test", "Test User"),
       )
@@ -168,16 +169,7 @@ class SyncFacadeTest {
       assertThat(exception.message).isEqualTo(expectedException.message)
 
       verify(syncVisitSlotService).createPrisonVisitSlot(request)
-      verify(outboundEventsService, never()).send(
-        outboundEvent = any(),
-        prisonCode = any(),
-        identifier = any(),
-        secondIdentifier = anyOrNull(),
-        noms = anyOrNull(),
-        contactId = anyOrNull(),
-        source = any(),
-        user = any(),
-      )
+      verifyNoInteractions(outboundEventsService)
     }
 
     @Test
@@ -194,7 +186,7 @@ class SyncFacadeTest {
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
         prisonCode = "MDI",
-        identifier = result.prisonTimeSlotId,
+        identifier = result.visitSlotId,
         source = Source.NOMIS,
         user = PrisonUser("MDI", "Test", "Test User"),
       )
@@ -249,6 +241,7 @@ class SyncFacadeTest {
       updatedBy = "Test",
       maxAdults = 15,
       updatedTime = updatedTime,
+      prisonTimeSlotId = 1L,
     )
 
     private fun syncVisitResponse(prisonVisitSlotId: Long) = SyncVisitSlot(

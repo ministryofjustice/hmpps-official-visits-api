@@ -75,7 +75,7 @@ class SyncFacade(
       )
     }
 
-  fun updateVisitSlot(prisonTimeSlotId: Long, request: SyncUpdateVisitSlotRequest) = syncVisitSlotService.updatePrisonVisitSlot(prisonTimeSlotId, request)
+  fun updateVisitSlot(prisonVisitSlotId: Long, request: SyncUpdateVisitSlotRequest) = syncVisitSlotService.updatePrisonVisitSlot(prisonVisitSlotId, request)
     .also {
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
