@@ -42,6 +42,9 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
   fun getPrisonVisitSlotById(prisonVisitSlotId: Long): SyncVisitSlot {
     val prisonVisitSlotEntity = prisonVisitSlotRepository.findById(prisonVisitSlotId)
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
-    return prisonVisitSlotEntity.toSyncModel()
+
+    val timeSlotEntity = prisonTimeSlotRepository.findById(prisonVisitSlotEntity.prisonTimeSlotId)
+      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${prisonVisitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
+    return prisonVisitSlotEntity.toSyncModel(timeSlotEntity.prisonCode)
   }
 }

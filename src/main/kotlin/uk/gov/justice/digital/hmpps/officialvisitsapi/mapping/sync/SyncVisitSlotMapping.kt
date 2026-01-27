@@ -17,18 +17,6 @@ fun PrisonVisitSlotEntity.toSyncModel(prisonCode: String): SyncVisitSlot = SyncV
   prisonCode = prisonCode,
 )
 
-fun PrisonVisitSlotEntity.toSyncModel(): SyncVisitSlot = SyncVisitSlot(
-  prisonTimeSlotId = this.prisonTimeSlotId,
-  visitSlotId = this.prisonVisitSlotId,
-  dpsLocationId = this.dpsLocationId,
-  maxAdults = this.maxAdults,
-  maxGroups = this.maxGroups,
-  createdBy = this.createdBy,
-  createdTime = this.createdTime,
-  updatedBy = this.updatedBy,
-  updatedTime = this.updatedTime,
-)
-
 fun SyncCreateVisitSlotRequest.toEntity() = PrisonVisitSlotEntity(
   prisonVisitSlotId = 0L,
   prisonTimeSlotId = this.prisonTimeSlotId,

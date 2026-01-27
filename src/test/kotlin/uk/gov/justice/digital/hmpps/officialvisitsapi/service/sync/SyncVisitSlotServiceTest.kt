@@ -44,6 +44,10 @@ class SyncVisitSlotServiceTest {
   @Test
   fun `should get a visit slot by ID`() {
     val visitSlotEntity = prisonVisitSlotEntity(1L)
+    val timeSlotEntity = prisonTimeSlotEntity(1L)
+
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
+
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
 
     val timeSlot = syncVisitSlotService.getPrisonVisitSlotById(1L)
