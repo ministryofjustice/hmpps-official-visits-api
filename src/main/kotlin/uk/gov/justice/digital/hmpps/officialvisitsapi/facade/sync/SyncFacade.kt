@@ -68,7 +68,7 @@ class SyncFacade(
     .also {
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,
-        prisonCode = it.prisonCode!!,
+        prisonCode = it.prisonCode,
         identifier = it.visitSlotId,
         source = Source.NOMIS,
         user = userOrDefault(request.createdBy),
@@ -79,12 +79,16 @@ class SyncFacade(
     .also {
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
-        prisonCode = it.prisonCode!!,
+        prisonCode = it.prisonCode,
         identifier = it.visitSlotId,
         source = Source.NOMIS,
         user = userOrDefault(request.updatedBy),
       )
     }
+
+  fun deleteVisitSlot(visitSlotId: Long) = syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
+
+  fun deleteTimeSlot(timeSlotId: Long) = syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)
 
   // TODO: Add facade methods and event generation for the other sync requests here
 

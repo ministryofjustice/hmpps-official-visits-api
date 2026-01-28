@@ -3,17 +3,19 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 
 @Service
 @Transactional
-class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotRepository, val prisonTimeSlotRepository: PrisonTimeSlotRepository) {
+class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotRepository, val prisonTimeSlotRepository: PrisonTimeSlotRepository, val officialVisitRepository: OfficialVisitRepository) {
   fun createPrisonVisitSlot(request: SyncCreateVisitSlotRequest): SyncVisitSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(request.prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${request.prisonTimeSlotId} was not found for visit slot") }
@@ -46,4 +48,15 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${prisonVisitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
     return prisonVisitSlotEntity.toSyncModel(timeSlotEntity.prisonCode)
   }
+
+  fun deletePrisonVisitSlot(prisonVisitSlotId: Long) {
+    val prisonVisitSlotEntity = prisonVisitSlotRepository.findById(prisonVisitSlotId)
+      .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
+    require(!validateOfficialVisit(prisonVisitSlotEntity.prisonVisitSlotId)) {
+      throw EntityInUseException("Cannot delete prison visit slot as valid official visit associated with it")
+    }
+    prisonVisitSlotRepository.deleteById(prisonVisitSlotId)
+  }
+
+  private fun validateOfficialVisit(prisonVisitSlotId: Long): Boolean = officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(prisonVisitSlotId)
 }

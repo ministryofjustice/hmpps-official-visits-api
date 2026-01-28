@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import java.time.LocalDate
@@ -29,15 +30,16 @@ import java.util.UUID
 class SyncVisitSlotServiceTest {
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
+  private val officialVisitRepository: OfficialVisitRepository = mock()
 
-  private val syncVisitSlotService = SyncVisitSlotService(prisonVisitSlotRepository, prisonTimeSlotRepository)
+  private val syncVisitSlotService = SyncVisitSlotService(prisonVisitSlotRepository, prisonTimeSlotRepository, officialVisitRepository)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
 
   @AfterEach
   fun afterEach() {
-    reset(prisonVisitSlotRepository, prisonTimeSlotRepository)
+    reset(prisonVisitSlotRepository, prisonTimeSlotRepository, officialVisitRepository)
   }
 
   @Test
