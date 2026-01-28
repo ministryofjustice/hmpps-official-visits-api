@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationsh
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ReferenceDataService
 
 fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService, visitorContactInformation: VisitorContactInformation) = OfficialVisitorDetails(
+  officialVisitorId = this.officialVisitorId,
   visitorTypeCode = this.visitorTypeCode,
   visitorTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.VISITOR_TYPE, this.visitorTypeCode.toString())?.description
     ?: this.visitorTypeCode.toString(),

@@ -44,6 +44,8 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
     )
   }
 
+  fun stubAllApprovedContacts(contact: PrisonerContactSummary) = stubAllApprovedContacts(prisonerNumber = contact.prisonerNumber, contactId = contact.contactId, prisonerContactId = contact.prisonerContactId)
+
   fun stubAllApprovedContacts(prisonerNumber: String, contactId: Long = 1, prisonerContactId: Long = 1) {
     stubFor(
       get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))

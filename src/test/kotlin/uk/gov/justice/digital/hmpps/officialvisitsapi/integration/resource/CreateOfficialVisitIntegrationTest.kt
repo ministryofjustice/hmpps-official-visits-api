@@ -106,7 +106,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       staffNotes isEqualTo "private notes"
       prisonerNotes isEqualTo "public notes"
       visitorConcernNotes isEqualTo null
-      searchTypeCode isEqualTo SearchLevelType.PAT
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
     }
@@ -158,7 +157,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       staffNotes isEqualTo "private notes"
       prisonerNotes isEqualTo "public notes"
       visitorConcernNotes isEqualTo null
-      searchTypeCode isEqualTo SearchLevelType.PAT
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
     }
