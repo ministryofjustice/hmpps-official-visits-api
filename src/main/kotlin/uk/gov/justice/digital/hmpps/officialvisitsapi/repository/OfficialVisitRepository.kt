@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import java.time.LocalDate
 
 @Repository
@@ -27,4 +28,6 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
    """,
   )
   fun findAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate?, toDate: LocalDate?): List<OfficialVisitEntity>
+
+  fun existsByPrisonVisitSlotId(prisonVisitSlotId: Long): Boolean
 }

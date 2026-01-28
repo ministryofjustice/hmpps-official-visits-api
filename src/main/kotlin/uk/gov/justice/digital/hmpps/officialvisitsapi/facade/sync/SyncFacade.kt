@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync
 
+import jakarta.persistence.Id
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
@@ -85,6 +86,10 @@ class SyncFacade(
         user = userOrDefault(request.updatedBy),
       )
     }
+
+  fun deleteVisitSlot(visitSlotId: Long) = syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
+
+  open fun deleteTimeSlot(timeSlotId: Long) = syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)
 
   // TODO: Add facade methods and event generation for the other sync requests here
 
