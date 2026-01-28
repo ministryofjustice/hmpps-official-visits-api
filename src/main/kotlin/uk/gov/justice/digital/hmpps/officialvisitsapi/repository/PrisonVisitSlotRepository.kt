@@ -5,4 +5,7 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 
 @Repository
-interface PrisonVisitSlotRepository : JpaRepository<PrisonVisitSlotEntity, Long>
+interface PrisonVisitSlotRepository : JpaRepository<PrisonVisitSlotEntity, Long> {
+
+  fun existsByPrisonTimeSlotId(prisonTimeSlotId: Long): Boolean
+}
