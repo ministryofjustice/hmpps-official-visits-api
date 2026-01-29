@@ -35,7 +35,7 @@ class OfficialVisitCompletionService(
         prisonerSearchType = request.prisonerSearchType!!,
         visitorAttendance = request.visitorAttendance.associateBy(
           { it.officialVisitorId },
-          { it.prisonerAttendance!! },
+          { it.visitorAttendance!! },
         ),
         user,
       ),

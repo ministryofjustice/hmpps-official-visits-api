@@ -23,5 +23,5 @@ data class OfficialVisitCompletionRequest(
 data class OfficialVisitorAttendance(
   val officialVisitorId: Long,
 
-  val prisonerAttendance: AttendanceType?,
+  val visitorAttendance: AttendanceType?,
 )

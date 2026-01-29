@@ -169,7 +169,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     ) officialVisitId: Long,
     @Valid
     @RequestBody
-    @Parameter(description = "The request with the official visit summary search details", required = true)
+    @Parameter(description = "The request with the official visit completion details", required = true)
     request: OfficialVisitCompletionRequest,
     httpRequest: HttpServletRequest,
   ) {

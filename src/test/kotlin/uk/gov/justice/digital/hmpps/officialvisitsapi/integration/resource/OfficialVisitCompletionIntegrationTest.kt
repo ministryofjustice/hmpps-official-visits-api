@@ -74,7 +74,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should complete an official scheduled`() {
+  fun `should complete an official scheduled visit`() {
     prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER)
     personalRelationshipsApi().stubReferenceGroup()
