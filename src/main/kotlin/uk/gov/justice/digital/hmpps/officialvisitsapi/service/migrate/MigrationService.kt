@@ -144,11 +144,11 @@ class MigrationService(
           visitorNotes = visitor.commentText,
           createdBy = visitor.createUsername ?: "MIGRATION",
           createdTime = visitor.createDateTime ?: LocalDateTime.now(),
-          updatedBy = visitor.modifyUsername,
-          updatedTime = visitor.modifyDateTime,
           offenderVisitVisitorId = visitor.offenderVisitVisitorId,
         ).apply {
           attendanceCode = visitor.attendanceCode
+          updatedBy = visitor.modifyUsername
+          updatedTime = visitor.modifyDateTime
         },
       ),
     )

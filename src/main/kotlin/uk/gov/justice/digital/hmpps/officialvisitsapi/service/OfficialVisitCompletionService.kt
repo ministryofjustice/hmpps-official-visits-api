@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -41,7 +42,13 @@ class OfficialVisitCompletionService(
       ),
     )
 
-    prisonerVisitedRepository.saveAndFlush(prisonerVisited.copy(attendanceCode = request.prisonerAttendance))
+    prisonerVisitedRepository.saveAndFlush(
+      prisonerVisited.copy(
+        attendanceCode = request.prisonerAttendance,
+        updatedBy = user.username,
+        updatedTime = LocalDateTime.now(),
+      ),
+    )
 
     logger.info("Official visit with ID $officialVisitId completed.")
   }

@@ -44,6 +44,8 @@ class OfficialVisitEntityTest {
     visit.updatedBy isEqualTo MOORLAND_PRISON_USER.username
     visit.updatedTime isCloseTo now()
     visit.officialVisitors().single().attendanceCode isEqualTo AttendanceType.ATTENDED
+    visit.officialVisitors().single().updatedBy isEqualTo MOORLAND_PRISON_USER.username
+    visit.officialVisitors().single().updatedTime isCloseTo now()
   }
 
   @Test

@@ -92,6 +92,8 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
 
     with(scheduledVisit.officialVisitors!!.single()) {
       attendanceCode isEqualTo null
+      updatedBy isEqualTo null
+      updatedTime isEqualTo null
     }
 
     webTestClient.complete(
@@ -121,6 +123,12 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
 
     with(completedVisit.officialVisitors!!.single()) {
       attendanceCode isEqualTo AttendanceType.ATTENDED
+      updatedBy isEqualTo MOORLAND_PRISON_USER.username
+      updatedTime isCloseTo now()
+    }
+
+    with(completedVisit.prisonerVisited!!) {
+      attendanceCode isEqualTo AttendanceType.ATTENDED.name
     }
   }
 
