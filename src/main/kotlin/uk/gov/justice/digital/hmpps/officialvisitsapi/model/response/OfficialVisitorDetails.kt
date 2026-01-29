@@ -8,6 +8,9 @@ import java.time.LocalDateTime
 
 data class OfficialVisitorDetails(
 
+  @Schema(description = "The official visitor id", example = "1")
+  val officialVisitorId: Long,
+
   @Schema(description = "The Official visitor Visit Type code")
   val visitorTypeCode: VisitorType,
 

@@ -37,7 +37,7 @@ class OfficialVisitsRetrievalService(
     val prisoner = prisonerSearchClient.getPrisoner(ove.prisonerNumber)
       ?: throw EntityNotFoundException("Prisoner not found ${ove.prisonerNumber}")
 
-    val pve = prisonerVisitedRepository.findByOfficialVisitId(id)
+    val pve = prisonerVisitedRepository.findByOfficialVisit(ove)
       ?: throw EntityNotFoundException("Prisoner visited not found for visit ID $id")
 
     return populateOfficialVisitDetails(ove, prisoner, pve)
@@ -109,7 +109,7 @@ class OfficialVisitsRetrievalService(
 
   private fun List<OfficialVisitorEntity>.getVisitorsDetails(): List<ContactDetails> = run {
     filter { visitor -> visitor.contactId != null }
-      .map { visitor -> personalRelationshipsApiClient.getContactById(visitor.contactId!!) ?: throw EntityNotFoundException("Contact not found") }
+      .map { visitor -> personalRelationshipsApiClient.getContactById(visitor.contactId!!) ?: throw EntityNotFoundException("Contact with ID ${visitor.contactId} not found") }
   }
 
   // Strictly speaking, it would be better if the personal relationship API provided easier access to this information instead of putting (fragile) logic in the service here to try and work it out.

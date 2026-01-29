@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.E
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.OfficialVisitFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
@@ -135,4 +136,43 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     )
     size: Int = 20,
   ): PagedModel<OfficialVisitSummarySearchResponse> = facade.searchForOfficialVisitSummaries(prisonCode, request, page, size)
+
+  @Operation(summary = "Endpoint to complete an official visit.")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No official visit found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PostMapping(path = ["/prison/{prisonCode}/id/{officialVisitId}/complete"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun complete(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @PathVariable("officialVisitId") @Parameter(
+      name = "officialVisitId",
+      description = "The official visit identifier",
+      example = "123",
+      required = true,
+    ) officialVisitId: Long,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request with the official visit completion details", required = true)
+    request: OfficialVisitCompletionRequest,
+    httpRequest: HttpServletRequest,
+  ) {
+    facade.completeOfficialVisit(prisonCode, officialVisitId, request, httpRequest.getLocalRequestContext().user)
+  }
 }

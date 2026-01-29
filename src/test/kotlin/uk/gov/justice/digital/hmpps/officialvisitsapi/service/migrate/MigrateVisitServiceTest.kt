@@ -294,7 +294,7 @@ class MigrateVisitServiceTest {
       val result = migrationService.migrateVisit(request)
 
       // Check responses generated
-      assertThat(result.visit).isEqualTo(IdPair(elementType = ElementType.OFFICIAL_VISIT, 1L, 1L))
+      assertThat(result.visit).isEqualTo(IdPair(elementType = ElementType.OFFICIAL_VISIT, 1L, 0L))
       assertThat(result.prisoner).isEqualTo(IdPair(elementType = ElementType.PRISONER_VISITED, 222, 1L))
       assertThat(result.visitors).containsAll(
         listOf(
@@ -398,29 +398,7 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    private fun visitEntity(request: MigrateVisitRequest, visitSlot: PrisonVisitSlotEntity) = OfficialVisitEntity(
-      officialVisitId = 1L,
-      prisonVisitSlot = visitSlot,
-      visitDate = request.visitDate!!,
-      startTime = request.startTime!!,
-      endTime = request.endTime!!,
-      dpsLocationId = request.dpsLocationId!!,
-      visitStatusCode = request.visitStatusCode!!,
-      visitTypeCode = request.visitTypeCode!!,
-      prisonCode = request.prisonCode!!,
-      prisonerNumber = request.prisonerNumber!!,
-      currentTerm = request.currentTerm!!,
-      staffNotes = request.commentText,
-      prisonerNotes = null,
-      visitorConcernNotes = request.visitorConcernText,
-      searchTypeCode = request.searchTypeCode,
-      completionCode = request.visitCompletionCode,
-      overrideBanBy = request.overrideBanStaffUsername,
-      createdBy = aUsername,
-      offenderBookId = request.offenderBookId,
-      offenderVisitId = request.offenderVisitId!!,
-      visitOrderNumber = request.visitOrderNumber,
-    )
+    private fun visitEntity(request: MigrateVisitRequest, visitSlot: PrisonVisitSlotEntity) = OfficialVisitEntity.migrated(visitSlot, request)
 
     private fun prisonerVisitedEntity(request: MigrateVisitRequest, visit: OfficialVisitEntity) = PrisonerVisitedEntity(
       prisonerVisitedId = 1L,
@@ -444,11 +422,12 @@ class MigrateVisitServiceTest {
         leadVisitor = request.visitors[0].groupLeaderFlag!!,
         assistedVisit = request.visitors[0].assistedVisitFlag!!,
         visitorNotes = request.visitors[0].commentText,
-        attendanceCode = request.visitors[0].attendanceCode,
         createdBy = aUsername,
         createdTime = aDateTime,
         offenderVisitVisitorId = request.visitors[0].offenderVisitVisitorId!!,
-      ),
+      ).apply {
+        attendanceCode = request.visitors[0].attendanceCode
+      },
       OfficialVisitorEntity(
         officialVisitorId = 2L,
         officialVisit = visit,
@@ -462,11 +441,12 @@ class MigrateVisitServiceTest {
         leadVisitor = request.visitors[1].groupLeaderFlag!!,
         assistedVisit = request.visitors[1].assistedVisitFlag!!,
         visitorNotes = request.visitors[1].commentText,
-        attendanceCode = request.visitors[1].attendanceCode,
         createdBy = aUsername,
         createdTime = aDateTime,
         offenderVisitVisitorId = request.visitors[1].offenderVisitVisitorId!!,
-      ),
+      ).apply {
+        attendanceCode = request.visitors[1].attendanceCode
+      },
     )
   }
 }
