@@ -28,6 +28,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitorAttendance
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
@@ -67,6 +71,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
+    stubEvents.reset()
 
     personalRelationshipsApi().stubAllApprovedContacts(CONTACT_MOORLAND_PRISONER)
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(prisonCode = MOORLAND, locations = listOf(location))
@@ -130,6 +135,27 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
     with(completedVisit.prisonerVisited!!) {
       attendanceCode isEqualTo AttendanceType.ATTENDED.name
     }
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = completedVisit.officialVisitId,
+      ),
+    )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISITOR_UPDATED,
+      additionalInfo = VisitorInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitorId = completedVisit.officialVisitors.single().officialVisitorId,
+        officialVisitId = completedVisit.officialVisitId,
+      ),
+    )
   }
 
   private fun WebTestClient.complete(officialVisitId: Long, request: OfficialVisitCompletionRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this

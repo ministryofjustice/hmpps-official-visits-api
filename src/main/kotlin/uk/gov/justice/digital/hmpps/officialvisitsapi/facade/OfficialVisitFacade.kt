@@ -46,6 +46,25 @@ class OfficialVisitFacade(
     request: OfficialVisitCompletionRequest,
     user: User,
   ) {
-    officialVisitCompletionService.completeOfficialVisit(prisonCode, officialVisitId, request, user)
+    officialVisitCompletionService.completeOfficialVisit(prisonCode, officialVisitId, request, user).also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_UPDATED,
+        prisonCode = prisonCode,
+        identifier = officialVisitId,
+        user = user,
+      )
+
+      request.visitorAttendance.forEach { attended ->
+        outboundEventsService.send(
+          outboundEvent = OutboundEvent.VISITOR_UPDATED,
+          prisonCode = prisonCode,
+          identifier = attended.officialVisitorId,
+          secondIdentifier = officialVisitId,
+          user = user,
+        )
+      }
+
+      // TODO need to determine what/if prisoner event to raise.
+    }
   }
 }
