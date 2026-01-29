@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
@@ -20,6 +21,7 @@ class OfficialVisitFacade(
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService,
   private val officialVisitSearchService: OfficialVisitSearchService,
   private val officialVisitCompletionService: OfficialVisitCompletionService,
+  private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val outboundEventsService: OutboundEventsService,
 ) {
   fun createOfficialVisit(
@@ -64,7 +66,13 @@ class OfficialVisitFacade(
         )
       }
 
-      // TODO need to determine what/if prisoner event to raise.
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.PRISONER_UPDATED,
+        prisonCode = prisonCode,
+        identifier = prisonerVisitedRepository.findByOfficialVisitId(officialVisitId)!!.prisonerVisitedId,
+        secondIdentifier = officialVisitId,
+        user = user,
+      )
     }
   }
 }
