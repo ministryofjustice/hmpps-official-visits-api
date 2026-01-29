@@ -13,6 +13,7 @@ import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
@@ -129,6 +130,49 @@ class SyncVisitSlotServiceTest {
     }
     verify(prisonVisitSlotRepository).findById(1L)
     verifyNoMoreInteractions(prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should fail to delete visit slot which does not exist`() {
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.empty())
+    assertThrows<EntityNotFoundException> {
+      syncVisitSlotService.deletePrisonVisitSlot(1L)
+    }
+    verify(prisonVisitSlotRepository).findById(1L)
+    verifyNoMoreInteractions(prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should delete visit slot when there is no visits exists`() {
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity(1L)))
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity(1L)))
+
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(false)
+
+    syncVisitSlotService.deletePrisonVisitSlot(1L)
+    verify(prisonVisitSlotRepository).deleteById(1L)
+
+    verify(prisonVisitSlotRepository).findById(1L)
+    verify(prisonTimeSlotRepository).findById(1L)
+
+    verify(officialVisitRepository).existsByPrisonVisitSlotPrisonVisitSlotId(1L)
+    verify(prisonVisitSlotRepository).deleteById(1L)
+
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
+  @Test
+  fun `should fail to  delete visit slot when there is official visit slot exists`() {
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity(1L)))
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
+    val exception = assertThrows<EntityInUseException> {
+      syncVisitSlotService.deletePrisonVisitSlot(1L)
+    }
+    val expectedException = EntityInUseException("The prison visit slot has visits associated with it and cannot be deleted.")
+    assertThat(exception.message).isEqualTo(expectedException.message)
+    verify(prisonVisitSlotRepository).findById(1L)
+    verify(officialVisitRepository).existsByPrisonVisitSlotPrisonVisitSlotId(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 
   private fun PrisonVisitSlotEntity.assertWithResponse(model: SyncVisitSlot) {

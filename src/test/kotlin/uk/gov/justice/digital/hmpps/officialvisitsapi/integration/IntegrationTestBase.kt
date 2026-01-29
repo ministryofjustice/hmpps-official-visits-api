@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Perso
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
@@ -64,6 +65,9 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
 
+  @Autowired
+  protected lateinit var prisonVisitSlotRepository: PrisonVisitSlotRepository
+
   @BeforeEach
   fun `stub default users and prisoners and reset stubbed events`() {
     stubEvents.reset()
@@ -94,6 +98,10 @@ abstract class IntegrationTestBase {
     prisonerVisitedRepository.deleteAll()
     officialVisitorRepository.deleteAll()
     officialVisitRepository.deleteAll()
+  }
+
+  protected fun clearVisitSlot() {
+    prisonerVisitedRepository.deleteAll()
   }
 
   protected fun prisonerSearchApi() = PrisonerSearchApiExtension.server

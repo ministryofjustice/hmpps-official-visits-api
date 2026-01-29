@@ -87,9 +87,26 @@ class SyncFacade(
     }
 
   fun deleteVisitSlot(visitSlotId: Long) = syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
+        prisonCode = it.prisonCode,
+        identifier = it.visitSlotId,
+        source = Source.NOMIS,
+        user = userOrDefault(it.createdBy),
+      )
+    }
 
   fun deleteTimeSlot(timeSlotId: Long) = syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)
-
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
+        prisonCode = it.prisonCode,
+        identifier = it.prisonTimeSlotId,
+        source = Source.NOMIS,
+        user = userOrDefault(it.createdBy),
+      )
+    }
   // TODO: Add facade methods and event generation for the other sync requests here
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()

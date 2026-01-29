@@ -1,3 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.exception
 
-class EntityInUseException(message: String, cause: Throwable? = null) : RuntimeException(message)
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.ResponseStatus
+
+@ResponseStatus(value = HttpStatus.CONFLICT)
+class EntityInUseException(message: String) : RuntimeException(message)

@@ -41,13 +41,14 @@ class SyncTimeSlotService(val prisonTimeSlotRepository: PrisonTimeSlotRepository
     return prisonTimeSlotRepository.saveAndFlush(changedTimeSlotEntity).toSyncModel()
   }
 
-  fun deletePrisonTimeSlot(prisonTimeSlotId: Long) {
+  fun deletePrisonTimeSlot(prisonTimeSlotId: Long): SyncTimeSlot {
     val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
     require(!validatePrisonVisitSlot(prisonTimeSlotEntity.prisonTimeSlotId)) {
-      throw EntityInUseException("Cannot delete prison Time slot as valid  visit slot associated with it")
+      throw EntityInUseException("The prison time slot has visit slot associated with it and cannot be deleted.")
     }
     prisonTimeSlotRepository.deleteById(prisonTimeSlotId)
+    return prisonTimeSlotEntity.toSyncModel()
   }
 
   private fun validatePrisonVisitSlot(prisonTimeSlotId: Long): Boolean = prisonVisitSlotRepository.existsByPrisonTimeSlotId(prisonTimeSlotId)

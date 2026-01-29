@@ -131,9 +131,9 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
     @Valid @RequestBody request: SyncUpdateTimeSlotRequest,
   ) = syncFacade.updateTimeSlot(prisonTimeSlotId, request)
 
-  @DeleteMapping("{timeSlotId}")
+  @DeleteMapping("/time-slot/{timeSlotId}")
   @Operation(
-    summary = "Delete prisoner time slot",
+    summary = "Delete prison time slot",
     description = "Delete the time slot. Only allowed if there are no  visits slots associated with it.",
   )
   @ApiResponses(
@@ -149,12 +149,12 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
       ),
       ApiResponse(
         responseCode = "409",
-        description = "The time has attached entities such as visit slots and cannot be deleted.",
+        description = "The prison time slot has visit slot associated with it and cannot be deleted.",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole(OFFICIAL_VISITS_MIGRATION)")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   open fun syncDelete(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
 }

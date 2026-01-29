@@ -132,30 +132,30 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
     @Valid @RequestBody request: SyncUpdateVisitSlotRequest,
   ) = syncFacade.updateVisitSlot(prisonVisitSlotId, request)
 
-  @DeleteMapping("{visitSlotId}")
+  @DeleteMapping("/visit-slot/{visitSlotId}")
   @Operation(
-    summary = "Delete prisoner Visit slot",
+    summary = "Delete prison Visit slot",
     description = "Delete the visit slot. Only allowed if there are no official visits associated with it.",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
-        description = "Deleted the visit slot  successfully",
+        description = "Deleted the visit slot successfully",
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Could not find the prisoner visit slot ",
+        description = "Could not find the prison visit slot ",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "409",
-        description = "The visit has attached entities such as official visit and cannot be deleted.",
+        description = "The prison visit slot has visits associated with it and cannot be deleted.",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole(OFFICIAL_VISITS_MIGRATION)")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   open fun syncDelete(@PathVariable visitSlotId: Long) = syncFacade.deleteVisitSlot(visitSlotId)
 }
