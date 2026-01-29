@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
@@ -28,10 +29,11 @@ class OfficialVisitFacadeTest {
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService = mock()
   private val officialVisitSearchService: OfficialVisitSearchService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
+  private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val officialVisitCompletionService: OfficialVisitCompletionService = mock()
   private val user = MOORLAND_PRISON_USER
 
-  private val facade = OfficialVisitFacade(officialVisitCreateService, officialVisitsRetrievalService, officialVisitSearchService, officialVisitCompletionService, outboundEventsService)
+  private val facade = OfficialVisitFacade(officialVisitCreateService, officialVisitsRetrievalService, officialVisitSearchService, officialVisitCompletionService, prisonerVisitedRepository, outboundEventsService)
 
   @Test
   fun `should delegate to service on create and emit a visit created event`() {
