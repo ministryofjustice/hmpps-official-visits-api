@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEnti
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
@@ -56,12 +55,10 @@ class OfficialVisitCreateService(
         startTime = request.startTime!!,
         endTime = request.endTime!!,
         dpsLocationId = request.dpsLocationId!!,
-        visitStatusCode = VisitStatusType.SCHEDULED,
         visitTypeCode = request.visitTypeCode!!,
         staffNotes = request.staffNotes,
         prisonerNotes = request.prisonerNotes,
         offenderBookId = prisonerDetails.bookingId?.toLong(),
-        searchTypeCode = request.searchTypeCode,
         createdBy = user.username,
       ).addVisitorsAndAnyEquipment(request.officialVisitors, matchingVisitors, user),
     ).savePrisonerBeingVisited()

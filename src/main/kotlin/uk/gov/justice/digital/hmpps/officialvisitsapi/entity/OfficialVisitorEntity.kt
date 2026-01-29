@@ -50,21 +50,21 @@ class OfficialVisitorEntity(
 
   val visitorNotes: String? = null,
 
-  @Enumerated(EnumType.STRING)
-  val attendanceCode: AttendanceType? = null,
-
   val createdBy: String,
 
   val createdTime: LocalDateTime = LocalDateTime.now(),
-
-  val updatedBy: String? = null,
-
-  val updatedTime: LocalDateTime? = null,
 
   val offenderVisitVisitorId: Long? = null,
 ) {
   @OneToOne(mappedBy = "officialVisitor", cascade = [CascadeType.ALL], orphanRemoval = true)
   var visitorEquipment: VisitorEquipmentEntity? = null
+
+  @Enumerated(EnumType.STRING)
+  var attendanceCode: AttendanceType? = null
+
+  var updatedBy: String? = null
+
+  var updatedTime: LocalDateTime? = null
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -113,41 +113,14 @@ class MigrationService(
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} not found on offender visit ID ${request.offenderVisitId}")
     }
 
-    val visit = officialVisitRepository.saveAndFlush(
-      OfficialVisitEntity(
-        prisonVisitSlot = visitSlot,
-        visitDate = request.visitDate!!,
-        startTime = request.startTime!!,
-        endTime = request.endTime!!,
-        dpsLocationId = request.dpsLocationId!!,
-        visitStatusCode = request.visitStatusCode!!,
-        visitTypeCode = request.visitTypeCode!!,
-        prisonCode = request.prisonCode,
-        prisonerNumber = request.prisonerNumber,
-        currentTerm = request.currentTerm!!,
-        staffNotes = request.commentText,
-        prisonerNotes = null, // Never supplied
-        visitorConcernNotes = request.visitorConcernText,
-        searchTypeCode = request.searchTypeCode,
-        completionCode = request.visitCompletionCode,
-        overrideBanTime = null, // Never supplied
-        overrideBanBy = request.overrideBanStaffUsername,
-        createdBy = request.createUsername ?: "MIGRATION",
-        createdTime = request.createDateTime ?: LocalDateTime.now(),
-        updatedBy = request.modifyUsername,
-        updatedTime = request.modifyDateTime,
-        offenderBookId = request.offenderBookId,
-        offenderVisitId = request.offenderVisitId!!,
-        visitOrderNumber = request.visitOrderNumber,
-      ),
-    )
+    val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.migrated(visitSlot, request))
 
     val prisoner = extractAndSavePrisonerVisited(visit, request)
 
     val visitorPairs = extractAndSaveVisitors(visit, request)
 
     return MigrateVisitResponse(
-      visit = IdPair(elementType = ElementType.OFFICIAL_VISIT, nomisId = request.offenderVisitId, dpsId = visit.officialVisitId),
+      visit = IdPair(elementType = ElementType.OFFICIAL_VISIT, nomisId = request.offenderVisitId!!, dpsId = visit.officialVisitId),
       prisoner = IdPair(elementType = ElementType.PRISONER_VISITED, nomisId = request.offenderBookId!!, dpsId = prisoner.prisonerVisitedId),
       visitors = visitorPairs.map { IdPair(elementType = ElementType.OFFICIAL_VISITOR, nomisId = it.first, dpsId = it.second.officialVisitorId) },
     )
@@ -169,13 +142,14 @@ class MigrationService(
           leadVisitor = visitor.groupLeaderFlag ?: false,
           assistedVisit = visitor.assistedVisitFlag ?: false,
           visitorNotes = visitor.commentText,
-          attendanceCode = visitor.attendanceCode,
           createdBy = visitor.createUsername ?: "MIGRATION",
           createdTime = visitor.createDateTime ?: LocalDateTime.now(),
-          updatedBy = visitor.modifyUsername,
-          updatedTime = visitor.modifyDateTime,
           offenderVisitVisitorId = visitor.offenderVisitVisitorId,
-        ),
+        ).apply {
+          attendanceCode = visitor.attendanceCode
+          updatedBy = visitor.modifyUsername
+          updatedTime = visitor.modifyDateTime
+        },
       ),
     )
   }
