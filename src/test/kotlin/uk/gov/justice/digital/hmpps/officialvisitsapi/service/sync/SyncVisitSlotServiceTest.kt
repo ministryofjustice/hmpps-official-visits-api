@@ -175,6 +175,19 @@ class SyncVisitSlotServiceTest {
     verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 
+  @Test
+  fun `should fail to  delete invalid visit slot`() {
+    val expectedException = EntityNotFoundException("Prison visit slot with ID 99 was not found")
+
+    whenever(prisonVisitSlotRepository.findById(99L)).thenThrow(expectedException)
+    val exception = assertThrows<EntityNotFoundException> {
+      syncVisitSlotService.deletePrisonVisitSlot(99L)
+    }
+    assertThat(exception.message).isEqualTo(expectedException.message)
+    verify(prisonVisitSlotRepository).findById(99L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
   private fun PrisonVisitSlotEntity.assertWithResponse(model: SyncVisitSlot) {
     assertThat(prisonVisitSlotId).isEqualTo(model.visitSlotId)
     assertThat(prisonTimeSlotId).isEqualTo(model.prisonTimeSlotId)

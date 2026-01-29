@@ -153,6 +153,19 @@ class SyncTimeSlotServiceTest {
     verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 
+  @Test
+  fun `should fail to  delete invalid time slot`() {
+    val expectedException = EntityNotFoundException("Prison time slot with ID 99 was not found")
+
+    whenever(prisonTimeSlotRepository.findById(99L)).thenThrow(expectedException)
+    val exception = assertThrows<EntityNotFoundException> {
+      syncTimeSlotService.deletePrisonTimeSlot(99L)
+    }
+    assertThat(exception.message).isEqualTo(expectedException.message)
+    verify(prisonTimeSlotRepository).findById(99L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
   private fun PrisonTimeSlotEntity.assertWithResponse(model: SyncTimeSlot) {
     assertThat(prisonTimeSlotId).isEqualTo(model.prisonTimeSlotId)
     assertThat(prisonCode).isEqualTo(model.prisonCode)
