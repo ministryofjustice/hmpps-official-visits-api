@@ -151,9 +151,13 @@ class OfficialVisitEntity(
       "Only scheduled or expired visits can be completed."
     }
 
+    val timestamp = now()
+
     visitorAttendance.forEach { attendance ->
       officialVisitors.single { ov -> ov.officialVisitorId == attendance.key }.apply {
         this.attendanceCode = attendance.value
+        this.updatedBy = completedBy.username
+        this.updatedTime = timestamp
       }
     }
 
@@ -161,7 +165,7 @@ class OfficialVisitEntity(
     this.completionCode = completionCode
     this.searchTypeCode = prisonerSearchType
     this.updatedBy = completedBy.username
-    this.updatedTime = now()
+    this.updatedTime = timestamp
   }
 
   companion object {
