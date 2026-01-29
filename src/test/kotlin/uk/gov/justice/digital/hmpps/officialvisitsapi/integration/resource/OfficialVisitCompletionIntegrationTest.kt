@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PrisonerInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
@@ -153,6 +154,17 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
         officialVisitorId = completedVisit.officialVisitors.single().officialVisitorId,
+        officialVisitId = completedVisit.officialVisitId,
+      ),
+    )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.PRISONER_UPDATED,
+      additionalInfo = PrisonerInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        prisonerVisitedId = prisonerVisitedRepository.findByOfficialVisitId(completedVisit.officialVisitId)!!.prisonerVisitedId,
         officialVisitId = completedVisit.officialVisitId,
       ),
     )
