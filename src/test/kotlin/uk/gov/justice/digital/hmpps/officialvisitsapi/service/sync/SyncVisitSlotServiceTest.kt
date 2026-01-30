@@ -143,7 +143,7 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should delete visit slot when there is no visits exists`() {
+  fun `should delete visit slot when there is no associated visits exists`() {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity(1L)))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity(1L)))
 
@@ -162,7 +162,7 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should fail to  delete visit slot when there is official visit slot exists`() {
+  fun `should fail to  delete visit slot when there is associated official visit exists`() {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity(1L)))
     whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
     val exception = assertThrows<EntityInUseException> {
@@ -176,7 +176,7 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should fail to  delete invalid visit slot`() {
+  fun `should fail to visit slot delete if it does not exist`() {
     val expectedException = EntityNotFoundException("Prison visit slot with ID 99 was not found")
 
     whenever(prisonVisitSlotRepository.findById(99L)).thenThrow(expectedException)

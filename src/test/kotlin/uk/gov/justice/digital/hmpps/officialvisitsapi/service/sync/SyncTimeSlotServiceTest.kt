@@ -116,7 +116,7 @@ class SyncTimeSlotServiceTest {
   }
 
   @Test
-  fun `should fail to delete time slot which does not exist`() {
+  fun `should fail to delete time slot which does not exist and throw EntityNotFoundException`() {
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.empty())
     assertThrows<EntityNotFoundException> {
       syncTimeSlotService.deletePrisonTimeSlot(1L)
@@ -126,7 +126,7 @@ class SyncTimeSlotServiceTest {
   }
 
   @Test
-  fun `should delete time slot when there is no visit slot exists`() {
+  fun `should delete time slot when there is no associated visit slot exists`() {
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity(1L)))
     whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotId(1L)).thenReturn(false)
     syncTimeSlotService.deletePrisonTimeSlot(1L)
@@ -140,13 +140,13 @@ class SyncTimeSlotServiceTest {
   }
 
   @Test
-  fun `should fail to  delete time slot when there is  visit slot exists`() {
+  fun `should fail to delete time slot when there is associated visit slot exists`() {
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity(1L)))
     whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotId(1L)).thenReturn(true)
     val exception = assertThrows<EntityInUseException> {
       syncTimeSlotService.deletePrisonTimeSlot(1L)
     }
-    val expectedException = EntityInUseException("The prison time slot has visit slot associated with it and cannot be deleted.")
+    val expectedException = EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
     assertThat(exception.message).isEqualTo(expectedException.message)
     verify(prisonTimeSlotRepository).findById(1L)
     verify(prisonVisitSlotRepository).existsByPrisonTimeSlotId(1L)
@@ -154,7 +154,7 @@ class SyncTimeSlotServiceTest {
   }
 
   @Test
-  fun `should fail to  delete invalid time slot`() {
+  fun `should fail to delete time slot if it does not exist`() {
     val expectedException = EntityNotFoundException("Prison time slot with ID 99 was not found")
 
     whenever(prisonTimeSlotRepository.findById(99L)).thenThrow(expectedException)

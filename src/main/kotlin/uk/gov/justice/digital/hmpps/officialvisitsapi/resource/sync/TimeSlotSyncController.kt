@@ -134,22 +134,22 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/time-slot/{timeSlotId}")
   @Operation(
     summary = "Delete prison time slot",
-    description = "Delete the time slot. Only allowed if there are no  visits slots associated with it.",
+    description = "Delete the time slot. Only allowed if there are no visits slots associated with it.",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
-        description = "Deleted the time slot  successfully",
+        description = "Deleted the time slot successfully",
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Could not find the time visit slot ",
+        description = "Could not find the time slot ",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "409",
-        description = "The prison time slot has visit slot associated with it and cannot be deleted.",
+        description = "The prison time slot has one or more visit slots associated with it and cannot be deleted.",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

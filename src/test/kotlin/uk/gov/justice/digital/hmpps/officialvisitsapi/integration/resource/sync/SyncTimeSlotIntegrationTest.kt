@@ -218,7 +218,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-      .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has visit slot associated with it and cannot be deleted.")
+      .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
   }
 
   private fun createTimeSlotRequest() = SyncCreateTimeSlotRequest(

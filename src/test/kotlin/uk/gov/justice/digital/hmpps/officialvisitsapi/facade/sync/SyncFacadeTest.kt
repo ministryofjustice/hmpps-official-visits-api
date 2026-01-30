@@ -194,7 +194,7 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should throw exception when trying to delete visits slot if associated timeslot exists`() {
+    fun `should not delete visit slot if associated official visit exits and throw EntityInUseException `() {
       val expectedException = EntityInUseException("The prison visit slot has visits associated with it and cannot be deleted.")
 
       whenever(syncVisitSlotService.deletePrisonVisitSlot(prisonVisitSlotId = 1L)).thenThrow(expectedException)
@@ -208,8 +208,8 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should throw exception when trying to delete time slot if associated visits exists`() {
-      val expectedException = EntityInUseException("The prison time slot has visit slot associated with it and cannot be deleted.")
+    fun `should fail to  delete time slot when there is associated visit slot exists and throw EntityInUseException exception`() {
+      val expectedException = EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
 
       whenever(syncTimeSlotService.deletePrisonTimeSlot(prisonTimeSlotId = 1L)).thenThrow(expectedException)
 
@@ -222,7 +222,7 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should should delete visits slots if there are no associated visits`() {
+    fun `should  delete visits slots if there are no associated visits`() {
       val response = syncVisitResponse(prisonVisitSlotId = 1L)
       whenever(syncVisitSlotService.deletePrisonVisitSlot(prisonVisitSlotId = 1L)).thenReturn(response)
       facade.deleteVisitSlot(1L)
@@ -237,7 +237,7 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should should delete time slots if there are no associated visits`() {
+    fun `should delete time slots if there are no associated visit slots`() {
       val response = syncResponse(prisonTimeSlotId = 1L)
       whenever(syncTimeSlotService.deletePrisonTimeSlot(prisonTimeSlotId = 1L)).thenReturn(response)
       facade.deleteTimeSlot(1L)
