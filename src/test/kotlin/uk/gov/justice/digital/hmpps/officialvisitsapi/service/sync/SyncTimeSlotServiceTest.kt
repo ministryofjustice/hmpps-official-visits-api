@@ -13,12 +13,14 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -26,15 +28,15 @@ import java.util.Optional
 
 class SyncTimeSlotServiceTest {
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository = mock()
-
-  private val syncTimeSlotService = SyncTimeSlotService(prisonTimeSlotRepository)
+  private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
+  private val syncTimeSlotService = SyncTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
 
   @AfterEach
   fun afterEach() {
-    reset(prisonTimeSlotRepository)
+    reset(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
 
   @Test
@@ -110,6 +112,57 @@ class SyncTimeSlotServiceTest {
       syncTimeSlotService.updatePrisonTimeSlot(1L, updateRequest)
     }
     verify(prisonTimeSlotRepository).findById(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
+  @Test
+  fun `should fail to delete time slot which does not exist and throw EntityNotFoundException`() {
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.empty())
+    assertThrows<EntityNotFoundException> {
+      syncTimeSlotService.deletePrisonTimeSlot(1L)
+    }
+    verify(prisonTimeSlotRepository).findById(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
+  @Test
+  fun `should delete time slot when there is no associated visit slot exists`() {
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity(1L)))
+    whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotId(1L)).thenReturn(false)
+    syncTimeSlotService.deletePrisonTimeSlot(1L)
+    verify(prisonTimeSlotRepository).deleteById(1L)
+
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).existsByPrisonTimeSlotId(1L)
+    verify(prisonTimeSlotRepository).deleteById(1L)
+
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
+  @Test
+  fun `should fail to delete time slot when there is associated visit slot exists`() {
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity(1L)))
+    whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotId(1L)).thenReturn(true)
+    val exception = assertThrows<EntityInUseException> {
+      syncTimeSlotService.deletePrisonTimeSlot(1L)
+    }
+    val expectedException = EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
+    assertThat(exception.message).isEqualTo(expectedException.message)
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).existsByPrisonTimeSlotId(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
+  @Test
+  fun `should fail to delete time slot if it does not exist`() {
+    val expectedException = EntityNotFoundException("Prison time slot with ID 99 was not found")
+
+    whenever(prisonTimeSlotRepository.findById(99L)).thenThrow(expectedException)
+    val exception = assertThrows<EntityNotFoundException> {
+      syncTimeSlotService.deletePrisonTimeSlot(99L)
+    }
+    assertThat(exception.message).isEqualTo(expectedException.message)
+    verify(prisonTimeSlotRepository).findById(99L)
     verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 

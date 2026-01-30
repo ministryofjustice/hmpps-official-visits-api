@@ -14,6 +14,7 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
@@ -187,6 +188,64 @@ class SyncFacadeTest {
         outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
         prisonCode = "MDI",
         identifier = result.visitSlotId,
+        source = Source.NOMIS,
+        user = PrisonUser("MDI", "Test", "Test User"),
+      )
+    }
+
+    @Test
+    fun `should not delete visit slot if associated official visit exits and throw EntityInUseException `() {
+      val expectedException = EntityInUseException("The prison visit slot has visits associated with it and cannot be deleted.")
+
+      whenever(syncVisitSlotService.deletePrisonVisitSlot(prisonVisitSlotId = 1L)).thenThrow(expectedException)
+
+      val exception = assertThrows<EntityInUseException> {
+        facade.deleteVisitSlot(1L)
+      }
+      assertThat(exception.message).isEqualTo(expectedException.message)
+      verify(syncVisitSlotService).deletePrisonVisitSlot(1)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `should fail to  delete time slot when there is associated visit slot exists and throw EntityInUseException exception`() {
+      val expectedException = EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
+
+      whenever(syncTimeSlotService.deletePrisonTimeSlot(prisonTimeSlotId = 1L)).thenThrow(expectedException)
+
+      val exception = assertThrows<EntityInUseException> {
+        facade.deleteTimeSlot(1L)
+      }
+      assertThat(exception.message).isEqualTo(expectedException.message)
+      verify(syncTimeSlotService).deletePrisonTimeSlot(1)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `should  delete visits slots if there are no associated visits`() {
+      val response = syncVisitResponse(prisonVisitSlotId = 1L)
+      whenever(syncVisitSlotService.deletePrisonVisitSlot(prisonVisitSlotId = 1L)).thenReturn(response)
+      facade.deleteVisitSlot(1L)
+      verify(syncVisitSlotService).deletePrisonVisitSlot(1)
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
+        prisonCode = "MDI",
+        identifier = response.visitSlotId,
+        source = Source.NOMIS,
+        user = PrisonUser("MDI", "Test", "Test User"),
+      )
+    }
+
+    @Test
+    fun `should delete time slots if there are no associated visit slots`() {
+      val response = syncResponse(prisonTimeSlotId = 1L)
+      whenever(syncTimeSlotService.deletePrisonTimeSlot(prisonTimeSlotId = 1L)).thenReturn(response)
+      facade.deleteTimeSlot(1L)
+      verify(syncTimeSlotService).deletePrisonTimeSlot(1)
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
+        prisonCode = "MDI",
+        identifier = response.prisonTimeSlotId,
         source = Source.NOMIS,
         user = PrisonUser("MDI", "Test", "Test User"),
       )

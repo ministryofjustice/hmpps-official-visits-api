@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
@@ -163,6 +164,61 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
       ),
     )
+  }
+
+  @Test
+  fun `should delete time slot if there are no associated visit slots`() {
+    val timeSLot = webTestClient.createTimeSlot()
+    webTestClient.delete()
+      .uri("/sync/time-slot/{prisonTimeSlotId}", timeSLot.prisonTimeSlotId)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .exchange()
+      .expectStatus()
+      .is2xxSuccessful
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncTimeSlot>()
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.TIME_SLOT_CREATED,
+      additionalInfo = TimeSlotInfo(
+        timeSlotId = timeSLot.prisonTimeSlotId,
+        source = Source.NOMIS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+      ),
+    )
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.TIME_SLOT_DELETED,
+      additionalInfo = TimeSlotInfo(
+        timeSlotId = timeSLot.prisonTimeSlotId,
+        source = Source.NOMIS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+      ),
+    )
+  }
+
+  @Test
+  fun `should fail to delete time slot which does not exist`() {
+    webTestClient.delete()
+      .uri("/sync/time-slot/{prisonTimeSlotId}", 99)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .exchange()
+      .expectStatus()
+      .is4xxClientError
+      .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
+  }
+
+  @Test
+  fun `should fail to delete time slot which has associated visit slots`() {
+    webTestClient.delete()
+      .uri("/sync/time-slot/{prisonTimeSlotId}", 1L)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+      .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
   }
 
   private fun createTimeSlotRequest() = SyncCreateTimeSlotRequest(
