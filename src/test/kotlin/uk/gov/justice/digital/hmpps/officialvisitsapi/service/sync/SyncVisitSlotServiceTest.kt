@@ -176,7 +176,7 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should fail to visit slot delete if it does not exist`() {
+  fun `should fail to delete visit slot if it does not exist`() {
     val expectedException = EntityNotFoundException("Prison visit slot with ID 99 was not found")
 
     whenever(prisonVisitSlotRepository.findById(99L)).thenThrow(expectedException)

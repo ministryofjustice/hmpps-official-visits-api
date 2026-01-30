@@ -134,7 +134,7 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/time-slot/{timeSlotId}")
   @Operation(
     summary = "Delete prison time slot",
-    description = "Delete the time slot. Only allowed if there are no visits slots associated with it.",
+    description = "Delete the time slot. Only allowed if there are no visit slots associated with it.",
   )
   @ApiResponses(
     value = [
