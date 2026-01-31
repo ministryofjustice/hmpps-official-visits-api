@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
@@ -12,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
@@ -71,13 +73,24 @@ class OfficialVisitsApiExceptionHandler {
       ),
     ).also { log.debug("Forbidden (403) returned: {}", e.message) }
 
+  @ExceptionHandler(EntityInUseException::class)
+  fun handleEntityInUseException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(CONFLICT)
+    .body(
+      ErrorResponse(
+        status = CONFLICT,
+        userMessage = "${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.error("Entity in use exception", e) }
+
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(INTERNAL_SERVER_ERROR)
     .body(
       ErrorResponse(
         status = INTERNAL_SERVER_ERROR,
-        userMessage = "Unexpected error: ${e.message}",
+        userMessage = "${e.message}",
         developerMessage = e.message,
       ),
     ).also { log.error("Unexpected exception", e) }

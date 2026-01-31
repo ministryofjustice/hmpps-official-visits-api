@@ -8,8 +8,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
@@ -127,4 +130,31 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
     @PathVariable prisonTimeSlotId: Long,
     @Valid @RequestBody request: SyncUpdateTimeSlotRequest,
   ) = syncFacade.updateTimeSlot(prisonTimeSlotId, request)
+
+  @DeleteMapping("/time-slot/{timeSlotId}")
+  @Operation(
+    summary = "Delete prison time slot",
+    description = "Delete the time slot. Only allowed if there are no visit slots associated with it.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "204",
+        description = "Deleted the time slot successfully",
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Could not find the time slot ",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "409",
+        description = "The prison time slot has one or more visit slots associated with it and cannot be deleted.",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  open fun syncDelete(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
 }
