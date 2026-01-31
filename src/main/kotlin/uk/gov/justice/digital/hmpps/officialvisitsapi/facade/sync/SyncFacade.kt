@@ -119,7 +119,7 @@ class SyncFacade(
 
   fun getOfficialVisitById(officialVisitId: Long) = syncOfficialVisitService.getOfficialVisitById(officialVisitId)
 
-  // TODO: Add facade methods and event generation for the other sync requests here
+  // --------------- Other methods add here ----------------
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()
 

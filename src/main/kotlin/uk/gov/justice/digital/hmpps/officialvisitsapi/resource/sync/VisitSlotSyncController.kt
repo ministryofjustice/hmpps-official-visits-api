@@ -34,7 +34,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
 
   @GetMapping(path = ["/visit-slot/{prisonVisitSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
-    summary = "Returns the data for a prison visit slot by ID",
+    summary = "Return a prison visit slot by ID",
     description = """
       Requires role: OFFICIAL_VISITS_MIGRATION.
       Used to get the details for one prison visit slot.
@@ -74,7 +74,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
     value = [
       ApiResponse(
         responseCode = "201",
-        description = "Successfully created a prison visit slot for official visits",
+        description = "Successfully created a prison visit slot",
         content = [
           Content(
             mediaType = "application/json",
@@ -84,7 +84,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
       ),
       ApiResponse(
         responseCode = "400",
-        description = "The request was invalid or had missing fields",
+        description = "The request was invalid",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -97,7 +97,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
   @PutMapping(path = ["/visit-slot/{prisonVisitSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
   @Operation(
-    summary = "Updates a prison visit slot with new or altered details",
+    summary = "Updates a prison visit slot",
     description = """
       Requires role: OFFICIAL_VISITS_MIGRATION.
       Used to update a a prison visit slot for official visits.
@@ -121,7 +121,7 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Invalid data supplied in the request",
+        description = "The request was invalid",
       ),
     ],
   )
@@ -134,23 +134,23 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
 
   @DeleteMapping("/visit-slot/{visitSlotId}")
   @Operation(
-    summary = "Delete prison Visit slot",
-    description = "Delete the visit slot. Only allowed if there are no official visits associated with it.",
+    summary = "Delete a prison visit slot",
+    description = "Delete a visit slot if there are no official visits associated with it",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
-        description = "Deleted the visit slot successfully",
+        description = "Deleted the visit slot",
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Could not find the prison visit slot ",
+        description = "The visit slot was not found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "409",
-        description = "The prison visit slot has visits associated with it and cannot be deleted.",
+        description = "The prison visit slot had visits associated so can not be deleted",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
