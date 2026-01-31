@@ -43,7 +43,7 @@ class OfficialVisitFacade(
         prisonCode = prisonCode,
         identifier = creationResult.officialVisitId,
         secondIdentifier = visitorId,
-        // TODO: Should have the contactId for the visitor set here but accepts nulls for now
+        // TODO: Should have the contactId for the visitor set here, for use in the PersonReference, but accepts nulls for now
         user = user,
       )
     }
@@ -73,7 +73,7 @@ class OfficialVisitFacade(
           prisonCode = prisonCode,
           identifier = officialVisitId,
           secondIdentifier = attended.officialVisitorId,
-          // TODO: Should have the contactId for the visitor here, but accepts nulls for now
+          // TODO: Should have the contactId for the visitor here, for the PersonReference, but accepts nulls for now
           user = user,
         )
       }
@@ -85,7 +85,7 @@ class OfficialVisitFacade(
         prisonCode = prisonCode,
         identifier = officialVisitId,
         secondIdentifier = prisonerVisitedRepository.findByOfficialVisitId(officialVisitId)!!.prisonerVisitedId,
-        // TODO: Should have the noms = prisonerNumber here, but accepts nulls for now
+        // TODO: Should have the noms = prisonerNumber here, for the PersonReference, but accepts nulls for now
         user = user,
       )
     }

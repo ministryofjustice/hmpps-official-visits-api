@@ -18,11 +18,11 @@ data class SyncOfficialVisitor(
   val lastName: String? = null,
 
   @Schema(description = "The relationship type for this visitor (OFFICIAL or SOCIAL)", example = "OFFICIAL")
-  val relationshipType: RelationshipType?,
+  val relationshipType: RelationshipType? = RelationshipType.OFFICIAL,
 
   @Schema(description = "The visitor relationship code", example = "POM")
-  val relationshipCode: String?,
+  val relationshipCode: String? = null,
 
   @Schema(description = "The visitor attendance code, either ABSENT, ATTENDED or null if not recorded.", example = "ABSENT")
-  val attendanceCode: AttendanceType?,
+  val attendanceCode: AttendanceType? = null,
 )
