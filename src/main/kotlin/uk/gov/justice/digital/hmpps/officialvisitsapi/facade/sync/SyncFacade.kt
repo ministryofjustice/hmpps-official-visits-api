@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 
@@ -35,9 +36,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlot
 class SyncFacade(
   val syncTimeSlotService: SyncTimeSlotService,
   val syncVisitSlotService: SyncVisitSlotService,
+  val syncOfficialVisitService: SyncOfficialVisitService,
   val outboundEventsService: OutboundEventsService,
   val userService: UserService,
 ) {
+
+  // ---------------  Time slots ----------------------
+
   fun getTimeSlotById(prisonTimeSlotId: Long) = syncTimeSlotService.getPrisonTimeSlotById(prisonTimeSlotId)
 
   fun createTimeSlot(request: SyncCreateTimeSlotRequest) = syncTimeSlotService.createPrisonTimeSlot(request)
@@ -61,6 +66,8 @@ class SyncFacade(
         user = userOrDefault(request.updatedBy),
       )
     }
+
+  // ---------------  Visit slots ----------------------
 
   fun getVisitSlotById(prisonVisitSlotId: Long) = syncVisitSlotService.getPrisonVisitSlotById(prisonVisitSlotId)
 
@@ -86,7 +93,9 @@ class SyncFacade(
       )
     }
 
-  // TODO: Add facade methods and event generation for the other sync requests here
+  // ---------------  Official visits ----------------------
+
+  fun getOfficialVisitById(officialVisitId: Long) = syncOfficialVisitService.getOfficialVisitById(officialVisitId)
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()
 

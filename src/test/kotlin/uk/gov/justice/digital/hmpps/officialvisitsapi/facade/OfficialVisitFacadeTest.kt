@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -33,10 +34,17 @@ class OfficialVisitFacadeTest {
   private val officialVisitCompletionService: OfficialVisitCompletionService = mock()
   private val user = MOORLAND_PRISON_USER
 
-  private val facade = OfficialVisitFacade(officialVisitCreateService, officialVisitsRetrievalService, officialVisitSearchService, officialVisitCompletionService, prisonerVisitedRepository, outboundEventsService)
+  private val facade = OfficialVisitFacade(
+    officialVisitCreateService,
+    officialVisitsRetrievalService,
+    officialVisitSearchService,
+    officialVisitCompletionService,
+    prisonerVisitedRepository,
+    outboundEventsService,
+  )
 
   @Test
-  fun `should delegate to service on create and emit a visit created event`() {
+  fun `should delegate to service on create and emit visit and visitor created events`() {
     val request = CreateOfficialVisitRequest(
       prisonVisitSlotId = 1L,
       prisonerNumber = "A1234AA",
@@ -57,20 +65,29 @@ class OfficialVisitFacadeTest {
     )
 
     whenever(officialVisitCreateService.create(MOORLAND, request, user)).thenReturn(
-      CreateOfficialVisitResponse(officialVisitId = 1L),
+      CreateOfficialVisitResponse(officialVisitId = 1L, officialVisitorIds = listOf(2L)),
     )
 
     facade.createOfficialVisit(MOORLAND, request, MOORLAND_PRISON_USER)
 
     verify(officialVisitCreateService).create(MOORLAND, request, MOORLAND_PRISON_USER)
 
-    verify(outboundEventsService).send(
+    // An event for the visit created
+    verify(outboundEventsService, atLeastOnce()).send(
       outboundEvent = OutboundEvent.VISIT_CREATED,
-      MOORLAND,
-      identifier = 1L,
-      secondIdentifier = 0L,
+      prisonCode = MOORLAND,
+      identifier = 1L, // visitId
       noms = "A1234AA",
-      contactId = null,
+      source = Source.DPS,
+      user = user,
+    )
+
+    // An event for the visitor created
+    verify(outboundEventsService, atLeastOnce()).send(
+      outboundEvent = OutboundEvent.VISITOR_CREATED,
+      prisonCode = MOORLAND,
+      identifier = 1L, // visitId
+      secondIdentifier = 2L, // visitorId
       source = Source.DPS,
       user = user,
     )

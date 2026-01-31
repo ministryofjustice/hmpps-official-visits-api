@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 import java.time.LocalDate
@@ -36,10 +37,17 @@ import java.util.UUID
 class SyncFacadeTest {
   private val syncTimeSlotService: SyncTimeSlotService = mock()
   private val syncVisitSlotService: SyncVisitSlotService = mock()
+  private val syncOfficialVisitService: SyncOfficialVisitService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
   private val userService: UserService = mock()
 
-  private val facade = SyncFacade(syncTimeSlotService, syncVisitSlotService, outboundEventsService, userService)
+  private val facade = SyncFacade(
+    syncTimeSlotService,
+    syncVisitSlotService,
+    syncOfficialVisitService,
+    outboundEventsService,
+    userService,
+  )
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
