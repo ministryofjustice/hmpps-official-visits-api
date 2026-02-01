@@ -10,27 +10,18 @@ import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.util.Optional
-import java.util.UUID
-import kotlin.Long
 
 class SyncOfficialVisitServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
 
   private val syncOfficialVisitService = SyncOfficialVisitService(officialVisitRepository, prisonerVisitedRepository)
-
-  private val createdTime = LocalDateTime.now().minusDays(2)
 
   @AfterEach
   fun afterEach() {
@@ -39,8 +30,8 @@ class SyncOfficialVisitServiceTest {
 
   @Test
   fun `should return an official visit by ID for sync`() {
-    val visitEntity = visitEntity(1L)
-    val prisonerVisitedEntity = prisonerVisitedEntity(visitEntity, 2L)
+    val visitEntity = createAVisitEntity(1L)
+    val prisonerVisitedEntity = createAPrisonerVisitedEntity(visitEntity, 2L)
 
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
     whenever(prisonerVisitedRepository.findByOfficialVisit(visitEntity)).thenReturn(prisonerVisitedEntity)
@@ -65,7 +56,7 @@ class SyncOfficialVisitServiceTest {
 
   @Test
   fun `should fail to get an official visit by ID if the prisoner visited does not exist`() {
-    val visitEntity = visitEntity(1L)
+    val visitEntity = createAVisitEntity(1L)
 
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
     whenever(prisonerVisitedRepository.findByOfficialVisit(visitEntity)).thenReturn(null)
@@ -93,38 +84,21 @@ class SyncOfficialVisitServiceTest {
     assertThat(updatedTime).isEqualTo(model.updatedTime)
     assertThat(updatedBy).isEqualTo(model.updatedBy)
 
-    // Check visitor information
+    assertThat(this.officialVisitors().size).isEqualTo(2)
+
+    var index = 0
+
+    this.officialVisitors().forEach { visitor ->
+      assertThat(visitor.contactId).isEqualTo(model.visitors[index].contactId)
+      assertThat(visitor.firstName).isEqualTo(model.visitors[index].firstName)
+      assertThat(visitor.lastName).isEqualTo(model.visitors[index].lastName)
+      assertThat(visitor.relationshipTypeCode).isEqualTo(model.visitors[index].relationshipType)
+      assertThat(visitor.relationshipCode).isEqualTo(model.visitors[index].relationshipCode)
+      assertThat(visitor.attendanceCode).isEqualTo(model.visitors[index].attendanceCode)
+      assertThat(visitor.leadVisitor).isEqualTo(model.visitors[index].leadVisitor)
+      assertThat(visitor.assistedVisit).isEqualTo(model.visitors[index].assistedVisit)
+      assertThat(visitor.visitorNotes).isEqualTo(model.visitors[index].visitorNotes)
+      index++
+    }
   }
-
-  private fun visitEntity(officialVisitId: Long = 1L) = OfficialVisitEntity(
-    officialVisitId = officialVisitId,
-    prisonCode = "MDI",
-    prisonerNumber = "A1234AA",
-    visitTypeCode = VisitType.IN_PERSON,
-    visitDate = LocalDate.now().plusDays(1),
-    startTime = LocalTime.of(10, 0),
-    endTime = LocalTime.of(11, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    createdBy = "Test",
-    createdTime = createdTime,
-    prisonVisitSlot = PrisonVisitSlotEntity(
-      prisonVisitSlotId = 1L,
-      prisonTimeSlotId = 1L,
-      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-      maxAdults = 3,
-      maxGroups = 3,
-      maxVideoSessions = 3,
-      createdBy = "Test",
-      createdTime = createdTime,
-    ),
-  )
-
-  private fun prisonerVisitedEntity(officialVisitEntity: OfficialVisitEntity, prisonerVisitedId: Long) = PrisonerVisitedEntity(
-    prisonerVisitedId = prisonerVisitedId,
-    officialVisit = officialVisitEntity,
-    prisonerNumber = officialVisitEntity.prisonerNumber,
-    attendanceCode = AttendanceType.ATTENDED,
-    createdBy = "Test",
-    createdTime = createdTime,
-  )
 }
