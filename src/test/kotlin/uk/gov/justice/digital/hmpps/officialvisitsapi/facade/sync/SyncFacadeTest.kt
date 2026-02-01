@@ -375,6 +375,10 @@ class SyncFacadeTest {
           lastName = "Testing",
           relationshipType = RelationshipType.OFFICIAL,
           relationshipCode = "POM",
+          leadVisitor = false,
+          assistedVisit = false,
+          createdBy = "Test",
+          createdTime = createdTime,
         ),
       ),
     )

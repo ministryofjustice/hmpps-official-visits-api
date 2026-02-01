@@ -11,6 +11,13 @@ fun OfficialVisitorEntity.toSyncModel(): SyncOfficialVisitor = SyncOfficialVisit
   relationshipType = this.relationshipTypeCode,
   relationshipCode = this.relationshipCode,
   attendanceCode = this.attendanceCode,
+  leadVisitor = this.leadVisitor,
+  assistedVisit = this.assistedVisit,
+  visitorNotes = this.visitorNotes,
+  createdBy = this.createdBy,
+  createdTime = this.createdTime,
+  updatedBy = this.updatedBy,
+  updatedTime = this.updatedTime,
 )
 
 fun List<OfficialVisitorEntity>.toSyncModel(): List<SyncOfficialVisitor> = map { it.toSyncModel() }
