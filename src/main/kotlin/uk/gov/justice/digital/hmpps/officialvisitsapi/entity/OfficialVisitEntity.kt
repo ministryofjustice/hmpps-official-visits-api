@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.requireNot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -151,6 +152,10 @@ class OfficialVisitEntity(
       "Only scheduled or expired visits can be completed."
     }
 
+    requireNot(completionCode.isCancellation) {
+      "$completionCode is not a valid completion code"
+    }
+
     val timestamp = now()
 
     visitorAttendance.forEach { attendance ->
@@ -165,6 +170,38 @@ class OfficialVisitEntity(
     this.completionCode = completionCode
     this.searchTypeCode = prisonerSearchType
     this.updatedBy = completedBy.username
+    this.updatedTime = timestamp
+  }
+
+  fun cancel(
+    cancellationCode: VisitCompletionType,
+    cancellationNotes: String?,
+    cancelledBy: User,
+  ) = apply {
+    // TODO - populate the cancellation reason when the field has been added to the entitiy.
+
+    require(this.visitStatusCode in listOf(VisitStatusType.SCHEDULED, VisitStatusType.EXPIRED)) {
+      "Only scheduled or expired visits can be cancelled."
+    }
+
+    require(cancellationCode.isCancellation) {
+      "$cancellationCode is not a valid cancellation code"
+    }
+
+    val timestamp = now()
+
+    officialVisitors.forEach { visitor ->
+      visitor.apply {
+        attendanceCode = AttendanceType.ABSENT
+        updatedBy = cancelledBy.username
+        updatedTime = timestamp
+      }
+    }
+
+    this.visitStatusCode = VisitStatusType.CANCELLED
+    this.completionCode = cancellationCode
+
+    this.updatedBy = cancelledBy.username
     this.updatedTime = timestamp
   }
 

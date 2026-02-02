@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.E
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.OfficialVisitFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
@@ -137,7 +138,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     size: Int = 20,
   ): PagedModel<OfficialVisitSummarySearchResponse> = facade.searchForOfficialVisitSummaries(prisonCode, request, page, size)
 
-  @Operation(summary = "Endpoint to complete an official visit.")
+  @Operation(summary = "Completes an official visit.")
   @ApiResponses(
     value = [
       ApiResponse(
@@ -174,5 +175,44 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     httpRequest: HttpServletRequest,
   ) {
     facade.completeOfficialVisit(prisonCode, officialVisitId, request, httpRequest.getLocalRequestContext().user)
+  }
+
+  @Operation(summary = "Cancels an official visit.")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit cancelled successfully",
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No official visit found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PostMapping(path = ["/prison/{prisonCode}/id/{officialVisitId}/cancel"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun cancel(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @PathVariable("officialVisitId") @Parameter(
+      name = "officialVisitId",
+      description = "The official visit identifier",
+      example = "123",
+      required = true,
+    ) officialVisitId: Long,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request with the official visit cancellation details", required = true)
+    request: OfficialVisitCancellationRequest,
+    httpRequest: HttpServletRequest,
+  ) {
+    facade.cancelOfficialVisit(prisonCode, officialVisitId, request, httpRequest.getLocalRequestContext().user)
   }
 }
