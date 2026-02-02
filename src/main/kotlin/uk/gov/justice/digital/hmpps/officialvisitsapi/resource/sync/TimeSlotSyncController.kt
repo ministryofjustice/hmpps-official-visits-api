@@ -83,7 +83,7 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
       ),
       ApiResponse(
         responseCode = "400",
-        description = "The request was invalid or had missing fields",
+        description = "The request was invalid",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -96,7 +96,7 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
   @PutMapping(path = ["/time-slot/{prisonTimeSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
   @Operation(
-    summary = "Updates a prison time slot with new or altered details",
+    summary = "Updates a prison time slot",
     description = """
       Requires role: OFFICIAL_VISITS_MIGRATION.
       Used to update a a prison time slot for official visits.
@@ -120,7 +120,7 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Invalid data supplied in the request",
+        description = "The request was invalid",
       ),
     ],
   )
@@ -133,23 +133,23 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
 
   @DeleteMapping("/time-slot/{timeSlotId}")
   @Operation(
-    summary = "Delete prison time slot",
-    description = "Delete the time slot. Only allowed if there are no visit slots associated with it.",
+    summary = "Delete a prison time slot",
+    description = "Delete a time slot if there are no visit slots associated with it.",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
-        description = "Deleted the time slot successfully",
+        description = "Deleted the time slot",
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Could not find the time slot ",
+        description = "The time slot was not found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "409",
-        description = "The prison time slot has one or more visit slots associated with it and cannot be deleted.",
+        description = "The prison time slot had visit slots associated with it and cannot be deleted.",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

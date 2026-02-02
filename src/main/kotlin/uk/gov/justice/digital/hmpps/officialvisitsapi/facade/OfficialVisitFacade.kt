@@ -36,6 +36,17 @@ class OfficialVisitFacade(
       noms = request.prisonerNumber!!,
       user = user,
     )
+
+    creationResult.officialVisitorIds.forEach { visitorId ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISITOR_CREATED,
+        prisonCode = prisonCode,
+        identifier = creationResult.officialVisitId,
+        secondIdentifier = visitorId,
+        // TODO: Should have the contactId for the visitor set here, for use in the PersonReference, but accepts nulls for now
+        user = user,
+      )
+    }
   }
 
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, officialVisitId: Long): OfficialVisitDetails = officialVisitsRetrievalService.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
@@ -60,17 +71,21 @@ class OfficialVisitFacade(
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = prisonCode,
-          identifier = attended.officialVisitorId,
-          secondIdentifier = officialVisitId,
+          identifier = officialVisitId,
+          secondIdentifier = attended.officialVisitorId,
+          // TODO: Should have the contactId for the visitor here, for the PersonReference, but accepts nulls for now
           user = user,
         )
       }
 
+      // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
+
       outboundEventsService.send(
         outboundEvent = OutboundEvent.PRISONER_UPDATED,
         prisonCode = prisonCode,
-        identifier = prisonerVisitedRepository.findByOfficialVisitId(officialVisitId)!!.prisonerVisitedId,
-        secondIdentifier = officialVisitId,
+        identifier = officialVisitId,
+        secondIdentifier = prisonerVisitedRepository.findByOfficialVisitId(officialVisitId)!!.prisonerVisitedId,
+        // TODO: Should have the noms = prisonerNumber here, for the PersonReference, but accepts nulls for now
         user = user,
       )
     }
