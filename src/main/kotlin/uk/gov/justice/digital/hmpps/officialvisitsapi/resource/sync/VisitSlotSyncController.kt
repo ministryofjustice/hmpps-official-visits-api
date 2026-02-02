@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
@@ -133,24 +135,13 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/visit-slot/{visitSlotId}")
   @Operation(
     summary = "Delete a prison visit slot",
-    description = "Delete a visit slot if there are no official visits associated with it",
+    description = "Delete a visit slot if there are no official visits associated",
   )
   @ApiResponses(
     value = [
       ApiResponse(
-        responseCode = "200",
-        description = "Successfully deleted the visit slot",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = SyncVisitSlot::class),
-          ),
-        ],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "The visit slot was not found",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+        responseCode = "204",
+        description = "Deleted the visit slot",
       ),
       ApiResponse(
         responseCode = "409",
@@ -160,5 +151,6 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  @ResponseStatus(value = HttpStatus.NO_CONTENT)
   open fun syncDeleteVisitSlot(@PathVariable visitSlotId: Long) = syncFacade.deleteVisitSlot(visitSlotId)
 }

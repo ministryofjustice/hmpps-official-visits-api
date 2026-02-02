@@ -161,6 +161,7 @@ class SyncFacadeTest {
       val exception = assertThrows<EntityInUseException> {
         facade.deleteTimeSlot(1L)
       }
+
       assertThat(exception.message).isEqualTo(expectedException.message)
       verify(syncTimeSlotService).deletePrisonTimeSlot(1)
       verifyNoInteractions(outboundEventsService)
@@ -169,9 +170,13 @@ class SyncFacadeTest {
     @Test
     fun `should delete time slots if there are no associated visit slots`() {
       val response = syncTimeSlotResponse(prisonTimeSlotId = 1L)
+
       whenever(syncTimeSlotService.deletePrisonTimeSlot(prisonTimeSlotId = 1L)).thenReturn(response)
+
       facade.deleteTimeSlot(1L)
+
       verify(syncTimeSlotService).deletePrisonTimeSlot(1)
+
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
         prisonCode = MOORLAND,
@@ -301,8 +306,11 @@ class SyncFacadeTest {
     @Test
     fun `should delete a visit slot`() {
       val response = syncVisitSlotResponse(prisonVisitSlotId = 1L)
+
       whenever(syncVisitSlotService.deletePrisonVisitSlot(prisonVisitSlotId = 1L)).thenReturn(response)
+
       facade.deleteVisitSlot(1L)
+
       verify(syncVisitSlotService).deletePrisonVisitSlot(1)
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,

@@ -28,6 +28,6 @@ fun SyncCreateTimeSlotRequest.toEntity() = PrisonTimeSlotEntity(
   endTime = this.endTime,
   effectiveDate = this.effectiveDate,
   expiryDate = this.expiryDate,
-  createdBy = createdBy,
-  createdTime = createdTime,
+  createdBy = this.createdBy,
+  createdTime = this.createdTime,
 )
