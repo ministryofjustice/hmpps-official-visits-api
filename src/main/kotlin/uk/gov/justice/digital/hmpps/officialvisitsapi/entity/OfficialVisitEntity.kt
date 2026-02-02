@@ -122,7 +122,7 @@ class OfficialVisitEntity(
       lastName = lastName,
       leadVisitor = leadVisitor,
       assistedVisit = assistedVisit,
-      visitorNotes = assistedNotes.takeIf { assistedVisit }, // assisted notes are only applicable when assistedVisit == true
+      visitorNotes = assistedNotes,
       createdBy = createdBy.username,
       createdTime = createdTime,
     ).also(officialVisitors::add)
@@ -180,8 +180,8 @@ class OfficialVisitEntity(
         prisonCode = request.prisonCode!!,
         prisonerNumber = request.prisonerNumber!!,
         currentTerm = request.currentTerm!!,
-        staffNotes = request.commentText,
-        prisonerNotes = null, // Never supplied
+        staffNotes = null, // Never supplied
+        prisonerNotes = request.commentText,
         visitorConcernNotes = request.visitorConcernText,
         overrideBanTime = null, // Never supplied
         overrideBanBy = request.overrideBanStaffUsername,

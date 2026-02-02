@@ -178,6 +178,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
       .is2xxSuccessful
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<SyncTimeSlot>()
+
     stubEvents.assertHasEvent(
       event = OutboundEvent.TIME_SLOT_CREATED,
       additionalInfo = TimeSlotInfo(
@@ -187,6 +188,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
       ),
     )
+
     stubEvents.assertHasEvent(
       event = OutboundEvent.TIME_SLOT_DELETED,
       additionalInfo = TimeSlotInfo(

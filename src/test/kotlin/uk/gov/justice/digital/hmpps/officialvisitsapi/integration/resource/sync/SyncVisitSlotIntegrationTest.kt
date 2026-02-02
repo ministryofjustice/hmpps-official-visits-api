@@ -80,8 +80,11 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should create a new prison visit slot`() {
     val syncVisitSlot = webTestClient.createVisitSlot()
+
     syncVisitSlot.assertWithCreateRequest(createVisitSlotRequest())
+
     assertThat(syncVisitSlot.visitSlotId).isGreaterThan(0)
+
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_SLOT_CREATED,
       additionalInfo = VisitSlotInfo(

@@ -15,6 +15,10 @@ import org.mockito.kotlin.reset
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
@@ -27,7 +31,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
@@ -35,7 +38,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.So
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
@@ -60,7 +62,7 @@ class SyncFacadeTest {
 
   @BeforeEach
   fun beforeEach() {
-    whenever(userService.getUser("Test")).thenReturn(PrisonUser("MDI", "Test", "Test User"))
+    whenever(userService.getUser(MOORLAND_PRISON_USER.username)).thenReturn(MOORLAND_PRISON_USER)
     whenever(
       outboundEventsService.send(
         outboundEvent = any(),
@@ -99,7 +101,7 @@ class SyncFacadeTest {
         prisonCode = result.prisonCode,
         identifier = result.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = PrisonUser("MDI", "Test", "Test User"),
+        user = MOORLAND_PRISON_USER,
       )
     }
 
@@ -145,7 +147,7 @@ class SyncFacadeTest {
         prisonCode = result.prisonCode,
         identifier = result.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = PrisonUser("MDI", "Test", "Test User"),
+        user = MOORLAND_PRISON_USER,
       )
     }
 
@@ -172,46 +174,46 @@ class SyncFacadeTest {
       verify(syncTimeSlotService).deletePrisonTimeSlot(1)
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
-        prisonCode = "MDI",
+        prisonCode = MOORLAND,
         identifier = response.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = PrisonUser("MDI", "Test", "Test User"),
+        user = MOORLAND_PRISON_USER,
       )
     }
 
     private fun createTimeSlotRequest() = SyncCreateTimeSlotRequest(
-      prisonCode = "MDI",
+      prisonCode = MOORLAND,
       dayCode = DayType.MON,
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
-      effectiveDate = LocalDate.now().plusDays(1),
-      expiryDate = LocalDate.now().plusDays(365),
-      createdBy = "Test",
+      effectiveDate = tomorrow(),
+      expiryDate = today().plusYears(1),
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = createdTime,
     )
 
     private fun updateTimeSlotRequest() = SyncUpdateTimeSlotRequest(
-      prisonCode = "MDI",
+      prisonCode = MOORLAND,
       dayCode = DayType.MON,
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
-      effectiveDate = LocalDate.now().plusDays(1),
-      expiryDate = LocalDate.now().plusDays(365),
-      updatedBy = "Test",
+      effectiveDate = tomorrow(),
+      expiryDate = today().plusYears(1),
+      updatedBy = MOORLAND_PRISON_USER.username,
       updatedTime = updatedTime,
     )
 
     private fun syncTimeSlotResponse(prisonTimeSlotId: Long) = SyncTimeSlot(
       prisonTimeSlotId = prisonTimeSlotId,
-      prisonCode = "MDI",
+      prisonCode = MOORLAND,
       dayCode = DayType.MON,
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
-      effectiveDate = LocalDate.now().plusDays(1),
-      expiryDate = LocalDate.now().plusDays(365),
-      createdBy = "Test",
+      effectiveDate = tomorrow(),
+      expiryDate = today().plusYears(1),
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = createdTime,
-      updatedBy = "Test",
+      updatedBy = MOORLAND_PRISON_USER.username,
       updatedTime = updatedTime,
     )
   }
@@ -232,10 +234,10 @@ class SyncFacadeTest {
 
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,
-        prisonCode = "MDI",
+        prisonCode = MOORLAND,
         identifier = result.visitSlotId,
         source = Source.NOMIS,
-        user = PrisonUser("MDI", "Test", "Test User"),
+        user = MOORLAND_PRISON_USER,
       )
     }
 
@@ -274,10 +276,10 @@ class SyncFacadeTest {
 
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISIT_SLOT_UPDATED,
-        prisonCode = "MDI",
+        prisonCode = MOORLAND,
         identifier = result.visitSlotId,
         source = Source.NOMIS,
-        user = PrisonUser("MDI", "Test", "Test User"),
+        user = MOORLAND_PRISON_USER,
       )
     }
 
@@ -304,10 +306,10 @@ class SyncFacadeTest {
       verify(syncVisitSlotService).deletePrisonVisitSlot(1)
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
-        prisonCode = "MDI",
+        prisonCode = MOORLAND,
         identifier = response.visitSlotId,
         source = Source.NOMIS,
-        user = PrisonUser("MDI", "Test", "Test User"),
+        user = MOORLAND_PRISON_USER,
       )
     }
 
@@ -315,13 +317,13 @@ class SyncFacadeTest {
       prisonTimeSlotId = 1L,
       dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
       maxAdults = 10,
-      createdBy = "Test",
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = createdTime,
     )
 
     private fun updateVisitSlotRequest() = SyncUpdateVisitSlotRequest(
       dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-      updatedBy = "Test",
+      updatedBy = MOORLAND_PRISON_USER.username,
       maxAdults = 15,
       updatedTime = updatedTime,
     )
@@ -331,11 +333,11 @@ class SyncFacadeTest {
       prisonTimeSlotId = 1L,
       dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
       maxAdults = 10,
-      createdBy = "Test",
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = createdTime,
-      updatedBy = "Test",
+      updatedBy = MOORLAND_PRISON_USER.username,
       updatedTime = updatedTime,
-      prisonCode = "MDI",
+      prisonCode = MOORLAND,
     )
   }
 
@@ -354,18 +356,18 @@ class SyncFacadeTest {
 
     private fun syncOfficialVisitResponse(officialVisitId: Long) = SyncOfficialVisit(
       officialVisitId = officialVisitId,
-      visitDate = LocalDate.now().plusDays(1),
+      visitDate = tomorrow(),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       prisonVisitSlotId = 1L,
       dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-      prisonCode = "MDI",
+      prisonCode = MOORLAND,
       prisonerNumber = "A1234AA",
       statusCode = VisitStatusType.SCHEDULED,
       visitType = VisitType.IN_PERSON,
-      createdBy = "Test",
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = createdTime,
-      updatedBy = "Test",
+      updatedBy = MOORLAND_PRISON_USER.username,
       updatedTime = updatedTime,
       visitors = listOf(
         SyncOfficialVisitor(
@@ -377,7 +379,7 @@ class SyncFacadeTest {
           relationshipCode = "POM",
           leadVisitor = false,
           assistedVisit = false,
-          createdBy = "Test",
+          createdBy = MOORLAND_PRISON_USER.username,
           createdTime = createdTime,
         ),
       ),

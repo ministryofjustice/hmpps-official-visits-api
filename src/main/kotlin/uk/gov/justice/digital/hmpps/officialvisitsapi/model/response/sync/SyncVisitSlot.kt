@@ -24,15 +24,15 @@ data class SyncVisitSlot(
   @Schema(description = "Maximum groups allowed in the visit slot")
   val maxGroups: Int? = null,
 
-  @Schema(description = "User who created the entry", example = "admin", required = true)
+  @Schema(description = "Username who created the visit slot", example = "admin")
   val createdBy: String,
 
-  @Schema(description = "The timestamp of when this slot was created", example = "2024-01-01T00:00:00Z")
+  @Schema(description = "The timestamp of when this visit slot was created", example = "2024-01-01T00:00:00Z")
   val createdTime: LocalDateTime,
 
-  @Schema(description = "User who Updated the entry", example = "admin", required = true)
+  @Schema(description = "Username who last updated the visit slot", example = "admin")
   val updatedBy: String? = null,
 
-  @Schema(description = "The timestamp of when this slot was Updated", example = "2024-01-01T00:00:00Z")
+  @Schema(description = "The timestamp of when this visit slot was last updated", example = "2024-01-01T00:00:00Z")
   val updatedTime: LocalDateTime? = null,
 )
