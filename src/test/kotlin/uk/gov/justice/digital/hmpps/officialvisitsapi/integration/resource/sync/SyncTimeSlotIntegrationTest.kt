@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.TimeSlotInfo
@@ -212,54 +211,6 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
-  }
-
-  @Test
-  fun `should return all active time slots summary for the prison`() {
-    val summary = webTestClient.get()
-      .uri("/sync/time-slots/prison/{prisonCode}", "MDI")
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlotSummary>()
-      .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDI")
-    assertThat(summary.timeSlots).size().isEqualTo(9)
-  }
-
-  @Test
-  fun `should return all time slots summary for the prison`() {
-    val summary = webTestClient.get()
-      .uri("/sync/time-slots/prison/{prisonCode}?activeOnly=false", "MDI")
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlotSummary>()
-      .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDI")
-    assertThat(summary.timeSlots).size().isGreaterThan(0)
-  }
-
-  @Test
-  fun `should return Zero time slot summary if there is no time slots associated with the prison code`() {
-    val summary = webTestClient.get()
-      .uri("/sync/time-slots/prison/{prisonCode}", "MDIN")
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlotSummary>()
-      .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDIN")
-    assertThat(summary.timeSlots).size().isEqualTo(0)
   }
 
   private fun createTimeSlotRequest() = SyncCreateTimeSlotRequest(

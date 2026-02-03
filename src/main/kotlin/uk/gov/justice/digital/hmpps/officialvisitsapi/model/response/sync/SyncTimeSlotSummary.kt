@@ -8,5 +8,5 @@ data class SyncTimeSlotSummary(
   val prisonCode: String,
 
   @Schema(description = "List of all time slots and associated visit lots for the prison")
-  val timeSlots: List<SyncTimeSlotAndVisitSlots>,
+  val timeSlots: List<SyncTimeSlotSummaryItem>,
 )

@@ -5,7 +5,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
@@ -118,8 +117,6 @@ class SyncFacade(
         )
       }
   }
-
-  fun summerizeTimeSlotsAndVisitSlots(prisonCode: String, activeOnly: Boolean): SyncTimeSlotSummary = syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot(prisonCode, activeOnly)
 
   // ---------------  Official visits ----------------------
 

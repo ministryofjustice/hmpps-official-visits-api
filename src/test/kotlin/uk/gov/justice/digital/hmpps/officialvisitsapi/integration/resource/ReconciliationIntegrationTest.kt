@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -19,6 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -192,6 +194,38 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
     val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number)
     officialVisits.size isEqualTo 2
+  }
+
+  @Test
+  fun `should return all time slots summary for the prison`() {
+    val summary = webTestClient.get()
+      .uri("/reconcile/time-slots/prison/{prisonCode}?activeOnly=false", "MDI")
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncTimeSlotSummary>()
+      .returnResult().responseBody!!
+    assertThat(summary.prisonCode).isEqualTo("MDI")
+    assertThat(summary.timeSlots).size().isGreaterThan(0)
+  }
+
+  @Test
+  fun `should return zero time slot summary if there is no time slots associated with the prison code`() {
+    val summary = webTestClient.get()
+      .uri("/reconcile/time-slots/prison/{prisonCode}", "MDIN")
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncTimeSlotSummary>()
+      .returnResult().responseBody!!
+    assertThat(summary.prisonCode).isEqualTo("MDIN")
+    assertThat(summary.timeSlots).size().isEqualTo(0)
   }
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
