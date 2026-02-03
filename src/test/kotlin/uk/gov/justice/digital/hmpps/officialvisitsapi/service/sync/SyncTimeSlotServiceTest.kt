@@ -13,6 +13,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
@@ -25,6 +26,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
+import java.util.UUID
 
 class SyncTimeSlotServiceTest {
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository = mock()
@@ -166,6 +168,42 @@ class SyncTimeSlotServiceTest {
     verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 
+  @Test
+  fun `should return summary of active time slots and associated visit slots for the prison code`() {
+    val request = prisonVisitSlotEntity(1L)
+    val timeSlotEntity = prisonTimeSlotEntity(1L)
+    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode("MDI")).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(request))
+    syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", true)
+
+    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode("MDI")
+    verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
+    verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should return summary of all time slots and associated visit slots for the prison code`() {
+    val request = prisonVisitSlotEntity(1L)
+    val timeSlotEntity = prisonTimeSlotEntity(1L)
+    whenever(prisonTimeSlotRepository.findAllByPrisonCode("MDI")).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(request))
+    syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", false)
+
+    verify(prisonTimeSlotRepository).findAllByPrisonCode("MDI")
+    verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
+    verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should return empty summary if there are no timeslots associated with the prison code`() {
+    val timeSlotEntity = prisonTimeSlotEntity(1L)
+    whenever(prisonTimeSlotRepository.findAllByPrisonCode("MDIN")).thenReturn(listOf(timeSlotEntity))
+    syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDIN", true)
+
+    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode("MDIN")
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
   private fun PrisonTimeSlotEntity.assertWithResponse(model: SyncTimeSlot) {
     assertThat(prisonTimeSlotId).isEqualTo(model.prisonTimeSlotId)
     assertThat(prisonCode).isEqualTo(model.prisonCode)
@@ -238,5 +276,14 @@ class SyncTimeSlotServiceTest {
     createdTime = createdTime,
     updatedBy = this.updatedBy,
     updatedTime = this.updatedTime,
+  )
+
+  private fun prisonVisitSlotEntity(prisonVisitSlotId: Long = 1L) = PrisonVisitSlotEntity(
+    prisonVisitSlotId = prisonVisitSlotId,
+    prisonTimeSlotId = 1L,
+    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    maxAdults = 10,
+    createdBy = "Test",
+    createdTime = createdTime,
   )
 }

@@ -9,6 +9,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotAndVisitSlots
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 
@@ -49,6 +52,30 @@ class SyncTimeSlotService(val prisonTimeSlotRepository: PrisonTimeSlotRepository
     }
     prisonTimeSlotRepository.deleteById(prisonTimeSlotId)
     return prisonTimeSlotEntity.toSyncModel()
+  }
+
+  fun getAllPrisonTimeSlotsAndAssociatedVisitSlot(prisonCode: String, activeOnly: Boolean): SyncTimeSlotSummary = if (activeOnly) {
+    val timeslots = prisonTimeSlotRepository.findAllActiveByPrisonCode(prisonCode).toSyncModel()
+    summerizeTimeSlotsAndVisitSlots(timeslots, prisonCode)
+  } else {
+    val timeslots = prisonTimeSlotRepository.findAllByPrisonCode(prisonCode).toSyncModel()
+    summerizeTimeSlotsAndVisitSlots(timeslots, prisonCode)
+  }
+
+  private fun summerizeTimeSlotsAndVisitSlots(syncTimeSlots: List<SyncTimeSlot>, prisonCode: String): SyncTimeSlotSummary {
+    val timeSlotIds = syncTimeSlots.map { it.prisonTimeSlotId }
+    val visitSlots = prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(timeSlotIds)!!.toSyncModel(prisonCode)
+    val visitSlotByTimeSlotIds: Map<Long, List<SyncVisitSlot>> = visitSlots.groupBy { it.prisonTimeSlotId }
+    val timeSlotAndVisitSlots: List<SyncTimeSlotAndVisitSlots> = syncTimeSlots.map { ts ->
+      SyncTimeSlotAndVisitSlots(
+        timeSlot = ts,
+        visitSlots = visitSlotByTimeSlotIds[ts.prisonTimeSlotId].orEmpty(),
+      )
+    }
+    return SyncTimeSlotSummary(
+      prisonCode = prisonCode,
+      timeSlots = timeSlotAndVisitSlots,
+    )
   }
 
   private fun noVisitSlotsExistFor(prisonTimeSlotId: Long): Boolean = !prisonVisitSlotRepository.existsByPrisonTimeSlotId(prisonTimeSlotId)

@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
@@ -179,6 +180,20 @@ class SyncFacadeTest {
       )
     }
 
+    @Test
+    fun `should return summary of all time slots and associated visit slots for the prison code`() {
+      whenever(syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", false)).thenReturn(syncTimeSlotSummary())
+      facade.summerizeTimeSlotsAndVisitSlots(prisonCode = "MDI", false)
+      verify(syncTimeSlotService).getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", false)
+    }
+
+    @Test
+    fun `should return summary of all active time slots and associated visit slots for the prison code`() {
+      whenever(syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", true)).thenReturn(syncTimeSlotSummary())
+      facade.summerizeTimeSlotsAndVisitSlots(prisonCode = "MDI", true)
+      verify(syncTimeSlotService).getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", true)
+    }
+
     private fun createTimeSlotRequest() = SyncCreateTimeSlotRequest(
       prisonCode = "MDI",
       dayCode = DayType.MON,
@@ -213,6 +228,11 @@ class SyncFacadeTest {
       createdTime = createdTime,
       updatedBy = "Test",
       updatedTime = updatedTime,
+    )
+
+    private fun syncTimeSlotSummary() = SyncTimeSlotSummary(
+      prisonCode = "MDI",
+      timeSlots = emptyList(),
     )
   }
 

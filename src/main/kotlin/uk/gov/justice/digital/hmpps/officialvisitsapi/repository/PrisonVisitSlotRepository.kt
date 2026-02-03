@@ -8,4 +8,5 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEnti
 interface PrisonVisitSlotRepository : JpaRepository<PrisonVisitSlotEntity, Long> {
 
   fun existsByPrisonTimeSlotId(prisonTimeSlotId: Long): Boolean
+  fun findByPrisonTimeSlotIdIn(prisonTimeSlotId: List<Long>): List<PrisonVisitSlotEntity>?
 }

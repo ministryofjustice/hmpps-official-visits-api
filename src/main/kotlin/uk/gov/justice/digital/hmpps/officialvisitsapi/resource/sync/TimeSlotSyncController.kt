@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -25,6 +26,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Synchronisation")
@@ -157,4 +160,35 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   open fun syncDelete(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
+
+  @GetMapping(path = ["/time-slots/prison/{prisonCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @Operation(
+    summary = "Return Summary of prison time slot and associated visit slots based on the prison code",
+    description = """
+      Requires role: OFFICIAL_VISITS_MIGRATION.
+      Used to get the summary of prison time slot and associated visit slots based on the prison code.
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "",
+        content = [
+          Content(mediaType = "application/json", schema = Schema(implementation = SyncVisitSlot::class)),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No time slots associated with prison code found",
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  fun summerizeTimeSlotsAndVisitSlots(
+    @Parameter(description = "The prison code", required = true)
+    @PathVariable prisonCode: String,
+    @RequestParam(name = "activeOnly", required = false, defaultValue = "true")
+    activeOnly: Boolean = true,
+  ): SyncTimeSlotSummary = syncFacade.summerizeTimeSlotsAndVisitSlots(prisonCode, activeOnly)
 }

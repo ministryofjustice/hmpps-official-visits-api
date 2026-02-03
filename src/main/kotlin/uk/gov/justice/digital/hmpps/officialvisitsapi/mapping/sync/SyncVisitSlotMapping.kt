@@ -26,3 +26,5 @@ fun SyncCreateVisitSlotRequest.toEntity() = PrisonVisitSlotEntity(
   createdTime = this.createdTime,
   createdBy = this.createdBy,
 )
+
+fun List<PrisonVisitSlotEntity>.toSyncModel(prisonCode: String): List<SyncVisitSlot> = this.map { it.toSyncModel(prisonCode) }
