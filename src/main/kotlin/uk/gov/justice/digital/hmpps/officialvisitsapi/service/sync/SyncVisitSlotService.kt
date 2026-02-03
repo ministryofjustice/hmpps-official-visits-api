@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
@@ -49,17 +50,24 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
     return prisonVisitSlotEntity.toSyncModel(timeSlotEntity.prisonCode)
   }
 
-  fun deletePrisonVisitSlot(prisonVisitSlotId: Long): SyncVisitSlot {
-    val prisonVisitSlotEntity = prisonVisitSlotRepository.findById(prisonVisitSlotId)
-      .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
-    require(noVisitsExitsFor(prisonVisitSlotEntity.prisonVisitSlotId)) {
-      throw EntityInUseException("The prison visit slot has visits associated with it and cannot be deleted.")
+  /**
+   * Idempotent delete.
+   * If the visit slot is not found it does nothing and silently succeeds.
+   * Otherwise, it checks for the presence of visits associated with this slot and if none are present performs the delete operation.
+   */
+  fun deletePrisonVisitSlot(prisonVisitSlotId: Long) = prisonVisitSlotRepository.findByIdOrNull(prisonVisitSlotId)
+    ?.let { visitSlot ->
+      require(noVisitsExitsFor(visitSlot.prisonVisitSlotId)) {
+        throw EntityInUseException("The prison visit slot has visits associated with it and cannot be deleted.")
+      }
+
+      val timeSlotEntity = prisonTimeSlotRepository.findById(visitSlot.prisonTimeSlotId)
+        .orElseThrow { EntityNotFoundException("Prison time slot with ID ${visitSlot.prisonTimeSlotId} was not found for visit slot") }
+
+      prisonVisitSlotRepository.deleteById(prisonVisitSlotId)
+
+      visitSlot.toSyncModel(timeSlotEntity.prisonCode)
     }
-    val timeSlotEntity = prisonTimeSlotRepository.findById(prisonVisitSlotEntity.prisonTimeSlotId)
-      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${prisonVisitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
-    prisonVisitSlotRepository.deleteById(prisonVisitSlotId)
-    return prisonVisitSlotEntity.toSyncModel(timeSlotEntity.prisonCode)
-  }
 
   private fun noVisitsExitsFor(prisonVisitSlotId: Long): Boolean = !officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(prisonVisitSlotId)
 }
