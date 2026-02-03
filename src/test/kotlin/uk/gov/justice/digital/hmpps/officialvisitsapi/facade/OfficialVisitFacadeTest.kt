@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -31,7 +30,6 @@ class OfficialVisitFacadeTest {
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService = mock()
   private val officialVisitSearchService: OfficialVisitSearchService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
-  private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val officialVisitCompletionService: OfficialVisitCompletionService = mock()
   private val officialVisitCancellationService: OfficialVisitCancellationService = mock()
   private val user = MOORLAND_PRISON_USER
@@ -42,7 +40,6 @@ class OfficialVisitFacadeTest {
     officialVisitSearchService,
     officialVisitCompletionService,
     officialVisitCancellationService,
-    prisonerVisitedRepository,
     outboundEventsService,
   )
 

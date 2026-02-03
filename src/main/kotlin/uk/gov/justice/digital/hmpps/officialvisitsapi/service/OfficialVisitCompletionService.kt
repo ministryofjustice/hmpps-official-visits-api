@@ -24,7 +24,7 @@ class OfficialVisitCompletionService(
     officialVisitId: Long,
     request: OfficialVisitCompletionRequest,
     user: User,
-  ) {
+  ): OfficialVisitCompletedDto {
     val officialVisit = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
     val prisonerVisited = prisonerVisitedRepository.findByOfficialVisit(officialVisit)
@@ -50,6 +50,20 @@ class OfficialVisitCompletionService(
       ),
     )
 
-    logger.info("Official visit with ID $officialVisitId completed.")
+    return OfficialVisitCompletedDto(
+      prisonCode = prisonCode,
+      officialVisitId = officialVisitId,
+      prisonerVisitedId = prisonerVisited.prisonerVisitedId,
+      officialVisitorIds = officialVisit.officialVisitors().map { it.officialVisitorId }.toSet(),
+    ).also {
+      logger.info("Official visit with ID $officialVisitId completed.")
+    }
   }
+
+  data class OfficialVisitCompletedDto(
+    val prisonCode: String,
+    val officialVisitId: Long,
+    val prisonerVisitedId: Long,
+    val officialVisitorIds: Set<Long>,
+  )
 }
