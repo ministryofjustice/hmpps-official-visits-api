@@ -27,6 +27,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PrisonerInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
@@ -122,6 +127,38 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
       updatedBy isEqualTo MOORLAND_PRISON_USER.username
       updatedTime isCloseTo now()
     }
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = cancelledVisit.officialVisitId,
+      ),
+    )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISITOR_UPDATED,
+      additionalInfo = VisitorInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitorId = cancelledVisit.officialVisitors.single().officialVisitorId,
+        officialVisitId = cancelledVisit.officialVisitId,
+      ),
+    )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.PRISONER_UPDATED,
+      additionalInfo = PrisonerInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        prisonerVisitedId = prisonerVisitedRepository.findByOfficialVisitId(cancelledVisit.officialVisitId)!!.prisonerVisitedId,
+        officialVisitId = cancelledVisit.officialVisitId,
+      ),
+    )
   }
 
   private fun WebTestClient.cancel(officialVisitId: Long, request: OfficialVisitCancellationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
