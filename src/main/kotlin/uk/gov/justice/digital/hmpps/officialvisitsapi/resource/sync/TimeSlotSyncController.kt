@@ -134,7 +134,10 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/time-slot/{timeSlotId}")
   @Operation(
     summary = "Delete a prison time slot",
-    description = "Delete a time slot if there are no visit slots associated with it.",
+    description = """
+      Delete a time slot if there are no visit slots associated with it.
+      This endpoint is idempotent so if the time slot does not exist it will silently succeed.
+      """,
   )
   @ApiResponses(
     value = [
