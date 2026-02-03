@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -24,9 +23,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquip
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -38,8 +35,6 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var prisonVisitSlotRepository: PrisonVisitSlotRepository
   private var savedPrisonVisitSlotId = 0L
 
   private val createdTime = LocalDateTime.now().minusDays(2)
@@ -201,54 +196,6 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody().jsonPath("$.userMessage").isEqualTo("The prison visit slot has visits associated with it and cannot be deleted.")
-  }
-
-  @Test
-  fun `should return all active time slots summary for the prison`() {
-    val summary = webTestClient.get()
-      .uri("/sync/time-slots/prison/{prisonCode}", "MDI")
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlotSummary>()
-      .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDI")
-    assertThat(summary.timeSlots).size().isEqualTo(9)
-  }
-
-  @Test
-  fun `should return all time slot summary for the prison`() {
-    val summary = webTestClient.get()
-      .uri("/sync/time-slots/prison/{prisonCode}?activeOnly=false", "MDI")
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlotSummary>()
-      .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDI")
-    assertThat(summary.timeSlots).size().isEqualTo(23)
-  }
-
-  @Test
-  fun `should return Zero time slot summary if there is no time slots associated with the prison code`() {
-    val summary = webTestClient.get()
-      .uri("/sync/time-slots/prison/{prisonCode}", "MDIN")
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlotSummary>()
-      .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDIN")
-    assertThat(summary.timeSlots).size().isEqualTo(0)
   }
 
   private fun SyncVisitSlot.assertWithCreateRequest(request: SyncCreateVisitSlotRequest) {
