@@ -215,7 +215,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should return all active time slots summary for the prison`() {
+  fun `should return all active time slot summary for the prison`() {
     val summary = webTestClient.get()
       .uri("/sync/time-slots/prison/{prisonCode}", "MDI")
       .accept(MediaType.APPLICATION_JSON)
