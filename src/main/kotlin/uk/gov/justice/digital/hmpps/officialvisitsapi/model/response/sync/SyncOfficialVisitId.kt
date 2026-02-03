@@ -4,6 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "Response object for sync reconciliation")
 data class SyncOfficialVisitId(
-  @Schema(description = "The ID for an Official visits", example = "111111")
+  @Schema(description = "The official visit ID", example = "111111")
   val officialVisitId: Long,
 )

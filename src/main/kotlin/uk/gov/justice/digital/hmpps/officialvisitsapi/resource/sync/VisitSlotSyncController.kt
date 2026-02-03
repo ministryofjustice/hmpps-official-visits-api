@@ -135,18 +135,16 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/visit-slot/{visitSlotId}")
   @Operation(
     summary = "Delete a prison visit slot",
-    description = "Delete a visit slot if there are no official visits associated with it",
+    description = """
+      Delete a visit slot if there are no official visits associated.
+      This endpoint is idempotent so if the visit slot does not exist it will silently succeed.
+      """,
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
         description = "Deleted the visit slot",
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "The visit slot was not found",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "409",
@@ -156,6 +154,6 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  open fun syncDelete(@PathVariable visitSlotId: Long) = syncFacade.deleteVisitSlot(visitSlotId)
+  @ResponseStatus(value = HttpStatus.NO_CONTENT)
+  open fun syncDeleteVisitSlot(@PathVariable visitSlotId: Long) = syncFacade.deleteVisitSlot(visitSlotId)
 }

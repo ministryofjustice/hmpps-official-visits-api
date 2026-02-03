@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.requireNot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -122,7 +123,7 @@ class OfficialVisitEntity(
       lastName = lastName,
       leadVisitor = leadVisitor,
       assistedVisit = assistedVisit,
-      visitorNotes = assistedNotes.takeIf { assistedVisit }, // assisted notes are only applicable when assistedVisit == true
+      visitorNotes = assistedNotes,
       createdBy = createdBy.username,
       createdTime = createdTime,
     ).also(officialVisitors::add)
@@ -151,6 +152,10 @@ class OfficialVisitEntity(
       "Only scheduled or expired visits can be completed."
     }
 
+    requireNot(completionCode.isCancellation) {
+      "$completionCode is not a valid completion code"
+    }
+
     val timestamp = now()
 
     visitorAttendance.forEach { attendance ->
@@ -168,6 +173,38 @@ class OfficialVisitEntity(
     this.updatedTime = timestamp
   }
 
+  fun cancel(
+    cancellationCode: VisitCompletionType,
+    cancellationNotes: String?,
+    cancelledBy: User,
+  ) = apply {
+    // TODO - populate the cancellation reason when the field has been added to the entitiy.
+
+    require(this.visitStatusCode in listOf(VisitStatusType.SCHEDULED, VisitStatusType.EXPIRED)) {
+      "Only scheduled or expired visits can be cancelled."
+    }
+
+    require(cancellationCode.isCancellation) {
+      "$cancellationCode is not a valid cancellation code"
+    }
+
+    val timestamp = now()
+
+    officialVisitors.forEach { visitor ->
+      visitor.apply {
+        attendanceCode = AttendanceType.ABSENT
+        updatedBy = cancelledBy.username
+        updatedTime = timestamp
+      }
+    }
+
+    this.visitStatusCode = VisitStatusType.CANCELLED
+    this.completionCode = cancellationCode
+
+    this.updatedBy = cancelledBy.username
+    this.updatedTime = timestamp
+  }
+
   companion object {
     fun migrated(visitSlot: PrisonVisitSlotEntity, request: MigrateVisitRequest) = run {
       OfficialVisitEntity(
@@ -180,8 +217,8 @@ class OfficialVisitEntity(
         prisonCode = request.prisonCode!!,
         prisonerNumber = request.prisonerNumber!!,
         currentTerm = request.currentTerm!!,
-        staffNotes = request.commentText,
-        prisonerNotes = null, // Never supplied
+        staffNotes = null, // Never supplied
+        prisonerNotes = request.commentText,
         visitorConcernNotes = request.visitorConcernText,
         overrideBanTime = null, // Never supplied
         overrideBanBy = request.overrideBanStaffUsername,

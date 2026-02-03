@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import java.time.LocalDateTime
 
 data class SyncOfficialVisitor(
-  @Schema(description = "The internal official visitor ID", example = "1")
+  @Schema(description = "The official visitor ID", example = "1")
   val officialVisitorId: Long,
 
   @Schema(description = "The contact ID of the person visiting", example = "123")

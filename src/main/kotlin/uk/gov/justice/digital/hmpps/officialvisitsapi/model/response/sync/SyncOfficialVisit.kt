@@ -28,7 +28,7 @@ data class SyncOfficialVisit(
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val endTime: LocalTime,
 
-  @Schema(description = "The visit slot identifier", example = "12345")
+  @Schema(description = "The visit slot ID", example = "12345")
   val prisonVisitSlotId: Long,
 
   @Schema(description = "The DPS location ID where the visit is taking place", example = "aaa-ddd-bbb-123455632323")
