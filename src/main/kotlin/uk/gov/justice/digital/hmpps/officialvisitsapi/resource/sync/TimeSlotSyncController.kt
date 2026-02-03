@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Synchronisation")
@@ -137,18 +136,16 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/time-slot/{timeSlotId}")
   @Operation(
     summary = "Delete a prison time slot",
-    description = "Delete a time slot if there are no visit slots associated with it.",
+    description = """
+      Delete a time slot if there are no visit slots associated with it.
+      This endpoint is idempotent so if the time slot does not exist it will silently succeed.
+      """,
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
         description = "Deleted the time slot",
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "The time slot was not found",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "409",
@@ -158,8 +155,8 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  open fun syncDelete(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
+  @ResponseStatus(value = HttpStatus.NO_CONTENT)
+  open fun syncDeleteTimeSlot(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
 
   @GetMapping(path = ["/time-slots/prison/{prisonCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
@@ -175,12 +172,8 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
         responseCode = "200",
         description = "",
         content = [
-          Content(mediaType = "application/json", schema = Schema(implementation = SyncVisitSlot::class)),
+          Content(mediaType = "application/json", schema = Schema(implementation = SyncTimeSlotSummary::class)),
         ],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "No time slots associated with prison code found",
       ),
     ],
   )

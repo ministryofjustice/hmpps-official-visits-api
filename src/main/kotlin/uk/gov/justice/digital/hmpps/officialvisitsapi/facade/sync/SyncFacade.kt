@@ -68,8 +68,8 @@ class SyncFacade(
       )
     }
 
-  fun deleteTimeSlot(timeSlotId: Long) = syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)
-    .also {
+  fun deleteTimeSlot(timeSlotId: Long) {
+    syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)?.also {
       outboundEventsService.send(
         outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
         prisonCode = it.prisonCode,
@@ -78,8 +78,7 @@ class SyncFacade(
         user = userOrDefault(it.createdBy),
       )
     }
-
-  fun summerizeTimeSlotsAndVisitSlots(prisonCode: String, activeOnly: Boolean): SyncTimeSlotSummary = syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot(prisonCode, activeOnly)
+  }
 
   // ---------------  Visit slots ----------------------
 
@@ -107,16 +106,20 @@ class SyncFacade(
       )
     }
 
-  fun deleteVisitSlot(visitSlotId: Long) = syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
-    .also {
-      outboundEventsService.send(
-        outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
-        prisonCode = it.prisonCode,
-        identifier = it.visitSlotId,
-        source = Source.NOMIS,
-        user = userOrDefault(it.createdBy),
-      )
-    }
+  fun deleteVisitSlot(visitSlotId: Long) {
+    syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
+      ?.also {
+        outboundEventsService.send(
+          outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
+          prisonCode = it.prisonCode,
+          identifier = it.visitSlotId,
+          source = Source.NOMIS,
+          user = userOrDefault(it.createdBy),
+        )
+      }
+  }
+
+  fun summerizeTimeSlotsAndVisitSlots(prisonCode: String, activeOnly: Boolean): SyncTimeSlotSummary = syncTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlot(prisonCode, activeOnly)
 
   // ---------------  Official visits ----------------------
 

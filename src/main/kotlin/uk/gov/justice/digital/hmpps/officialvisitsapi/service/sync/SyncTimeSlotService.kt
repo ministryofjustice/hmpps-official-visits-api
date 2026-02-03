@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
@@ -44,15 +45,18 @@ class SyncTimeSlotService(val prisonTimeSlotRepository: PrisonTimeSlotRepository
     return prisonTimeSlotRepository.saveAndFlush(changedTimeSlotEntity).toSyncModel()
   }
 
-  fun deletePrisonTimeSlot(prisonTimeSlotId: Long): SyncTimeSlot {
-    val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
-      .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
-    require(noVisitSlotsExistFor(prisonTimeSlotEntity.prisonTimeSlotId)) {
-      throw EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
-    }
-    prisonTimeSlotRepository.deleteById(prisonTimeSlotId)
-    return prisonTimeSlotEntity.toSyncModel()
-  }
+  /**
+   * Idempotent delete.
+   * If the time slot is not found it does nothing and silently succeeds.
+   * Otherwise, it checks for the presence of visit slots and if none are present performs the delete operation.
+   */
+  fun deletePrisonTimeSlot(prisonTimeSlotId: Long) = prisonTimeSlotRepository.findByIdOrNull(prisonTimeSlotId)
+    ?.also { timeSlot ->
+      require(noVisitSlotsExistFor(timeSlot.prisonTimeSlotId)) {
+        throw EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
+      }
+      prisonTimeSlotRepository.deleteById(prisonTimeSlotId)
+    }?.toSyncModel()
 
   fun getAllPrisonTimeSlotsAndAssociatedVisitSlot(prisonCode: String, activeOnly: Boolean): SyncTimeSlotSummary = if (activeOnly) {
     val timeslots = prisonTimeSlotRepository.findAllActiveByPrisonCode(prisonCode).toSyncModel()
