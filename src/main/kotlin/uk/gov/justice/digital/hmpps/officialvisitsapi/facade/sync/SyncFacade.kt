@@ -105,16 +105,18 @@ class SyncFacade(
       )
     }
 
-  fun deleteVisitSlot(visitSlotId: Long) = syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
-    ?.also {
-      outboundEventsService.send(
-        outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
-        prisonCode = it.prisonCode,
-        identifier = it.visitSlotId,
-        source = Source.NOMIS,
-        user = userOrDefault(it.createdBy),
-      )
-    }
+  fun deleteVisitSlot(visitSlotId: Long) {
+    syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
+      ?.also {
+        outboundEventsService.send(
+          outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
+          prisonCode = it.prisonCode,
+          identifier = it.visitSlotId,
+          source = Source.NOMIS,
+          user = userOrDefault(it.createdBy),
+        )
+      }
+  }
 
   // ---------------  Official visits ----------------------
 

@@ -135,7 +135,10 @@ class VisitSlotSyncController(val syncFacade: SyncFacade) {
   @DeleteMapping("/visit-slot/{visitSlotId}")
   @Operation(
     summary = "Delete a prison visit slot",
-    description = "Delete a visit slot if there are no official visits associated",
+    description = """
+      Delete a visit slot if there are no official visits associated.
+      This endpoint is idempotent so if the visit slot does not exist it will silently succeed.
+      """,
   )
   @ApiResponses(
     value = [
