@@ -167,30 +167,22 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should delete time slot if there are no associated visit slots`() {
-    val timeSLot = webTestClient.createTimeSlot()
+  fun `should delete a time slot if there are no associated visit slots`() {
+    val timeSlot = webTestClient.createTimeSlot()
+    stubEvents.reset()
+
     webTestClient.delete()
-      .uri("/sync/time-slot/{prisonTimeSlotId}", timeSLot.prisonTimeSlotId)
+      .uri("/sync/time-slot/{prisonTimeSlotId}", timeSlot.prisonTimeSlotId)
       .accept(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
       .exchange()
       .expectStatus()
       .is2xxSuccessful
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncTimeSlot>()
-    stubEvents.assertHasEvent(
-      event = OutboundEvent.TIME_SLOT_CREATED,
-      additionalInfo = TimeSlotInfo(
-        timeSlotId = timeSLot.prisonTimeSlotId,
-        source = Source.NOMIS,
-        username = MOORLAND_PRISON_USER.username,
-        prisonId = MOORLAND,
-      ),
-    )
+
     stubEvents.assertHasEvent(
       event = OutboundEvent.TIME_SLOT_DELETED,
       additionalInfo = TimeSlotInfo(
-        timeSlotId = timeSLot.prisonTimeSlotId,
+        timeSlotId = timeSlot.prisonTimeSlotId,
         source = Source.NOMIS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
@@ -199,15 +191,15 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should fail to delete time slot which does not exist`() {
+  fun `should silently succeed a delete when a time slot does not exist`() {
     webTestClient.delete()
       .uri("/sync/time-slot/{prisonTimeSlotId}", 99)
       .accept(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
       .exchange()
-      .expectStatus()
-      .is4xxClientError
-      .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
+      .expectStatus().isEqualTo(HttpStatus.NO_CONTENT)
+
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_DELETED)
   }
 
   @Test

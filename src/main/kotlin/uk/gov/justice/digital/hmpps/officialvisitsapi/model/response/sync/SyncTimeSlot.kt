@@ -9,7 +9,7 @@ import java.time.LocalTime
 
 @Schema(description = "Sync response for a prison time slot")
 data class SyncTimeSlot(
-  @Schema(description = "Time slot ID", example = "18767")
+  @Schema(description = "Prison time slot ID", example = "18767")
   val prisonTimeSlotId: Long,
 
   @Schema(description = "Prison code", example = "MDI")

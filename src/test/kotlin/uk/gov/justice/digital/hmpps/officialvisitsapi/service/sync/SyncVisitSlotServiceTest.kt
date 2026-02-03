@@ -133,11 +133,14 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should fail to delete visit slot which does not exist`() {
-    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.empty())
+  fun `should fail to delete a visit slot when its time slot does not exist`() {
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity(1L)))
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.empty())
+
     assertThrows<EntityNotFoundException> {
       syncVisitSlotService.deletePrisonVisitSlot(1L)
     }
+
     verify(prisonVisitSlotRepository).findById(1L)
     verifyNoMoreInteractions(prisonVisitSlotRepository)
   }
@@ -162,7 +165,7 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should fail to  delete visit slot when there is associated official visit exists`() {
+  fun `should fail to delete visit slot when there is associated official visit exists`() {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity(1L)))
     whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
     val exception = assertThrows<EntityInUseException> {
@@ -176,14 +179,13 @@ class SyncVisitSlotServiceTest {
   }
 
   @Test
-  fun `should fail to delete visit slot if it does not exist`() {
-    val expectedException = EntityNotFoundException("Prison visit slot with ID 99 was not found")
+  fun `should silently complete a delete when a visit slot does not exist`() {
+    whenever(prisonVisitSlotRepository.findById(99L)).thenReturn(Optional.empty())
 
-    whenever(prisonVisitSlotRepository.findById(99L)).thenThrow(expectedException)
-    val exception = assertThrows<EntityNotFoundException> {
-      syncVisitSlotService.deletePrisonVisitSlot(99L)
-    }
-    assertThat(exception.message).isEqualTo(expectedException.message)
+    val result = syncVisitSlotService.deletePrisonVisitSlot(99L)
+
+    assertThat(result).isNull()
+
     verify(prisonVisitSlotRepository).findById(99L)
     verifyNoMoreInteractions(prisonTimeSlotRepository)
   }

@@ -118,7 +118,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       lastName isEqualTo "Doe"
       leadVisitor isEqualTo true
       assistedVisit isEqualTo false
-      visitorNotes isEqualTo null
+      visitorNotes isEqualTo "visitor notes"
       visitorEquipment!!.description isEqualTo "Bringing secure laptop"
     }
 

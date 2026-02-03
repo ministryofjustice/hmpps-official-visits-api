@@ -67,8 +67,8 @@ class SyncFacade(
       )
     }
 
-  fun deleteTimeSlot(timeSlotId: Long) = syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)
-    .also {
+  fun deleteTimeSlot(timeSlotId: Long) {
+    syncTimeSlotService.deletePrisonTimeSlot(timeSlotId)?.also {
       outboundEventsService.send(
         outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
         prisonCode = it.prisonCode,
@@ -77,6 +77,7 @@ class SyncFacade(
         user = userOrDefault(it.createdBy),
       )
     }
+  }
 
   // ---------------  Visit slots ----------------------
 
@@ -105,7 +106,7 @@ class SyncFacade(
     }
 
   fun deleteVisitSlot(visitSlotId: Long) = syncVisitSlotService.deletePrisonVisitSlot(visitSlotId)
-    .also {
+    ?.also {
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
         prisonCode = it.prisonCode,

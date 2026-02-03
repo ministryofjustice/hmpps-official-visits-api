@@ -80,8 +80,11 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should create a new prison visit slot`() {
     val syncVisitSlot = webTestClient.createVisitSlot()
+
     syncVisitSlot.assertWithCreateRequest(createVisitSlotRequest())
+
     assertThat(syncVisitSlot.visitSlotId).isGreaterThan(0)
+
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_SLOT_CREATED,
       additionalInfo = VisitSlotInfo(
@@ -142,15 +145,15 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should fail to delete visit slot which does not exist`() {
+  fun `should silently succeed a delete for a visit slot which does not exist`() {
     webTestClient.delete()
       .uri("/sync/visit-slot/{prisonVisitSlotId}", 99)
       .accept(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
       .exchange()
-      .expectStatus()
-      .is4xxClientError
-      .expectBody().jsonPath("$.userMessage").isEqualTo("Prison visit slot with ID 99 was not found")
+      .expectStatus().isNoContent
+
+    stubEvents.assertHasNoEvents(OutboundEvent.VISIT_SLOT_DELETED)
   }
 
   @Test
@@ -164,8 +167,6 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .is2xxSuccessful
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<SyncVisitSlot>()
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_SLOT_CREATED,

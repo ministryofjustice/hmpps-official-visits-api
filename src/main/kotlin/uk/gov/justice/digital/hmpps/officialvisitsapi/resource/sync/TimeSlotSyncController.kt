@@ -143,11 +143,6 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
         description = "Deleted the time slot",
       ),
       ApiResponse(
-        responseCode = "404",
-        description = "The time slot was not found",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
         responseCode = "409",
         description = "The prison time slot had visit slots associated with it and cannot be deleted.",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
@@ -155,6 +150,6 @@ class TimeSlotSyncController(val syncFacade: SyncFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  open fun syncDelete(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
+  @ResponseStatus(value = HttpStatus.NO_CONTENT)
+  open fun syncDeleteTimeSlot(@PathVariable timeSlotId: Long) = syncFacade.deleteTimeSlot(timeSlotId)
 }
