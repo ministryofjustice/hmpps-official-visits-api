@@ -243,7 +243,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
       .expectBody<SyncTimeSlotSummary>()
       .returnResult().responseBody!!
     assertThat(summary.prisonCode).isEqualTo("MDI")
-    assertThat(summary.timeSlots).size().isEqualTo(17)
+    assertThat(summary.timeSlots).size().isEqualTo(16)
   }
 
   @Test
