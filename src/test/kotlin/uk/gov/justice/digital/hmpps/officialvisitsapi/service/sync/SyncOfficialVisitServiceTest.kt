@@ -14,18 +14,24 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.util.Optional
 
 class SyncOfficialVisitServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
+  private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
 
-  private val syncOfficialVisitService = SyncOfficialVisitService(officialVisitRepository, prisonerVisitedRepository)
+  private val syncOfficialVisitService = SyncOfficialVisitService(
+    officialVisitRepository,
+    prisonerVisitedRepository,
+    prisonVisitSlotRepository,
+  )
 
   @AfterEach
   fun afterEach() {
-    reset(officialVisitRepository, prisonerVisitedRepository)
+    reset(officialVisitRepository, prisonerVisitedRepository, prisonVisitSlotRepository)
   }
 
   @Test
@@ -67,6 +73,18 @@ class SyncOfficialVisitServiceTest {
 
     verify(officialVisitRepository).findById(1L)
     verify(prisonerVisitedRepository).findByOfficialVisit(visitEntity)
+  }
+
+  @Test
+  fun `should create an official visit`() {
+  }
+
+  @Test
+  fun `should fail to create an official visit - references a visit slot that does not exist`() {
+  }
+
+  @Test
+  fun `should fail to create an official visit - missing content for required fields`() {
   }
 
   private fun OfficialVisitEntity.assertWithResponse(model: SyncOfficialVisit) {
