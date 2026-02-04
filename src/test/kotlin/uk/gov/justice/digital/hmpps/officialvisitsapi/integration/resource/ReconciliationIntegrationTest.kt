@@ -199,7 +199,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should return all time slots summary for the prison`() {
     val summary = webTestClient.get()
-      .uri("/reconcile/time-slots/prison/{prisonCode}?activeOnly=false", "MDI")
+      .uri("/reconcile/time-slots/prison/{prisonCode}?activeOnly=false", MOORLAND_PRISONER.prison)
       .accept(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
       .exchange()
@@ -208,8 +208,36 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<SyncTimeSlotSummary>()
       .returnResult().responseBody!!
-    assertThat(summary.prisonCode).isEqualTo("MDI")
+    assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
     assertThat(summary.timeSlots).size().isGreaterThan(0)
+    assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
+    with(summary.timeSlots.first().visitSlots.first()) {
+      prisonCode isEqualTo MOORLAND_PRISONER.prison
+      prisonTimeSlotId isEqualTo summary.timeSlots.first().timeSlot.prisonTimeSlotId
+    }
+  }
+
+  @Test
+  fun `should return all active time slots summary for the prison`() {
+    val summary = webTestClient.get()
+      .uri("/reconcile/time-slots/prison/{prisonCode}?activeOnly=true", MOORLAND_PRISONER.prison)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncTimeSlotSummary>()
+      .returnResult().responseBody!!
+    assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
+    assertThat(summary.timeSlots).size().isGreaterThan(0)
+    assertThat(summary.timeSlots.first().timeSlot.effectiveDate).isBeforeOrEqualTo(today())
+    assertThat(summary.timeSlots.first().timeSlot.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
+
+    with(summary.timeSlots.first().visitSlots.first()) {
+      prisonCode isEqualTo MOORLAND_PRISONER.prison
+      prisonTimeSlotId isEqualTo summary.timeSlots.first().timeSlot.prisonTimeSlotId
+    }
   }
 
   @Test

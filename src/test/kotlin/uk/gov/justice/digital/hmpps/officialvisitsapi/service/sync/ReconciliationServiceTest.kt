@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
@@ -60,11 +61,11 @@ class ReconciliationServiceTest {
   fun `should return summary of active time slots and associated visit slots for the prison code`() {
     val request = prisonVisitSlotEntity(1L)
     val timeSlotEntity = prisonTimeSlotEntity(1L)
-    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode("MDI")).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(listOf(timeSlotEntity))
     whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(request))
-    val summary = reconciliationService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", true)
-    assertThat(summary).isEqualTo(SyncTimeSlotSummary(prisonCode = "MDI", listOf(SyncTimeSlotSummaryItem(timeSlotEntity.toSyncModel(), listOf(request.toSyncModel("MDI"))))))
-    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode("MDI")
+    val summary = reconciliationService.getAllPrisonTimeSlotsAndAssociatedVisitSlot(MOORLAND_PRISONER.prison, true)
+    assertThat(summary).isEqualTo(SyncTimeSlotSummary(prisonCode = MOORLAND_PRISONER.prison, listOf(SyncTimeSlotSummaryItem(timeSlotEntity.toSyncModel(), listOf(request.toSyncModel("MDI"))))))
+    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
@@ -73,11 +74,11 @@ class ReconciliationServiceTest {
   fun `should return summary of all time slots and associated visit slots for the prison code`() {
     val request = prisonVisitSlotEntity(1L)
     val timeSlotEntity = prisonTimeSlotEntity(1L)
-    whenever(prisonTimeSlotRepository.findAllByPrisonCode("MDI")).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonTimeSlotRepository.findAllByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(listOf(timeSlotEntity))
     whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(request))
-    val summary = reconciliationService.getAllPrisonTimeSlotsAndAssociatedVisitSlot("MDI", false)
-    assertThat(summary).isEqualTo(SyncTimeSlotSummary(prisonCode = "MDI", listOf(SyncTimeSlotSummaryItem(timeSlotEntity.toSyncModel(), listOf(request.toSyncModel("MDI"))))))
-    verify(prisonTimeSlotRepository).findAllByPrisonCode("MDI")
+    val summary = reconciliationService.getAllPrisonTimeSlotsAndAssociatedVisitSlot(MOORLAND_PRISONER.prison, false)
+    assertThat(summary).isEqualTo(SyncTimeSlotSummary(prisonCode = MOORLAND_PRISONER.prison, listOf(SyncTimeSlotSummaryItem(timeSlotEntity.toSyncModel(), listOf(request.toSyncModel("MDI"))))))
+    verify(prisonTimeSlotRepository).findAllByPrisonCode(MOORLAND_PRISONER.prison)
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
