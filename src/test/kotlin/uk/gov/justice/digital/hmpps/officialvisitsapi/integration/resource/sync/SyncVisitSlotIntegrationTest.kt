@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -25,7 +24,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -37,8 +35,6 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var prisonVisitSlotRepository: PrisonVisitSlotRepository
   private var savedPrisonVisitSlotId = 0L
 
   private val createdTime = LocalDateTime.now().minusDays(2)
