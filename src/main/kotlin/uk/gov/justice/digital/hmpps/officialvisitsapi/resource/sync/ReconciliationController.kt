@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitId
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.ReconciliationService
 import java.time.LocalDate
@@ -103,4 +104,31 @@ class ReconciliationController(private val reconciliationService: Reconciliation
     @RequestParam(name = "toDate", required = false)
     toDate: LocalDate?,
   ): List<SyncOfficialVisit> = reconciliationService.getAllPrisonerVisits(prisonerNumber, currentTermOnly, fromDate, toDate)
+
+  @GetMapping(path = ["/time-slots/prison/{prisonCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @Operation(
+    summary = "Return summary of prison time slot and associated visit slots based on the prison code",
+    description = """
+      Requires role: OFFICIAL_VISITS_MIGRATION.
+      Used to get the summary of prison time slot and associated visit slots based on the prison code.
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Summary of time slot and associated visit slots based on the prison code.",
+        content = [
+          Content(mediaType = "application/json", schema = Schema(implementation = SyncTimeSlotSummary::class)),
+        ],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  fun summariseTimeSlotsAndVisitSlots(
+    @Parameter(description = "The prison code", required = true)
+    @PathVariable prisonCode: String,
+    @RequestParam(name = "activeOnly", required = false, defaultValue = "true")
+    activeOnly: Boolean = true,
+  ): SyncTimeSlotSummary = reconciliationService.getAllPrisonTimeSlotsAndAssociatedVisitSlot(prisonCode, activeOnly)
 }
