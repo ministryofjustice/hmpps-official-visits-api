@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBodyList
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -140,7 +141,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBodyList(AvailableSlot::class.java)
+    .expectBodyList<AvailableSlot>()
     .returnResult().responseBody!!
 
   private fun fakeOfficialVisitLocations() = listOf(

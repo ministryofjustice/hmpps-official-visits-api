@@ -4,6 +4,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.springframework.data.annotation.Immutable
+import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
@@ -27,6 +28,10 @@ data class AvailableSlotEntity(
   val startTime: LocalTime,
 
   val endTime: LocalTime,
+
+  val effectiveDate: LocalDate,
+
+  val expiryDate: LocalDate? = null,
 
   val dpsLocationId: UUID,
 
