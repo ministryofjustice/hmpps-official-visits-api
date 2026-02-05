@@ -38,8 +38,11 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should perform basic GET with no visits`() {
+  fun `should perform basic GET with no visits and ignoring expired and inactive slots`() {
     val nextFriday = today.next(FRIDAY)
+
+    // An expired slot from 2023 exists in base data for Fridays at 9:10 until 10:10
+    // A future-dated slot for 2040 exists in base data for Fridays at 9:15 until 10:15
 
     val response = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
 
