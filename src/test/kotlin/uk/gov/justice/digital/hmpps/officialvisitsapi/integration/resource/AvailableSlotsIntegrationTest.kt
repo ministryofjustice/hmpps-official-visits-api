@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBodyList
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -37,8 +38,11 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should perform basic GET with no visits`() {
+  fun `should perform basic GET with no visits and ignoring expired and inactive slots`() {
     val nextFriday = today.next(FRIDAY)
+
+    // An expired slot from 2023 exists in base data for Fridays at 9:10 until 10:10
+    // A future-dated slot for 2040 exists in base data for Fridays at 9:15 until 10:15
 
     val response = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
 
@@ -140,7 +144,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBodyList(AvailableSlot::class.java)
+    .expectBodyList<AvailableSlot>()
     .returnResult().responseBody!!
 
   private fun fakeOfficialVisitLocations() = listOf(
