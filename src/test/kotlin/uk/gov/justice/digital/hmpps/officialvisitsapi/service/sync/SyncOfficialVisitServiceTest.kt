@@ -126,7 +126,7 @@ class SyncOfficialVisitServiceTest {
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.empty())
 
-    assertThrows<RuntimeException> {
+    assertThrows<EntityNotFoundException> {
       syncOfficialVisitService.createOfficialVisit(request)
     }
 

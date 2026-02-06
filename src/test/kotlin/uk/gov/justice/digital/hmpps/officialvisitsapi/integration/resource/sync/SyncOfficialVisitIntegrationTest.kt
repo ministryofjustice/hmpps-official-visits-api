@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
@@ -87,8 +86,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should get an existing official visit by ID`() {
-    // Create an official visit to use
-    val savedOfficialVisitId = (webTestClient.createOfficialVisit(officialVisitRequest)).officialVisitId
+    val savedOfficialVisitId = (testAPIClient.createOfficialVisit(officialVisitRequest, MOORLAND_PRISON_USER)).officialVisitId
     stubEvents.reset()
 
     val syncOfficialVisit = webTestClient.get()
@@ -107,7 +105,6 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should fail to get visit when the ID does not exist`() {
-    // Create an official visit to use
     webTestClient.get()
       .uri("/sync/official-visit/id/{officialVisitId}", 999)
       .accept(MediaType.APPLICATION_JSON)
@@ -119,7 +116,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should create an official visit via the sync endpoint`() {
+  fun `should create an official visit with no visitors via the sync endpoint`() {
     val request = syncCreateOfficialVisitRequest(
       offenderVisitId = 1L,
       prisonVisitSlotId = 1L,
@@ -145,7 +142,6 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(response.endTime).isEqualTo(request.endTime)
     assertThat(response.visitors).isEmpty()
 
-    // Check events were generated
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_CREATED,
       additionalInfo = VisitInfo(
@@ -218,20 +214,6 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     createDateTime = LocalDateTime.now().minusMinutes(10),
   )
 
-  // Create request via UI-facing endpoint
-  private fun WebTestClient.createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
-    .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
-    .bodyValue(request)
-    .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-    .exchange()
-    .expectStatus().isCreated
-    .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody<CreateOfficialVisitResponse>()
-    .returnResult().responseBody!!
-
-  // Create request via sync endpoint
   private fun WebTestClient.syncCreateOfficialVisit(request: SyncCreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
     .uri("/sync/official-visit")
