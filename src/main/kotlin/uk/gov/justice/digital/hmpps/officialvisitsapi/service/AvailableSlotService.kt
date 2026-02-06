@@ -29,7 +29,7 @@ class AvailableSlotService(
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
-    val availableSlots = getAvailableSlots(prisonCode, videoOnly)
+    val availableSlots = getAvailableSlots(prisonCode, fromDate, videoOnly)
     val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
 
     val sortedSlots = AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
@@ -38,10 +38,10 @@ class AvailableSlotService(
     decorateWithLocationDescription(prisonCode, sortedSlots)
   }
 
-  private fun getAvailableSlots(prisonCode: String, videoOnly: Boolean) = if (videoOnly) {
-    availableSlotRepository.findAvailableVideoSlotsByPrisonCode(prisonCode)
+  private fun getAvailableSlots(prisonCode: String, fromDate: LocalDate, videoOnly: Boolean) = if (videoOnly) {
+    availableSlotRepository.findAvailableVideoSlotsForPrison(prisonCode, fromDate)
   } else {
-    availableSlotRepository.findAvailableSlotsByPrisonCode(prisonCode)
+    availableSlotRepository.findAvailableSlotsForPrison(prisonCode, fromDate)
   }
 
   private fun decorateWithLocationDescription(prisonCode: String, slots: List<AvailableSlot>): List<AvailableSlot> {
@@ -89,8 +89,9 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
     val results = buildList {
       availableSlots.forEach { availableSlot ->
         for (date in fromDate..toDate) {
-          // Only add to the list if the slot is on the same day as the date in question and there is capacity, otherwise ignore the slot.
-          if (availableSlot.isOnSameDay(date.dayOfWeek)) {
+          // Only add to the list if the slot is on the same day as the date in question, there is
+          // capacity, and the slot is not expired or reached its effective date, otherwise ignore the slot.
+          if (availableSlot.isOnSameDay(date.dayOfWeek) && !availableSlot.hasExpired(date) && !availableSlot.hasNotReachedItsEffectiveDate(date)) {
             val availableAdults = availableSlot.availableAdultsOn(date)
             val availableGroups = availableSlot.availableGroupsOn(date)
             val availableVideoSessions = availableSlot.availableVideoSessionsOn(date)
@@ -121,6 +122,10 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
     // Filter out anything with a start time earlier than now, there should only ever be a handful or less
     results.filter { it.visitDate.atTime(it.startTime) > timeSource.now() }
   }
+
+  private fun AvailableSlotEntity.hasExpired(date: LocalDate) = expiryDate != null && date >= expiryDate
+
+  private fun AvailableSlotEntity.hasNotReachedItsEffectiveDate(date: LocalDate) = date < effectiveDate
 
   private fun AvailableSlotEntity.isOnSameDay(dayOfWeek: DayOfWeek) = Day.valueOf(dayCode).value == dayOfWeek.value
 
