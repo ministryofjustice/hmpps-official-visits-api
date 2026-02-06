@@ -77,5 +77,5 @@ data class SyncOfficialVisit(
   val updatedTime: LocalDateTime? = null,
 
   @Schema(description = "The visitor details")
-  val visitors: List<SyncOfficialVisitor>,
+  val visitors: List<SyncOfficialVisitor> = emptyList(),
 )

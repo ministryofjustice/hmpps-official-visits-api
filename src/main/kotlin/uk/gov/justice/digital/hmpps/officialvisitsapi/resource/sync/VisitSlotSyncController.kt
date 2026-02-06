@@ -33,6 +33,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 class VisitSlotSyncController(val syncFacade: SyncFacade) {
 
   @GetMapping(path = ["/visit-slot/{prisonVisitSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseBody
   @Operation(
     summary = "Return a prison visit slot by ID",
     description = """

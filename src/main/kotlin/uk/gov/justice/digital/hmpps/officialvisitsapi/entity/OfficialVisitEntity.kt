@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -233,6 +234,34 @@ class OfficialVisitEntity(
         this.searchTypeCode = request.searchTypeCode
         this.updatedBy = request.modifyUsername
         this.updatedTime = request.modifyDateTime
+      }
+    }
+
+    fun synchronised(visitSlot: PrisonVisitSlotEntity, request: SyncCreateOfficialVisitRequest) = run {
+      OfficialVisitEntity(
+        prisonVisitSlot = visitSlot,
+        visitDate = request.visitDate!!,
+        startTime = request.startTime!!,
+        endTime = request.endTime!!,
+        dpsLocationId = request.dpsLocationId!!,
+        visitTypeCode = request.visitTypeCode!!,
+        prisonCode = request.prisonCode!!,
+        prisonerNumber = request.prisonerNumber!!,
+        currentTerm = request.currentTerm!!,
+        staffNotes = null, // Never supplied from NOMIS
+        prisonerNotes = request.commentText,
+        visitorConcernNotes = request.visitorConcernText,
+        overrideBanTime = null, // Never supplied from NOMIS
+        overrideBanBy = request.overrideBanStaffUsername,
+        createdBy = request.createUsername ?: "SYNC",
+        createdTime = request.createDateTime ?: now(),
+        offenderBookId = request.offenderBookId,
+        offenderVisitId = request.offenderVisitId!!, // The visit id in NOMIS - reference only
+        visitOrderNumber = request.visitOrderNumber, // Not usually supplied - reference only
+      ).apply {
+        this.visitStatusCode = request.visitStatusCode!!
+        this.completionCode = request.visitCompletionCode
+        this.searchTypeCode = request.searchTypeCode
       }
     }
   }
