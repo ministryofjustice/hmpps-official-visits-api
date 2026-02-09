@@ -26,7 +26,6 @@ fun List<OfficialVisitorEntity>.toSyncModel(): List<SyncOfficialVisitor> = map {
 fun OfficialVisitorEntity.toSyncItemModel(): SyncOfficialVisitorDeletionInfo = SyncOfficialVisitorDeletionInfo(
   officialVisitorId = this.officialVisitorId,
   contactId = this.contactId,
-  createdBy = this.createdBy,
 )
 
 fun List<OfficialVisitorEntity>.toSyncItemModel(): List<SyncOfficialVisitorDeletionInfo> = map { it.toSyncItemModel() }

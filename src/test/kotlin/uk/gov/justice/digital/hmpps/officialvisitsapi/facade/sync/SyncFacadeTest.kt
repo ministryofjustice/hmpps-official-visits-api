@@ -387,14 +387,14 @@ class SyncFacadeTest {
         source = Source.NOMIS,
         identifier = 1L, // official visit ID
         noms = "A1234AA",
-        user = MOORLAND_PRISON_USER,
+        user = UserService.getClientAsUser("NOMIS"),
       )
       verify(outboundEventsService, atLeastOnce()).send(
         outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = MOORLAND,
         identifier = 1L, // official visit ID
         secondIdentifier = 1L, // official visitor ID
-        user = MOORLAND_PRISON_USER,
+        user = UserService.getClientAsUser("NOMIS"),
       )
     }
 
@@ -402,12 +402,10 @@ class SyncFacadeTest {
       officialVisitId = officialVisitId,
       prisonCode = MOORLAND,
       prisonerNumber = "A1234AA",
-      createdBy = MOORLAND_PRISON_USER.username,
       visitors = listOf(
         SyncOfficialVisitorDeletionInfo(
           officialVisitorId = 1L,
           contactId = 2L,
-          createdBy = MOORLAND_PRISON_USER.username,
         ),
       ),
     )

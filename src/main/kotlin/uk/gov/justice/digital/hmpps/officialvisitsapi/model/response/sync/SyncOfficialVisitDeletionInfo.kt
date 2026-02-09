@@ -12,9 +12,6 @@ data class SyncOfficialVisitDeletionInfo(
   @Schema(description = "The prisoner number")
   val prisonerNumber: String,
 
-  @Schema(description = "The Created by user")
-  val createdBy: String,
-
-  @Schema(description = "Visitor items")
+  @Schema(description = "List of deleted official visitors")
   val visitors: List<SyncOfficialVisitorDeletionInfo>,
 )

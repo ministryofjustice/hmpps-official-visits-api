@@ -33,6 +33,5 @@ fun OfficialVisitEntity.toSyncModel(): SyncOfficialVisitDeletionInfo = SyncOffic
   officialVisitId = this.officialVisitId,
   prisonCode = this.prisonCode,
   prisonerNumber = this.prisonerNumber,
-  createdBy = this.createdBy,
   visitors = this.officialVisitors().toSyncItemModel(),
 )

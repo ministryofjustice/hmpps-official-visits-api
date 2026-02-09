@@ -9,7 +9,4 @@ data class SyncOfficialVisitorDeletionInfo(
 
   @Schema(description = "The contact ID", example = "111111")
   val contactId: Long?,
-
-  @Schema(description = "The Created by user")
-  val createdBy: String,
 )

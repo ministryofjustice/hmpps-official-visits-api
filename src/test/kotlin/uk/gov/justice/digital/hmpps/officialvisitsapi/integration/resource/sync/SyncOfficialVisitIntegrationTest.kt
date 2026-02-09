@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -177,13 +178,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should get success response for the deletion of non existing official visit ID`() {
-    webTestClient.delete()
-      .uri("/sync/official-visit/id/{officialVisitId}", 99)
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .is2xxSuccessful
+    webTestClient.delete(99L)
 
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_DELETED)
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISITOR_DELETED)
@@ -208,13 +203,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitInfo(officialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
       personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
     )
-    webTestClient.delete()
-      .uri("/sync/official-visit/id/{officialVisitId}", officialVisit.officialVisitId)
-      .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
-      .exchange()
-      .expectStatus()
-      .is2xxSuccessful
+    webTestClient.delete(officialVisit.officialVisitId)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_DELETED,
@@ -222,7 +211,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
         officialVisitId = officialVisit.officialVisitId,
         officialVisitorId = officialVisit.officialVisitorIds.first(),
         source = Source.DPS,
-        username = MOORLAND_PRISON_USER.username,
+        username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
       ),
     )
@@ -232,7 +221,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitInfo(
         officialVisitId = officialVisit.officialVisitId,
         source = Source.NOMIS,
-        username = MOORLAND_PRISON_USER.username,
+        username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
       ),
     )
@@ -298,4 +287,13 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody<CreateOfficialVisitResponse>()
     .returnResult().responseBody!!
+
+  private fun WebTestClient.delete(officialVisitId: Long) = this
+    .delete()
+    .uri("/sync/official-visit/id/{officialVisitId}", officialVisitId)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+    .expectStatus()
+    .is2xxSuccessful
 }

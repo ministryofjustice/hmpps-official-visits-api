@@ -93,10 +93,10 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
 
   @DeleteMapping("/official-visit/id/{officialVisitId}")
   @Operation(
-    summary = "Delete a official visit by ID",
+    summary = "Delete an official visit by ID",
     description = """
-      Delete a official visit and associated child entities like official visitor, prisoner visitors and equipments .
-      This endpoint is idempotent so if the official visit does not exist it will silently succeed.
+      Delete an official visit including all related information. 
+      This endpoint is idempotent, so if the visit is not present it will silently succeed.
       """,
   )
   @ApiResponses(
@@ -104,11 +104,6 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
       ApiResponse(
         responseCode = "204",
         description = "Deleted the official visit by ID",
-      ),
-      ApiResponse(
-        responseCode = "409",
-        description = "The official visit and associated official visitors and prison visitor cannot be deleted.",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )

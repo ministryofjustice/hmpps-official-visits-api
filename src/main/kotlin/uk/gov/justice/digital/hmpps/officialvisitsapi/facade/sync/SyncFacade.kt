@@ -132,7 +132,7 @@ class SyncFacade(
           identifier = deletedOfficialVisit.officialVisitId,
           source = Source.NOMIS,
           noms = deletedOfficialVisit.prisonerNumber,
-          user = userOrDefault(deletedOfficialVisit.createdBy),
+          user = UserService.getClientAsUser("NOMIS"),
         )
         deletedOfficialVisit.visitors.forEach { visitor ->
           outboundEventsService.send(
@@ -140,7 +140,7 @@ class SyncFacade(
             prisonCode = deletedOfficialVisit.prisonCode,
             identifier = deletedOfficialVisit.officialVisitId,
             secondIdentifier = visitor.officialVisitorId,
-            user = userOrDefault(visitor.createdBy),
+            user = UserService.getClientAsUser("NOMIS"),
           )
         }
       }
