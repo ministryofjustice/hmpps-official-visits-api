@@ -36,7 +36,6 @@ class SyncOfficialVisitServiceTest {
   private val officialVisitorRepository: OfficialVisitorRepository = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
-  private val updatedTime = LocalDateTime.now().minusDays(1)
 
   private val syncOfficialVisitService = SyncOfficialVisitService(
     officialVisitRepository,
@@ -185,7 +184,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should not return exception for non existent official visit passed`() {
+  fun `should not throw exception when non-existent official visit ID is passed`() {
     whenever(officialVisitRepository.findById(99L)).thenReturn(Optional.empty())
     syncOfficialVisitService.deleteOfficialVisit(99L)
 

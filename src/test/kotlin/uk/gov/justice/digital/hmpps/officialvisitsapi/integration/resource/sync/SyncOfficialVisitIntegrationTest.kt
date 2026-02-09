@@ -200,7 +200,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    // Create an official visit to use with each test
+    // Create an official visit
     val officialVisit = (webTestClient.createOfficialVisit(officialVisitRequest))
 
     stubEvents.assertHasEvent(
