@@ -95,7 +95,7 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   @Operation(
     summary = "Delete a official visit by ID",
     description = """
-      Delete a official visit and it associated child entities like official visitor, prisoner visitors and equipments .
+      Delete a official visit and associated child entities like official visitor, prisoner visitors and equipments .
       This endpoint is idempotent so if the official visit does not exist it will silently succeed.
       """,
   )
