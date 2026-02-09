@@ -407,6 +407,7 @@ class SyncFacadeTest {
         SynOfficialVisitorDeletionInfo(
           officialVisitorId = 1L,
           contactId = 2L,
+          createdBy = MOORLAND_PRISON_USER.username,
         ),
       ),
     )

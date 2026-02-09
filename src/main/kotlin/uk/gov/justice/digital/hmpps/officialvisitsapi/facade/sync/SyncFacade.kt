@@ -140,7 +140,7 @@ class SyncFacade(
             prisonCode = deletedOfficialVisit.prisonCode,
             identifier = deletedOfficialVisit.officialVisitId,
             secondIdentifier = visitor.officialVisitorId,
-            user = userOrDefault(deletedOfficialVisit.createdBy),
+            user = userOrDefault(visitor.createdBy),
           )
         }
       }
