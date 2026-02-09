@@ -28,10 +28,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService

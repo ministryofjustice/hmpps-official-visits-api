@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 
 fun OfficialVisitorEntity.toSyncModel(): SyncOfficialVisitor = SyncOfficialVisitor(
   officialVisitorId = this.officialVisitorId,
