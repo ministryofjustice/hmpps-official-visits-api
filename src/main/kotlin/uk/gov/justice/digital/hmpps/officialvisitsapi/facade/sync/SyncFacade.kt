@@ -122,6 +122,28 @@ class SyncFacade(
 
   fun getOfficialVisitById(officialVisitId: Long) = syncOfficialVisitService.getOfficialVisitById(officialVisitId)
 
+  fun deleteOfficialVisit(officialVisitId: Long) {
+    syncOfficialVisitService.deleteOfficialVisit(officialVisitId)
+      ?.also { deletedOfficialVisit ->
+        outboundEventsService.send(
+          outboundEvent = OutboundEvent.VISIT_DELETED,
+          prisonCode = deletedOfficialVisit.prisonCode,
+          identifier = deletedOfficialVisit.officialVisitId,
+          source = Source.NOMIS,
+          noms = deletedOfficialVisit.prisonerNumber,
+          user = userOrDefault(deletedOfficialVisit.createdBy),
+        )
+        deletedOfficialVisit.visitors.forEach { visitor ->
+          outboundEventsService.send(
+            outboundEvent = OutboundEvent.VISITOR_DELETED,
+            prisonCode = deletedOfficialVisit.prisonCode,
+            identifier = deletedOfficialVisit.officialVisitId,
+            secondIdentifier = visitor.officialVisitorId,
+            user = userOrDefault(deletedOfficialVisit.createdBy),
+          )
+        }
+      }
+  }
   // --------------- Other methods add here ----------------
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()

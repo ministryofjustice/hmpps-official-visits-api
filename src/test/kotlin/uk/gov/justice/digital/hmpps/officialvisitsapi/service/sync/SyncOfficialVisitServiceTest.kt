@@ -8,20 +8,23 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.util.Optional
 
 class SyncOfficialVisitServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
+  private val officialVisitorRepository: OfficialVisitorRepository = mock()
 
-  private val syncOfficialVisitService = SyncOfficialVisitService(officialVisitRepository, prisonerVisitedRepository)
+  private val syncOfficialVisitService = SyncOfficialVisitService(officialVisitRepository, prisonerVisitedRepository, officialVisitorRepository)
 
   @AfterEach
   fun afterEach() {
@@ -67,6 +70,37 @@ class SyncOfficialVisitServiceTest {
 
     verify(officialVisitRepository).findById(1L)
     verify(prisonerVisitedRepository).findByOfficialVisit(visitEntity)
+  }
+
+  @Test
+  fun `should delete official visit by ID if exist`() {
+    val visitEntity = createAVisitEntity(1L)
+
+    whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
+    val syncResponse = syncOfficialVisitService.deleteOfficialVisit(1L)
+    assertThat(syncResponse?.officialVisitId).isEqualTo(visitEntity.officialVisitId)
+    assertThat(syncResponse?.prisonerNumber).isEqualTo(visitEntity.prisonerNumber)
+    assertThat(syncResponse?.prisonCode).isEqualTo(visitEntity.prisonCode)
+    assertThat(syncResponse?.visitors).size().isEqualTo(2)
+    var index = 0
+    syncResponse?.visitors?.forEach { visitor ->
+      assertThat(visitor.contactId).isEqualTo(syncResponse.visitors[index].contactId)
+      assertThat(visitor.officialVisitorId).isEqualTo(syncResponse.visitors[index].officialVisitorId)
+      index++
+    }
+    verify(officialVisitRepository).findById(1L)
+    verify(prisonerVisitedRepository).deleteByOfficialVisit(visitEntity)
+    verify(officialVisitorRepository).deleteByOfficialVisit(visitEntity)
+    verify(officialVisitRepository).deleteById(1L)
+  }
+
+  @Test
+  fun `should not return exception for non existent official visit passed`() {
+    whenever(officialVisitRepository.findById(99L)).thenReturn(Optional.empty())
+    syncOfficialVisitService.deleteOfficialVisit(99L)
+
+    verify(officialVisitRepository).findById(99L)
+    verifyNoInteractions(prisonerVisitedRepository, officialVisitorRepository)
   }
 
   private fun OfficialVisitEntity.assertWithResponse(model: SyncOfficialVisit) {

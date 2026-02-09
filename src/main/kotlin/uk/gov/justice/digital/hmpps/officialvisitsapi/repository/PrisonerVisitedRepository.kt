@@ -15,4 +15,6 @@ interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long>
   fun findByOfficialVisit(officialVisitEntity: OfficialVisitEntity): PrisonerVisitedEntity?
 
   fun findAllByOfficialVisitOfficialVisitIdIn(officialVisitIds: Collection<Long>): List<PrisonerVisitedEntity>
+
+  fun deleteByOfficialVisit(officialVisitEntity: OfficialVisitEntity)
 }
