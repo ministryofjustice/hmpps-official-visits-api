@@ -374,7 +374,7 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should delete official visit and retrun response object`() {
+    fun `should delete official visit and return response object`() {
       val response = syncOfficialVisitDeleted(1L)
 
       whenever(syncOfficialVisitService.deleteOfficialVisit(1L)).thenReturn(response)
