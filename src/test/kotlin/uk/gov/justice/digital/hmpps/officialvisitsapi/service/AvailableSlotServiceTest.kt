@@ -77,7 +77,13 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
-      availableSlotRepository.stub { on { findAvailableSlotsByPrisonCode(MOORLAND) } doReturn availableSlots }
+
+      availableSlotRepository.stub {
+        on {
+          findAvailableSlotsForPrison(MOORLAND, mondayAtMidday.toLocalDate())
+        } doReturn availableSlots
+      }
+
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -91,9 +97,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 3 available slots on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 13))
-      availableSlots.add(availableSlot(Day.MON, 14))
-      availableSlots.add(availableSlot(Day.MON, 15))
+      availableSlots.add(availableSlot(Day.MON, 13, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
+      availableSlots.add(availableSlot(Day.MON, 14, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
+      availableSlots.add(availableSlot(Day.MON, 15, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -108,9 +114,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be no available slots on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 9))
-      availableSlots.add(availableSlot(Day.MON, 10))
-      availableSlots.add(availableSlot(Day.MON, 11))
+      availableSlots.add(availableSlot(Day.MON, 9, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 10, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 11, effectiveDate = mondayAtMidday.toLocalDate()))
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -125,9 +131,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 3 available slots on Monday the following week`() {
-      availableSlots.add(availableSlot(Day.MON, 9))
-      availableSlots.add(availableSlot(Day.MON, 10))
-      availableSlots.add(availableSlot(Day.MON, 11))
+      availableSlots.add(availableSlot(Day.MON, 9, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 10, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 11, effectiveDate = mondayAtMidday.toLocalDate()))
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -142,9 +148,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 1 free slot with 0 available video, 1 group and 1 adult on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 11))
-      availableSlots.add(availableSlot(Day.MON, 12))
-      availableSlots.add(availableSlot(Day.MON, 13))
+      availableSlots.add(availableSlot(Day.MON, 11, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 12, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 13, effectiveDate = mondayAtMidday.toLocalDate()))
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -166,9 +172,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be no available slots on Monday`() {
-      availableSlots.add(availableSlot(Day.TUE, 10))
-      availableSlots.add(availableSlot(Day.TUE, 11))
-      availableSlots.add(availableSlot(Day.TUE, 12))
+      availableSlots.add(availableSlot(Day.TUE, 10, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.TUE, 11, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.TUE, 12, effectiveDate = mondayAtMidday.toLocalDate()))
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -183,9 +189,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 1 free slot with 0 available video, 1 group and 1 adult on Tuesday morning`() {
-      availableSlots.add(availableSlot(Day.MON, 10))
-      availableSlots.add(availableSlot(Day.MON, 11))
-      availableSlots.add(availableSlot(Day.TUE, 11))
+      availableSlots.add(availableSlot(Day.MON, 10, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 11, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.TUE, 11, effectiveDate = mondayAtMidday.toLocalDate()))
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -216,7 +222,7 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
-      availableSlotRepository.stub { on { findAvailableSlotsByPrisonCode(MOORLAND) } doReturn availableSlots }
+      availableSlotRepository.stub { on { findAvailableSlotsForPrison(MOORLAND, mondayAtMidday.toLocalDate()) } doReturn availableSlots }
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -230,9 +236,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 1 free slot with 0 available video, 5 groups and 5 adults on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 13))
-      availableSlots.add(availableSlot(Day.MON, 14))
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 5))
+      availableSlots.add(availableSlot(Day.MON, 13, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 14, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(1)))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2)))
@@ -257,9 +263,9 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be no available slots on Monday when fully booked`() {
-      availableSlots.add(availableSlot(Day.MON, 13))
-      availableSlots.add(availableSlot(Day.MON, 14))
-      availableSlots.add(availableSlot(Day.MON, 15))
+      availableSlots.add(availableSlot(Day.MON, 13, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 14, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 15, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(1)))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2)))
@@ -278,7 +284,7 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 1 free slot with 2 available video, 1 group and 3 adults on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 2, maxVideo = 2))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 2, maxVideo = 2, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
@@ -303,7 +309,7 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be no available slot on Monday afternoon when available adult capacity met`() {
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 2))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 2, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3)))
@@ -324,7 +330,7 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be no available slot on Monday afternoon when available group capacity met`() {
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 2))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 2, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), 1))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), 2))
@@ -351,7 +357,7 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
-      availableSlotRepository.stub { on { findAvailableVideoSlotsByPrisonCode(MOORLAND) } doReturn availableSlots }
+      availableSlotRepository.stub { on { findAvailableVideoSlotsForPrison(MOORLAND, mondayAtMidday.toLocalDate()) } doReturn availableSlots }
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -365,7 +371,7 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 1 free slot with 1 available video, 3 groups and 5 adults on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 14, 5, 5, 3))
+      availableSlots.add(availableSlot(Day.MON, 14, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), officialVisitId = 1, videoOnly = true))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), officialVisitId = 2, videoOnly = true))
@@ -390,7 +396,7 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be 1 free slot with 1 available video, 4 groups and 5 adults on Monday afternoon`() {
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
@@ -415,7 +421,7 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should be no available video slot on Monday afternoon when available video capacity met`() {
-      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
@@ -433,6 +439,104 @@ class AvailableSlotServiceTest {
     }
   }
 
+  @Nested
+  @DisplayName("Checking effective and expiry dates for available slots")
+  inner class AvailableSlotsFromMondayMorningWhenExpiredOrBeforeEffectiveDate {
+    private val mondayAtEightAm = LocalDate.of(2025, 11, 17).atTime(8, 0)
+    private val availableSlots: MutableList<AvailableSlotEntity> = mutableListOf()
+    private val bookedSlots: MutableList<VisitBookedEntity> = mutableListOf()
+
+    @BeforeEach
+    fun beforeEach() {
+      availableSlotService = service(mondayAtEightAm)
+      availableSlotRepository.stub { on { findAvailableVideoSlotsForPrison(MOORLAND, mondayAtEightAm.toLocalDate()) } doReturn availableSlots }
+      visitBookedRepository.stub {
+        on {
+          findCurrentVisitsBookedBy(
+            eq(MOORLAND),
+            eq(mondayAtEightAm.toLocalDate()),
+            any(),
+          )
+        } doReturn bookedSlots
+      }
+    }
+
+    @Test
+    fun `should leave 1 free slot for video on Monday morning and ignore an expired slot`() {
+      availableSlots.add(availableSlot(Day.MON, 10, 5, 5, 3, effectiveDate = mondayAtEightAm.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 11, 5, 5, 3, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().minusDays(1)))
+
+      bookedSlots.add(bookedSlot(mondayAtEightAm.plusHours(2), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtEightAm.plusHours(2), officialVisitId = 2, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtEightAm.toLocalDate(),
+          mondayAtEightAm.toLocalDate().plusDays(1),
+          true,
+        )
+
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtEightAm.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(10, 0))
+        .availableAdultsIsEqualTo(5)
+        .availableGroupsIsEqualTo(3)
+        .availableVideosIsEqualTo(1)
+    }
+
+    @Test
+    fun `should leave 1 free slot for video and ignore the expired and not yet effective slots`() {
+      // Available slot
+      availableSlots.add(availableSlot(Day.MON, 10, 2, 2, 2, effectiveDate = mondayAtEightAm.toLocalDate()))
+
+      // Not reached its effectiveDate
+      availableSlots.add(availableSlot(Day.MON, 11, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate().plusDays(7)))
+
+      // Both expired
+      availableSlots.add(availableSlot(Day.MON, 11, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate().minusDays(3), expiryDate = mondayAtEightAm.toLocalDate().minusDays(1)))
+      availableSlots.add(availableSlot(Day.MON, 12, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate().minusDays(3), expiryDate = mondayAtEightAm.toLocalDate().minusDays(1)))
+
+      bookedSlots.add(bookedSlot(mondayAtEightAm.plusHours(2), officialVisitId = 1, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtEightAm.toLocalDate(),
+          mondayAtEightAm.toLocalDate(),
+          true,
+        )
+
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtEightAm.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(10, 0))
+        .availableAdultsIsEqualTo(2)
+        .availableGroupsIsEqualTo(1)
+        .availableVideosIsEqualTo(1)
+    }
+
+    @Test
+    fun `should all be available slots if the expiry dates are in the future`() {
+      availableSlots.add(availableSlot(Day.MON, 9, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().plusDays(2)))
+      availableSlots.add(availableSlot(Day.MON, 10, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().plusDays(2)))
+      availableSlots.add(availableSlot(Day.MON, 11, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().plusDays(2)))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtEightAm.toLocalDate(),
+          mondayAtEightAm.toLocalDate().plusDays(1),
+          videoOnly = true,
+        )
+
+      freeSlots.size isEqualTo 3
+    }
+  }
+
   private fun service(dateTime: LocalDateTime) = AvailableSlotService(
     { dateTime },
     visitBookedRepository,
@@ -440,7 +544,15 @@ class AvailableSlotServiceTest {
     locationsService,
   )
 
-  private fun availableSlot(day: Day, startHour: Int, maxAdults: Int = 1, maxGroups: Int = 1, maxVideo: Int = 0) = AvailableSlotEntity(
+  private fun availableSlot(
+    day: Day,
+    startHour: Int,
+    maxAdults: Int = 1,
+    maxGroups: Int = 1,
+    maxVideo: Int = 0,
+    effectiveDate: LocalDate = LocalDate.now(),
+    expiryDate: LocalDate? = null,
+  ) = AvailableSlotEntity(
     prisonVisitSlotId = startHour.toLong(),
     prisonTimeSlotId = startHour.toLong(),
     prisonCode = MOORLAND,
@@ -449,6 +561,8 @@ class AvailableSlotServiceTest {
     dayDescription = day.toString(),
     startTime = LocalTime.of(startHour, 0),
     endTime = LocalTime.of(startHour, 59),
+    effectiveDate = effectiveDate,
+    expiryDate = expiryDate,
     dpsLocationId = UUID.randomUUID(),
     maxAdults = maxAdults,
     maxGroups = maxGroups,

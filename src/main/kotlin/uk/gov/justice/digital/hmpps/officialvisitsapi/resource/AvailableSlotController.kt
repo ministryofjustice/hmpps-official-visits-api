@@ -42,8 +42,7 @@ class AvailableSlotController(private val availableSlotService: AvailableSlotSer
   @GetMapping(value = ["/{prisonCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
   fun getAvailableSlotsForPrison(
-    @Parameter(description = "The prison code", required = true, example = "MDI")
-    @PathVariable("prisonCode", required = true)
+    @PathVariable(required = true) @Parameter(description = "The prison code", required = true, example = "MDI")
     prisonCode: String,
     @Parameter(description = "The from date in ISO format (YYYY-MM-DD).")
     @RequestParam(name = "fromDate", required = true)

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
@@ -144,6 +145,19 @@ class SyncFacade(
         }
       }
   }
+  
+  fun createOfficialVisit(request: SyncCreateOfficialVisitRequest) = syncOfficialVisitService.createOfficialVisit(request)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_CREATED,
+        prisonCode = it.prisonCode,
+        identifier = it.officialVisitId,
+        noms = it.prisonerNumber,
+        source = Source.NOMIS,
+        user = userOrDefault(it.createdBy),
+      )
+    }
+
   // --------------- Other methods add here ----------------
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()

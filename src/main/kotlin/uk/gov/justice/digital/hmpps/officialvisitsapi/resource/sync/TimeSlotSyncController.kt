@@ -31,7 +31,9 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 @RestController
 @RequestMapping(value = ["/sync"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class TimeSlotSyncController(val syncFacade: SyncFacade) {
+
   @GetMapping(path = ["/time-slot/{prisonTimeSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseBody
   @Operation(
     summary = "Returns the data for a prison time slot by ID",
     description = """
