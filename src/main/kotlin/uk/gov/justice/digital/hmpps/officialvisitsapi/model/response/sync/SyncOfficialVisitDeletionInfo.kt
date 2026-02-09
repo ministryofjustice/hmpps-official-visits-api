@@ -16,5 +16,5 @@ data class SyncOfficialVisitDeletionInfo(
   val createdBy: String,
 
   @Schema(description = "Visitor items")
-  val visitors: List<SynOfficialVisitorDeletionInfo>,
+  val visitors: List<SyncOfficialVisitorDeletionInfo>,
 )

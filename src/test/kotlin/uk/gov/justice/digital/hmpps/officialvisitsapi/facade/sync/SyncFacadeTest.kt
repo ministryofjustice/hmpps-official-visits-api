@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SynOfficialVisitorDeletionInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
@@ -366,7 +366,7 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should return success even if non existent  id passed for deletion`() {
+    fun `should return success even if non existent id passed for deletion`() {
       whenever(syncOfficialVisitService.deleteOfficialVisit(99L)).thenReturn(null)
       facade.deleteOfficialVisit(99L)
       verify(syncOfficialVisitService).deleteOfficialVisit(99L)
@@ -374,7 +374,7 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should delete official visit and retrun response object`() {
+    fun `should delete official visit and return response object`() {
       val response = syncOfficialVisitDeleted(1L)
 
       whenever(syncOfficialVisitService.deleteOfficialVisit(1L)).thenReturn(response)
@@ -404,7 +404,7 @@ class SyncFacadeTest {
       prisonerNumber = "A1234AA",
       createdBy = MOORLAND_PRISON_USER.username,
       visitors = listOf(
-        SynOfficialVisitorDeletionInfo(
+        SyncOfficialVisitorDeletionInfo(
           officialVisitorId = 1L,
           contactId = 2L,
           createdBy = MOORLAND_PRISON_USER.username,
