@@ -2,10 +2,12 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
@@ -134,6 +136,33 @@ class SyncFacade(
         user = userOrDefault(it.createdBy),
       )
     }
+
+  // ---------------  Official visitors ----------------------
+
+  fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncOfficialVisitor {
+    val response = syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)
+
+    outboundEventsService.send(
+      outboundEvent = OutboundEvent.VISITOR_CREATED,
+      prisonCode = response.prisonCode,
+      identifier = officialVisitId,
+      secondIdentifier = response.officialVisitorId,
+      contactId = response.visitor.contactId,
+      source = Source.NOMIS,
+      user = userOrDefault(response.visitor.createdBy),
+    )
+
+    outboundEventsService.send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = response.prisonCode,
+      identifier = officialVisitId,
+      noms = response.prisonerNumber,
+      source = Source.NOMIS,
+      user = userOrDefault(response.visitor.createdBy),
+    )
+
+    return response.visitor
+  }
 
   // --------------- Other methods add here ----------------
 

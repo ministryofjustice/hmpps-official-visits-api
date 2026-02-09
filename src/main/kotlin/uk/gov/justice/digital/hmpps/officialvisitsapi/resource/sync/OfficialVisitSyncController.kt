@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -84,7 +86,47 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
-  fun syncCreateVisitSlot(
+  fun syncCreateOfficialVisit(
     @Valid @RequestBody request: SyncCreateOfficialVisitRequest,
   ): SyncOfficialVisit = syncFacade.createOfficialVisit(request)
+
+  @PostMapping(path = ["/official-visit/{officialVisitId}/visitor"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseBody
+  @Operation(
+    summary = "Creates a visitor on an existing official visit",
+    description = """
+      Requires role: OFFICIAL_VISITS_MIGRATION.
+      Used to add a visitor to an official visit in DPS as part of the synchronisation from NOMIS.
+      If the contactId or offenderVisitVisitorId already exists on the visit this request will be rejected.
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully added the visitor",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = SyncOfficialVisitor::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "The the official visit was not found using the ID presented",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "409",
+        description = "The visitor with the IDs presented already exists on this visit",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  fun syncCreateOfficialVisitor(
+    @Valid @RequestBody request: SyncCreateOfficialVisitorRequest,
+    @PathVariable(required = true) officialVisitId: Long,
+  ): SyncOfficialVisitor = syncFacade.createOfficialVisitor(officialVisitId, request)
 }

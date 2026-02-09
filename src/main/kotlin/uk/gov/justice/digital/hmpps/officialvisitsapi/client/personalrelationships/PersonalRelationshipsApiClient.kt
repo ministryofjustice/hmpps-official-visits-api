@@ -87,4 +87,21 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
     .retrieve()
     .bodyToMono(typeReference<List<ReferenceCode>>())
     .block()
+
+  fun getPrisonerContactRelationships(prisonerNumber: String, contactId: Long) = personalRelationshipsApiWebClient.get()
+    .uri { uriBuilder: UriBuilder ->
+      uriBuilder
+        .path("/prisoner/{prisonerNumber}/contact/{contactId}")
+        .build(prisonerNumber)
+    }
+    .retrieve()
+    .bodyToMono(typeReference<List<PrisonerContactSummary>>())
+    .doOnError { error ->
+      log.info(
+        "Error fetching relationships for contactId $contactId and $prisonerNumber in personal relationships client",
+        error,
+      )
+    }
+    .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
+    .block() ?: emptyList()
 }
