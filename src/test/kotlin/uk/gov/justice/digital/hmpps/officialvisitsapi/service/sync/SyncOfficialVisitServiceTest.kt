@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import java.time.LocalDateTime
@@ -32,6 +33,7 @@ class SyncOfficialVisitServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
+  private val officialVisitorRepository: OfficialVisitorRepository = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
@@ -39,12 +41,13 @@ class SyncOfficialVisitServiceTest {
   private val syncOfficialVisitService = SyncOfficialVisitService(
     officialVisitRepository,
     prisonerVisitedRepository,
+    officialVisitorRepository,
     prisonVisitSlotRepository,
   )
 
   @AfterEach
   fun afterEach() {
-    reset(officialVisitRepository, prisonerVisitedRepository, prisonVisitSlotRepository)
+    reset(officialVisitRepository, prisonerVisitedRepository, prisonVisitSlotRepository, officialVisitorRepository)
   }
 
   @Test
@@ -204,7 +207,6 @@ class SyncOfficialVisitServiceTest {
     createUsername = "Bob",
   )
 
-  
   private fun prisonVisitSlotEntity(prisonVisitSlotId: Long = 1L) = PrisonVisitSlotEntity(
     prisonVisitSlotId = prisonVisitSlotId,
     prisonTimeSlotId = 1L,

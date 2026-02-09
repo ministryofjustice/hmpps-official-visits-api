@@ -145,7 +145,7 @@ class SyncFacade(
         }
       }
   }
-  
+
   fun createOfficialVisit(request: SyncCreateOfficialVisitRequest) = syncOfficialVisitService.createOfficialVisit(request)
     .also {
       outboundEventsService.send(

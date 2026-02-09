@@ -32,14 +32,14 @@ class SyncOfficialVisitService(
 
     return ove.toSyncModel(pve)
   }
-  
+
   @Transactional
   fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
     officialVisitorRepository.deleteByOfficialVisit(officialVisit)
     prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
     officialVisitRepository.deleteById(officialVisit.officialVisitId)
   }?.toSyncModel()
-  
+
   @Transactional
   fun createOfficialVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
     val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {

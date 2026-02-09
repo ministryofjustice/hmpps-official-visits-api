@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
@@ -105,9 +106,6 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should get success response for the deletion of non existing official visit ID`() {
-    webTestClient.delete()
-      .uri("/sync/official-visit/id/{officialVisitId}", 99)
   fun `should fail to get visit when the ID does not exist`() {
     webTestClient.get()
       .uri("/sync/official-visit/id/{officialVisitId}", 999)
@@ -239,7 +237,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       ),
     )
   }
-  
+
   private fun SyncOfficialVisit.assertWithCreateRequest(request: CreateOfficialVisitRequest) {
     // Main visit attributes
     assertThat(prisonCode).isEqualTo(MOORLAND)
@@ -288,4 +286,16 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
     .exchange()
+
+  private fun WebTestClient.createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
+    .post()
+    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isCreated
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody<CreateOfficialVisitResponse>()
+    .returnResult().responseBody!!
 }

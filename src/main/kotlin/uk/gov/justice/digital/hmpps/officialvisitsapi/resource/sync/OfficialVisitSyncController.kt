@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
@@ -88,8 +90,8 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   fun syncCreateVisitSlot(
     @Valid @RequestBody request: SyncCreateOfficialVisitRequest,
   ): SyncOfficialVisit = syncFacade.createOfficialVisit(request)
-  
-@DeleteMapping("/official-visit/id/{officialVisitId}")
+
+  @DeleteMapping("/official-visit/id/{officialVisitId}")
   @Operation(
     summary = "Delete a official visit by ID",
     description = """
@@ -114,5 +116,5 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
   fun syncDeleteOfficialVisit(
     @PathVariable(required = true) officialVisitId: Long,
-  ) = syncFacade.deleteOfficialVisit(officialVisitId)  
+  ) = syncFacade.deleteOfficialVisit(officialVisitId)
 }
