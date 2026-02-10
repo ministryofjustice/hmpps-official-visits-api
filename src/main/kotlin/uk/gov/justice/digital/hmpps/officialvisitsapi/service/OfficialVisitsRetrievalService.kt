@@ -69,6 +69,7 @@ class OfficialVisitsRetrievalService(
       prisonerNotes = ove.prisonerNotes,
       visitorConcernNotes = ove.visitorConcernNotes,
       completionCode = ove.completionCode,
+      completionNotes = ove.completionNotes,
       completionDescription = getReferenceDescription(ReferenceDataGroup.VIS_COMPLETION, ove.completionCode?.name),
       searchTypeCode = ove.searchTypeCode,
       searchTypeDescription = getReferenceDescription(ReferenceDataGroup.SEARCH_LEVEL, ove.searchTypeCode?.name),

@@ -18,6 +18,9 @@ data class OfficialVisitCompletionRequest(
   @field:NotNull(message = "The completion reason is mandatory")
   val completionReason: VisitCompletionType?,
 
+  @Schema(description = "Optional notes containing details of the completion", example = "The visitor was late arriving so the the prisoner may need another visit to be arranged.")
+  val completionNotes: String? = null,
+
   @field:NotNull(message = "The prisoner attendance is mandatory")
   val prisonerAttendance: AttendanceType?,
 
