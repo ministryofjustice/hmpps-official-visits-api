@@ -92,7 +92,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
     .uri { uriBuilder: UriBuilder ->
       uriBuilder
         .path("/prisoner/{prisonerNumber}/contact/{contactId}")
-        .build(prisonerNumber)
+        .build(prisonerNumber, contactId)
     }
     .retrieve()
     .bodyToMono(typeReference<List<PrisonerContactSummary>>())

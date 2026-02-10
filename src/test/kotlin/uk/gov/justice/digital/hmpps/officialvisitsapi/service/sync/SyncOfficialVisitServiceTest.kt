@@ -6,19 +6,28 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.any
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
@@ -50,7 +59,7 @@ class SyncOfficialVisitServiceTest {
 
   @AfterEach
   fun afterEach() {
-    reset(officialVisitRepository, prisonerVisitedRepository, prisonVisitSlotRepository)
+    reset(officialVisitRepository, officialVisitorRepository, prisonerVisitedRepository, prisonVisitSlotRepository, contactsService)
   }
 
   @Test
@@ -220,4 +229,172 @@ class SyncOfficialVisitServiceTest {
       index++
     }
   }
+
+  /* -------------------- Create visitors ------------------------- */
+
+  @Test
+  fun `should create an official visitor on an existing visit`() {
+    val visitSlotId = 1L
+    val visitId = 2L
+    val visitorId = 3L
+    val contactId = 4L
+    val prisonerContactId = 5L
+    val offenderVisitVisitorId = 6L
+
+    // Mocked visit
+    val visitSlotEntity = prisonVisitSlotEntity(visitSlotId)
+    val visitRequest = createOfficialVisitRequest(visitId)
+    val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
+
+    // Mocked visitor
+    val officialVisitorEntity = createOfficialVisitorEntity(officialVisitEntity, visitorId, contactId, prisonerContactId, offenderVisitVisitorId)
+
+    val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
+
+    whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
+    whenever(contactsService.getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)).thenReturn(
+      listOf(prisonerContactSummary(prisonerContactId, MOORLAND_PRISONER.number, contactId)),
+    )
+    whenever(officialVisitorRepository.saveAndFlush(any())).thenReturn(officialVisitorEntity)
+
+    val result = syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
+
+    with(result) {
+      assertThat(this.prisonCode).isEqualTo(officialVisitEntity.prisonCode)
+      assertThat(this.prisonerNumber).isEqualTo(officialVisitEntity.prisonerNumber)
+      assertThat(this.officialVisitId).isEqualTo(officialVisitEntity.officialVisitId)
+      assertThat(this.officialVisitorId).isEqualTo(officialVisitorEntity.officialVisitorId)
+
+      assertThat(this.visitor.contactId).isEqualTo(contactId)
+      assertThat(this.visitor.officialVisitorId).isEqualTo(officialVisitorId)
+      assertThat(this.visitor.relationshipType).isEqualTo(RelationshipType.OFFICIAL)
+      assertThat(this.visitor.relationshipCode).isEqualTo("POL")
+    }
+
+    verify(officialVisitRepository).findById(visitId)
+    verify(contactsService).getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)
+    verify(officialVisitorRepository).saveAndFlush(any())
+  }
+
+  @Test
+  fun `should fail to add a visitor if the visit ID specified was not found`() {
+    val visitId = 2L
+    val contactId = 4L
+    val offenderVisitVisitorId = 6L
+
+    val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
+
+    whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.empty())
+
+    assertThrows<EntityNotFoundException> {
+      syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
+    }
+
+    verify(officialVisitRepository).findById(visitId)
+    verifyNoInteractions(contactsService, officialVisitorRepository)
+  }
+
+  @Test
+  fun `should fail to add a visitor when there is a duplicate NOMIS offenderVisitVisitorId or contactId`() {
+    val visitSlotId = 1L
+    val visitId = 2L
+    val contactId = 4L
+    val offenderVisitVisitorId = 6L
+
+    // Mocked visit
+    val visitSlotEntity = prisonVisitSlotEntity(visitSlotId)
+    val visitRequest = createOfficialVisitRequest(visitId)
+    val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
+
+    val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
+
+    // Before calling the service add a duplicate visitor to the visit
+    officialVisitEntity.addVisitor(
+      visitorTypeCode = VisitorType.CONTACT,
+      relationshipTypeCode = visitorRequest.relationshipTypeCode!!,
+      relationshipCode = visitorRequest.relationshipToPrisoner!!,
+      contactId = visitorRequest.personId,
+      firstName = visitorRequest.firstName,
+      lastName = visitorRequest.lastName,
+      leadVisitor = visitorRequest.groupLeaderFlag!!,
+      assistedVisit = visitorRequest.assistedVisitFlag!!,
+      assistedNotes = visitorRequest.commentText,
+      createdBy = MOORLAND_PRISON_USER,
+      createdTime = visitorRequest.createDateTime!!,
+    )
+
+    whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
+
+    assertThrows<EntityInUseException> {
+      syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
+    }
+
+    verify(officialVisitRepository).findById(visitId)
+    verifyNoInteractions(contactsService, officialVisitorRepository)
+  }
+
+  private fun createOfficialVisitorRequest(offenderVisitVisitorId: Long, contactId: Long) = SyncCreateOfficialVisitorRequest(
+    offenderVisitVisitorId = offenderVisitVisitorId,
+    personId = contactId,
+    firstName = "First",
+    lastName = "Last",
+    relationshipTypeCode = RelationshipType.OFFICIAL,
+    relationshipToPrisoner = "POL",
+    groupLeaderFlag = false,
+    assistedVisitFlag = false,
+    commentText = "Notes",
+    createDateTime = createdTime,
+    createUsername = "Bob",
+  )
+
+  private fun prisonerContactSummary(
+    prisonerContactId: Long,
+    prisonerNumber: String,
+    contactId: Long,
+  ) = PrisonerContactSummary(
+    prisonerContactId = prisonerContactId,
+    contactId = contactId,
+    prisonerNumber = prisonerNumber,
+    lastName = "Last",
+    firstName = "First",
+    relationshipTypeCode = "OFFICIAL",
+    relationshipTypeDescription = "Official",
+    relationshipToPrisonerCode = "POL",
+    relationshipToPrisonerDescription = "Police officer",
+    isApprovedVisitor = true,
+    isNextOfKin = false,
+    isEmergencyContact = false,
+    isRelationshipActive = true,
+    currentTerm = true,
+    isStaff = false,
+    restrictionSummary = RestrictionsSummary(
+      active = emptySet(),
+      totalActive = 0,
+      totalExpired = 0,
+    ),
+  )
+
+  private fun createOfficialVisitorEntity(
+    officialVisit: OfficialVisitEntity,
+    visitorId: Long,
+    contactId: Long,
+    prisonerContactId: Long,
+    offenderVisitVisitorId: Long,
+  ) = OfficialVisitorEntity(
+    officialVisitorId = visitorId,
+    officialVisit = officialVisit,
+    visitorTypeCode = VisitorType.CONTACT,
+    firstName = "First",
+    lastName = "Last",
+    contactId = contactId,
+    prisonerContactId = prisonerContactId,
+    relationshipTypeCode = RelationshipType.OFFICIAL,
+    relationshipCode = "POL",
+    leadVisitor = false,
+    assistedVisit = false,
+    visitorNotes = "Notes",
+    offenderVisitVisitorId = offenderVisitVisitorId,
+    createdBy = "Test",
+    createdTime = LocalDateTime.now(),
+  )
 }
