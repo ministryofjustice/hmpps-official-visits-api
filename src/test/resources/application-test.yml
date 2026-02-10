@@ -39,6 +39,7 @@ feature:
         created: true
         updated: true
         cancelled: true
+        deleted: true
       visitor:
         created: true
         updated: true

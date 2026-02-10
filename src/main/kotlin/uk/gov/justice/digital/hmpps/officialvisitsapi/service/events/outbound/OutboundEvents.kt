@@ -33,6 +33,14 @@ enum class OutboundEvent(val eventType: String) {
       description = "An official visit has been cancelled",
     )
   },
+  VISIT_DELETED("official-visits-api.visit.deleted") {
+    override fun event(additionalInformation: AdditionalInformation, personReference: PersonReference?) = OutboundHMPPSDomainEvent(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+      personReference = personReference,
+      description = "An official visit has been deleted",
+    )
+  },
   VISITOR_CREATED("official-visits-api.visitor.created") {
     override fun event(additionalInformation: AdditionalInformation, personReference: PersonReference?) = OutboundHMPPSDomainEvent(
       eventType = eventType,

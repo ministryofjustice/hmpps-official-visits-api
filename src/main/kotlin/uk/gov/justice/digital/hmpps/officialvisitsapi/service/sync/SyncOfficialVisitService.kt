@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -9,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 
@@ -17,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisited
 class SyncOfficialVisitService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
 ) {
   fun getOfficialVisitById(officialVisitId: Long): SyncOfficialVisit {
@@ -29,6 +32,13 @@ class SyncOfficialVisitService(
 
     return ove.toSyncModel(pve)
   }
+
+  @Transactional
+  fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
+    officialVisitorRepository.deleteByOfficialVisit(officialVisit)
+    prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
+    officialVisitRepository.deleteById(officialVisit.officialVisitId)
+  }?.toSyncModel()
 
   @Transactional
   fun createOfficialVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {

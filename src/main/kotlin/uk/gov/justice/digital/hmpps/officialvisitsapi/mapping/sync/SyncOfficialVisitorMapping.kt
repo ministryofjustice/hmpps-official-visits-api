@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 
 fun OfficialVisitorEntity.toSyncModel(): SyncOfficialVisitor = SyncOfficialVisitor(
   officialVisitorId = this.officialVisitorId,
@@ -21,3 +22,10 @@ fun OfficialVisitorEntity.toSyncModel(): SyncOfficialVisitor = SyncOfficialVisit
 )
 
 fun List<OfficialVisitorEntity>.toSyncModel(): List<SyncOfficialVisitor> = map { it.toSyncModel() }
+
+fun OfficialVisitorEntity.toSyncItemModel(): SyncOfficialVisitorDeletionInfo = SyncOfficialVisitorDeletionInfo(
+  officialVisitorId = this.officialVisitorId,
+  contactId = this.contactId,
+)
+
+fun List<OfficialVisitorEntity>.toSyncItemModel(): List<SyncOfficialVisitorDeletionInfo> = map { it.toSyncItemModel() }
