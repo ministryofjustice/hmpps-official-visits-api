@@ -33,12 +33,13 @@ class OfficialVisitCompletionService(
     officialVisitRepository.saveAndFlush(
       officialVisit.complete(
         completionCode = request.completionReason!!,
+        completionNotes = request.completionNotes,
         prisonerSearchType = request.prisonerSearchType!!,
         visitorAttendance = request.visitorAttendance.associateBy(
           { it.officialVisitorId },
           { it.visitorAttendance!! },
         ),
-        user,
+        completedBy = user,
       ),
     )
 

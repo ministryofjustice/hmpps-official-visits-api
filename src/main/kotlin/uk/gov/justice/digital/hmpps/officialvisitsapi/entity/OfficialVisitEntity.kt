@@ -89,6 +89,8 @@ class OfficialVisitEntity(
   var completionCode: VisitCompletionType? = null
     private set
 
+  var completionNotes: String? = null
+
   @Enumerated(EnumType.STRING)
   var searchTypeCode: SearchLevelType? = null
     private set
@@ -148,6 +150,7 @@ class OfficialVisitEntity(
     prisonerSearchType: SearchLevelType,
     visitorAttendance: Map<Long, AttendanceType>,
     completedBy: User,
+    completionNotes: String?,
   ) = apply {
     require(this.visitStatusCode in listOf(VisitStatusType.SCHEDULED, VisitStatusType.EXPIRED)) {
       "Only scheduled or expired visits can be completed."
@@ -169,6 +172,7 @@ class OfficialVisitEntity(
 
     this.visitStatusCode = VisitStatusType.COMPLETED
     this.completionCode = completionCode
+    this.completionNotes = completionNotes
     this.searchTypeCode = prisonerSearchType
     this.updatedBy = completedBy.username
     this.updatedTime = timestamp
@@ -179,8 +183,6 @@ class OfficialVisitEntity(
     cancellationNotes: String?,
     cancelledBy: User,
   ) = apply {
-    // TODO - populate the cancellation reason when the field has been added to the entitiy.
-
     require(this.visitStatusCode in listOf(VisitStatusType.SCHEDULED, VisitStatusType.EXPIRED)) {
       "Only scheduled or expired visits can be cancelled."
     }
@@ -201,6 +203,7 @@ class OfficialVisitEntity(
 
     this.visitStatusCode = VisitStatusType.CANCELLED
     this.completionCode = cancellationCode
+    this.completionNotes = cancellationNotes
 
     this.updatedBy = cancelledBy.username
     this.updatedTime = timestamp

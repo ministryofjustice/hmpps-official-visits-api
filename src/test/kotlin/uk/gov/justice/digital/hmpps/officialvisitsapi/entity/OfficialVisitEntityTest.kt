@@ -21,12 +21,44 @@ import java.util.UUID
 
 class OfficialVisitEntityTest {
   @Test
-  fun `should complete scheduled official visit`() {
+  fun `should complete scheduled official visit with notes`() {
     val visit = scheduledFutureVisit()
 
     visit.visitStatusCode isEqualTo VisitStatusType.SCHEDULED
     visit.searchTypeCode isEqualTo null
     visit.completionCode isEqualTo null
+    visit.completionNotes isEqualTo null
+    visit.updatedBy isEqualTo null
+    visit.updatedTime isEqualTo null
+    visit.officialVisitors().single().attendanceCode isEqualTo null
+
+    visit.complete(
+      completionCode = VisitCompletionType.VISITOR_EARLY,
+      completionNotes = "completion notes",
+      prisonerSearchType = SearchLevelType.FULL,
+      visitorAttendance = mapOf(0L to AttendanceType.ATTENDED),
+      completedBy = MOORLAND_PRISON_USER,
+    )
+
+    visit.visitStatusCode isEqualTo VisitStatusType.COMPLETED
+    visit.searchTypeCode isEqualTo SearchLevelType.FULL
+    visit.completionCode isEqualTo VisitCompletionType.VISITOR_EARLY
+    visit.completionNotes isEqualTo "completion notes"
+    visit.updatedBy isEqualTo MOORLAND_PRISON_USER.username
+    visit.updatedTime isCloseTo now()
+    visit.officialVisitors().single().attendanceCode isEqualTo AttendanceType.ATTENDED
+    visit.officialVisitors().single().updatedBy isEqualTo MOORLAND_PRISON_USER.username
+    visit.officialVisitors().single().updatedTime isCloseTo now()
+  }
+
+  @Test
+  fun `should complete scheduled official visit without notes`() {
+    val visit = scheduledFutureVisit()
+
+    visit.visitStatusCode isEqualTo VisitStatusType.SCHEDULED
+    visit.searchTypeCode isEqualTo null
+    visit.completionCode isEqualTo null
+    visit.completionNotes isEqualTo null
     visit.updatedBy isEqualTo null
     visit.updatedTime isEqualTo null
     visit.officialVisitors().single().attendanceCode isEqualTo null
@@ -36,11 +68,13 @@ class OfficialVisitEntityTest {
       prisonerSearchType = SearchLevelType.FULL,
       visitorAttendance = mapOf(0L to AttendanceType.ATTENDED),
       completedBy = MOORLAND_PRISON_USER,
+      completionNotes = null,
     )
 
     visit.visitStatusCode isEqualTo VisitStatusType.COMPLETED
     visit.searchTypeCode isEqualTo SearchLevelType.FULL
     visit.completionCode isEqualTo VisitCompletionType.VISITOR_EARLY
+    visit.completionNotes isEqualTo null
     visit.updatedBy isEqualTo MOORLAND_PRISON_USER.username
     visit.updatedTime isCloseTo now()
     visit.officialVisitors().single().attendanceCode isEqualTo AttendanceType.ATTENDED
@@ -54,6 +88,7 @@ class OfficialVisitEntityTest {
       .complete(
         completionCode = VisitCompletionType.VISITOR_EARLY,
         prisonerSearchType = SearchLevelType.FULL,
+        completionNotes = "completion notes",
         visitorAttendance = emptyMap(),
         completedBy = MOORLAND_PRISON_USER,
       )
@@ -61,6 +96,7 @@ class OfficialVisitEntityTest {
     val exception = assertThrows<IllegalArgumentException> {
       completedVisit.complete(
         completionCode = VisitCompletionType.VISITOR_EARLY,
+        completionNotes = "completion notes",
         prisonerSearchType = SearchLevelType.FULL,
         visitorAttendance = emptyMap(),
         completedBy = MOORLAND_PRISON_USER,
@@ -81,6 +117,7 @@ class OfficialVisitEntityTest {
     val exception = assertThrows<IllegalArgumentException> {
       cancelledVisit.complete(
         completionCode = VisitCompletionType.VISITOR_EARLY,
+        completionNotes = "completion notes",
         prisonerSearchType = SearchLevelType.FULL,
         visitorAttendance = emptyMap(),
         completedBy = MOORLAND_PRISON_USER,
@@ -95,6 +132,7 @@ class OfficialVisitEntityTest {
     val exception = assertThrows<IllegalArgumentException> {
       scheduledFutureVisit().complete(
         completionCode = VisitCompletionType.VISITOR_CANCELLED,
+        completionNotes = "completion notes",
         prisonerSearchType = SearchLevelType.FULL,
         visitorAttendance = emptyMap(),
         completedBy = MOORLAND_PRISON_USER,
@@ -105,12 +143,13 @@ class OfficialVisitEntityTest {
   }
 
   @Test
-  fun `should cancel scheduled official visit`() {
+  fun `should cancel scheduled official visit with notes`() {
     val visit = scheduledFutureVisit()
 
     visit.visitStatusCode isEqualTo VisitStatusType.SCHEDULED
     visit.searchTypeCode isEqualTo null
     visit.completionCode isEqualTo null
+    visit.completionNotes isEqualTo null
     visit.updatedBy isEqualTo null
     visit.updatedTime isEqualTo null
     visit.officialVisitors().single().attendanceCode isEqualTo null
@@ -124,6 +163,36 @@ class OfficialVisitEntityTest {
     visit.visitStatusCode isEqualTo VisitStatusType.CANCELLED
     visit.searchTypeCode isEqualTo null
     visit.completionCode isEqualTo VisitCompletionType.VISITOR_CANCELLED
+    visit.completionNotes isEqualTo "cancellation notes"
+    visit.updatedBy isEqualTo MOORLAND_PRISON_USER.username
+    visit.updatedTime isCloseTo now()
+    visit.officialVisitors().single().attendanceCode isEqualTo AttendanceType.ABSENT
+    visit.officialVisitors().single().updatedBy isEqualTo MOORLAND_PRISON_USER.username
+    visit.officialVisitors().single().updatedTime isCloseTo now()
+  }
+
+  @Test
+  fun `should cancel scheduled official visit without notes`() {
+    val visit = scheduledFutureVisit()
+
+    visit.visitStatusCode isEqualTo VisitStatusType.SCHEDULED
+    visit.searchTypeCode isEqualTo null
+    visit.completionCode isEqualTo null
+    visit.completionNotes isEqualTo null
+    visit.updatedBy isEqualTo null
+    visit.updatedTime isEqualTo null
+    visit.officialVisitors().single().attendanceCode isEqualTo null
+
+    visit.cancel(
+      cancellationCode = VisitCompletionType.VISITOR_CANCELLED,
+      cancellationNotes = null,
+      cancelledBy = MOORLAND_PRISON_USER,
+    )
+
+    visit.visitStatusCode isEqualTo VisitStatusType.CANCELLED
+    visit.searchTypeCode isEqualTo null
+    visit.completionCode isEqualTo VisitCompletionType.VISITOR_CANCELLED
+    visit.completionNotes isEqualTo null
     visit.updatedBy isEqualTo MOORLAND_PRISON_USER.username
     visit.updatedTime isCloseTo now()
     visit.officialVisitors().single().attendanceCode isEqualTo AttendanceType.ABSENT
@@ -155,6 +224,7 @@ class OfficialVisitEntityTest {
     val completedVisit = scheduledFutureVisit()
       .complete(
         completionCode = VisitCompletionType.VISITOR_EARLY,
+        completionNotes = "completion notes",
         prisonerSearchType = SearchLevelType.FULL,
         visitorAttendance = emptyMap(),
         completedBy = MOORLAND_PRISON_USER,
