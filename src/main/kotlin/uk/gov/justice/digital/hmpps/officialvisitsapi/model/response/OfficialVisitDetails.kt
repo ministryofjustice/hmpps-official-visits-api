@@ -63,6 +63,9 @@ class OfficialVisitDetails(
   @Schema(description = "The Official visit completion type")
   val completionCode: VisitCompletionType?,
 
+  @Schema(description = "Optional notes captured when a visit is either cancelled or completed")
+  val completionNotes: String?,
+
   @Schema(description = "The Official visit creation description")
   val completionDescription: String?, // from reference data
 

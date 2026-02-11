@@ -11,6 +11,7 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
@@ -28,7 +29,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
@@ -361,6 +364,51 @@ class SyncFacadeTest {
 
       verify(syncOfficialVisitService).getOfficialVisitById(1L)
     }
+
+    @Test
+    fun `should return success even if non existent id passed for deletion`() {
+      whenever(syncOfficialVisitService.deleteOfficialVisit(99L)).thenReturn(null)
+      facade.deleteOfficialVisit(99L)
+      verify(syncOfficialVisitService).deleteOfficialVisit(99L)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `should delete official visit and return response object`() {
+      val response = syncOfficialVisitDeleted(1L)
+
+      whenever(syncOfficialVisitService.deleteOfficialVisit(1L)).thenReturn(response)
+      facade.deleteOfficialVisit(1L)
+      verify(syncOfficialVisitService).deleteOfficialVisit(1L)
+
+      verify(outboundEventsService, atLeastOnce()).send(
+        outboundEvent = OutboundEvent.VISIT_DELETED,
+        prisonCode = MOORLAND,
+        source = Source.NOMIS,
+        identifier = 1L, // official visit ID
+        noms = "A1234AA",
+        user = UserService.getClientAsUser("NOMIS"),
+      )
+      verify(outboundEventsService, atLeastOnce()).send(
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
+        prisonCode = MOORLAND,
+        identifier = 1L, // official visit ID
+        secondIdentifier = 1L, // official visitor ID
+        user = UserService.getClientAsUser("NOMIS"),
+      )
+    }
+
+    private fun syncOfficialVisitDeleted(officialVisitId: Long) = SyncOfficialVisitDeletionInfo(
+      officialVisitId = officialVisitId,
+      prisonCode = MOORLAND,
+      prisonerNumber = "A1234AA",
+      visitors = listOf(
+        SyncOfficialVisitorDeletionInfo(
+          officialVisitorId = 1L,
+          contactId = 2L,
+        ),
+      ),
+    )
 
     private fun syncOfficialVisitResponse(officialVisitId: Long) = SyncOfficialVisit(
       officialVisitId = officialVisitId,

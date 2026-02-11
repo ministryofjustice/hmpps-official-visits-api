@@ -106,6 +106,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
       officialVisitId = scheduledVisit.officialVisitId,
       request = OfficialVisitCompletionRequest(
         completionReason = VisitCompletionType.VISITOR_EARLY,
+        completionNotes = "completed by integration test",
         prisonerAttendance = AttendanceType.ATTENDED,
         prisonerSearchType = SearchLevelType.FULL,
         visitorAttendance = listOf(
@@ -122,6 +123,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
     with(completedVisit) {
       visitStatus isEqualTo VisitStatusType.COMPLETED
       completionCode isEqualTo VisitCompletionType.VISITOR_EARLY
+      completionNotes isEqualTo "completed by integration test"
       searchTypeCode isEqualTo SearchLevelType.FULL
       updatedBy isEqualTo MOORLAND_PRISON_USER.username
       updatedTime isCloseTo now()

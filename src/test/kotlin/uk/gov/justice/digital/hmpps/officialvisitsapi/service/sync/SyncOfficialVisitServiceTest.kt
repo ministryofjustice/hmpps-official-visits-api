@@ -47,7 +47,6 @@ class SyncOfficialVisitServiceTest {
   private val contactsService: ContactsService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
-  private val updatedTime = LocalDateTime.now().minusDays(1)
 
   private val syncOfficialVisitService = SyncOfficialVisitService(
     officialVisitRepository,
@@ -172,6 +171,37 @@ class SyncOfficialVisitServiceTest {
     verify(prisonVisitSlotRepository).findById(1L)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
     verify(prisonerVisitedRepository).saveAndFlush(prisonerVisitedEntity)
+  }
+
+  @Test
+  fun `should delete official visit by ID if exist`() {
+    val visitEntity = createAVisitEntity(1L)
+
+    whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
+    val syncResponse = syncOfficialVisitService.deleteOfficialVisit(1L)
+    assertThat(syncResponse?.officialVisitId).isEqualTo(visitEntity.officialVisitId)
+    assertThat(syncResponse?.prisonerNumber).isEqualTo(visitEntity.prisonerNumber)
+    assertThat(syncResponse?.prisonCode).isEqualTo(visitEntity.prisonCode)
+    assertThat(syncResponse?.visitors).size().isEqualTo(2)
+    var index = 0
+    syncResponse?.visitors?.forEach { visitor ->
+      assertThat(visitor.contactId).isEqualTo(syncResponse.visitors[index].contactId)
+      assertThat(visitor.officialVisitorId).isEqualTo(syncResponse.visitors[index].officialVisitorId)
+      index++
+    }
+    verify(officialVisitRepository).findById(1L)
+    verify(prisonerVisitedRepository).deleteByOfficialVisit(visitEntity)
+    verify(officialVisitorRepository).deleteByOfficialVisit(visitEntity)
+    verify(officialVisitRepository).deleteById(1L)
+  }
+
+  @Test
+  fun `should silently succeed when the official visit ID is not found`() {
+    whenever(officialVisitRepository.findById(99L)).thenReturn(Optional.empty())
+    syncOfficialVisitService.deleteOfficialVisit(99L)
+
+    verify(officialVisitRepository).findById(99L)
+    verifyNoInteractions(prisonerVisitedRepository, officialVisitorRepository)
   }
 
   private fun createOfficialVisitRequest(visitSlotId: Long) = SyncCreateOfficialVisitRequest(

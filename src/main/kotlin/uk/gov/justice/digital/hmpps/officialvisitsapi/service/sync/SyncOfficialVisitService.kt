@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -45,6 +46,13 @@ class SyncOfficialVisitService(
 
     return ove.toSyncModel(pve)
   }
+
+  @Transactional
+  fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
+    officialVisitorRepository.deleteByOfficialVisit(officialVisit)
+    prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
+    officialVisitRepository.deleteById(officialVisit.officialVisitId)
+  }?.toSyncModel()
 
   @Transactional
   fun createOfficialVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {

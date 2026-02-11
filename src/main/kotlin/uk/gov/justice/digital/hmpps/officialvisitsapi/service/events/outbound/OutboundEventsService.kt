@@ -34,6 +34,7 @@ class OutboundEventsService(
         OutboundEvent.VISIT_CREATED,
         OutboundEvent.VISIT_UPDATED,
         OutboundEvent.VISIT_CANCELLED,
+        OutboundEvent.VISIT_DELETED,
         -> {
           sendSafely(
             outboundEvent,

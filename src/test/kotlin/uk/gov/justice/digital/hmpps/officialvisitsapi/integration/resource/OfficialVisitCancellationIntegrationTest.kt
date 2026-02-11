@@ -105,6 +105,7 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
       officialVisitId = scheduledVisit.officialVisitId,
       request = OfficialVisitCancellationRequest(
         cancellationReason = VisitCompletionType.VISITOR_CANCELLED,
+        cancellationNotes = "cancelled by integration test",
       ),
     )
 
@@ -113,6 +114,7 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
     with(cancelledVisit) {
       visitStatus isEqualTo VisitStatusType.CANCELLED
       completionCode isEqualTo VisitCompletionType.VISITOR_CANCELLED
+      completionNotes isEqualTo "cancelled by integration test"
       searchTypeCode isEqualTo null
       updatedBy isEqualTo MOORLAND_PRISON_USER.username
       updatedTime isCloseTo now()
