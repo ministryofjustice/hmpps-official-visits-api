@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 class OfficialVisitCancellationRequestTest : ValidatorBase<OfficialVisitCancellationRequest>() {
   private val request = OfficialVisitCancellationRequest(
     cancellationReason = VisitCompletionType.VISITOR_CANCELLED,
-    cancellationNotes = "Visitor cancelled due to unforeseen circumstances",
+    cancellationNotes = "a".repeat(240),
   )
 
   @Test
@@ -19,6 +19,7 @@ class OfficialVisitCancellationRequestTest : ValidatorBase<OfficialVisitCancella
   @Test
   fun `should be errors for invalid requests`() {
     request.copy(cancellationReason = null) failsWithSingle ModelError("cancellationReason", "The cancellation reason is mandatory")
+    request.copy(cancellationNotes = "a".repeat(241)) failsWithSingle ModelError("cancellationNotes", "The cancellation notes should not exceed 240 characters")
 
     VisitCompletionType.entries.filterNot { it.isCancellation }.forEach { reason ->
       request.copy(cancellationReason = reason) failsWithSingle ModelError("invalidCancellationReason", "The cancellation reason is not valid or allowed")

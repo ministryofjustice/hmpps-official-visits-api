@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 
 data class OfficialVisitCancellationRequest(
@@ -15,6 +16,7 @@ data class OfficialVisitCancellationRequest(
   @field:NotNull(message = "The cancellation reason is mandatory")
   val cancellationReason: VisitCompletionType?,
 
+  @field:Size(max = 240, message = "The cancellation notes should not exceed {max} characters")
   @Schema(description = "Optional notes containing details of the reason for cancellation", example = "Prisoner in hospital")
   val cancellationNotes: String? = null,
 ) {

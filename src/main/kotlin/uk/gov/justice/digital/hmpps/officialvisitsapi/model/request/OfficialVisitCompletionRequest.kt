@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
@@ -18,6 +19,7 @@ data class OfficialVisitCompletionRequest(
   @field:NotNull(message = "The completion reason is mandatory")
   val completionReason: VisitCompletionType?,
 
+  @field:Size(max = 240, message = "The completion notes should not exceed {max} characters")
   @Schema(description = "Optional notes containing details of the completion", example = "The visitor was late arriving so the the prisoner may need another visit to be arranged.")
   val completionNotes: String? = null,
 
