@@ -155,6 +155,11 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
         description = "The prison time slot had visit slots associated with it and cannot be deleted.",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Could not find the time slot ",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
