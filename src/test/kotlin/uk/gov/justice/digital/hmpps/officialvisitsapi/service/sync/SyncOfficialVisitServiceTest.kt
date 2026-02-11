@@ -121,12 +121,12 @@ class SyncOfficialVisitServiceTest {
     val result = syncOfficialVisitService.createOfficialVisit(request)
 
     with(result) {
-      assertThat(this.prisonCode).isEqualTo(request.prisonCode)
-      assertThat(this.prisonerNumber).isEqualTo(request.prisonerNumber)
-      assertThat(this.visitDate).isEqualTo(request.visitDate)
-      assertThat(this.startTime).isEqualTo(request.startTime)
-      assertThat(this.endTime).isEqualTo(request.endTime)
-      assertThat(this.dpsLocationId).isEqualTo(request.dpsLocationId)
+      assertThat(prisonCode).isEqualTo(request.prisonCode)
+      assertThat(prisonerNumber).isEqualTo(request.prisonerNumber)
+      assertThat(visitDate).isEqualTo(request.visitDate)
+      assertThat(startTime).isEqualTo(request.startTime)
+      assertThat(endTime).isEqualTo(request.endTime)
+      assertThat(dpsLocationId).isEqualTo(request.dpsLocationId)
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
@@ -290,15 +290,15 @@ class SyncOfficialVisitServiceTest {
     val result = syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
 
     with(result) {
-      assertThat(this.prisonCode).isEqualTo(officialVisitEntity.prisonCode)
-      assertThat(this.prisonerNumber).isEqualTo(officialVisitEntity.prisonerNumber)
-      assertThat(this.officialVisitId).isEqualTo(officialVisitEntity.officialVisitId)
-      assertThat(this.officialVisitorId).isEqualTo(officialVisitorEntity.officialVisitorId)
+      assertThat(prisonCode).isEqualTo(officialVisitEntity.prisonCode)
+      assertThat(prisonerNumber).isEqualTo(officialVisitEntity.prisonerNumber)
+      assertThat(officialVisitId).isEqualTo(officialVisitEntity.officialVisitId)
+      assertThat(officialVisitorId).isEqualTo(officialVisitorEntity.officialVisitorId)
 
-      assertThat(this.visitor.contactId).isEqualTo(contactId)
-      assertThat(this.visitor.officialVisitorId).isEqualTo(officialVisitorId)
-      assertThat(this.visitor.relationshipType).isEqualTo(RelationshipType.OFFICIAL)
-      assertThat(this.visitor.relationshipCode).isEqualTo("POL")
+      assertThat(visitor.contactId).isEqualTo(contactId)
+      assertThat(visitor.officialVisitorId).isEqualTo(officialVisitorId)
+      assertThat(visitor.relationshipType).isEqualTo(RelationshipType.OFFICIAL)
+      assertThat(visitor.relationshipCode).isEqualTo("POL")
     }
 
     verify(officialVisitRepository).findById(visitId)

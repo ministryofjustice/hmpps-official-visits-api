@@ -116,7 +116,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should fail to get visit when the ID does not exist`() {
+  fun `should fail to get a visit when the ID does not exist`() {
     webTestClient.get()
       .uri("/sync/official-visit/id/{officialVisitId}", 999)
       .accept(MediaType.APPLICATION_JSON)
@@ -186,7 +186,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should get silently succeed delete when the official visit ID is not found`() {
+  fun `should silently succeed delete when the official visit ID is not found`() {
     webTestClient.delete(99L)
 
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_DELETED)
