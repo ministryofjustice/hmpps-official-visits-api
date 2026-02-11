@@ -12,6 +12,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactEmailDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactPhoneDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
@@ -142,6 +144,45 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
                   genderCode = null,
                   genderDescription = null,
                   staff = null,
+                ),
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubPrisonerContactRelationships(prisonerNumber: String, contactId: Long = 1) {
+    stubFor(
+      get(urlPathEqualTo("/prisoner/$prisonerNumber/contact/$contactId"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                listOf(
+                  PrisonerContactSummary(
+                    prisonerContactId = 2L,
+                    contactId = contactId,
+                    prisonerNumber = prisonerNumber,
+                    lastName = "Last",
+                    firstName = "First",
+                    relationshipTypeCode = "OFFICIAL",
+                    relationshipTypeDescription = "Official",
+                    relationshipToPrisonerCode = "POL",
+                    relationshipToPrisonerDescription = "Police officer",
+                    isApprovedVisitor = true,
+                    isNextOfKin = false,
+                    isEmergencyContact = false,
+                    isRelationshipActive = true,
+                    currentTerm = true,
+                    isStaff = false,
+                    restrictionSummary = RestrictionsSummary(
+                      active = emptySet<RestrictionTypeDetails>(),
+                      totalActive = 0,
+                      totalExpired = 0,
+                    ),
+                  ),
                 ),
               ),
             )
