@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
+package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
@@ -9,6 +9,7 @@ import java.time.LocalTime
 
 @Schema(description = "Response for a prison time slot")
 data class TimeSlotResponse(
+
   @Schema(description = "Prison time slot ID", example = "18767")
   val prisonTimeSlotId: Long,
 

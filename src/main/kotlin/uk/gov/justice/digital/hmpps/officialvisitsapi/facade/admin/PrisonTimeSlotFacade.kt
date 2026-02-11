@@ -1,10 +1,10 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
+package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.admin
 
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.UpdateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonTimeSlotService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin.PrisonTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source

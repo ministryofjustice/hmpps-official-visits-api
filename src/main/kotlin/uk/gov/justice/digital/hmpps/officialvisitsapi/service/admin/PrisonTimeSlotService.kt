@@ -1,16 +1,17 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin
 
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
-import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.UpdateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.TimeSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin.toEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin.toModel
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
-import java.time.LocalDateTime.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import java.time.LocalDateTime
 
 @Service
 class PrisonTimeSlotService(
@@ -30,7 +31,7 @@ class PrisonTimeSlotService(
       effectiveDate = request.effectiveDate,
       expiryDate = request.expiryDate,
       updatedBy = user.username,
-      updatedTime = now(),
+      updatedTime = LocalDateTime.now(),
     )
     return prisonTimeSlotRepository.save(changedTimeSlotEntity).toModel()
   }

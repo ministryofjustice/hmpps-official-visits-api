@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
+package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
@@ -6,8 +6,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import java.time.LocalDate
 import java.time.LocalTime
 
-@Schema(description = "Request to create a new prison time slot for official visits")
-data class CreateTimeSlotRequest(
+@Schema(description = "Request to Update a new prison visit slot for official visits")
+data class UpdateTimeSlotRequest(
   @Schema(description = "Prison code", example = "MDI", required = true)
   val prisonCode: String,
 
@@ -29,5 +29,4 @@ data class CreateTimeSlotRequest(
   @Schema(description = "Expiry date. The date from which this time slot will no longer be considered active", example = "2027-01-21")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val expiryDate: LocalDate? = null,
-
 )
