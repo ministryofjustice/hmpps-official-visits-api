@@ -1,6 +1,6 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
+package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.admin
 
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -94,10 +94,10 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     // Ensure the changes have been applied but the ID is the same
-    assertThat(timeSLot.prisonTimeSlotId).isEqualTo(savedPrisonTimeSlotId)
-    assertThat(timeSLot.dayCode).isEqualTo(updateRequest.dayCode)
-    assertThat(timeSLot.startTime).isEqualTo(updateRequest.startTime)
-    assertThat(timeSLot.endTime).isEqualTo(updateRequest.endTime)
+    Assertions.assertThat(timeSLot.prisonTimeSlotId).isEqualTo(savedPrisonTimeSlotId)
+    Assertions.assertThat(timeSLot.dayCode).isEqualTo(updateRequest.dayCode)
+    Assertions.assertThat(timeSLot.startTime).isEqualTo(updateRequest.startTime)
+    Assertions.assertThat(timeSLot.endTime).isEqualTo(updateRequest.endTime)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.TIME_SLOT_UPDATED,
@@ -137,21 +137,21 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should fail to delete time slot which has associated visit slots`() {
     webTestClient.delete()
-      .uri("/sync/time-slot/{prisonTimeSlotId}", 1L)
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
       .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
   }
 
   private fun TimeSlotResponse.assertWithCreateRequest(request: CreateTimeSlotRequest) {
-    assertThat(prisonCode).isEqualTo(request.prisonCode)
-    assertThat(dayCode).isEqualTo(request.dayCode)
-    assertThat(startTime).isEqualTo(request.startTime)
-    assertThat(endTime).isEqualTo(request.endTime)
-    assertThat(effectiveDate).isEqualTo(request.effectiveDate)
-    assertThat(expiryDate).isEqualTo(request.expiryDate)
+    Assertions.assertThat(prisonCode).isEqualTo(request.prisonCode)
+    Assertions.assertThat(dayCode).isEqualTo(request.dayCode)
+    Assertions.assertThat(startTime).isEqualTo(request.startTime)
+    Assertions.assertThat(endTime).isEqualTo(request.endTime)
+    Assertions.assertThat(effectiveDate).isEqualTo(request.effectiveDate)
+    Assertions.assertThat(expiryDate).isEqualTo(request.expiryDate)
   }
 
   private fun createTimeSlotRequest() = CreateTimeSlotRequest(
