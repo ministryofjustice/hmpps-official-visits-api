@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.admin
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -62,18 +63,69 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+
+    webTestClient.put()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(updateTimeSlotRequest())
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(role)))
+      .exchange()
+      .expectStatus()
+      .isForbidden
+
+    webTestClient.delete()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(role)))
+      .exchange()
+      .expectStatus()
+      .isForbidden
   }
 
   @Test
   fun `should return unauthorized if no token is provided`() {
     webTestClient.post()
-      .uri("/sync/tim-slot")
+      .uri("/admin/time-slot")
       .accept(MediaType.APPLICATION_JSON)
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(createTimeSlotRequest())
       .exchange()
       .expectStatus()
       .isUnauthorized
+
+    webTestClient.put()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(updateTimeSlotRequest())
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+
+    webTestClient.delete()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `should get an existing time slot by ID`() {
+    val timeSlot = webTestClient.get()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", savedPrisonTimeSlotId)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<TimeSlotResponse>()
+      .returnResult().responseBody!!
+
+    timeSlot.assertWithCreateRequest(createTimeSlotRequest())
+    assertThat(timeSlot.prisonTimeSlotId).isGreaterThan(0)
   }
 
   @Test
@@ -93,7 +145,6 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectBody<SyncTimeSlot>()
       .returnResult().responseBody!!
 
-    // Ensure the changes have been applied but the ID is the same
     Assertions.assertThat(timeSLot.prisonTimeSlotId).isEqualTo(savedPrisonTimeSlotId)
     Assertions.assertThat(timeSLot.dayCode).isEqualTo(updateRequest.dayCode)
     Assertions.assertThat(timeSLot.startTime).isEqualTo(updateRequest.startTime)
@@ -108,6 +159,22 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
       ),
     )
+  }
+
+  @Test
+  fun `should fail to update time slot which does not exist`() {
+    val updateRequest = updateTimeSlotRequest()
+
+    val timeSLot = webTestClient.put()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 99L)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
+      .bodyValue(updateRequest)
+      .exchange()
+      .expectStatus()
+      .is4xxClientError
+      .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
   }
 
   @Test
@@ -143,6 +210,18 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
+  }
+
+  @Test
+  fun `should fail to delete time slot which does not exist`() {
+    webTestClient.delete()
+      .uri("/admin/time-slot/{prisonTimeSlotId}", 99)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
+      .exchange()
+      .expectStatus()
+      .is4xxClientError
+      .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
   }
 
   private fun TimeSlotResponse.assertWithCreateRequest(request: CreateTimeSlotRequest) {
