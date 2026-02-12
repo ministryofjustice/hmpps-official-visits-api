@@ -420,7 +420,6 @@ class SyncOfficialVisitServiceTest {
 
     verify(officialVisitRepository).findById(officialVisitId)
     verify(visitorEquipmentRepository).deleteAllByOfficialVisitor(officialVisitorEntity)
-    verify(officialVisitorRepository).deleteById(officialVisitorId)
   }
 
   @Test

@@ -26,7 +26,7 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 class SyncOfficialVisitService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val officialVisitorRepository: OfficialVisitorRepository,
@@ -39,6 +39,7 @@ class SyncOfficialVisitService(
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
+  @Transactional(readOnly = true)
   fun getOfficialVisitById(officialVisitId: Long): SyncOfficialVisit {
     val ove = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("Official visit with id $officialVisitId not found")
@@ -50,7 +51,6 @@ class SyncOfficialVisitService(
     return ove.toSyncModel(pve)
   }
 
-  @Transactional
   fun createOfficialVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
     val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
@@ -73,14 +73,12 @@ class SyncOfficialVisitService(
     return visit.toSyncModel(prisonVisited)
   }
 
-  @Transactional
   fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
     officialVisitorRepository.deleteByOfficialVisit(officialVisit)
     prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
     officialVisitRepository.deleteById(officialVisit.officialVisitId)
   }?.toSyncModel()
 
-  @Transactional
   fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
@@ -134,7 +132,6 @@ class SyncOfficialVisitService(
     )
   }
 
-  @Transactional
   fun removeOfficialVisitor(officialVisitId: Long, officialVisitorId: Long): SyncRemoveVisitorResponse? {
     val visit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return null
     visit.officialVisitors().forEach { visitor ->
@@ -142,7 +139,9 @@ class SyncOfficialVisitService(
         if (visitor.visitorEquipment != null) {
           visitorEquipmentRepository.deleteAllByOfficialVisitor(visitor)
         }
-        officialVisitorRepository.deleteById(visitor.officialVisitorId)
+
+        visit.removeVisitor(visitor)
+
         return SyncRemoveVisitorResponse(
           officialVisitId = visit.officialVisitId,
           officialVisitorId = visitor.officialVisitorId,
