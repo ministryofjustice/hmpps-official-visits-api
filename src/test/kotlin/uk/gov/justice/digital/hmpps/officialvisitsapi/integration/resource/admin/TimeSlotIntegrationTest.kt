@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.admi
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -34,8 +35,19 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
     stubEvents.reset()
   }
 
-  @Test
+  @BeforeEach
   @Transactional
+  fun setupTest() {
+    clearAllVisitData()
+  }
+
+  @AfterEach
+  @Transactional
+  fun tearDown() {
+    clearAllVisitData()
+  }
+
+  @Test
   fun `should create a new prison time slot`() {
     val timeslot = webTestClient.createTimeSlot()
     timeslot.assertWithCreateRequest(createTimeSlotRequest())
