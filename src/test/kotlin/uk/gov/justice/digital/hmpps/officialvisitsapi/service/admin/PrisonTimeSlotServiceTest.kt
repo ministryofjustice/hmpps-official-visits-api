@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin.toEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import java.time.LocalDate
@@ -157,7 +157,7 @@ class PrisonTimeSlotServiceTest {
     verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 
-  private fun PrisonTimeSlotEntity.assertWithResponse(model: TimeSlotResponse) {
+  private fun PrisonTimeSlotEntity.assertWithResponse(model: TimeSlot) {
     assertThat(prisonTimeSlotId).isEqualTo(model.prisonTimeSlotId)
     assertThat(prisonCode).isEqualTo(model.prisonCode)
     assertThat(dayCode).isEqualTo(model.dayCode)
@@ -168,7 +168,7 @@ class PrisonTimeSlotServiceTest {
     assertThat(createdBy).isEqualTo(model.createdBy)
   }
 
-  private fun TimeSlotResponse.assertWithCreateRequest(request: CreateTimeSlotRequest) {
+  private fun TimeSlot.assertWithCreateRequest(request: CreateTimeSlotRequest) {
     assertThat(prisonCode).isEqualTo(request.prisonCode)
     assertThat(dayCode).isEqualTo(request.dayCode)
     assertThat(startTime).isEqualTo(request.startTime)

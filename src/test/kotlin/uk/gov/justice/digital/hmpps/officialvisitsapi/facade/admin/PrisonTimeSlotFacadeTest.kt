@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin.PrisonTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
@@ -154,7 +154,7 @@ class PrisonTimeSlotFacadeTest {
     expiryDate = today().plusYears(1),
   )
 
-  private fun timeSlotResponse(prisonTimeSlotId: Long) = TimeSlotResponse(
+  private fun timeSlotResponse(prisonTimeSlotId: Long) = TimeSlot(
     prisonTimeSlotId = prisonTimeSlotId,
     prisonCode = MOORLAND,
     dayCode = DayType.MON,

@@ -2,10 +2,10 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import java.time.LocalDateTime.now
 
-fun PrisonTimeSlotEntity.toModel(): TimeSlotResponse = TimeSlotResponse(
+fun PrisonTimeSlotEntity.toModel(): TimeSlot = TimeSlot(
   prisonTimeSlotId = this.prisonTimeSlotId,
   prisonCode = this.prisonCode,
   dayCode = this.dayCode,

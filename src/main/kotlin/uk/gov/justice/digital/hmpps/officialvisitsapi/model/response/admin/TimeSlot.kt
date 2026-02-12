@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Schema(description = "Response for a prison time slot")
-data class TimeSlotResponse(
+data class TimeSlot(
 
   @Schema(description = "Prison time slot ID", example = "18767")
   val prisonTimeSlotId: Long,

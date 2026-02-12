@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestCont
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.admin.PrisonTimeSlotFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Admin")
@@ -49,7 +49,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
         responseCode = "200",
         description = "The prison time slot matching the ID provided in the request",
         content = [
-          Content(mediaType = "application/json", schema = Schema(implementation = TimeSlotResponse::class)),
+          Content(mediaType = "application/json", schema = Schema(implementation = TimeSlot::class)),
         ],
       ),
       ApiResponse(
@@ -62,7 +62,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
   fun syncGetTimeSlotById(
     @Parameter(description = "The internal ID for a prison time slot", required = true)
     @PathVariable prisonTimeSlotId: Long,
-  ): TimeSlotResponse = facade.getTimeSlotById(prisonTimeSlotId)
+  ): TimeSlot = facade.getTimeSlotById(prisonTimeSlotId)
 
   @PostMapping(path = ["/time-slot"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
@@ -81,7 +81,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
         content = [
           Content(
             mediaType = "application/json",
-            schema = Schema(implementation = TimeSlotResponse::class),
+            schema = Schema(implementation = TimeSlot::class),
           ),
         ],
       ),
@@ -96,7 +96,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
   fun createTimeSlot(
     @Valid @RequestBody request: CreateTimeSlotRequest,
     httpRequest: HttpServletRequest,
-  ): TimeSlotResponse = facade.createPrisonTimeSlot(request, httpRequest.getLocalRequestContext().user)
+  ): TimeSlot = facade.createPrisonTimeSlot(request, httpRequest.getLocalRequestContext().user)
 
   @PutMapping(path = ["/time-slot/{prisonTimeSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
@@ -115,7 +115,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
         content = [
           Content(
             mediaType = "application/json",
-            schema = Schema(implementation = TimeSlotResponse::class),
+            schema = Schema(implementation = TimeSlot::class),
           ),
         ],
       ),

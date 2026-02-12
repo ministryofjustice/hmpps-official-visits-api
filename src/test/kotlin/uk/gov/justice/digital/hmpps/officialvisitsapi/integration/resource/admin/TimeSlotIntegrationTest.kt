@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTes
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -121,7 +121,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<TimeSlotResponse>()
+      .expectBody<TimeSlot>()
       .returnResult().responseBody!!
 
     timeSlot.assertWithCreateRequest(createTimeSlotRequest())
@@ -224,7 +224,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
   }
 
-  private fun TimeSlotResponse.assertWithCreateRequest(request: CreateTimeSlotRequest) {
+  private fun TimeSlot.assertWithCreateRequest(request: CreateTimeSlotRequest) {
     Assertions.assertThat(prisonCode).isEqualTo(request.prisonCode)
     Assertions.assertThat(dayCode).isEqualTo(request.dayCode)
     Assertions.assertThat(startTime).isEqualTo(request.startTime)
@@ -261,6 +261,6 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
     .expectStatus()
     .isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody<TimeSlotResponse>()
+    .expectBody<TimeSlot>()
     .returnResult().responseBody!!
 }
