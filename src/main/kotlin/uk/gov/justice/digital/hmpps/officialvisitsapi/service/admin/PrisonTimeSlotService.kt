@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeS
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
@@ -27,12 +28,15 @@ class PrisonTimeSlotService(
     return prisonTimeSlotEntity.toModel()
   }
 
-  fun create(request: CreateTimeSlotRequest, user: User): TimeSlot = prisonTimeSlotRepository.saveAndFlush(request.toEntity(user.username)).toModel()
+  fun create(request: CreateTimeSlotRequest, user: User): TimeSlot {
+    request.validate()
+    return prisonTimeSlotRepository.saveAndFlush(request.toEntity(user.username)).toModel()
+  }
 
   fun update(prisonTimeSlotId: Long, request: UpdateTimeSlotRequest, user: User): TimeSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
-
+    request.validate()
     val changedTimeSlotEntity = timeSlotEntity.copy(
       dayCode = request.dayCode,
       startTime = request.startTime,
@@ -56,4 +60,14 @@ class PrisonTimeSlotService(
   }
 
   private fun noVisitSlotsExistFor(prisonTimeSlotId: Long): Boolean = !prisonVisitSlotRepository.existsByPrisonTimeSlotId(prisonTimeSlotId)
+
+  private fun UpdateTimeSlotRequest.validate() = also {
+    require(startTime < endTime) { "Prison time slot start time must be before end time" }
+    require(expiryDate == null || expiryDate >= LocalDate.now()) { "Prison time slot expiry date must not be in the past" }
+  }
+
+  private fun CreateTimeSlotRequest.validate() = also {
+    require(startTime < endTime) { "Prison time slot start time must be before end time" }
+    require(expiryDate == null || expiryDate >= LocalDate.now()) { "Prison time slot expiry date must not be in the past" }
+  }
 }

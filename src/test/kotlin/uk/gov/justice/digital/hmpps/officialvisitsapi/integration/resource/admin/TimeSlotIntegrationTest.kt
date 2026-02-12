@@ -221,7 +221,8 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-      .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
+      .expectBody().jsonPath("$.userMessage")
+      .isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
   }
 
   @Test
@@ -234,6 +235,44 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectStatus()
       .is4xxClientError
       .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
+  }
+
+  @Test
+  fun `should fail create when Time slot endTime is less that startTime`() {
+    webTestClient.badRequest(
+      createTimeSlotRequest().copy(
+        startTime = LocalTime.now().plusMinutes(10),
+        endTime = LocalTime.now(),
+      ),
+      "Prison time slot start time must be before end time",
+    )
+  }
+
+  @Test
+  fun `should fail update when Time slot endTime is less that startTime`() {
+    webTestClient.badRequest(
+      updateTimeSlotRequest().copy(
+        startTime = LocalTime.now().plusMinutes(10),
+        endTime = LocalTime.now(),
+      ),
+      "Prison time slot start time must be before end time",
+    )
+  }
+
+  @Test
+  fun `should fail create when expiry date is in past`() {
+    webTestClient.badRequest(
+      createTimeSlotRequest().copy(expiryDate = LocalDate.now().minusDays(1)),
+      "Prison time slot expiry date must not be in the past",
+    )
+  }
+
+  @Test
+  fun `should fail update when expiry date is in past`() {
+    webTestClient.badRequest(
+      updateTimeSlotRequest().copy(expiryDate = LocalDate.now().minusDays(1)),
+      "Prison time slot expiry date must not be in the past",
+    )
   }
 
   private fun TimeSlot.assertWithCreateRequest(request: CreateTimeSlotRequest) {
@@ -275,4 +314,32 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody<TimeSlot>()
     .returnResult().responseBody!!
+
+  private fun WebTestClient.badRequest(
+    request: CreateTimeSlotRequest,
+    errorMessage: String,
+  ) = this
+    .post()
+    .uri("/admin/time-slot")
+    .accept(MediaType.APPLICATION_JSON)
+    .contentType(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
+    .bodyValue(request)
+    .exchange()
+    .expectStatus().isBadRequest
+    .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
+
+  private fun WebTestClient.badRequest(
+    request: UpdateTimeSlotRequest,
+    errorMessage: String,
+  ) = this
+    .put()
+    .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
+    .accept(MediaType.APPLICATION_JSON)
+    .contentType(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISIT_ADMIN")))
+    .bodyValue(request)
+    .exchange()
+    .expectStatus().isBadRequest
+    .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
 }
