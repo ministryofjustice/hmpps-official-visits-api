@@ -50,6 +50,8 @@ data class OfficialVisitSummaryEntity(
   @Enumerated(EnumType.STRING)
   val completionCode: VisitCompletionType?,
 
+  val completionNotes: String?,
+
   val createdBy: String,
 
   val createdTime: LocalDateTime,
