@@ -107,6 +107,7 @@ class OfficialVisitSearchService(
         numberOfVisitors = ov.numberOfVisitors,
         completionCode = ov.completionCode,
         completionDescription = getReferenceDescription(ReferenceDataGroup.VIS_COMPLETION, ov.completionCode?.name),
+        completionNotes = ov.completionNotes,
         createdBy = ov.createdBy,
         createdTime = ov.createdTime,
         updatedBy = ov.updatedBy,

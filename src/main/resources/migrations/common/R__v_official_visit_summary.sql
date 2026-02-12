@@ -23,5 +23,6 @@ select ov.official_visit_id,
   ov.updated_by,
   ov.updated_time,
   ov.offender_book_id,
-  (select count(1) from official_visitor ov2 where ov2.official_visit_id = ov.official_visit_id) as number_of_visitors
+  (select count(1) from official_visitor ov2 where ov2.official_visit_id = ov.official_visit_id) as number_of_visitors,
+  ov.completion_notes
   from official_visit ov

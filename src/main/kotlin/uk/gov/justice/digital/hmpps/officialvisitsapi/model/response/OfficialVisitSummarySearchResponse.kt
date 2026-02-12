@@ -69,6 +69,9 @@ data class OfficialVisitSummarySearchResponse(
   @Schema(description = "The official visit completion description")
   val completionDescription: String?,
 
+  @Schema(description = "Optional notes captured when a visit is either cancelled or completed", example = "Cancelled due to prisoner in hospital")
+  val completionNotes: String?,
+
   @Schema(description = "The name of the user who created the official visit", example = "Fred Bloggs")
   val createdBy: String,
 
