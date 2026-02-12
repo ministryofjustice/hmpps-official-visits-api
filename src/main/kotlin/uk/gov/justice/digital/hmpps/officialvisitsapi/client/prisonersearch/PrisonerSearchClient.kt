@@ -59,6 +59,20 @@ class PrisonerSearchClient(private val prisonerSearchApiWebClient: WebClient) {
     .bodyToMono(typeReference<PagedPrisoner>())
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block()?.content?.toList() ?: emptyList()
+
+  fun findPrisonName(prisonCode: String) = prisonerSearchApiWebClient
+    .get()
+    .uri { uriBuilder: UriBuilder ->
+      uriBuilder
+        .path("/prison/{prisonCode}/prisoners")
+        .queryParam("page", 0)
+        .queryParam("size", 1) // Only need one prisoner to get the prison name, so page size of 1 is sufficient and more efficient than retrieving more prisoners
+        .build(prisonCode)
+    }
+    .retrieve()
+    .bodyToMono(typeReference<PagedPrisoner>())
+    .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
+    .block()?.content?.firstOrNull()?.prisonName ?: "Unknown prison name"
 }
 
 data class PrisonerNumbers(val prisonerNumbers: List<String>)

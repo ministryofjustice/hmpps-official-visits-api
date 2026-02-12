@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 import java.util.UUID
 
-@Schema(description = "Sync response for a prison visit slot")
+@Schema(description = "Response for a prison visit slot")
 data class VisitSlot(
   @Schema(description = "Prison visit slot Id", required = true)
   val visitSlotId: Long,
@@ -19,13 +19,13 @@ data class VisitSlot(
   val dpsLocationId: UUID,
 
   @Schema(description = "The description of the prison location this visit slot is in", example = "Legal visits room 8")
-  var locationDescription: String? = null,
+  val locationDescription: String? = null,
 
-  @Schema(description = "The type of the prison location this visit slot is in, e.g. 'VISIT', 'VIDEO_CALL', 'OTHER'", example = "VISIT")
-  var locationType: String? = null,
+  @Schema(description = "The type of the prison location this visit slot is in, e.g. 'VISITS', 'VIDEO_LINK', 'INTERVIEW'", example = "VISITS")
+  val locationType: String? = null,
 
-  @Schema(description = "The capacity of the prison location this visit slot is in, if known", example = "12")
-  var locationCapacity: Int? = null,
+  @Schema(description = "The max capacity of the prison location this visit slot is in, if known", example = "12")
+  val locationMaxCapacity: Int? = null,
 
   @Schema(description = "Maximum adults allowed in the visit slot")
   val maxAdults: Int? = null,

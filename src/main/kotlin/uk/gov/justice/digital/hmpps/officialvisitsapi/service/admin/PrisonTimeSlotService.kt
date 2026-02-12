@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
@@ -14,13 +15,30 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDate
 import java.time.LocalDateTime
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin.toTimeSlotListModel
+import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin.toVisitSlotListModel
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummaryItem
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
+
 
 @Service
 @Transactional
 class PrisonTimeSlotService(
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
+  private val prisonerSearchClient: PrisonerSearchClient,
+  private val locationService: LocationsService,
 ) {
+    private companion object {
+        private val log = LoggerFactory.getLogger(this::class.java)
+    }
+
   @Transactional(readOnly = true)
   fun getPrisonTimeSlotById(prisonTimeSlotId: Long): TimeSlot {
     val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
@@ -70,4 +88,66 @@ class PrisonTimeSlotService(
     require(startTime < endTime) { "Prison time slot start time must be before end time" }
     require(expiryDate == null || expiryDate >= LocalDate.now()) { "Prison time slot expiry date must not be in the past" }
   }
+
+    fun getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode: String, activeOnly: Boolean): TimeSlotSummary {
+        val timeSlots = if (activeOnly) {
+            prisonTimeSlotRepository.findAllActiveByPrisonCode(prisonCode)
+        } else {
+            prisonTimeSlotRepository.findAllByPrisonCode(prisonCode)
+        }.toTimeSlotListModel()
+
+        val timeSlotIds = timeSlots.map { it.prisonTimeSlotId }
+        val visitSlots: List<VisitSlot> =
+            if (timeSlotIds.isEmpty()) {
+                emptyList()
+            } else {
+                prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(timeSlotIds)
+                    .toVisitSlotListModel(prisonCode)
+            }
+
+        val decoratedVisitSlots = decorateWithLocationDescription(
+            prisonCode,
+            slots = visitSlots,
+        )
+
+        val visitSlotByTimeSlotIds: Map<Long, List<VisitSlot>> = decoratedVisitSlots.groupBy { it.prisonTimeSlotId }
+
+        val prisonName = prisonerSearchClient.findPrisonName(prisonCode)
+
+        return TimeSlotSummary(
+            prisonCode = prisonCode,
+            timeSlots = timeSlots.map { ts ->
+                TimeSlotSummaryItem(
+                    timeSlot = ts,
+                    visitSlots = visitSlotByTimeSlotIds[ts.prisonTimeSlotId].orEmpty(),
+                )
+            },
+            prisonName = prisonName,
+        )
+    }
+
+    private fun decorateWithLocationDescription(prisonCode: String, slots: List<VisitSlot>): List<VisitSlot> {
+        val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
+        log.info("Found ${activeVisitLocations.size} official visit locations for prison $prisonCode")
+
+        val locationById = activeVisitLocations.associateBy { it.id }
+
+        val decoratedSlots = slots.map { slot ->
+            val location = locationById[slot.dpsLocationId]
+            if (location == null) {
+                log.error("Unmatched location for visit ${slot.dpsLocationId} for $prisonCode is not in the official visits locations")
+                slot.copy(locationDescription = "** unknown **")
+            } else {
+                slot.copy(
+                    locationDescription = location.localName,
+                    locationMaxCapacity = getCapacityForVisitType(location),
+                    locationType = location.locationType.value,
+                )
+            }
+        }
+
+        return decoratedSlots
+    }
+
+    private fun getCapacityForVisitType(location: Location): Int? = location.usage?.firstNotNullOfOrNull { (usageType, _, capacity) -> if (usageType.name == "VISIT") capacity else null }
 }
