@@ -205,12 +205,8 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     )
 
     val officialVisit = webTestClient.createOfficialVisit(officialVisitRequest)
+    stubEvents.reset()
 
-    stubEvents.assertHasEvent(
-      event = OutboundEvent.VISIT_CREATED,
-      additionalInfo = VisitInfo(officialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
-      personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
-    )
     webTestClient.delete(officialVisit.officialVisitId)
 
     stubEvents.assertHasEvent(
@@ -218,7 +214,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitorInfo(
         officialVisitId = officialVisit.officialVisitId,
         officialVisitorId = officialVisit.officialVisitorIds.first(),
-        source = Source.DPS,
+        source = Source.NOMIS,
         username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
       ),

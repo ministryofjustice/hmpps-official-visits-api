@@ -93,6 +93,28 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
     @Valid @RequestBody request: SyncCreateOfficialVisitRequest,
   ): SyncOfficialVisit = syncFacade.createOfficialVisit(request)
 
+  @DeleteMapping("/official-visit/id/{officialVisitId}")
+  @Operation(
+    summary = "Delete an official visit by ID",
+    description = """
+      Delete an official visit including all related information. 
+      This endpoint is idempotent, so if the visit is not present it will silently succeed.
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "204",
+        description = "Deleted the official visit by ID",
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @ResponseStatus(value = HttpStatus.NO_CONTENT)
+  fun syncDeleteOfficialVisit(
+    @PathVariable(required = true) officialVisitId: Long,
+  ) = syncFacade.deleteOfficialVisit(officialVisitId)
+
   @PostMapping(path = ["/official-visit/{officialVisitId}/visitor"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
   @Operation(
@@ -133,25 +155,26 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
     @PathVariable(required = true) officialVisitId: Long,
   ): SyncOfficialVisitor = syncFacade.createOfficialVisitor(officialVisitId, request)
 
-  @DeleteMapping("/official-visit/id/{officialVisitId}")
+  @DeleteMapping("/official-visit/{officialVisitId}/visitor/{officialVisitorId}")
   @Operation(
-    summary = "Delete an official visit by ID",
+    summary = "Delete an official visitor from a visit",
     description = """
-      Delete an official visit including all related information. 
-      This endpoint is idempotent, so if the visit is not present it will silently succeed.
+      Delete an official visitor from a visit. 
+      This endpoint is idempotent, so if the visit or visitor is not present it will silently succeed.
       """,
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
-        description = "Deleted the official visit by ID",
+        description = "Deleted the official visitor",
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
-  fun syncDeleteOfficialVisit(
+  fun syncDeleteOfficialVisitor(
     @PathVariable(required = true) officialVisitId: Long,
-  ) = syncFacade.deleteOfficialVisit(officialVisitId)
+    @PathVariable(required = true) officialVisitorId: Long,
+  ) = syncFacade.removeOfficialVisitor(officialVisitId, officialVisitorId)
 }

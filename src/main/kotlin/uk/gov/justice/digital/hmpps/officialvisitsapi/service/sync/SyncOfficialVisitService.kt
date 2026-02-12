@@ -20,8 +20,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import java.time.LocalDateTime
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 @Transactional(readOnly = true)
@@ -31,6 +33,7 @@ class SyncOfficialVisitService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
+  private val visitorEquipmentRepository: VisitorEquipmentRepository,
 ) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -46,13 +49,6 @@ class SyncOfficialVisitService(
 
     return ove.toSyncModel(pve)
   }
-
-  @Transactional
-  fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
-    officialVisitorRepository.deleteByOfficialVisit(officialVisit)
-    prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
-    officialVisitRepository.deleteById(officialVisit.officialVisitId)
-  }?.toSyncModel()
 
   @Transactional
   fun createOfficialVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
@@ -76,6 +72,13 @@ class SyncOfficialVisitService(
 
     return visit.toSyncModel(prisonVisited)
   }
+
+  @Transactional
+  fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
+    officialVisitorRepository.deleteByOfficialVisit(officialVisit)
+    prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
+    officialVisitRepository.deleteById(officialVisit.officialVisitId)
+  }?.toSyncModel()
 
   @Transactional
   fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
@@ -130,6 +133,27 @@ class SyncOfficialVisitService(
       visitor = visitorSaved.toSyncModel(),
     )
   }
+
+  @Transactional
+  fun removeOfficialVisitor(officialVisitId: Long, officialVisitorId: Long): SyncRemoveVisitorResponse? {
+    val visit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return null
+    visit.officialVisitors().forEach { visitor ->
+      if (visitor.officialVisitorId == officialVisitorId) {
+        if (visitor.visitorEquipment != null) {
+          visitorEquipmentRepository.deleteAllByOfficialVisitor(visitor)
+        }
+        officialVisitorRepository.deleteById(visitor.officialVisitorId)
+        return SyncRemoveVisitorResponse(
+          officialVisitId = visit.officialVisitId,
+          officialVisitorId = visitor.officialVisitorId,
+          prisonCode = visit.prisonCode,
+          prisonerNumber = visit.prisonerNumber,
+          contactId = visitor.contactId,
+        )
+      }
+    }
+    return null
+  }
 }
 
 data class SyncAddVisitorResponse(
@@ -138,4 +162,12 @@ data class SyncAddVisitorResponse(
   val prisonCode: String,
   val prisonerNumber: String,
   val visitor: SyncOfficialVisitor,
+)
+
+data class SyncRemoveVisitorResponse(
+  val officialVisitId: Long,
+  val officialVisitorId: Long,
+  val prisonCode: String,
+  val prisonerNumber: String,
+  val contactId: Long? = null,
 )
