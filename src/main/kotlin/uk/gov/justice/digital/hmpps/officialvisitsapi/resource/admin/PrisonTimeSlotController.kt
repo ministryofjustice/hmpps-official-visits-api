@@ -59,10 +59,10 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
-  fun syncGetTimeSlotById(
+  fun getPrisonTimeSlotById(
     @Parameter(description = "The internal ID for a prison time slot", required = true)
     @PathVariable prisonTimeSlotId: Long,
-  ): TimeSlot = facade.getTimeSlotById(prisonTimeSlotId)
+  ): TimeSlot = facade.getPrisonTimeSlotById(prisonTimeSlotId)
 
   @PostMapping(path = ["/time-slot"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody

@@ -56,7 +56,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       event = OutboundEvent.TIME_SLOT_CREATED,
       additionalInfo = TimeSlotInfo(
         timeSlotId = timeslot.prisonTimeSlotId,
-        source = Source.NOMIS,
+        source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
       ),
@@ -166,7 +166,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       event = OutboundEvent.TIME_SLOT_UPDATED,
       additionalInfo = TimeSlotInfo(
         timeSlotId = timeSLot.prisonTimeSlotId,
-        source = Source.NOMIS,
+        source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
       ),
@@ -177,7 +177,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
   fun `should fail to update time slot which does not exist`() {
     val updateRequest = updateTimeSlotRequest()
 
-    val timeSLot = webTestClient.put()
+    webTestClient.put()
       .uri("/admin/time-slot/{prisonTimeSlotId}", 99L)
       .accept(MediaType.APPLICATION_JSON)
       .contentType(MediaType.APPLICATION_JSON)
@@ -206,7 +206,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       event = OutboundEvent.TIME_SLOT_DELETED,
       additionalInfo = TimeSlotInfo(
         timeSlotId = timeSlot.prisonTimeSlotId,
-        source = Source.NOMIS,
+        source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
       ),

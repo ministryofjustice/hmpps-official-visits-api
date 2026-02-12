@@ -14,13 +14,13 @@ class PrisonTimeSlotFacade(
   private val prisonTimeSlotService: PrisonTimeSlotService,
   private val outboundEventsService: OutboundEventsService,
 ) {
-  fun getTimeSlotById(prisonTimeSlotId: Long) = prisonTimeSlotService.getPrisonTimeSlotById(prisonTimeSlotId)
+  fun getPrisonTimeSlotById(prisonTimeSlotId: Long) = prisonTimeSlotService.getPrisonTimeSlotById(prisonTimeSlotId)
   fun createPrisonTimeSlot(request: CreateTimeSlotRequest, user: User) = prisonTimeSlotService.create(request, user).also {
     outboundEventsService.send(
       outboundEvent = OutboundEvent.TIME_SLOT_CREATED,
       prisonCode = it.prisonCode,
       identifier = it.prisonTimeSlotId,
-      source = Source.NOMIS,
+      source = Source.DPS,
       user = user,
     )
   }
@@ -30,7 +30,7 @@ class PrisonTimeSlotFacade(
       outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
       prisonCode = it.prisonCode,
       identifier = it.prisonTimeSlotId,
-      source = Source.NOMIS,
+      source = Source.DPS,
       user = user,
     )
   }
@@ -40,7 +40,7 @@ class PrisonTimeSlotFacade(
       outboundEvent = OutboundEvent.TIME_SLOT_UPDATED,
       prisonCode = it.prisonCode,
       identifier = it.prisonTimeSlotId,
-      source = Source.NOMIS,
+      source = Source.DPS,
       user = user,
     )
   }

@@ -4,10 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
@@ -50,7 +48,7 @@ class PrisonTimeSlotFacadeTest {
       outboundEvent = OutboundEvent.TIME_SLOT_CREATED,
       prisonCode = result.prisonCode,
       identifier = result.prisonTimeSlotId,
-      source = Source.NOMIS,
+      source = Source.DPS,
       user = MOORLAND_PRISON_USER,
     )
   }
@@ -69,16 +67,7 @@ class PrisonTimeSlotFacadeTest {
     assertThat(exception.message).isEqualTo(expectedException.message)
 
     verify(timeSlotService).create(request, MOORLAND_PRISON_USER)
-    verify(outboundEventsService, never()).send(
-      outboundEvent = any(),
-      prisonCode = any(),
-      identifier = any(),
-      secondIdentifier = anyOrNull(),
-      noms = anyOrNull(),
-      contactId = anyOrNull(),
-      source = any(),
-      user = any(),
-    )
+    verifyNoInteractions(outboundEventsService)
   }
 
   @Test
@@ -96,7 +85,7 @@ class PrisonTimeSlotFacadeTest {
       outboundEvent = OutboundEvent.TIME_SLOT_UPDATED,
       prisonCode = result.prisonCode,
       identifier = result.prisonTimeSlotId,
-      source = Source.NOMIS,
+      source = Source.DPS,
       user = MOORLAND_PRISON_USER,
     )
   }
@@ -131,7 +120,7 @@ class PrisonTimeSlotFacadeTest {
       outboundEvent = OutboundEvent.TIME_SLOT_DELETED,
       prisonCode = MOORLAND,
       identifier = response.prisonTimeSlotId,
-      source = Source.NOMIS,
+      source = Source.DPS,
       user = MOORLAND_PRISON_USER,
     )
   }

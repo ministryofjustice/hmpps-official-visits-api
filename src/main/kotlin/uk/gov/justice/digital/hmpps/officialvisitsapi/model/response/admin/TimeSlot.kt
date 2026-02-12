@@ -27,11 +27,11 @@ data class TimeSlot(
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val endTime: LocalTime,
 
-  @Schema(description = "Effective date. The date from which this time slot is active", example = "2026-01-21")
+  @Schema(description = "The date from which this time slot is active", example = "2026-01-21")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val effectiveDate: LocalDate,
 
-  @Schema(description = "Expiry date. The date from which this time is no longer be considered active", example = "2027-01-21")
+  @Schema(description = "The date from which this time is no longer be considered active", example = "2027-01-21")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val expiryDate: LocalDate? = null,
 
