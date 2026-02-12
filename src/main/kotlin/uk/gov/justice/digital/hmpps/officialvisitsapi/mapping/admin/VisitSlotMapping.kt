@@ -13,6 +13,7 @@ fun PrisonVisitSlotEntity.toVisitSlotModel(prisonCode: String): VisitSlot = Visi
   maxGroups = this.maxGroups,
   createdBy = this.createdBy,
   createdTime = this.createdTime,
+  maxVideo = this.maxVideoSessions,
   updatedBy = this.updatedBy,
   updatedTime = this.updatedTime,
   prisonCode = prisonCode,

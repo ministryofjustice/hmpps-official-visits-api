@@ -60,6 +60,7 @@ class PrisonerSearchClient(private val prisonerSearchApiWebClient: WebClient) {
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block()?.content?.toList() ?: emptyList()
 
+  // TODO: use Prison Register service to find prison name and cache results
   fun findPrisonName(prisonCode: String) = prisonerSearchApiWebClient
     .get()
     .uri { uriBuilder: UriBuilder ->

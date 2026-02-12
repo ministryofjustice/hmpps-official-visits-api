@@ -27,6 +27,9 @@ data class VisitSlot(
   @Schema(description = "The max capacity of the prison location this visit slot is in, if known", example = "12")
   val locationMaxCapacity: Int? = null,
 
+  @Schema(description = "Maximum video link allowed in the visit slot")
+  val maxVideo: Int? = null,
+
   @Schema(description = "Maximum adults allowed in the visit slot")
   val maxAdults: Int? = null,
 
