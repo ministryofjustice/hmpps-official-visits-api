@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.admin
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -157,10 +156,10 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectBody<SyncTimeSlot>()
       .returnResult().responseBody!!
 
-    Assertions.assertThat(timeSLot.prisonTimeSlotId).isEqualTo(savedPrisonTimeSlotId)
-    Assertions.assertThat(timeSLot.dayCode).isEqualTo(updateRequest.dayCode)
-    Assertions.assertThat(timeSLot.startTime).isEqualTo(updateRequest.startTime)
-    Assertions.assertThat(timeSLot.endTime).isEqualTo(updateRequest.endTime)
+    assertThat(timeSLot.prisonTimeSlotId).isEqualTo(savedPrisonTimeSlotId)
+    assertThat(timeSLot.dayCode).isEqualTo(updateRequest.dayCode)
+    assertThat(timeSLot.startTime).isEqualTo(updateRequest.startTime)
+    assertThat(timeSLot.endTime).isEqualTo(updateRequest.endTime)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.TIME_SLOT_UPDATED,
@@ -223,6 +222,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody().jsonPath("$.userMessage")
       .isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_DELETED)
   }
 
   @Test
@@ -235,6 +235,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       .expectStatus()
       .is4xxClientError
       .expectBody().jsonPath("$.userMessage").isEqualTo("Prison time slot with ID 99 was not found")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_DELETED)
   }
 
   @Test
@@ -246,6 +247,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       ),
       "Prison time slot start time must be before end time",
     )
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_CREATED)
   }
 
   @Test
@@ -257,6 +259,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       ),
       "Prison time slot start time must be before end time",
     )
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_UPDATED)
   }
 
   @Test
@@ -265,6 +268,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       createTimeSlotRequest().copy(expiryDate = LocalDate.now().minusDays(1)),
       "Prison time slot expiry date must not be in the past",
     )
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_CREATED)
   }
 
   @Test
@@ -273,15 +277,16 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
       updateTimeSlotRequest().copy(expiryDate = LocalDate.now().minusDays(1)),
       "Prison time slot expiry date must not be in the past",
     )
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_UPDATED)
   }
 
   private fun TimeSlot.assertWithCreateRequest(request: CreateTimeSlotRequest) {
-    Assertions.assertThat(prisonCode).isEqualTo(request.prisonCode)
-    Assertions.assertThat(dayCode).isEqualTo(request.dayCode)
-    Assertions.assertThat(startTime).isEqualTo(request.startTime)
-    Assertions.assertThat(endTime).isEqualTo(request.endTime)
-    Assertions.assertThat(effectiveDate).isEqualTo(request.effectiveDate)
-    Assertions.assertThat(expiryDate).isEqualTo(request.expiryDate)
+    assertThat(prisonCode).isEqualTo(request.prisonCode)
+    assertThat(dayCode).isEqualTo(request.dayCode)
+    assertThat(startTime).isEqualTo(request.startTime)
+    assertThat(endTime).isEqualTo(request.endTime)
+    assertThat(effectiveDate).isEqualTo(request.effectiveDate)
+    assertThat(expiryDate).isEqualTo(request.expiryDate)
   }
 
   private fun createTimeSlotRequest() = CreateTimeSlotRequest(
