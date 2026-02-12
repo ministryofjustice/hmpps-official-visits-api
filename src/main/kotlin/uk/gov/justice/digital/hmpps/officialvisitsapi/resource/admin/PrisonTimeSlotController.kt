@@ -29,7 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.Update
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotResponse
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
-@Tag(name = "Time slots")
+@Tag(name = "Admin")
 @RestController
 @RequestMapping(value = ["/admin"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
