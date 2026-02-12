@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -27,12 +28,32 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.admin.PrisonTimeSlo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @Tag(name = "Admin")
 @RestController
 @RequestMapping(value = ["/admin"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@AuthApiResponses
 class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
+
+  @GetMapping(path = ["/time-slots/prison/{prisonCode}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @Operation(
+    summary = "Return summary of prison time slot and associated visit slots based on the prison code",
+    description = """
+      Requires role: OFFICIAL_VISITS_ADMIN.
+      Used to get the summary of prison time slot and associated visit slots based on the prison code.
+      """,
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_ADMIN')")
+  fun getAllTimeSlotsAndVisitSlots(
+    @Parameter(description = "The prison code", required = true)
+    @PathVariable prisonCode: String,
+    @Parameter(description = "If true, only returns active time slots and visit slots")
+    @RequestParam(name = "activeOnly", required = false, defaultValue = "true")
+    activeOnly: Boolean = true,
+  ): TimeSlotSummary = facade.getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode, activeOnly)
 
   @GetMapping(path = ["/time-slot/{prisonTimeSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody

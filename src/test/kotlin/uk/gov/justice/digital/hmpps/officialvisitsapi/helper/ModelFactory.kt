@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialUsageDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
@@ -12,7 +13,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -30,6 +30,7 @@ fun location(prisonCode: String, locationKeySuffix: String, active: Boolean = tr
   active = active,
   deactivatedByParent = false,
   topLevelId = UUID.randomUUID(),
+  usage = listOf(NonResidentialUsageDto(usageType = NonResidentialUsageDto.UsageType.VISIT, sequence = 99, capacity = 10)),
   key = "$prisonCode-$locationKeySuffix",
   isResidential = false,
   localName = localName,
@@ -78,8 +79,6 @@ fun userDetails(
   authSource = authSource,
   activeCaseLoadId = activeCaseLoadId,
 )
-
-fun serviceUser() = UserService.getServiceAsUser()
 
 fun prisonUser(
   username: String = "prison_user",

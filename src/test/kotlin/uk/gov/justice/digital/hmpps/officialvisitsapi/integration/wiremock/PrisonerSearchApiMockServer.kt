@@ -52,6 +52,22 @@ class PrisonerSearchApiMockServer : MockServer(8092) {
     )
   }
 
+  fun stubGetPrisonName(prisonCode: String, vararg prisoner: Prisoner) {
+    stubFor(
+      get("/prison/$prisonCode/prisoners?page=0&size=1")
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                PagedPrisoner(content = prisoner.toList().map { prisonerSearchPrisoner(prisonCode = prisonCode, prisonerNumber = it.number, bookingId = it.bookingId) }),
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+  }
+
   fun stubSearchPrisonersByPrisonerNumbers(idsBeingSearchFor: List<String>, prisonersToReturn: List<SearchPrisoner>) {
     stubFor(
       post("/prisoner-search/prisoner-numbers")

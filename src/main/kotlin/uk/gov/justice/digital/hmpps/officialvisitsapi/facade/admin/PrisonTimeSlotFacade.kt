@@ -44,4 +44,6 @@ class PrisonTimeSlotFacade(
       user = user,
     )
   }
+
+  fun getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode: String, activeOnly: Boolean) = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode, activeOnly)
 }

@@ -1,0 +1,50 @@
+package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin
+
+import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDateTime
+import java.util.UUID
+
+@Schema(description = "Response for a prison visit slot")
+data class VisitSlot(
+  @Schema(description = "Prison visit slot Id", required = true)
+  val visitSlotId: Long,
+
+  @Schema(description = "Prison Code")
+  val prisonCode: String,
+
+  @Schema(description = "Prison time slot Id", required = true)
+  val prisonTimeSlotId: Long,
+
+  @Schema(description = "The DPS location ID where the visit is taking place", example = "aaa-ddd-bbb-123455632323")
+  val dpsLocationId: UUID,
+
+  @Schema(description = "The description of the prison location this visit slot is in", example = "Legal visits room 8")
+  val locationDescription: String? = null,
+
+  @Schema(description = "The type of the prison location this visit slot is in, e.g. 'VISITS', 'VIDEO_LINK', 'INTERVIEW'", example = "VISITS")
+  val locationType: String? = null,
+
+  @Schema(description = "The max capacity of the prison location this visit slot is in, if known", example = "12")
+  val locationMaxCapacity: Int? = null,
+
+  @Schema(description = "Maximum video link allowed in the visit slot")
+  val maxVideo: Int? = null,
+
+  @Schema(description = "Maximum adults allowed in the visit slot")
+  val maxAdults: Int? = null,
+
+  @Schema(description = "Maximum groups allowed in the visit slot")
+  val maxGroups: Int? = null,
+
+  @Schema(description = "Username who created the visit slot", example = "admin")
+  val createdBy: String,
+
+  @Schema(description = "The timestamp of when this visit slot was created", example = "2024-01-01T00:00:00Z")
+  val createdTime: LocalDateTime,
+
+  @Schema(description = "Username who last updated the visit slot", example = "admin")
+  val updatedBy: String? = null,
+
+  @Schema(description = "The timestamp of when this visit slot was last updated", example = "2024-01-01T00:00:00Z")
+  val updatedTime: LocalDateTime? = null,
+)
