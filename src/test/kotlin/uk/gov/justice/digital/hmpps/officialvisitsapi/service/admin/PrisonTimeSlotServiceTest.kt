@@ -511,5 +511,4 @@ class PrisonTimeSlotServiceTest {
     effectiveDate = LocalDate.now().plusDays(1),
     expiryDate = LocalDate.now().plusDays(365),
   )
-
 }
