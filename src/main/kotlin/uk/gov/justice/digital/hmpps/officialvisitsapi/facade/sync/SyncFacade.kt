@@ -125,6 +125,18 @@ class SyncFacade(
 
   fun getOfficialVisitById(officialVisitId: Long) = syncOfficialVisitService.getOfficialVisitById(officialVisitId)
 
+  fun createOfficialVisit(request: SyncCreateOfficialVisitRequest) = syncOfficialVisitService.createOfficialVisit(request)
+    .also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_CREATED,
+        prisonCode = it.prisonCode,
+        identifier = it.officialVisitId,
+        noms = it.prisonerNumber,
+        source = Source.NOMIS,
+        user = userOrDefault(it.createdBy),
+      )
+    }
+
   fun deleteOfficialVisit(officialVisitId: Long) {
     syncOfficialVisitService.deleteOfficialVisit(officialVisitId)
       ?.also { deletedOfficialVisit ->
@@ -142,49 +154,41 @@ class SyncFacade(
             prisonCode = deletedOfficialVisit.prisonCode,
             identifier = deletedOfficialVisit.officialVisitId,
             secondIdentifier = visitor.officialVisitorId,
+            source = Source.NOMIS,
             user = UserService.getClientAsUser("NOMIS"),
           )
         }
       }
   }
 
-  fun createOfficialVisit(request: SyncCreateOfficialVisitRequest) = syncOfficialVisitService.createOfficialVisit(request)
-    .also {
-      outboundEventsService.send(
-        outboundEvent = OutboundEvent.VISIT_CREATED,
-        prisonCode = it.prisonCode,
-        identifier = it.officialVisitId,
-        noms = it.prisonerNumber,
-        source = Source.NOMIS,
-        user = userOrDefault(it.createdBy),
-      )
-    }
-
   // ---------------  Official visitors ----------------------
 
   fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncOfficialVisitor {
     val response = syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)
-
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISITOR_CREATED,
       prisonCode = response.prisonCode,
-      identifier = officialVisitId,
+      identifier = response.officialVisitId,
       secondIdentifier = response.officialVisitorId,
       contactId = response.visitor.contactId,
       source = Source.NOMIS,
       user = userOrDefault(response.visitor.createdBy),
     )
-
-    outboundEventsService.send(
-      outboundEvent = OutboundEvent.VISIT_UPDATED,
-      prisonCode = response.prisonCode,
-      identifier = officialVisitId,
-      noms = response.prisonerNumber,
-      source = Source.NOMIS,
-      user = userOrDefault(response.visitor.createdBy),
-    )
-
     return response.visitor
+  }
+
+  fun removeOfficialVisitor(officialVisitId: Long, officialVisitorId: Long) {
+    syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)?.also { response ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
+        prisonCode = response.prisonCode,
+        identifier = response.officialVisitId,
+        secondIdentifier = response.officialVisitorId,
+        contactId = response.contactId,
+        source = Source.NOMIS,
+        user = UserService.getClientAsUser("NOMIS"),
+      )
+    }
   }
 
   // --------------- Other methods add here ----------------

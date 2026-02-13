@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync
 
+import jakarta.persistence.EntityNotFoundException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -17,6 +18,7 @@ import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
@@ -24,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
@@ -38,7 +41,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncAddVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncRemoveVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 import java.time.LocalDateTime
@@ -356,7 +361,7 @@ class SyncFacadeTest {
   inner class OfficialVisitsSyncEvents {
 
     @Test
-    fun `should delegate to service to fetch official visits based on Id`() {
+    fun `get a visit - should delegate to service to fetch official visits based on ID`() {
       val response = syncOfficialVisitResponse(1L)
       whenever(syncOfficialVisitService.getOfficialVisitById(officialVisitId = 1L)).thenReturn(response)
 
@@ -366,19 +371,23 @@ class SyncFacadeTest {
     }
 
     @Test
-    fun `should return success even if non existent id passed for deletion`() {
+    fun `delete a visit - should return success even if non existent id passed for deletion`() {
       whenever(syncOfficialVisitService.deleteOfficialVisit(99L)).thenReturn(null)
+
       facade.deleteOfficialVisit(99L)
+
       verify(syncOfficialVisitService).deleteOfficialVisit(99L)
       verifyNoInteractions(outboundEventsService)
     }
 
     @Test
-    fun `should delete official visit and return response object`() {
+    fun `delete a visit - should delete an official visit and return response object`() {
       val response = syncOfficialVisitDeleted(1L)
 
       whenever(syncOfficialVisitService.deleteOfficialVisit(1L)).thenReturn(response)
+
       facade.deleteOfficialVisit(1L)
+
       verify(syncOfficialVisitService).deleteOfficialVisit(1L)
 
       verify(outboundEventsService, atLeastOnce()).send(
@@ -389,9 +398,11 @@ class SyncFacadeTest {
         noms = "A1234AA",
         user = UserService.getClientAsUser("NOMIS"),
       )
+
       verify(outboundEventsService, atLeastOnce()).send(
         outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = MOORLAND,
+        source = Source.NOMIS,
         identifier = 1L, // official visit ID
         secondIdentifier = 1L, // official visitor ID
         user = UserService.getClientAsUser("NOMIS"),
@@ -438,6 +449,135 @@ class SyncFacadeTest {
           createdBy = MOORLAND_PRISON_USER.username,
           createdTime = createdTime,
         ),
+      ),
+    )
+  }
+
+  @Nested
+  inner class OfficialVisitorSyncEvents {
+    val officialVisitId = 1L
+    val officialVisitorId = 2L
+    val contactId = 3L
+    val creationTime: LocalDateTime = LocalDateTime.now()
+
+    @Test
+    fun `add a visitor - should add a visitor to a visit and raise an event`() {
+      val request = createVisitorRequest()
+      val mockedResponse = createVisitorResponse()
+      whenever(syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)).thenReturn(
+        mockedResponse,
+      )
+
+      val response = facade.createOfficialVisitor(officialVisitId, request)
+
+      assertThat(response.officialVisitorId).isEqualTo(officialVisitorId)
+
+      verify(syncOfficialVisitService).createOfficialVisitor(officialVisitId, request)
+
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISITOR_CREATED,
+        prisonCode = MOORLAND,
+        source = Source.NOMIS,
+        identifier = officialVisitId,
+        secondIdentifier = officialVisitorId,
+        contactId = contactId,
+        user = MOORLAND_PRISON_USER,
+      )
+    }
+
+    @Test
+    fun `add a visitor - should fail if the visit was not found`() {
+      val request = createVisitorRequest()
+      val expectedException = EntityNotFoundException("The official visit with id $officialVisitId was not found")
+
+      whenever(syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
+
+      val exception = assertThrows<EntityNotFoundException> {
+        facade.createOfficialVisitor(officialVisitId, request)
+      }
+
+      assertThat(exception.message).isEqualTo(expectedException.message)
+
+      verify(syncOfficialVisitService).createOfficialVisitor(officialVisitId, request)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `add a visitor - should fail if this would produce a duplicate visitor`() {
+      val request = createVisitorRequest()
+      val expectedException = EntityInUseException("The person ID ${request.personId} or offenderVisitVisitorId ${request.offenderVisitVisitorId}) is already on the visit $officialVisitId and cannot be added again")
+
+      whenever(syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
+
+      val exception = assertThrows<EntityInUseException> {
+        facade.createOfficialVisitor(officialVisitId, request)
+      }
+
+      assertThat(exception.message).isEqualTo(expectedException.message)
+
+      verify(syncOfficialVisitService).createOfficialVisitor(officialVisitId, request)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `remove a visitor - should remove a visitor from a visit and raise an event`() {
+      val response = SyncRemoveVisitorResponse(
+        officialVisitId = officialVisitId,
+        officialVisitorId = officialVisitorId,
+        prisonCode = MOORLAND,
+        prisonerNumber = MOORLAND_PRISONER.number,
+        contactId = contactId,
+      )
+
+      whenever(syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(response)
+
+      facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
+
+      verify(syncOfficialVisitService).removeOfficialVisitor(officialVisitId, officialVisitorId)
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
+        prisonCode = MOORLAND,
+        source = Source.NOMIS,
+        identifier = officialVisitId,
+        secondIdentifier = officialVisitorId,
+        contactId = contactId,
+        user = UserService.getClientAsUser("NOMIS"),
+      )
+    }
+
+    @Test
+    fun `remove a visitor - should silently succeed if the visit or visitor does not exist`() {
+      whenever(syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(null)
+
+      facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
+
+      verify(syncOfficialVisitService).removeOfficialVisitor(officialVisitId, officialVisitorId)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    private fun createVisitorRequest() = SyncCreateOfficialVisitorRequest(
+      offenderVisitVisitorId = 9L,
+      personId = contactId,
+      firstName = "First",
+      lastName = "Last",
+      relationshipTypeCode = RelationshipType.OFFICIAL,
+      relationshipToPrisoner = "POL",
+      createUsername = MOORLAND_PRISON_USER.username,
+      createDateTime = creationTime,
+    )
+
+    private fun createVisitorResponse() = SyncAddVisitorResponse(
+      officialVisitId = officialVisitId,
+      officialVisitorId = officialVisitorId,
+      prisonCode = MOORLAND,
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitor = SyncOfficialVisitor(
+        officialVisitorId = officialVisitorId,
+        contactId = contactId,
+        firstName = "First",
+        lastName = "Last",
+        createdBy = MOORLAND_PRISON_USER.username,
+        createdTime = creationTime,
       ),
     )
   }
