@@ -46,6 +46,17 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
       Used to get the summary of prison time slot and associated visit slots based on the prison code.
       """,
   )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "The prison time slot and visit slots matching the prison code provided",
+        content = [
+          Content(mediaType = "application/json", schema = Schema(implementation = TimeSlotSummary::class)),
+        ],
+      ),
+    ],
+  )
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_ADMIN')")
   fun getAllTimeSlotsAndVisitSlots(
     @Parameter(description = "The prison code", required = true)
