@@ -105,7 +105,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
       ApiResponse(responseCode = "204", description = "Deleted the visit slot"),
       ApiResponse(
         responseCode = "409",
-        description = "The prison visit slot had visits associated so can not be deleted",
+        description = "The prison visit slot had visits associated so cannot be deleted",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(

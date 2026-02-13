@@ -72,12 +72,12 @@ class VisitSlotService(
     val visitSlotEntity = prisonVisitSlotRepository.findById(prisonVisitSlotId)
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
 
-    val timeSlotEntity = prisonTimeSlotRepository.findById(visitSlotEntity.prisonTimeSlotId)
-      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${visitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
-
     if (officialVisitsExistFor(visitSlotEntity.prisonVisitSlotId)) {
       throw EntityInUseException("The prison visit slot has visits associated with it and cannot be deleted.")
     }
+
+    val timeSlotEntity = prisonTimeSlotRepository.findById(visitSlotEntity.prisonTimeSlotId)
+      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${visitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
 
     prisonVisitSlotRepository.deleteById(prisonVisitSlotId)
 

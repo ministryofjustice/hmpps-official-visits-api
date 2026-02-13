@@ -71,7 +71,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .isUnauthorized
 
     webTestClient.delete()
-      .uri("/admin/time-slot/{prisonTimeSlotId}", 1)
+      .uri("/admin/visit-slot/id/{visitSlotId}", 1)
       .accept(MediaType.APPLICATION_JSON)
       .exchange()
       .expectStatus()

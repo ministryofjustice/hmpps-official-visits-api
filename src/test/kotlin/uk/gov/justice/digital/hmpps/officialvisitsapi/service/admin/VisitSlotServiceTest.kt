@@ -147,7 +147,6 @@ class VisitSlotServiceTest {
   @Test
   fun `should fail to delete visit slot when there is associated official visit exists`() {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(prisonVisitSlotEntity()))
-    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
     whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
 
     val exception = assertThrows<EntityInUseException> {
@@ -158,7 +157,7 @@ class VisitSlotServiceTest {
     assertThat(exception.message).isEqualTo(expectedException.message)
     verify(prisonVisitSlotRepository).findById(1L)
     verify(officialVisitRepository).existsByPrisonVisitSlotPrisonVisitSlotId(1L)
-    verify(prisonTimeSlotRepository).findById(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
   }
 
   private fun PrisonVisitSlotEntity.assertWithResponse(model: VisitSlot) {
