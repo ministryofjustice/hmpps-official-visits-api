@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitSlotInfo
@@ -179,7 +180,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitSlotInfo(
         visitSlotId = syncVisitSlot.visitSlotId,
         source = Source.NOMIS,
-        username = "OFFICIAL_VISITS_SERVICE",
+        username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
       ),
     )
