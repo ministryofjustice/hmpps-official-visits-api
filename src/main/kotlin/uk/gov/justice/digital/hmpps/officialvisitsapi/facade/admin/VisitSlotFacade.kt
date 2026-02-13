@@ -34,13 +34,15 @@ class VisitSlotFacade(
     )
   }
 
-  fun deleteVisitSlot(visitSlotId: Long, user: User) = visitSlotService.delete(visitSlotId).also {
-    outboundEventsService.send(
-      outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
-      prisonCode = it.prisonCode,
-      identifier = it.visitSlotId,
-      source = Source.DPS,
-      user = user,
-    )
+  fun deleteVisitSlot(visitSlotId: Long, user: User) {
+    visitSlotService.delete(visitSlotId).also {
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_SLOT_DELETED,
+        prisonCode = it.prisonCode,
+        identifier = it.visitSlotId,
+        source = Source.DPS,
+        user = user,
+      )
+    }
   }
 }

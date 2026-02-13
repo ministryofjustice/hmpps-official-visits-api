@@ -104,7 +104,7 @@ class VisitSlotServiceTest {
 
   @Test
   fun `should update a visit slot capacities and return it`() {
-    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1)
+    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1, dpsLocationId = UUID.randomUUID())
     val existing = prisonVisitSlotEntity()
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(existing))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))

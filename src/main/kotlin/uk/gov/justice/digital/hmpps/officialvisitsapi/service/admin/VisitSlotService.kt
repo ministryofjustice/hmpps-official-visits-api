@@ -58,6 +58,7 @@ class VisitSlotService(
       maxAdults = request.maxAdults,
       maxGroups = request.maxGroups,
       maxVideoSessions = request.maxVideo,
+      dpsLocationId = request.dpsLocationId ?: visitSlotEntity.dpsLocationId,
       updatedBy = user.username,
       updatedTime = LocalDateTime.now(),
     )
