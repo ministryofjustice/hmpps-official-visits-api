@@ -40,7 +40,7 @@ class LocationsInsidePrisonClient(private val locationsInsidePrisonApiWebClient:
         .path("/locations/non-residential/prison/{prisonCode}/service/{serviceType}")
         .queryParam("sortByLocalName", true)
         .queryParam("formatLocalName", true)
-        .queryParam("filterParents", true)
+        .queryParam("filterParents", false)
         .build(prisonCode, serviceType)
     }
     .retrieve()
@@ -48,18 +48,4 @@ class LocationsInsidePrisonClient(private val locationsInsidePrisonApiWebClient:
     .doOnError { error -> log.info("Error looking up non-residential appointment locations by prison code $prisonCode in locations inside prison client", error) }
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block() ?: emptyList()
-
-  fun getLocationsByIds(locations: List<UUID>): List<Location> {
-    if (locations.isEmpty()) return emptyList()
-    return locationsInsidePrisonApiWebClient.post()
-      .uri("/locations/keys")
-      .bodyValue(locations.map { it.toString() })
-      .retrieve()
-      .bodyToMono(typeReference<List<Location>>())
-      .doOnError { error ->
-        log.info("Error fetching locations by list of ID in locations inside prison client", error)
-      }
-      .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
-      .block() ?: emptyList()
-  }
 }

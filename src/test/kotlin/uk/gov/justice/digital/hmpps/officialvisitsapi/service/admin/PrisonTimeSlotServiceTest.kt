@@ -208,7 +208,7 @@ class PrisonTimeSlotServiceTest {
     )
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
 
-    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison))
+    whenever(locationService.getAllVisitLocationsAtPrison(MOORLAND_PRISONER.prison))
       .thenReturn(officialVisitLocations(dpsLocationId))
 
     val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, true)
@@ -243,7 +243,7 @@ class PrisonTimeSlotServiceTest {
     whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
 
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
-    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
+    whenever(locationService.getAllVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
 
     val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, true)
 
@@ -283,7 +283,7 @@ class PrisonTimeSlotServiceTest {
     )
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
 
-    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison))
+    whenever(locationService.getAllVisitLocationsAtPrison(MOORLAND_PRISONER.prison))
       .thenReturn(officialVisitLocations(dpsLocationId))
 
     val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, true)
@@ -345,7 +345,7 @@ class PrisonTimeSlotServiceTest {
     )
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
 
-    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison))
+    whenever(locationService.getAllVisitLocationsAtPrison(MOORLAND_PRISONER.prison))
       .thenReturn(officialVisitLocations(dpsLocationId))
 
     val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, false)
@@ -408,7 +408,7 @@ class PrisonTimeSlotServiceTest {
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
 
     // official locations do not include the dpsLocationId used by the visit slot
-    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
+    whenever(locationService.getAllVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
 
     val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, true)
 

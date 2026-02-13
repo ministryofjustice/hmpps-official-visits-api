@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin
 
 import jakarta.persistence.EntityNotFoundException
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
@@ -32,10 +31,6 @@ class PrisonTimeSlotService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationService: LocationsService,
 ) {
-  private companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
-  }
-
   @Transactional(readOnly = true)
   fun getPrisonTimeSlotById(prisonTimeSlotId: Long): TimeSlot {
     val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
@@ -102,10 +97,7 @@ class PrisonTimeSlotService(
           .toVisitSlotListModel(prisonCode)
       }
 
-    val decoratedVisitSlots = decorateWithLocationDescription(
-      prisonCode,
-      slots = visitSlots,
-    )
+    val decoratedVisitSlots = decorateWithLocationDescription(prisonCode = prisonCode, slots = visitSlots)
 
     val visitSlotByTimeSlotIds: Map<Long, List<VisitSlot>> = decoratedVisitSlots.groupBy { it.prisonTimeSlotId }
 
@@ -124,16 +116,18 @@ class PrisonTimeSlotService(
   }
 
   private fun decorateWithLocationDescription(prisonCode: String, slots: List<VisitSlot>): List<VisitSlot> {
-    val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
-    log.info("Found ${activeVisitLocations.size} official visit locations for prison $prisonCode")
-
+    val activeVisitLocations = locationService.getAllVisitLocationsAtPrison(prisonCode)
     val locationById = activeVisitLocations.associateBy { it.id }
-
     val decoratedSlots = slots.map { slot ->
       val location = locationById[slot.dpsLocationId]
       if (location == null) {
-        log.warn("Location ${slot.dpsLocationId} for visit slot ${slot.visitSlotId} in prison $prisonCode is not found in the official visit locations list")
         slot.copy(locationDescription = "** unknown **")
+      } else if (location.status == Location.Status.INACTIVE) {
+        slot.copy(
+          locationDescription = "${location.localName} (inactive)",
+          locationMaxCapacity = getCapacityForVisitType(location),
+          locationType = location.locationType.value,
+        )
       } else {
         slot.copy(
           locationDescription = location.localName,

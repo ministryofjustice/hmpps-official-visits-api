@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AvailableSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitBookedEntity
@@ -20,10 +20,6 @@ class AvailableSlotService(
   private val availableSlotRepository: AvailableSlotRepository,
   private val locationService: LocationsService,
 ) {
-  private companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
-  }
-
   @Transactional(readOnly = true)
   fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
@@ -45,14 +41,14 @@ class AvailableSlotService(
   }
 
   private fun decorateWithLocationDescription(prisonCode: String, slots: List<AvailableSlot>): List<AvailableSlot> {
-    val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
-    log.info("Found ${slots.size} official visit locations for prison $prisonCode")
+    val visitLocations = locationService.getAllVisitLocationsAtPrison(prisonCode)
 
     val decoratedSlots = slots.map { slot ->
-      val location = activeVisitLocations.find { location -> location.id == slot.dpsLocationId }
+      val location = visitLocations.find { location -> location.id == slot.dpsLocationId }
       if (location == null) {
-        log.error("Unmatched location for visit ${slot.dpsLocationId} for $prisonCode is not in the official visits locations")
         slot.copy(locationDescription = "** unknown **")
+      } else if (location.status == Location.Status.INACTIVE) {
+        slot.copy(locationDescription = "${location.localName} (inactive)")
       } else {
         slot.copy(locationDescription = location.localName)
       }
