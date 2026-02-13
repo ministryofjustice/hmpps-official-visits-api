@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.resource.sync
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -112,7 +113,9 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
   fun syncDeleteOfficialVisit(
-    @PathVariable(required = true) officialVisitId: Long,
+    @Parameter(description = "The official visit ID to remove", required = true)
+    @PathVariable(required = true)
+    officialVisitId: Long,
   ) = syncFacade.deleteOfficialVisit(officialVisitId)
 
   @PostMapping(path = ["/official-visit/{officialVisitId}/visitor"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -174,7 +177,11 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
   fun syncDeleteOfficialVisitor(
-    @PathVariable(required = true) officialVisitId: Long,
-    @PathVariable(required = true) officialVisitorId: Long,
+    @Parameter(description = "The official visit ID", required = true)
+    @PathVariable(required = true)
+    officialVisitId: Long,
+    @Parameter(description = "The official visitor ID to remove", required = true)
+    @PathVariable(required = true)
+    officialVisitorId: Long,
   ) = syncFacade.removeOfficialVisitor(officialVisitId, officialVisitorId)
 }
