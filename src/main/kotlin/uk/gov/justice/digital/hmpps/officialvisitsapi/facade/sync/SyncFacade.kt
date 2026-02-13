@@ -77,7 +77,7 @@ class SyncFacade(
         prisonCode = it.prisonCode,
         identifier = it.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = userOrDefault(it.createdBy),
+        user = UserService.getClientAsUser("NOMIS"),
       )
     }
   }
@@ -116,7 +116,7 @@ class SyncFacade(
           prisonCode = it.prisonCode,
           identifier = it.visitSlotId,
           source = Source.NOMIS,
-          user = userOrDefault(it.createdBy),
+          user = UserService.getClientAsUser("NOMIS"),
         )
       }
   }

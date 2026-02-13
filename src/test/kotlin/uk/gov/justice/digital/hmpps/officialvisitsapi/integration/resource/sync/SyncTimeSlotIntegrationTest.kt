@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.TimeSlotInfo
@@ -184,7 +185,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
       additionalInfo = TimeSlotInfo(
         timeSlotId = timeSlot.prisonTimeSlotId,
         source = Source.NOMIS,
-        username = MOORLAND_PRISON_USER.username,
+        username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
       ),
     )
