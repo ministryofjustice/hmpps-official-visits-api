@@ -78,4 +78,13 @@ data class SyncOfficialVisit(
 
   @Schema(description = "The visitor details")
   val visitors: List<SyncOfficialVisitor> = emptyList(),
+
+  @Schema(description = "The visitor concern notes if present")
+  val visitorConcernNotes: String? = null,
+
+  @Schema(description = "The visitor oder number if present")
+  val visitOrderNumber: Long? = null,
+
+  @Schema(description = "The staff username who authorised an override for a ban for this visit")
+  val overrideBanStaffUsername: String? = null,
 )

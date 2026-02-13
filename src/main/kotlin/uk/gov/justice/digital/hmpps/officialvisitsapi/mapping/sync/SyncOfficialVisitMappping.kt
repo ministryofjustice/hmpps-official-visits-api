@@ -27,6 +27,9 @@ fun OfficialVisitEntity.toSyncModel(pve: PrisonerVisitedEntity?): SyncOfficialVi
   updatedBy = this.updatedBy,
   updatedTime = this.updatedTime,
   visitors = this.officialVisitors().toSyncModel(),
+  overrideBanStaffUsername = this.overrideBanBy,
+  visitOrderNumber = this.visitOrderNumber,
+  visitorConcernNotes = this.visitorConcernNotes,
 )
 
 fun OfficialVisitEntity.toSyncModel(): SyncOfficialVisitDeletionInfo = SyncOfficialVisitDeletionInfo(
