@@ -4,7 +4,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
@@ -36,23 +35,6 @@ class LocationsInsidePrisonApiClientTest {
     val locationPentonville = location(PENTONVILLE, locationKeySuffix = "B-2-002")
     server.stubGetOfficialVisitLocationsAtPrison(PENTONVILLE, fakeOfficialVisitLocationsAtPrison(PENTONVILLE, "PVI-B-2-002"))
     client.getOfficialVisitLocationsAtPrison(PENTONVILLE).first().key isEqualTo locationPentonville.key
-  }
-
-  @Test
-  fun `should return locations by keys`() {
-    server.stubLocationsByKeys(
-      locationIds = listOf(UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
-      locationsToReturn = listOf(
-        location(prisonCode = MOORLAND, locationKeySuffix = MOORLAND, localName = "Visit place", id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
-      ),
-    )
-    val locationList = client.getLocationsByIds(listOf(UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
-
-    with(locationList.first()) {
-      id isEqualTo UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
-      prisonId isEqualTo MOORLAND
-      localName isEqualTo "Visit place"
-    }
   }
 
   @AfterEach

@@ -1,16 +1,13 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.post
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
-import java.util.UUID
 
 class LocationsInsidePrisonApiMockServer : MockServer(8091) {
 
@@ -36,19 +33,6 @@ class LocationsInsidePrisonApiMockServer : MockServer(8091) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(mapper.writeValueAsString(locations))
-            .withStatus(200),
-        ),
-    )
-  }
-
-  fun stubLocationsByKeys(locationIds: List<UUID>, locationsToReturn: List<Location>) {
-    stubFor(
-      post("/locations/keys")
-        .withRequestBody(equalToJson(mapper.writeValueAsString(locationIds.map { it.toString() })))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(locationsToReturn))
             .withStatus(200),
         ),
     )
