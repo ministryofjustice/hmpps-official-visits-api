@@ -185,7 +185,7 @@ class SyncFacadeTest {
         prisonCode = MOORLAND,
         identifier = response.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = MOORLAND_PRISON_USER,
+        user = UserService.getClientAsUser("NOMIS"),
       )
     }
 
@@ -320,7 +320,7 @@ class SyncFacadeTest {
         prisonCode = MOORLAND,
         identifier = response.visitSlotId,
         source = Source.NOMIS,
-        user = MOORLAND_PRISON_USER,
+        user = UserService.getClientAsUser("NOMIS"),
       )
     }
 
