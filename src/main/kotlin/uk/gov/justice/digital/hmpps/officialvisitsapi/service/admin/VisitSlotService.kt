@@ -53,6 +53,9 @@ class VisitSlotService(
     val visitSlotEntity = prisonVisitSlotRepository.findById(prisonVisitSlotId)
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
 
+    val timeSlotEntity = prisonTimeSlotRepository.findById(visitSlotEntity.prisonTimeSlotId)
+      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${visitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
+
     // Only capacities may be changed; dpsLocationId and prisonTimeSlotId must remain the same
     val changed = visitSlotEntity.copy(
       maxAdults = request.maxAdults,
@@ -62,9 +65,6 @@ class VisitSlotService(
       updatedBy = user.username,
       updatedTime = LocalDateTime.now(),
     )
-
-    val timeSlotEntity = prisonTimeSlotRepository.findById(changed.prisonTimeSlotId)
-      .orElseThrow { EntityNotFoundException("Prison time slot with ID ${changed.prisonTimeSlotId} was not found for visit slot") }
 
     return prisonVisitSlotRepository.saveAndFlush(changed).toVisitSlotModel(timeSlotEntity.prisonCode)
   }
