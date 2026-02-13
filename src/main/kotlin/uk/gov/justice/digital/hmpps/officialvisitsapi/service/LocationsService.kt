@@ -6,7 +6,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsidepris
 
 @Service
 class LocationsService(private val locationsInsidePrisonClient: LocationsInsidePrisonClient) {
-  fun getOfficialVisitLocationsAtPrison(prisonCode: String): List<Location> = run {
+  fun getActiveVisitLocationsAtPrison(prisonCode: String): List<Location> = run {
     locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode).filter { loc -> loc.status == Location.Status.ACTIVE }
+  }
+
+  fun getAllVisitLocationsAtPrison(prisonCode: String): List<Location> = run {
+    locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode)
   }
 }

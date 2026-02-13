@@ -31,7 +31,7 @@ class LocationsInsidePrisonApiMockServer : MockServer(8091) {
     serviceType: String = "OFFICIAL_VISITS",
   ) {
     stubFor(
-      get("/locations/non-residential/prison/$prisonCode/service/$serviceType?sortByLocalName=true&formatLocalName=true&filterParents=true")
+      get("/locations/non-residential/prison/$prisonCode/service/$serviceType?sortByLocalName=true&formatLocalName=true&filterParents=false")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
