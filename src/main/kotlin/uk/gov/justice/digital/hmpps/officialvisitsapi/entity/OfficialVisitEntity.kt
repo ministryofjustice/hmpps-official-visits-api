@@ -132,6 +132,10 @@ class OfficialVisitEntity(
     ).also(officialVisitors::add)
   }
 
+  fun removeVisitor(officialVisitorEntity: OfficialVisitorEntity) {
+    officialVisitors.remove(officialVisitorEntity)
+  }
+
   fun officialVisitors(): List<OfficialVisitorEntity> = officialVisitors.toList()
 
   override fun equals(other: Any?): Boolean {
