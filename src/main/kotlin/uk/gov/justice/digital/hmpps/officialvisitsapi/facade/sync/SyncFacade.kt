@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCre
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
@@ -161,6 +162,8 @@ class SyncFacade(
       }
   }
 
+  // TODO: Add an update method here - just the visit (no visitors, as these are handled individually)
+
   // ---------------  Official visitors ----------------------
 
   fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncOfficialVisitor {
@@ -189,6 +192,20 @@ class SyncFacade(
         user = UserService.getClientAsUser("NOMIS"),
       )
     }
+  }
+
+  fun updateOfficialVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncOfficialVisitor {
+    val response = syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+    outboundEventsService.send(
+      outboundEvent = OutboundEvent.VISITOR_UPDATED,
+      prisonCode = response.prisonCode,
+      identifier = response.officialVisitId,
+      secondIdentifier = response.officialVisitorId,
+      contactId = response.visitor.contactId,
+      source = Source.NOMIS,
+      user = userOrDefault(response.visitor.updatedBy),
+    )
+    return response.visitor
   }
 
   // --------------- Other methods add here ----------------

@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
@@ -39,6 +40,8 @@ class SyncOfficialVisitService(
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
+  // ----------------- official visits -------------------------
+
   @Transactional(readOnly = true)
   fun getOfficialVisitById(officialVisitId: Long): SyncOfficialVisit {
     val ove = officialVisitRepository.findById(officialVisitId).orElseThrow {
@@ -56,8 +59,7 @@ class SyncOfficialVisitService(
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
     }
 
-    // TODO: Check whether NOMIS includes the visitCompletionType at the point of creation, and prisoner attendance
-    // NOMIS may set these values by default when creating a visit? Question for Andy.
+    // TODO: Check whether NOMIS includes the visitCompletionType or searchType at the point of creation, and prisoner attendance
 
     val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request))
 
@@ -78,6 +80,8 @@ class SyncOfficialVisitService(
     prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
     officialVisitRepository.deleteById(officialVisit.officialVisitId)
   }?.toSyncModel()
+
+  // ----------------- official visitors -------------------------
 
   fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
@@ -153,9 +157,143 @@ class SyncOfficialVisitService(
     }
     return null
   }
+
+  fun updateOfficialVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncUpdateVisitorResponse {
+    val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
+      EntityNotFoundException("The official visit with id $officialVisitId was not found")
+    }
+
+    val visitor = officialVisitorRepository.findById(officialVisitorId).getOrNull()
+      ?: throw EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
+
+    val changedVisitorEntity = buildChangedEntity(visit, visitor, request)
+    val changes = describeVisitorChanges(old = visitor, new = changedVisitorEntity)
+    log.info(changes)
+
+    val savedVisitorEntity = officialVisitorRepository.saveAndFlush(
+      visitor.copy(
+        visitorTypeCode = changedVisitorEntity.visitorTypeCode,
+        firstName = changedVisitorEntity.firstName,
+        lastName = changedVisitorEntity.lastName,
+        contactId = changedVisitorEntity.contactId,
+        prisonerContactId = changedVisitorEntity.prisonerContactId,
+        relationshipTypeCode = changedVisitorEntity.relationshipTypeCode,
+        relationshipCode = changedVisitorEntity.relationshipCode,
+        leadVisitor = changedVisitorEntity.leadVisitor,
+        assistedVisit = changedVisitorEntity.assistedVisit,
+        visitorNotes = changedVisitorEntity.visitorNotes,
+        offenderVisitVisitorId = changedVisitorEntity.offenderVisitVisitorId,
+        visitorEquipment = visitor.visitorEquipment,
+        updatedBy = changedVisitorEntity.updatedBy,
+        updatedTime = changedVisitorEntity.updatedTime,
+      ),
+    )
+
+    // TODO: Check whether this is needed - integration test will confirm it - try with and without
+    // Get the visit again - to check the list of visitors has now updated - don't want to save the original list
+    val visitChanged = officialVisitRepository.findById(officialVisitId).orElseThrow {
+      EntityNotFoundException("The official visit with id $officialVisitId was not found")
+    }
+
+    log.info("Visitors on the visit (after update) = ${visitChanged.officialVisitors().size}")
+
+    return SyncUpdateVisitorResponse(
+      officialVisitId = visit.officialVisitId,
+      officialVisitorId = visitor.officialVisitorId,
+      prisonCode = visit.prisonCode,
+      prisonerNumber = visit.prisonerNumber,
+      visitor = savedVisitorEntity.toSyncModel(),
+    )
+  }
+
+  private fun buildChangedEntity(
+    visit: OfficialVisitEntity,
+    visitor: OfficialVisitorEntity,
+    request: SyncUpdateOfficialVisitorRequest,
+  ) = OfficialVisitorEntity(
+    officialVisitorId = visitor.officialVisitorId,
+    officialVisit = visit,
+    visitorTypeCode = visitor.visitorTypeCode,
+    firstName = request.firstName,
+    lastName = request.lastName,
+    contactId = request.personId,
+    prisonerContactId = if (visitor.contactId == request.personId) visitor.prisonerContactId else null,
+    relationshipTypeCode = request.relationshipTypeCode,
+    relationshipCode = request.relationshipToPrisoner,
+    leadVisitor = request.groupLeaderFlag ?: false,
+    assistedVisit = request.assistedVisitFlag ?: false,
+    visitorNotes = request.commentText,
+    createdBy = visitor.createdBy,
+    createdTime = visitor.createdTime,
+  ).apply {
+    visitorEquipment = visitor.visitorEquipment
+    attendanceCode = request.attendanceCode
+    updatedTime = request.updateDateTime
+    updatedBy = request.updateUsername
+  }
+
+  private fun describeVisitorChanges(old: OfficialVisitorEntity, new: OfficialVisitorEntity): String {
+    val changes = mutableListOf<String>()
+
+    if (old.firstName != new.firstName) {
+      changes.add("First name changed from '${old.firstName}' to '${new.firstName}'")
+    }
+    if (old.lastName != new.lastName) {
+      changes.add("Last name changed from '${old.lastName}' to '${new.lastName}'")
+    }
+    if (old.leadVisitor != new.leadVisitor) {
+      val status = if (new.leadVisitor) "Is now the lead visitor" else "Is no longer the lead visitor"
+      changes.add(status)
+    }
+    if (old.assistedVisit != new.assistedVisit) {
+      val status = if (new.assistedVisit) "Is now an assisted visitor" else "Is no longer an assisted visitor"
+      changes.add(status)
+    }
+    if (old.visitorTypeCode != new.visitorTypeCode) {
+      changes.add("Visitor type changed from '${old.visitorTypeCode}' to '${new.visitorTypeCode}'")
+    }
+    if (old.contactId != new.contactId) {
+      changes.add("Contact ID changed from '${old.contactId}' to '${new.contactId}'")
+    }
+    if (old.prisonerContactId != new.prisonerContactId) {
+      changes.add("Prisoner contact ID changed from '${old.prisonerContactId}' to '${new.prisonerContactId}'")
+    }
+    if (old.relationshipTypeCode != new.relationshipTypeCode) {
+      changes.add("Relationship type code changed from '${old.relationshipTypeCode}' to '${new.relationshipTypeCode}'")
+    }
+    if (old.relationshipCode != new.relationshipCode) {
+      changes.add("Relationship code changed from '${old.relationshipCode}' to '${new.relationshipCode}'")
+    }
+    if (old.visitorNotes != new.visitorNotes) {
+      changes.add("Visitor notes changed from '${old.visitorNotes}' to '${new.visitorNotes}'")
+    }
+    if (old.attendanceCode != new.attendanceCode) {
+      changes.add("Attendance code changed from '${old.attendanceCode}' to '${new.attendanceCode}'")
+    }
+    if (old.visitorEquipment?.description != new.visitorEquipment?.description) {
+      changes.add("Visitor equipment changed from '${old.visitorEquipment?.description}' to '${new.visitorEquipment?.description}'")
+    }
+    if (old.offenderVisitVisitorId != new.offenderVisitVisitorId) {
+      changes.add("NOMIS offender visit visitor ID changed from '${old.offenderVisitVisitorId}' to '${new.offenderVisitVisitorId}'")
+    }
+
+    return if (changes.isEmpty()) {
+      "No changes detected."
+    } else {
+      "Changes: ${changes.joinToString(separator = "; ", postfix = ".")}"
+    }
+  }
 }
 
 data class SyncAddVisitorResponse(
+  val officialVisitId: Long,
+  val officialVisitorId: Long,
+  val prisonCode: String,
+  val prisonerNumber: String,
+  val visitor: SyncOfficialVisitor,
+)
+
+data class SyncUpdateVisitorResponse(
   val officialVisitId: Long,
   val officialVisitorId: Long,
   val prisonCode: String,

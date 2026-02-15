@@ -32,7 +32,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
@@ -241,7 +240,6 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
     personId = contactId,
     firstName = "First",
     lastName = "Last",
-    dateOfBirth = LocalDate.of(1980, 1, 1),
     relationshipTypeCode = RelationshipType.OFFICIAL,
     relationshipToPrisoner = "POL",
     groupLeaderFlag = true,

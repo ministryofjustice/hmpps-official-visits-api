@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
@@ -184,4 +186,39 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
     @PathVariable(required = true)
     officialVisitorId: Long,
   ) = syncFacade.removeOfficialVisitor(officialVisitId, officialVisitorId)
+
+  @PutMapping(path = ["/official-visit/{officialVisitId}/visitor/{officialVisitorId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseBody
+  @Operation(
+    summary = "Updates a visitor on an existing official visit",
+    description = """
+      Requires role: OFFICIAL_VISITS_MIGRATION.
+      Used to update a visitor on an official visit in DPS as part of the synchronisation from NOMIS.      
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully updated the visitor",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = SyncOfficialVisitor::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "The the official visit or visitor was not found using the IDs presented",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  fun syncUpdateOfficialVisitor(
+    @Valid @RequestBody request: SyncUpdateOfficialVisitorRequest,
+    @PathVariable(required = true) officialVisitId: Long,
+    @PathVariable(required = true) officialVisitorId: Long,
+  ): SyncOfficialVisitor = syncFacade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
 }
