@@ -38,7 +38,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
@@ -370,7 +369,6 @@ class MigrateVisitServiceTest {
           personId = 11111,
           firstName = "Mary",
           lastName = "Smith",
-          dateOfBirth = LocalDate.of(2001, 1, 1),
           relationshipTypeCode = RelationshipType.OFFICIAL,
           relationshipToPrisoner = "POL",
           groupLeaderFlag = true,
@@ -385,7 +383,6 @@ class MigrateVisitServiceTest {
           personId = 22222,
           firstName = "John",
           lastName = "Smith",
-          dateOfBirth = LocalDate.of(2001, 2, 2),
           relationshipTypeCode = RelationshipType.OFFICIAL,
           relationshipToPrisoner = "POM",
           groupLeaderFlag = false,

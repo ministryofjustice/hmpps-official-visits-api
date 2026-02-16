@@ -40,8 +40,10 @@ data class SyncUpdateOfficialVisitorRequest(
   val attendanceCode: AttendanceType? = null,
 
   @Schema(description = "The date and time the visitor was updated", example = "2022-10-01T16:45:45", required = true)
+  @field:NotNull(message = "The update date and time is mandatory")
   var updateDateTime: LocalDateTime? = null,
 
   @Schema(description = "The username who updated the visitor", example = "X999X", required = true)
+  @field:NotNull(message = "The update username is mandatory")
   var updateUsername: String? = null,
 )
