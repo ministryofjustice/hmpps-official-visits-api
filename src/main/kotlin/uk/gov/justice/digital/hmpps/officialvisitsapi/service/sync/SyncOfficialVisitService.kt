@@ -184,18 +184,11 @@ class SyncOfficialVisitService(
         visitorNotes = changedVisitorEntity.visitorNotes,
         offenderVisitVisitorId = changedVisitorEntity.offenderVisitVisitorId,
         visitorEquipment = visitor.visitorEquipment,
+        attendanceCode = changedVisitorEntity.attendanceCode,
         updatedBy = changedVisitorEntity.updatedBy,
         updatedTime = changedVisitorEntity.updatedTime,
       ),
     )
-
-    // TODO: Check whether this is needed - integration test will confirm it - try with and without
-    // Get the visit again - to check the list of visitors has now updated - don't want to save the original list
-    val visitChanged = officialVisitRepository.findById(officialVisitId).orElseThrow {
-      EntityNotFoundException("The official visit with id $officialVisitId was not found")
-    }
-
-    log.info("Visitors on the visit (after update) = ${visitChanged.officialVisitors().size}")
 
     return SyncUpdateVisitorResponse(
       officialVisitId = visit.officialVisitId,

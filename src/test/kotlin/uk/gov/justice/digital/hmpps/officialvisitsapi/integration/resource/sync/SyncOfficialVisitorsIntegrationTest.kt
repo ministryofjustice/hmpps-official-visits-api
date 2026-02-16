@@ -233,7 +233,7 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
     stubEvents.reset()
 
     // Add a visitor
-    val visitorRequest = syncCreateOfficialVisitorRequest(offenderVisitVisitorId = 1L,  contactId)
+    val visitorRequest = syncCreateOfficialVisitorRequest(offenderVisitVisitorId = 1L, contactId)
     val visitorResponse = webTestClient.syncCreateOfficialVisitor(savedOfficialVisitId, visitorRequest)
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)

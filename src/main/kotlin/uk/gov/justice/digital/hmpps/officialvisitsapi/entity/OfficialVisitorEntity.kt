@@ -90,6 +90,7 @@ class OfficialVisitorEntity(
     visitorNotes: String?,
     offenderVisitVisitorId: Long?,
     visitorEquipment: VisitorEquipmentEntity?,
+    attendanceCode: AttendanceType?,
     updatedBy: String?,
     updatedTime: LocalDateTime?,
   ) = OfficialVisitorEntity(
@@ -110,6 +111,7 @@ class OfficialVisitorEntity(
     createdTime = this.createdTime,
   ).apply {
     this.visitorEquipment = visitorEquipment
+    this.attendanceCode = attendanceCode
     this.updatedBy = updatedBy
     this.updatedTime = updatedTime
   }

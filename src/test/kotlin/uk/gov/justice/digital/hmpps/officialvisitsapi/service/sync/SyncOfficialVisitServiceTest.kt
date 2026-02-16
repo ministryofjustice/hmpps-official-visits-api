@@ -6,7 +6,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
@@ -24,11 +26,14 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
@@ -73,7 +78,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should return an official visit by ID for sync`() {
+  fun `get a visit - should return an official visit by ID`() {
     val visitEntity = createAVisitEntity(1L)
     val prisonerVisitedEntity = createAPrisonerVisitedEntity(visitEntity, 2L)
 
@@ -88,7 +93,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should fail to get an official visit by ID if it does not exist`() {
+  fun `get a visit - should fail if the visit does not exist`() {
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.empty())
 
     assertThrows<EntityNotFoundException> {
@@ -99,7 +104,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should fail to get an official visit by ID if the prisoner visited does not exist`() {
+  fun `get a visit - should fail if the prisoner visited does not exist`() {
     val visitEntity = createAVisitEntity(1L)
 
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
@@ -114,7 +119,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should create an official visit`() {
+  fun `create a visit - should succeed`() {
     val visitSlotEntity = prisonVisitSlotEntity(1L)
     val request = createOfficialVisitRequest(1L)
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, request)
@@ -146,7 +151,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should fail to create an official visit - references a visit slot that does not exist`() {
+  fun `create a visit - should fail if the visit slot does not exist`() {
     val request = createOfficialVisitRequest(1L)
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.empty())
@@ -160,7 +165,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should fail to create an official visit - exception on insert`() {
+  fun `create a visit - should fail if there is an exception on insert`() {
     val visitSlotEntity = prisonVisitSlotEntity(1L)
     val request = createOfficialVisitRequest(1L)
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, request)
@@ -185,7 +190,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should delete an official visit by ID`() {
+  fun `delete a visit - should succeed`() {
     val visitEntity = createAVisitEntity(1L)
 
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
@@ -207,7 +212,7 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
-  fun `should silently succeed a delete when the official visit ID is not found`() {
+  fun `delete a visit - should silently succeed when the official visit ID is not found`() {
     whenever(officialVisitRepository.findById(99L)).thenReturn(Optional.empty())
     syncOfficialVisitService.deleteOfficialVisit(99L)
 
@@ -274,7 +279,7 @@ class SyncOfficialVisitServiceTest {
   /* -------------------- Official visitors ------------------------- */
 
   @Test
-  fun `add a visitor - should create an official visitor on an existing visit`() {
+  fun `add a visitor - should succeed`() {
     val visitSlotId = 1L
     val visitId = 2L
     val visitorId = 3L
@@ -288,7 +293,7 @@ class SyncOfficialVisitServiceTest {
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
 
     // Mocked visitor
-    val officialVisitorEntity = createOfficialVisitorEntity(officialVisitEntity, visitorId, contactId, prisonerContactId, offenderVisitVisitorId)
+    val officialVisitorEntity = officialVisitorEntity(officialVisitEntity, visitorId, contactId, prisonerContactId, offenderVisitVisitorId)
 
     val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
 
@@ -452,6 +457,129 @@ class SyncOfficialVisitServiceTest {
     assertThat(response).isNull()
   }
 
+  @Test
+  fun `update a visitor - should succeed`() {
+    val visitSlotId = 1L
+    val visitId = 2L
+    val visitorId = 3L
+    val contactId = 4L
+    val prisonerContactId = 5L
+    val offenderVisitVisitorId = 6L
+
+    // Mocked visit
+    val visitSlotEntity = prisonVisitSlotEntity(visitSlotId)
+    val visitRequest = createOfficialVisitRequest(visitId)
+    val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
+
+    // Mocked visitor
+    val officialVisitorEntity = officialVisitorEntity(officialVisitEntity, visitorId, contactId, prisonerContactId, offenderVisitVisitorId)
+
+    // Update visitor request
+    val visitorUpdateRequest = updateOfficialVisitorRequest(
+      offenderVisitVisitorId = offenderVisitVisitorId,
+      contactId = contactId,
+      firstName = "FirstX",
+      lastName = "LastX",
+      relationshipToPrisoner = "POM",
+      groupLeaderFlag = false,
+      assistedVisitFlag = false,
+      commentText = "Changed",
+    )
+
+    whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
+    whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.of(officialVisitorEntity))
+    whenever(officialVisitorRepository.saveAndFlush(any())).thenReturn(officialVisitorEntity)
+
+    syncOfficialVisitService.updateOfficialVisitor(visitId, visitorId, visitorUpdateRequest)
+
+    verify(officialVisitRepository).findById(visitId)
+    verify(officialVisitorRepository).findById(visitorId)
+
+    val visitorCaptor = argumentCaptor<OfficialVisitorEntity>()
+    verify(officialVisitorRepository).saveAndFlush(visitorCaptor.capture())
+
+    with(visitorCaptor.firstValue) {
+      // Check that the update request changes are saved
+      assertThat(officialVisitorId).isEqualTo(visitorId)
+      assertThat(firstName).isEqualTo(visitorUpdateRequest.firstName)
+      assertThat(lastName).isEqualTo(visitorUpdateRequest.lastName)
+      assertThat(relationshipCode).isEqualTo(visitorUpdateRequest.relationshipToPrisoner)
+      assertThat(leadVisitor).isEqualTo(visitorUpdateRequest.groupLeaderFlag)
+      assertThat(assistedVisit).isEqualTo(visitorUpdateRequest.assistedVisitFlag)
+      assertThat(visitorNotes).isEqualTo(visitorUpdateRequest.commentText)
+      assertThat(attendanceCode).isEqualTo(visitorUpdateRequest.attendanceCode)
+    }
+  }
+
+  @Test
+  fun `update a visitor - should fail if the visit does not exist`() {
+    val visitId = 2L
+    val visitorId = 3L
+    val contactId = 4L
+    val offenderVisitVisitorId = 6L
+
+    val visitorUpdateRequest = updateOfficialVisitorRequest(
+      offenderVisitVisitorId = offenderVisitVisitorId,
+      contactId = contactId,
+      firstName = "FirstX",
+      lastName = "LastX",
+      relationshipToPrisoner = "POL",
+      groupLeaderFlag = true,
+      assistedVisitFlag = true,
+      commentText = "Changed",
+    )
+
+    whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.empty())
+
+    val exception = assertThrows<EntityNotFoundException> {
+      syncOfficialVisitService.updateOfficialVisitor(visitId, visitorId, visitorUpdateRequest)
+    }
+
+    exception.message isEqualTo "The official visit with id $visitId was not found"
+
+    verify(officialVisitRepository).findById(visitId)
+    verifyNoInteractions(officialVisitorRepository)
+  }
+
+  @Test
+  fun `update a visitor - should fail if the visitor does not exist`() {
+    val visitSlotId = 1L
+    val visitId = 2L
+    val visitorId = 3L
+    val contactId = 4L
+    val offenderVisitVisitorId = 6L
+
+    // Mocked visit
+    val visitSlotEntity = prisonVisitSlotEntity(visitSlotId)
+    val visitRequest = createOfficialVisitRequest(visitId)
+    val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
+
+    // Update request
+    val visitorUpdateRequest = updateOfficialVisitorRequest(
+      offenderVisitVisitorId = offenderVisitVisitorId,
+      contactId = contactId,
+      firstName = "FirstX",
+      lastName = "LastX",
+      relationshipToPrisoner = "POL",
+      groupLeaderFlag = true,
+      assistedVisitFlag = true,
+      commentText = "Changed",
+    )
+
+    whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
+    whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.empty())
+
+    val exception = assertThrows<EntityNotFoundException> {
+      syncOfficialVisitService.updateOfficialVisitor(visitId, visitorId, visitorUpdateRequest)
+    }
+
+    exception.message isEqualTo "The official visitor with id $visitorId was not found"
+
+    verify(officialVisitRepository).findById(visitId)
+    verify(officialVisitorRepository).findById(visitorId)
+    verify(officialVisitorRepository, never()).saveAndFlush(any())
+  }
+
   private fun createOfficialVisitorRequest(offenderVisitVisitorId: Long, contactId: Long) = SyncCreateOfficialVisitorRequest(
     offenderVisitVisitorId = offenderVisitVisitorId,
     personId = contactId,
@@ -464,6 +592,30 @@ class SyncOfficialVisitServiceTest {
     commentText = "Notes",
     createDateTime = createdTime,
     createUsername = "Bob",
+  )
+
+  private fun updateOfficialVisitorRequest(
+    offenderVisitVisitorId: Long,
+    contactId: Long,
+    firstName: String,
+    lastName: String,
+    relationshipToPrisoner: String,
+    groupLeaderFlag: Boolean,
+    assistedVisitFlag: Boolean,
+    commentText: String,
+  ) = SyncUpdateOfficialVisitorRequest(
+    offenderVisitVisitorId = offenderVisitVisitorId,
+    personId = contactId,
+    firstName = firstName,
+    lastName = lastName,
+    relationshipTypeCode = RelationshipType.OFFICIAL,
+    relationshipToPrisoner = relationshipToPrisoner,
+    groupLeaderFlag = groupLeaderFlag,
+    assistedVisitFlag = assistedVisitFlag,
+    commentText = commentText,
+    attendanceCode = AttendanceType.ATTENDED,
+    updateUsername = MOORLAND_PRISON_USER.username,
+    updateDateTime = LocalDateTime.now().minusMinutes(10),
   )
 
   private fun prisonerContactSummary(
@@ -493,7 +645,7 @@ class SyncOfficialVisitServiceTest {
     ),
   )
 
-  private fun createOfficialVisitorEntity(
+  private fun officialVisitorEntity(
     officialVisit: OfficialVisitEntity,
     visitorId: Long,
     contactId: Long,
