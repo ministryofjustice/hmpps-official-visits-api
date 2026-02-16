@@ -76,4 +76,43 @@ class OfficialVisitorEntity(
   }
 
   override fun hashCode(): Int = officialVisitorId.hashCode()
+
+  fun copy(
+    visitorTypeCode: VisitorType,
+    firstName: String?,
+    lastName: String?,
+    contactId: Long?,
+    prisonerContactId: Long?,
+    relationshipTypeCode: RelationshipType?,
+    relationshipCode: String?,
+    leadVisitor: Boolean,
+    assistedVisit: Boolean,
+    visitorNotes: String?,
+    offenderVisitVisitorId: Long?,
+    visitorEquipment: VisitorEquipmentEntity?,
+    attendanceCode: AttendanceType?,
+    updatedBy: String?,
+    updatedTime: LocalDateTime?,
+  ) = OfficialVisitorEntity(
+    officialVisitorId = this.officialVisitorId,
+    officialVisit = this.officialVisit,
+    visitorTypeCode = visitorTypeCode,
+    firstName = firstName,
+    lastName = lastName,
+    contactId = contactId,
+    prisonerContactId = prisonerContactId,
+    relationshipTypeCode = relationshipTypeCode,
+    relationshipCode = relationshipCode,
+    leadVisitor = leadVisitor,
+    assistedVisit = assistedVisit,
+    visitorNotes = visitorNotes,
+    offenderVisitVisitorId = offenderVisitVisitorId,
+    createdBy = this.createdBy,
+    createdTime = this.createdTime,
+  ).apply {
+    this.visitorEquipment = visitorEquipment
+    this.attendanceCode = attendanceCode
+    this.updatedBy = updatedBy
+    this.updatedTime = updatedTime
+  }
 }

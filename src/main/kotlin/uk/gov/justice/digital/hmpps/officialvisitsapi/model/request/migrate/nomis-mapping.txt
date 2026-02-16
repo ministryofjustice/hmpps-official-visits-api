@@ -38,7 +38,6 @@ OFFICIAL VISITOR MAPPING
    prisoner_contact_id bigint                       --> Not supplied - Migration service tries to establish - from name, person, and relationship? Set by DPS
    first_name varchar(60)                           --> Supplied - check against contacts?
    last_name varchar(60)                            --> Supplied - check against contacts?
-   dateOfBirth date                                 --> Supplied - check against contacts?
    relationship_code varchar(20)                    --> Supplied - check against contacts?
    lead_visitor boolean NOT NULL                    --> Supplied - Group leader flag (Y/N) converted to Boolean
    assisted_visit boolean NOT NULL                  --> Supplied - Assisted visit flag (Y/N) converted to Boolean
@@ -94,7 +93,7 @@ OFFICIAL VISITOR MAPPING
                          RUB_A,222372
                          RUB_B,184999
 
-   * VIS_COMPLETION  - Calculated by Sycson at time of migration or sync to NOMIS, from DPS values.
+   * VIS_COMPLETION  - Calculated by Syscon at time of migration or sync to NOMIS, from DPS values.
                      - One of
                          - NORMAL
                          - STAFF_CANCELLED

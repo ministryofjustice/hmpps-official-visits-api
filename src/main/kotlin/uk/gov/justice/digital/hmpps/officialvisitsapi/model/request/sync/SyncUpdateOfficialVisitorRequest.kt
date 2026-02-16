@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import java.time.LocalDateTime
 
-data class SyncCreateOfficialVisitorRequest(
+data class SyncUpdateOfficialVisitorRequest(
   @Schema(description = "The NOMIS offender visit visitor ID", example = "133232", required = true)
   @field:NotNull(message = "The NOMIS offender visit visitor ID is mandatory")
   val offenderVisitVisitorId: Long?,
@@ -33,15 +33,17 @@ data class SyncCreateOfficialVisitorRequest(
   @Schema(description = "Set to true if this person requires assistance at the visit. Defaults to false if not supplied.", example = "true", nullable = true)
   val assistedVisitFlag: Boolean? = false,
 
-  @Schema(description = "The visitor comment text from NOMIS", example = "Some comments", nullable = true)
+  @Schema(description = "The visitor comment text from NOMIS. Propagates into visitor assistance notes on DPS", example = "Some comments", nullable = true)
   val commentText: String? = null,
 
   @Schema(description = "The visitor attendance code (ATTENDED or ABSENT). A null indicates no attendance was added.", example = "ATTENDED", nullable = true)
   val attendanceCode: AttendanceType? = null,
 
-  @Schema(description = "The data and time the record was created", example = "2022-10-01T16:45:45", required = true)
-  var createDateTime: LocalDateTime? = null,
+  @Schema(description = "The date and time the visitor was updated", example = "2022-10-01T16:45:45", required = true)
+  @field:NotNull(message = "The update date and time is mandatory")
+  var updateDateTime: LocalDateTime? = null,
 
-  @Schema(description = "The username who created the row", example = "X999X", required = true)
-  var createUsername: String? = null,
+  @Schema(description = "The username who updated the visitor", example = "X999X", required = true)
+  @field:NotNull(message = "The update username is mandatory")
+  var updateUsername: String? = null,
 )

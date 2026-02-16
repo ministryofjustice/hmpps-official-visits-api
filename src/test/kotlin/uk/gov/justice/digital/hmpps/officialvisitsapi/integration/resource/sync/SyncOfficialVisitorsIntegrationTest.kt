@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
@@ -32,7 +33,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
@@ -211,6 +211,96 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
     stubEvents.assertHasNoEvents(OutboundEvent.VISITOR_DELETED)
   }
 
+  @Test
+  fun `update a visitor - should update the details of a visitor on a visit`() {
+    val contactId = 2L
+
+    // Create a visit
+    val visitRequest = syncCreateOfficialVisitRequest(
+      offenderVisitId = 1L,
+      prisonVisitSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    )
+
+    val visitResponse = webTestClient.syncCreateOfficialVisit(visitRequest)
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncOfficialVisit>()
+      .returnResult().responseBody!!
+
+    val savedOfficialVisitId = visitResponse.officialVisitId
+
+    stubEvents.reset()
+
+    // Add a visitor
+    val visitorRequest = syncCreateOfficialVisitorRequest(offenderVisitVisitorId = 1L, contactId)
+    val visitorResponse = webTestClient.syncCreateOfficialVisitor(savedOfficialVisitId, visitorRequest)
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncOfficialVisitor>()
+      .returnResult().responseBody!!
+
+    stubEvents.reset()
+
+    assertThat(visitorResponse.officialVisitorId).isGreaterThan(0)
+
+    // Build an update request to change details on the visitor
+    val updateRequest = syncUpdateOfficialVisitorRequest(
+      offenderVisitVisitorId = 99L,
+      contactId = contactId,
+      firstName = "Firstchanged",
+      lastName = "Lastchanged",
+      relationshipToPrisoner = "POM",
+      groupLeaderFlag = false,
+      assistedVisitFlag = false,
+      commentText = "Changed comment",
+    )
+
+    val updateResponse = webTestClient.syncUpdateOfficialVisitor(savedOfficialVisitId, visitorResponse.officialVisitorId, updateRequest)
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncOfficialVisitor>()
+      .returnResult().responseBody!!
+
+    // Check the update response detail reflects what was requested for update
+    assertThat(updateResponse.firstName).isEqualTo(updateRequest.firstName)
+    assertThat(updateResponse.lastName).isEqualTo(updateRequest.lastName)
+    assertThat(updateResponse.contactId).isEqualTo(updateRequest.personId)
+    assertThat(updateResponse.relationshipCode).isEqualTo(updateRequest.relationshipToPrisoner)
+    assertThat(updateResponse.leadVisitor).isEqualTo(updateRequest.groupLeaderFlag)
+    assertThat(updateResponse.assistedVisit).isEqualTo(updateRequest.assistedVisitFlag)
+    assertThat(updateResponse.visitorNotes).isEqualTo(updateRequest.commentText)
+    assertThat(updateResponse.attendanceCode).isEqualTo(updateRequest.attendanceCode)
+
+    // Get the visit again - and check the updates are reflected in the response
+    val checkResult = webTestClient.syncGetVisit(savedOfficialVisitId)
+    with(checkResult.visitors.first()) {
+      // Check the ID has remained consistent
+      assertThat(officialVisitorId).isEqualTo(visitorResponse.officialVisitorId)
+
+      // Check the update details are now reflected in the GET
+      assertThat(firstName).isEqualTo(updateRequest.firstName)
+      assertThat(visitorNotes).isEqualTo(updateRequest.commentText)
+      assertThat(attendanceCode).isEqualTo(updateRequest.attendanceCode)
+      assertThat(leadVisitor).isEqualTo(updateRequest.groupLeaderFlag)
+      assertThat(assistedVisit).isEqualTo(updateRequest.assistedVisitFlag)
+    }
+
+    // Check the update visitor domain event was issued
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISITOR_UPDATED,
+      additionalInfo = VisitorInfo(
+        officialVisitId = visitResponse.officialVisitId,
+        officialVisitorId = visitorResponse.officialVisitorId,
+        source = Source.NOMIS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+      ),
+    )
+  }
+
+  // ---- utility functions for tests ----
+
   private fun syncCreateOfficialVisitRequest(
     offenderVisitId: Long,
     prisonVisitSlotId: Long,
@@ -241,7 +331,6 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
     personId = contactId,
     firstName = "First",
     lastName = "Last",
-    dateOfBirth = LocalDate.of(1980, 1, 1),
     relationshipTypeCode = RelationshipType.OFFICIAL,
     relationshipToPrisoner = "POL",
     groupLeaderFlag = true,
@@ -249,6 +338,29 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
     commentText = "comment text",
     createUsername = MOORLAND_PRISON_USER.username,
     createDateTime = LocalDateTime.now().minusMinutes(10),
+  )
+
+  private fun syncUpdateOfficialVisitorRequest(
+    offenderVisitVisitorId: Long,
+    contactId: Long,
+    firstName: String,
+    lastName: String,
+    relationshipToPrisoner: String,
+    groupLeaderFlag: Boolean,
+    assistedVisitFlag: Boolean,
+    commentText: String,
+  ) = SyncUpdateOfficialVisitorRequest(
+    offenderVisitVisitorId = offenderVisitVisitorId,
+    personId = contactId,
+    firstName = firstName,
+    lastName = lastName,
+    relationshipTypeCode = RelationshipType.OFFICIAL,
+    relationshipToPrisoner = relationshipToPrisoner,
+    groupLeaderFlag = groupLeaderFlag,
+    assistedVisitFlag = assistedVisitFlag,
+    commentText = commentText,
+    updateUsername = MOORLAND_PRISON_USER.username,
+    updateDateTime = LocalDateTime.now().minusMinutes(10),
   )
 
   private fun WebTestClient.syncCreateOfficialVisitor(
@@ -274,6 +386,19 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
   private fun WebTestClient.syncDeleteVisitor(officialVisitId: Long, officialVisitorId: Long, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .delete()
     .uri("/sync/official-visit/{officialVisitId}/visitor/{officialVisitorId}", officialVisitId, officialVisitorId)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
+    .exchange()
+
+  private fun WebTestClient.syncUpdateOfficialVisitor(
+    officialVisitId: Long,
+    officialVisitorId: Long,
+    request: SyncUpdateOfficialVisitorRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = this
+    .put()
+    .uri("/sync/official-visit/{officialVisitId}/visitor/{officialVisitorId}", officialVisitId, officialVisitorId)
+    .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
     .exchange()

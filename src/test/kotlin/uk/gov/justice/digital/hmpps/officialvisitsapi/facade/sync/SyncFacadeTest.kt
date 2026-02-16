@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
@@ -45,6 +46,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncAddVisito
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncRemoveVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncUpdateVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -459,6 +461,7 @@ class SyncFacadeTest {
     val officialVisitorId = 2L
     val contactId = 3L
     val creationTime: LocalDateTime = LocalDateTime.now()
+    val updateTime: LocalDateTime = LocalDateTime.now()
 
     @Test
     fun `add a visitor - should add a visitor to a visit and raise an event`() {
@@ -555,6 +558,65 @@ class SyncFacadeTest {
       verifyNoInteractions(outboundEventsService)
     }
 
+    @Test
+    fun `update a visitor - should update a visitor and raise an event`() {
+      val request = updateVisitorRequest()
+      val mockedResponse = updateVisitorResponse()
+      whenever(syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenReturn(
+        mockedResponse,
+      )
+
+      val response = facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+
+      assertThat(response.officialVisitorId).isEqualTo(officialVisitorId)
+
+      verify(syncOfficialVisitService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISITOR_UPDATED,
+        prisonCode = MOORLAND,
+        source = Source.NOMIS,
+        identifier = officialVisitId,
+        secondIdentifier = officialVisitorId,
+        contactId = contactId,
+        user = MOORLAND_PRISON_USER,
+      )
+    }
+
+    @Test
+    fun `update a visitor - should fail if the visit was not found`() {
+      val request = updateVisitorRequest()
+      val expectedException = EntityNotFoundException("The official visit with id $officialVisitId was not found")
+
+      whenever(syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
+
+      val exception = assertThrows<EntityNotFoundException> {
+        facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      }
+
+      assertThat(exception.message).isEqualTo(expectedException.message)
+
+      verify(syncOfficialVisitService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `update a visitor - should fail if the visitor was not found`() {
+      val request = updateVisitorRequest()
+      val expectedException = EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
+
+      whenever(syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
+
+      val exception = assertThrows<EntityNotFoundException> {
+        facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      }
+
+      assertThat(exception.message).isEqualTo(expectedException.message)
+
+      verify(syncOfficialVisitService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verifyNoInteractions(outboundEventsService)
+    }
+
     private fun createVisitorRequest() = SyncCreateOfficialVisitorRequest(
       offenderVisitVisitorId = 9L,
       personId = contactId,
@@ -578,6 +640,34 @@ class SyncFacadeTest {
         lastName = "Last",
         createdBy = MOORLAND_PRISON_USER.username,
         createdTime = creationTime,
+      ),
+    )
+
+    private fun updateVisitorRequest() = SyncUpdateOfficialVisitorRequest(
+      offenderVisitVisitorId = 9L,
+      personId = contactId,
+      firstName = "First",
+      lastName = "Last",
+      relationshipTypeCode = RelationshipType.OFFICIAL,
+      relationshipToPrisoner = "POL",
+      updateUsername = MOORLAND_PRISON_USER.username,
+      updateDateTime = updateTime,
+    )
+
+    private fun updateVisitorResponse() = SyncUpdateVisitorResponse(
+      officialVisitId = officialVisitId,
+      officialVisitorId = officialVisitorId,
+      prisonCode = MOORLAND,
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitor = SyncOfficialVisitor(
+        officialVisitorId = officialVisitorId,
+        contactId = contactId,
+        firstName = "First",
+        lastName = "Last",
+        createdBy = MOORLAND_PRISON_USER.username,
+        createdTime = creationTime,
+        updatedBy = MOORLAND_PRISON_USER.username,
+        updatedTime = updateTime,
       ),
     )
   }

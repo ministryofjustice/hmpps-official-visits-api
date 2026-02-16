@@ -117,10 +117,6 @@ data class MigrateVisitor(
   @Schema(description = "The last name of the visitor", example = "Harris", nullable = true)
   val lastName: String? = null,
 
-  @Schema(description = "The visitors date of birth", example = "2011-01-03", nullable = true)
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
-  val dateOfBirth: LocalDate? = null,
-
   @Schema(description = "The relationship type OFFICIAL or SOCIAL. Default is null if not known.", example = "OFFICIAL", nullable = true)
   val relationshipTypeCode: RelationshipType? = null,
 
