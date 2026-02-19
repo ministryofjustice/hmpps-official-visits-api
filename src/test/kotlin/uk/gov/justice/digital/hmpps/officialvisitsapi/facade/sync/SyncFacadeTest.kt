@@ -26,9 +26,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateVisitSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
@@ -373,34 +375,110 @@ class SyncFacadeTest {
   inner class OfficialVisitsSyncEvents {
 
     @Test
-    fun `get a visit - should delegate to service to fetch official visits based on ID`() {
-      val response = syncOfficialVisitResponse(1L)
-      whenever(syncOfficialVisitService.getOfficialVisitById(officialVisitId = 1L)).thenReturn(response)
+    fun `create a visit - should delegate the create and raise an event`() {
+      val officialVisitId = 1L
+      val request = createVisitRequest(visitSlotId = 1L)
+      val response = syncOfficialVisitResponse(officialVisitId)
 
-      facade.getOfficialVisitById(1L)
+      whenever(syncOfficialVisitService.createVisit(request)).thenReturn(response)
 
-      verify(syncOfficialVisitService).getOfficialVisitById(1L)
+      facade.createOfficialVisit(request)
+
+      verify(syncOfficialVisitService).createVisit(request)
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISIT_CREATED,
+        prisonCode = MOORLAND,
+        source = Source.NOMIS,
+        identifier = officialVisitId,
+        noms = MOORLAND_PRISONER.number,
+        user = MOORLAND_PRISON_USER,
+      )
     }
 
     @Test
-    fun `delete a visit - should return success even if non existent id passed for deletion`() {
-      whenever(syncOfficialVisitService.deleteOfficialVisit(99L)).thenReturn(null)
+    fun `create a visit - should fail the create and avoid raising an event`() {
+      val request = createVisitRequest(visitSlotId = 1L)
 
-      facade.deleteOfficialVisit(99L)
+      whenever(syncOfficialVisitService.createVisit(request)).thenThrow(
+        EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist"),
+      )
 
-      verify(syncOfficialVisitService).deleteOfficialVisit(99L)
+      assertThrows<EntityNotFoundException> {
+        facade.createOfficialVisit(request)
+      }
+
+      verify(syncOfficialVisitService).createVisit(request)
       verifyNoInteractions(outboundEventsService)
     }
 
     @Test
-    fun `delete a visit - should delete an official visit and return response object`() {
+    fun `update a visit - should delegate the update and raise an event`() {
+      val officialVisitId = 1L
+      val request = updateVisitRequest(visitSlotId = 1L)
+      val response = syncOfficialVisitResponse(officialVisitId)
+
+      whenever(syncOfficialVisitService.updateVisit(officialVisitId, request)).thenReturn(response)
+
+      facade.updateOfficialVisit(officialVisitId, request)
+
+      verify(syncOfficialVisitService).updateVisit(officialVisitId, request)
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISIT_UPDATED,
+        prisonCode = MOORLAND,
+        source = Source.NOMIS,
+        identifier = officialVisitId,
+        noms = MOORLAND_PRISONER.number,
+        user = MOORLAND_PRISON_USER,
+      )
+    }
+
+    @Test
+    fun `update a visit - should fail the update and avoid raising an event`() {
+      val officialVisitId = 1L
+      val request = updateVisitRequest(visitSlotId = 1L)
+
+      whenever(syncOfficialVisitService.updateVisit(officialVisitId, request)).thenThrow(
+        EntityNotFoundException("Official visit with id $officialVisitId not found"),
+      )
+
+      assertThrows<EntityNotFoundException> {
+        facade.updateOfficialVisit(officialVisitId, request)
+      }
+
+      verify(syncOfficialVisitService).updateVisit(officialVisitId, request)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `get a visit - should delegate to the service and return the visit`() {
+      val response = syncOfficialVisitResponse(1L)
+
+      whenever(syncOfficialVisitService.getVisitById(officialVisitId = 1L)).thenReturn(response)
+
+      facade.getOfficialVisitById(1L)
+
+      verify(syncOfficialVisitService).getVisitById(1L)
+    }
+
+    @Test
+    fun `delete a visit - should return success if the visit ID is not present`() {
+      whenever(syncOfficialVisitService.deleteVisit(99L)).thenReturn(null)
+
+      facade.deleteOfficialVisit(99L)
+
+      verify(syncOfficialVisitService).deleteVisit(99L)
+      verifyNoInteractions(outboundEventsService)
+    }
+
+    @Test
+    fun `delete a visit - should delete the visit and raise the event`() {
       val response = syncOfficialVisitDeleted(1L)
 
-      whenever(syncOfficialVisitService.deleteOfficialVisit(1L)).thenReturn(response)
+      whenever(syncOfficialVisitService.deleteVisit(1L)).thenReturn(response)
 
       facade.deleteOfficialVisit(1L)
 
-      verify(syncOfficialVisitService).deleteOfficialVisit(1L)
+      verify(syncOfficialVisitService).deleteVisit(1L)
 
       verify(outboundEventsService, atLeastOnce()).send(
         outboundEvent = OutboundEvent.VISIT_DELETED,
@@ -433,6 +511,36 @@ class SyncFacadeTest {
       ),
     )
 
+    private fun createVisitRequest(visitSlotId: Long) = SyncCreateOfficialVisitRequest(
+      offenderVisitId = 1L,
+      prisonVisitSlotId = visitSlotId,
+      prisonCode = MOORLAND,
+      offenderBookId = 1L,
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitDate = tomorrow(),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+      createDateTime = createdTime,
+      createUsername = MOORLAND_PRISON_USER.username,
+    )
+
+    private fun updateVisitRequest(visitSlotId: Long) = SyncUpdateOfficialVisitRequest(
+      offenderVisitId = 1L,
+      prisonVisitSlotId = visitSlotId,
+      prisonCode = MOORLAND,
+      offenderBookId = 1L,
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitDate = tomorrow().plusDays(2),
+      startTime = LocalTime.parse("10:00"),
+      endTime = LocalTime.parse("11:00"),
+      visitorConcernText = "Concerned",
+      visitStatusCode = VisitStatusType.CANCELLED,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+      updateDateTime = updatedTime,
+      updateUsername = MOORLAND_PRISON_USER.username,
+    )
+
     private fun syncOfficialVisitResponse(officialVisitId: Long) = SyncOfficialVisit(
       officialVisitId = officialVisitId,
       visitDate = tomorrow(),
@@ -441,7 +549,7 @@ class SyncFacadeTest {
       prisonVisitSlotId = 1L,
       dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
       prisonCode = MOORLAND,
-      prisonerNumber = "A1234AA",
+      prisonerNumber = MOORLAND_PRISONER.number,
       statusCode = VisitStatusType.SCHEDULED,
       visitType = VisitType.IN_PERSON,
       createdBy = MOORLAND_PRISON_USER.username,
@@ -477,7 +585,7 @@ class SyncFacadeTest {
     fun `add a visitor - should add a visitor to a visit and raise an event`() {
       val request = createVisitorRequest()
       val mockedResponse = createVisitorResponse()
-      whenever(syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)).thenReturn(
+      whenever(syncOfficialVisitorService.createVisitor(officialVisitId, request)).thenReturn(
         mockedResponse,
       )
 
@@ -485,7 +593,7 @@ class SyncFacadeTest {
 
       assertThat(response.officialVisitorId).isEqualTo(officialVisitorId)
 
-      verify(syncOfficialVisitorService).createOfficialVisitor(officialVisitId, request)
+      verify(syncOfficialVisitorService).createVisitor(officialVisitId, request)
 
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISITOR_CREATED,
@@ -503,7 +611,7 @@ class SyncFacadeTest {
       val request = createVisitorRequest()
       val expectedException = EntityNotFoundException("The official visit with id $officialVisitId was not found")
 
-      whenever(syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.createVisitor(officialVisitId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityNotFoundException> {
         facade.createOfficialVisitor(officialVisitId, request)
@@ -511,7 +619,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitorService).createOfficialVisitor(officialVisitId, request)
+      verify(syncOfficialVisitorService).createVisitor(officialVisitId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -520,7 +628,7 @@ class SyncFacadeTest {
       val request = createVisitorRequest()
       val expectedException = EntityInUseException("The person ID ${request.personId} or offenderVisitVisitorId ${request.offenderVisitVisitorId}) is already on the visit $officialVisitId and cannot be added again")
 
-      whenever(syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.createVisitor(officialVisitId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityInUseException> {
         facade.createOfficialVisitor(officialVisitId, request)
@@ -528,7 +636,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitorService).createOfficialVisitor(officialVisitId, request)
+      verify(syncOfficialVisitorService).createVisitor(officialVisitId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -542,11 +650,11 @@ class SyncFacadeTest {
         contactId = contactId,
       )
 
-      whenever(syncOfficialVisitorService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(response)
+      whenever(syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)).thenReturn(response)
 
       facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
 
-      verify(syncOfficialVisitorService).removeOfficialVisitor(officialVisitId, officialVisitorId)
+      verify(syncOfficialVisitorService).deleteVisitor(officialVisitId, officialVisitorId)
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = MOORLAND,
@@ -560,11 +668,11 @@ class SyncFacadeTest {
 
     @Test
     fun `remove a visitor - should silently succeed if the visit or visitor does not exist`() {
-      whenever(syncOfficialVisitorService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(null)
+      whenever(syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)).thenReturn(null)
 
       facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
 
-      verify(syncOfficialVisitorService).removeOfficialVisitor(officialVisitId, officialVisitorId)
+      verify(syncOfficialVisitorService).deleteVisitor(officialVisitId, officialVisitorId)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -572,7 +680,7 @@ class SyncFacadeTest {
     fun `update a visitor - should update a visitor and raise an event`() {
       val request = updateVisitorRequest()
       val mockedResponse = updateVisitorResponse()
-      whenever(syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenReturn(
+      whenever(syncOfficialVisitorService.updateVisitor(officialVisitId, officialVisitorId, request)).thenReturn(
         mockedResponse,
       )
 
@@ -580,7 +688,7 @@ class SyncFacadeTest {
 
       assertThat(response.officialVisitorId).isEqualTo(officialVisitorId)
 
-      verify(syncOfficialVisitorService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verify(syncOfficialVisitorService).updateVisitor(officialVisitId, officialVisitorId, request)
 
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISITOR_UPDATED,
@@ -598,7 +706,7 @@ class SyncFacadeTest {
       val request = updateVisitorRequest()
       val expectedException = EntityNotFoundException("The official visit with id $officialVisitId was not found")
 
-      whenever(syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.updateVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityNotFoundException> {
         facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
@@ -606,7 +714,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitorService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verify(syncOfficialVisitorService).updateVisitor(officialVisitId, officialVisitorId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -615,7 +723,7 @@ class SyncFacadeTest {
       val request = updateVisitorRequest()
       val expectedException = EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
 
-      whenever(syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.updateVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityNotFoundException> {
         facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
@@ -623,7 +731,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitorService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verify(syncOfficialVisitorService).updateVisitor(officialVisitId, officialVisitorId, request)
       verifyNoInteractions(outboundEventsService)
     }
 

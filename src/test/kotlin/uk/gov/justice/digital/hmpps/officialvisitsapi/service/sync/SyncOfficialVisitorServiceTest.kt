@@ -77,7 +77,7 @@ class SyncOfficialVisitorServiceTest {
     // Mocked visitor
     val officialVisitorEntity = officialVisitorEntity(officialVisitEntity, visitorId, contactId, prisonerContactId, offenderVisitVisitorId)
 
-    val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
+    val visitorRequest = createVisitorRequest(offenderVisitVisitorId, contactId)
 
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
     whenever(contactsService.getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)).thenReturn(
@@ -85,7 +85,7 @@ class SyncOfficialVisitorServiceTest {
     )
     whenever(officialVisitorRepository.saveAndFlush(any())).thenReturn(officialVisitorEntity)
 
-    val result = syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
+    val result = syncOfficialVisitService.createVisitor(visitId, visitorRequest)
 
     with(result) {
       assertThat(prisonCode).isEqualTo(officialVisitEntity.prisonCode)
@@ -110,12 +110,12 @@ class SyncOfficialVisitorServiceTest {
     val contactId = 4L
     val offenderVisitVisitorId = 6L
 
-    val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
+    val visitorRequest = createVisitorRequest(offenderVisitVisitorId, contactId)
 
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.empty())
 
     assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
+      syncOfficialVisitService.createVisitor(visitId, visitorRequest)
     }
 
     verify(officialVisitRepository).findById(visitId)
@@ -134,7 +134,7 @@ class SyncOfficialVisitorServiceTest {
     val visitRequest = createOfficialVisitRequest(visitId)
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
 
-    val visitorRequest = createOfficialVisitorRequest(offenderVisitVisitorId, contactId)
+    val visitorRequest = createVisitorRequest(offenderVisitVisitorId, contactId)
 
     // Before calling the service add a duplicate visitor to the visit
     officialVisitEntity.addVisitor(
@@ -154,7 +154,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
 
     assertThrows<EntityInUseException> {
-      syncOfficialVisitService.createOfficialVisitor(visitId, visitorRequest)
+      syncOfficialVisitService.createVisitor(visitId, visitorRequest)
     }
 
     verify(officialVisitRepository).findById(visitId)
@@ -195,7 +195,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
 
-    val response = syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)
+    val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
 
     with(response) {
       assertThat(officialVisitId).isEqualTo(officialVisitId)
@@ -216,7 +216,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.empty())
 
-    val response = syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)
+    val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
 
     assertThat(response).isNull()
   }
@@ -234,7 +234,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
 
-    val response = syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)
+    val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
 
     assertThat(response).isNull()
   }
@@ -257,7 +257,7 @@ class SyncOfficialVisitorServiceTest {
     val officialVisitorEntity = officialVisitorEntity(officialVisitEntity, visitorId, contactId, prisonerContactId, offenderVisitVisitorId)
 
     // Update visitor request
-    val visitorUpdateRequest = updateOfficialVisitorRequest(
+    val visitorUpdateRequest = updateVisitorRequest(
       offenderVisitVisitorId = offenderVisitVisitorId,
       contactId = contactId,
       firstName = "FirstX",
@@ -272,7 +272,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.of(officialVisitorEntity))
     whenever(officialVisitorRepository.saveAndFlush(any())).thenReturn(officialVisitorEntity)
 
-    syncOfficialVisitService.updateOfficialVisitor(visitId, visitorId, visitorUpdateRequest)
+    syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
 
     verify(officialVisitRepository).findById(visitId)
     verify(officialVisitorRepository).findById(visitorId)
@@ -300,7 +300,7 @@ class SyncOfficialVisitorServiceTest {
     val contactId = 4L
     val offenderVisitVisitorId = 6L
 
-    val visitorUpdateRequest = updateOfficialVisitorRequest(
+    val visitorUpdateRequest = updateVisitorRequest(
       offenderVisitVisitorId = offenderVisitVisitorId,
       contactId = contactId,
       firstName = "FirstX",
@@ -314,7 +314,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.empty())
 
     val exception = assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.updateOfficialVisitor(visitId, visitorId, visitorUpdateRequest)
+      syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
     }
 
     exception.message isEqualTo "The official visit with id $visitId was not found"
@@ -337,7 +337,7 @@ class SyncOfficialVisitorServiceTest {
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, visitRequest)
 
     // Update request
-    val visitorUpdateRequest = updateOfficialVisitorRequest(
+    val visitorUpdateRequest = updateVisitorRequest(
       offenderVisitVisitorId = offenderVisitVisitorId,
       contactId = contactId,
       firstName = "FirstX",
@@ -352,7 +352,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.empty())
 
     val exception = assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.updateOfficialVisitor(visitId, visitorId, visitorUpdateRequest)
+      syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
     }
 
     exception.message isEqualTo "The official visitor with id $visitorId was not found"
@@ -385,7 +385,7 @@ class SyncOfficialVisitorServiceTest {
     createdTime = createdTime,
   )
 
-  private fun createOfficialVisitorRequest(offenderVisitVisitorId: Long, contactId: Long) = SyncCreateOfficialVisitorRequest(
+  private fun createVisitorRequest(offenderVisitVisitorId: Long, contactId: Long) = SyncCreateOfficialVisitorRequest(
     offenderVisitVisitorId = offenderVisitVisitorId,
     personId = contactId,
     firstName = "First",
@@ -399,7 +399,7 @@ class SyncOfficialVisitorServiceTest {
     createUsername = "Bob",
   )
 
-  private fun updateOfficialVisitorRequest(
+  private fun updateVisitorRequest(
     offenderVisitVisitorId: Long,
     contactId: Long,
     firstName: String,

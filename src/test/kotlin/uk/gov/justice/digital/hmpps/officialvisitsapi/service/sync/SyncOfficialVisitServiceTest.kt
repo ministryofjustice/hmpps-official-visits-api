@@ -57,7 +57,7 @@ class SyncOfficialVisitServiceTest {
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
     whenever(prisonerVisitedRepository.findByOfficialVisit(visitEntity)).thenReturn(prisonerVisitedEntity)
 
-    val visit = syncOfficialVisitService.getOfficialVisitById(1L)
+    val visit = syncOfficialVisitService.getVisitById(1L)
     visitEntity.assertWithResponse(visit)
 
     verify(officialVisitRepository).findById(1L)
@@ -69,7 +69,7 @@ class SyncOfficialVisitServiceTest {
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.empty())
 
     assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.getOfficialVisitById(1L)
+      syncOfficialVisitService.getVisitById(1L)
     }
 
     verify(officialVisitRepository).findById(1L)
@@ -83,7 +83,7 @@ class SyncOfficialVisitServiceTest {
     whenever(prisonerVisitedRepository.findByOfficialVisit(visitEntity)).thenReturn(null)
 
     assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.getOfficialVisitById(1L)
+      syncOfficialVisitService.getVisitById(1L)
     }
 
     verify(officialVisitRepository).findById(1L)
@@ -93,7 +93,7 @@ class SyncOfficialVisitServiceTest {
   @Test
   fun `create a visit - should succeed`() {
     val visitSlotEntity = prisonVisitSlotEntity(1L)
-    val request = createOfficialVisitRequest(1L)
+    val request = createVisitRequest(1L)
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, request)
     val prisonerVisitedEntity = PrisonerVisitedEntity(
       officialVisit = officialVisitEntity,
@@ -106,7 +106,7 @@ class SyncOfficialVisitServiceTest {
     whenever(officialVisitRepository.saveAndFlush(officialVisitEntity)).thenReturn(officialVisitEntity)
     whenever(prisonerVisitedRepository.saveAndFlush(prisonerVisitedEntity)).thenReturn(prisonerVisitedEntity)
 
-    val result = syncOfficialVisitService.createOfficialVisit(request)
+    val result = syncOfficialVisitService.createVisit(request)
 
     with(result) {
       assertThat(prisonCode).isEqualTo(request.prisonCode)
@@ -124,12 +124,12 @@ class SyncOfficialVisitServiceTest {
 
   @Test
   fun `create a visit - should fail if the visit slot does not exist`() {
-    val request = createOfficialVisitRequest(1L)
+    val request = createVisitRequest(1L)
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.empty())
 
     assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.createOfficialVisit(request)
+      syncOfficialVisitService.createVisit(request)
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
@@ -139,7 +139,7 @@ class SyncOfficialVisitServiceTest {
   @Test
   fun `create a visit - should fail if there is an exception on insert`() {
     val visitSlotEntity = prisonVisitSlotEntity(1L)
-    val request = createOfficialVisitRequest(1L)
+    val request = createVisitRequest(1L)
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, request)
     val prisonerVisitedEntity = PrisonerVisitedEntity(
       officialVisit = officialVisitEntity,
@@ -153,7 +153,7 @@ class SyncOfficialVisitServiceTest {
     whenever(prisonerVisitedRepository.saveAndFlush(prisonerVisitedEntity)).thenThrow(RuntimeException("bang!"))
 
     assertThrows<RuntimeException> {
-      syncOfficialVisitService.createOfficialVisit(request)
+      syncOfficialVisitService.createVisit(request)
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
@@ -166,17 +166,18 @@ class SyncOfficialVisitServiceTest {
     val visitEntity = createAVisitEntity(1L)
 
     whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.of(visitEntity))
-    val syncResponse = syncOfficialVisitService.deleteOfficialVisit(1L)
+
+    val syncResponse = syncOfficialVisitService.deleteVisit(1L)
+
     assertThat(syncResponse?.officialVisitId).isEqualTo(visitEntity.officialVisitId)
     assertThat(syncResponse?.prisonerNumber).isEqualTo(visitEntity.prisonerNumber)
     assertThat(syncResponse?.prisonCode).isEqualTo(visitEntity.prisonCode)
     assertThat(syncResponse?.visitors).size().isEqualTo(2)
-    var index = 0
-    syncResponse?.visitors?.forEach { visitor ->
-      assertThat(visitor.contactId).isEqualTo(syncResponse.visitors[index].contactId)
-      assertThat(visitor.officialVisitorId).isEqualTo(syncResponse.visitors[index].officialVisitorId)
-      index++
-    }
+
+    assertThat(syncResponse?.visitors).extracting("officialVisitorId").containsAll(
+      visitEntity.officialVisitors().map { it.officialVisitorId }.toSet(),
+    )
+
     verify(officialVisitRepository).findById(1L)
     verify(prisonerVisitedRepository).deleteByOfficialVisit(visitEntity)
     verify(officialVisitorRepository).deleteByOfficialVisit(visitEntity)
@@ -186,13 +187,13 @@ class SyncOfficialVisitServiceTest {
   @Test
   fun `delete a visit - should silently succeed when the official visit ID is not found`() {
     whenever(officialVisitRepository.findById(99L)).thenReturn(Optional.empty())
-    syncOfficialVisitService.deleteOfficialVisit(99L)
+    syncOfficialVisitService.deleteVisit(99L)
 
     verify(officialVisitRepository).findById(99L)
     verifyNoInteractions(prisonerVisitedRepository, officialVisitorRepository)
   }
 
-  private fun createOfficialVisitRequest(visitSlotId: Long) = SyncCreateOfficialVisitRequest(
+  private fun createVisitRequest(visitSlotId: Long) = SyncCreateOfficialVisitRequest(
     offenderVisitId = 1L,
     prisonVisitSlotId = visitSlotId,
     prisonCode = MOORLAND,

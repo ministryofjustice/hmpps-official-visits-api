@@ -29,7 +29,7 @@ class SyncOfficialVisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getOfficialVisitById(officialVisitId: Long): SyncOfficialVisit {
+  fun getVisitById(officialVisitId: Long): SyncOfficialVisit {
     val ove = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("Official visit with id $officialVisitId not found")
     }
@@ -40,7 +40,7 @@ class SyncOfficialVisitService(
     return ove.toSyncModel(pve)
   }
 
-  fun createOfficialVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
+  fun createVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
     val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
     }
@@ -61,7 +61,7 @@ class SyncOfficialVisitService(
     return visit.toSyncModel(prisonVisited)
   }
 
-  fun updateOfficialVisit(officialVisitId: Long, request: SyncUpdateOfficialVisitRequest): SyncOfficialVisit {
+  fun updateVisit(officialVisitId: Long, request: SyncUpdateOfficialVisitRequest): SyncOfficialVisit {
     val ove = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("Official visit with id $officialVisitId not found")
     }
@@ -80,7 +80,7 @@ class SyncOfficialVisitService(
     return ove.toSyncModel(pve)
   }
 
-  fun deleteOfficialVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
+  fun deleteVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->
     officialVisitorRepository.deleteByOfficialVisit(officialVisit)
     prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
     officialVisitRepository.deleteById(officialVisit.officialVisitId)

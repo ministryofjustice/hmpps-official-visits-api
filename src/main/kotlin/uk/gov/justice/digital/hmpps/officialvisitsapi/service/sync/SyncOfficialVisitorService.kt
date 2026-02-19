@@ -32,7 +32,7 @@ class SyncOfficialVisitorService(
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
+  fun createVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
     }
@@ -85,7 +85,7 @@ class SyncOfficialVisitorService(
     )
   }
 
-  fun removeOfficialVisitor(officialVisitId: Long, officialVisitorId: Long): SyncRemoveVisitorResponse? {
+  fun deleteVisitor(officialVisitId: Long, officialVisitorId: Long): SyncRemoveVisitorResponse? {
     val visit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return null
     visit.officialVisitors().forEach { visitor ->
       if (visitor.officialVisitorId == officialVisitorId) {
@@ -107,7 +107,7 @@ class SyncOfficialVisitorService(
     return null
   }
 
-  fun updateOfficialVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncUpdateVisitorResponse {
+  fun updateVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncUpdateVisitorResponse {
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
     }
