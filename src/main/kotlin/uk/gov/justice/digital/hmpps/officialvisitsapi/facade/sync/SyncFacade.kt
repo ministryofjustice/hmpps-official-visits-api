@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitorService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncVisitSlotService
 
@@ -41,6 +42,7 @@ class SyncFacade(
   val syncTimeSlotService: SyncTimeSlotService,
   val syncVisitSlotService: SyncVisitSlotService,
   val syncOfficialVisitService: SyncOfficialVisitService,
+  val syncOfficialVisitorService: SyncOfficialVisitorService,
   val outboundEventsService: OutboundEventsService,
   val userService: UserService,
 ) {
@@ -162,12 +164,10 @@ class SyncFacade(
       }
   }
 
-  // TODO: Add an update method here - just the visit (no visitors, as these are handled individually)
-
   // ---------------  Official visitors ----------------------
 
   fun createOfficialVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncOfficialVisitor {
-    val response = syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)
+    val response = syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISITOR_CREATED,
       prisonCode = response.prisonCode,
@@ -181,7 +181,7 @@ class SyncFacade(
   }
 
   fun removeOfficialVisitor(officialVisitId: Long, officialVisitorId: Long) {
-    syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)?.also { response ->
+    syncOfficialVisitorService.removeOfficialVisitor(officialVisitId, officialVisitorId)?.also { response ->
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = response.prisonCode,
@@ -195,7 +195,7 @@ class SyncFacade(
   }
 
   fun updateOfficialVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncOfficialVisitor {
-    val response = syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+    val response = syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISITOR_UPDATED,
       prisonCode = response.prisonCode,
@@ -207,8 +207,6 @@ class SyncFacade(
     )
     return response.visitor
   }
-
-  // --------------- Other methods add here ----------------
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()
 

@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncAddVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitorService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncRemoveVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncUpdateVisitorResponse
@@ -56,6 +57,7 @@ class SyncFacadeTest {
   private val syncTimeSlotService: SyncTimeSlotService = mock()
   private val syncVisitSlotService: SyncVisitSlotService = mock()
   private val syncOfficialVisitService: SyncOfficialVisitService = mock()
+  private val syncOfficialVisitorService: SyncOfficialVisitorService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
   private val userService: UserService = mock()
 
@@ -63,6 +65,7 @@ class SyncFacadeTest {
     syncTimeSlotService,
     syncVisitSlotService,
     syncOfficialVisitService,
+    syncOfficialVisitorService,
     outboundEventsService,
     userService,
   )
@@ -89,7 +92,14 @@ class SyncFacadeTest {
 
   @AfterEach
   fun afterEach() {
-    reset(userService, syncTimeSlotService, syncVisitSlotService)
+    reset(
+      syncTimeSlotService,
+      syncVisitSlotService,
+      syncOfficialVisitService,
+      syncOfficialVisitorService,
+      outboundEventsService,
+      userService,
+    )
   }
 
   @Nested
@@ -467,7 +477,7 @@ class SyncFacadeTest {
     fun `add a visitor - should add a visitor to a visit and raise an event`() {
       val request = createVisitorRequest()
       val mockedResponse = createVisitorResponse()
-      whenever(syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)).thenReturn(
+      whenever(syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)).thenReturn(
         mockedResponse,
       )
 
@@ -475,7 +485,7 @@ class SyncFacadeTest {
 
       assertThat(response.officialVisitorId).isEqualTo(officialVisitorId)
 
-      verify(syncOfficialVisitService).createOfficialVisitor(officialVisitId, request)
+      verify(syncOfficialVisitorService).createOfficialVisitor(officialVisitId, request)
 
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISITOR_CREATED,
@@ -493,7 +503,7 @@ class SyncFacadeTest {
       val request = createVisitorRequest()
       val expectedException = EntityNotFoundException("The official visit with id $officialVisitId was not found")
 
-      whenever(syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityNotFoundException> {
         facade.createOfficialVisitor(officialVisitId, request)
@@ -501,7 +511,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitService).createOfficialVisitor(officialVisitId, request)
+      verify(syncOfficialVisitorService).createOfficialVisitor(officialVisitId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -510,7 +520,7 @@ class SyncFacadeTest {
       val request = createVisitorRequest()
       val expectedException = EntityInUseException("The person ID ${request.personId} or offenderVisitVisitorId ${request.offenderVisitVisitorId}) is already on the visit $officialVisitId and cannot be added again")
 
-      whenever(syncOfficialVisitService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.createOfficialVisitor(officialVisitId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityInUseException> {
         facade.createOfficialVisitor(officialVisitId, request)
@@ -518,7 +528,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitService).createOfficialVisitor(officialVisitId, request)
+      verify(syncOfficialVisitorService).createOfficialVisitor(officialVisitId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -532,11 +542,11 @@ class SyncFacadeTest {
         contactId = contactId,
       )
 
-      whenever(syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(response)
+      whenever(syncOfficialVisitorService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(response)
 
       facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
 
-      verify(syncOfficialVisitService).removeOfficialVisitor(officialVisitId, officialVisitorId)
+      verify(syncOfficialVisitorService).removeOfficialVisitor(officialVisitId, officialVisitorId)
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = MOORLAND,
@@ -550,11 +560,11 @@ class SyncFacadeTest {
 
     @Test
     fun `remove a visitor - should silently succeed if the visit or visitor does not exist`() {
-      whenever(syncOfficialVisitService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(null)
+      whenever(syncOfficialVisitorService.removeOfficialVisitor(officialVisitId, officialVisitorId)).thenReturn(null)
 
       facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
 
-      verify(syncOfficialVisitService).removeOfficialVisitor(officialVisitId, officialVisitorId)
+      verify(syncOfficialVisitorService).removeOfficialVisitor(officialVisitId, officialVisitorId)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -562,7 +572,7 @@ class SyncFacadeTest {
     fun `update a visitor - should update a visitor and raise an event`() {
       val request = updateVisitorRequest()
       val mockedResponse = updateVisitorResponse()
-      whenever(syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenReturn(
+      whenever(syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenReturn(
         mockedResponse,
       )
 
@@ -570,7 +580,7 @@ class SyncFacadeTest {
 
       assertThat(response.officialVisitorId).isEqualTo(officialVisitorId)
 
-      verify(syncOfficialVisitService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verify(syncOfficialVisitorService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
 
       verify(outboundEventsService).send(
         outboundEvent = OutboundEvent.VISITOR_UPDATED,
@@ -588,7 +598,7 @@ class SyncFacadeTest {
       val request = updateVisitorRequest()
       val expectedException = EntityNotFoundException("The official visit with id $officialVisitId was not found")
 
-      whenever(syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityNotFoundException> {
         facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
@@ -596,7 +606,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verify(syncOfficialVisitorService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
@@ -605,7 +615,7 @@ class SyncFacadeTest {
       val request = updateVisitorRequest()
       val expectedException = EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
 
-      whenever(syncOfficialVisitService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
+      whenever(syncOfficialVisitorService.updateOfficialVisitor(officialVisitId, officialVisitorId, request)).thenThrow(expectedException)
 
       val exception = assertThrows<EntityNotFoundException> {
         facade.updateOfficialVisitor(officialVisitId, officialVisitorId, request)
@@ -613,7 +623,7 @@ class SyncFacadeTest {
 
       assertThat(exception.message).isEqualTo(expectedException.message)
 
-      verify(syncOfficialVisitService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
+      verify(syncOfficialVisitorService).updateOfficialVisitor(officialVisitId, officialVisitorId, request)
       verifyNoInteractions(outboundEventsService)
     }
 
