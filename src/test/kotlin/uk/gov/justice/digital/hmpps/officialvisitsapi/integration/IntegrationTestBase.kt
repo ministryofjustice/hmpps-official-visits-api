@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Priso
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
 @ExtendWith(
@@ -72,8 +72,8 @@ abstract class IntegrationTestBase {
     testAPIClient = TestApiClient(webTestClient, jwtAuthHelper)
   }
 
-  protected fun stubUser(user: User) {
-    manageUsersApi().stubGetUserDetails(user.username, UserDetailsDto.AuthSource.nomis, user.name)
+  protected fun stubUser(user: PrisonUser) {
+    manageUsersApi().stubGetUserDetails(username = user.username, authSource = UserDetailsDto.AuthSource.nomis, name = user.name, activeCaseload = user.activeCaseLoadId)
   }
 
   internal fun setAuthorisation(

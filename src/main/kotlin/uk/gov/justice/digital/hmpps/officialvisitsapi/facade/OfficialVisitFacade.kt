@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompl
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
@@ -29,24 +30,30 @@ class OfficialVisitFacade(
     prisonCode: String,
     request: CreateOfficialVisitRequest,
     user: User,
-  ): CreateOfficialVisitResponse = officialVisitCreateService.create(prisonCode, request, user).also { creationResult ->
-    outboundEventsService.send(
-      outboundEvent = OutboundEvent.VISIT_CREATED,
-      prisonCode = prisonCode,
-      identifier = creationResult.officialVisitId,
-      noms = request.prisonerNumber!!,
-      user = user,
-    )
+  ): CreateOfficialVisitResponse = run {
+    require(user is PrisonUser) { "Visits can only be created by a digital prison user" }
 
-    creationResult.officialVisitorIds.forEach { visitorId ->
+    checkPrisonUsersActiveCaseload(prisonCode, user, "This visit cannot be created in a prison which is not the active caseload for the user")
+
+    officialVisitCreateService.create(prisonCode, request, user).also { creationResult ->
       outboundEventsService.send(
-        outboundEvent = OutboundEvent.VISITOR_CREATED,
+        outboundEvent = OutboundEvent.VISIT_CREATED,
         prisonCode = prisonCode,
         identifier = creationResult.officialVisitId,
-        secondIdentifier = visitorId,
-        // TODO: Should have the contactId for the visitor set here, for use in the PersonReference, but accepts nulls for now
+        noms = request.prisonerNumber!!,
         user = user,
       )
+
+      creationResult.officialVisitorIds.forEach { visitorId ->
+        outboundEventsService.send(
+          outboundEvent = OutboundEvent.VISITOR_CREATED,
+          prisonCode = prisonCode,
+          identifier = creationResult.officialVisitId,
+          secondIdentifier = visitorId,
+          // TODO: Should have the contactId for the visitor set here, for use in the PersonReference, but accepts nulls for now
+          user = user,
+        )
+      }
     }
   }
 
@@ -128,7 +135,13 @@ class OfficialVisitFacade(
         user = user,
       )
     }
+  }
 
-    // TODO: raise domain events
+  private fun checkPrisonUsersActiveCaseload(prisonCode: String, user: PrisonUser, message: String) {
+    if (prisonCode.trim().uppercase() != user.activeCaseLoadId?.trim()?.uppercase()) {
+      throw CaseloadAccessException(message)
+    }
   }
 }
+
+class CaseloadAccessException(message: String) : RuntimeException(message)
