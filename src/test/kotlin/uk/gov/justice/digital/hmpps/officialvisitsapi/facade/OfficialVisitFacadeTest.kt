@@ -1,12 +1,15 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
@@ -18,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompl
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -107,5 +111,25 @@ class OfficialVisitFacadeTest {
     facade.searchForOfficialVisitSummaries(MOORLAND, request, 0, 10)
 
     verify(officialVisitSearchService).searchForOfficialVisitSummaries(MOORLAND, request, 0, 10)
+  }
+
+  @Test
+  fun `should fail create on caseload check if user is not in the correct caseload`() {
+    val request: CreateOfficialVisitRequest = mock()
+
+    assertThrows<CaseloadAccessException> {
+      facade.createOfficialVisit(MOORLAND, request, PENTONVILLE_PRISON_USER)
+    }
+      .message isEqualTo "This visit cannot be created in a prison which is not the active caseload for the user"
+  }
+
+  @Test
+  fun `should fail create when user is not a prison user`() {
+    val request: CreateOfficialVisitRequest = mock()
+
+    assertThrows<IllegalArgumentException> {
+      facade.createOfficialVisit(MOORLAND, request, UserService.getServiceAsUser())
+    }
+      .message isEqualTo "Visits can only be created by a digital prison user"
   }
 }

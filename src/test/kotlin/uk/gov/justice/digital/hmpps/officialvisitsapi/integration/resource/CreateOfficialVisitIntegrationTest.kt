@@ -1,11 +1,14 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
+import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
@@ -234,7 +237,23 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should fail when prisoner not at prison`() {
+    stubUser(PENTONVILLE_PRISON_USER)
+
     webTestClient.badRequest(nextMondayAt9, "Prisoner ${MOORLAND_PRISONER.number} not found at prison $PENTONVILLE", PENTONVILLE_PRISON_USER)
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
+  }
+
+  @Test
+  fun `should fail to create visit when the prison is not the active caseload for the user`() {
+    stubUser(PENTONVILLE_PRISON_USER)
+
+    webTestClient.conflict(
+      prisonCode = MOORLAND,
+      prisonUser = PENTONVILLE_PRISON_USER,
+      request = nextMondayAt9,
+      errorMessage = "This visit cannot be created in a prison which is not the active caseload for the user",
+    )
+
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
@@ -258,5 +277,15 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isBadRequest
+    .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
+
+  private fun WebTestClient.conflict(request: CreateOfficialVisitRequest, errorMessage: String, prisonUser: PrisonUser = MOORLAND_PRISON_USER, prisonCode: String) = this
+    .post()
+    .uri("/official-visit/prison/$prisonCode")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().value(equalTo(HttpStatus.CONFLICT.value()))
     .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
 }
