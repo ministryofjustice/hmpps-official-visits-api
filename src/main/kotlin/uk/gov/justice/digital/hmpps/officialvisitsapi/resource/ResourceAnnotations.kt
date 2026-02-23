@@ -36,3 +36,15 @@ annotation class AuthApiResponses
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class ProtectedByIngress
+
+@ApiResponses(
+  value = [
+    ApiResponse(
+      responseCode = "409",
+      description = "Conflict, requires users active caseload to match that of the prison",
+      content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+    ),
+  ],
+)
+@Target(AnnotationTarget.FUNCTION)
+annotation class CaseloadConflictResponse

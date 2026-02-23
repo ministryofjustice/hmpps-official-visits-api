@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.CaseloadAccessException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
@@ -94,6 +95,20 @@ class OfficialVisitsApiExceptionHandler {
         developerMessage = e.message,
       ),
     ).also { log.error("Unexpected exception", e) }
+
+  @ExceptionHandler(CaseloadAccessException::class)
+  fun handleCaseLoadAccessException(e: CaseloadAccessException): ResponseEntity<ErrorResponse> {
+    log.info("Case load access exception: {}", e.message)
+    return ResponseEntity
+      .status(CONFLICT)
+      .body(
+        ErrorResponse(
+          status = CONFLICT.value(),
+          userMessage = e.message,
+          developerMessage = e.message,
+        ),
+      )
+  }
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

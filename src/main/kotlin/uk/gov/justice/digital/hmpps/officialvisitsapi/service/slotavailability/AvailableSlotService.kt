@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AvailableSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitBookedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import java.time.DayOfWeek
 import java.time.LocalDate
 

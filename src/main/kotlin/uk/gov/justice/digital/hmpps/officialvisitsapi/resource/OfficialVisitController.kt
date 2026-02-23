@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 class OfficialVisitController(private val facade: OfficialVisitFacade) {
 
   @Operation(summary = "Endpoint to support the creation of official visits.")
+  @CaseloadConflictResponse
   @ApiResponses(
     value = [
       ApiResponse(
