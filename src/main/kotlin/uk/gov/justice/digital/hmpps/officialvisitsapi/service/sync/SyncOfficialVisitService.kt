@@ -45,7 +45,8 @@ class SyncOfficialVisitService(
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
     }
 
-    // TODO: Check whether NOMIS includes the visitCompletionType or searchType at the point of creation, and prisoner attendance
+    // TODO: Check whether another visit exists with this offenderVisitId - 409 Conflict if it does
+    // TODO: Check whether NOMIS sends visitCompletionType / searchType / prisoner attendance for create requests
 
     val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request))
 
@@ -69,13 +70,19 @@ class SyncOfficialVisitService(
     val pve = prisonerVisitedRepository.findByOfficialVisit(ove)
       ?: throw EntityNotFoundException("Prisoner visited not found for visit ID $officialVisitId")
 
+    // Has the prisoner / booking id  changed?
+    // Has the offenderVisitId changed?
+    // Has the visit slot changed?
+    // Date / time
+    // Location
+    // How do we know that it can fit into the slot?
+    // Has the visit type changed??? NOMIS sync can't change it.
     // Implement the updates
     // Do not include anything about the visitors here
     // Check what has changed?
-    // All fields are nullable - take the original value if request value is null
-    // How would they set something to null that previously had a value?
     // Record the changes?
-    // Implement a copy command on the official visit entity
+    // Implement a copy command on the OfficialVisitEntity?
+    // What can change? Everything... prisoner, booking, visit slot, - need special cases.
 
     return ove.toSyncModel(pve)
   }

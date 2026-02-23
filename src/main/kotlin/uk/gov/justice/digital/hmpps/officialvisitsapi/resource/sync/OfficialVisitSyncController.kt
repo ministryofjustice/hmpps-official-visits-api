@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitorRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitorRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
@@ -95,6 +96,47 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   fun syncCreateOfficialVisit(
     @Valid @RequestBody request: SyncCreateOfficialVisitRequest,
   ): SyncOfficialVisit = syncFacade.createOfficialVisit(request)
+
+  @PutMapping(path = ["/official-visit/{officialVisitId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseBody
+  @Operation(
+    summary = "Updates an official visit via sync from NOMIS",
+    description = """
+      Requires role: OFFICIAL_VISITS_MIGRATION.
+      Used to update an official visit in DPS as a result of changes made in NOMIS.
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully updated the official visit",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = SyncOfficialVisit::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "The visit ID did not exist",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "The request was invalid",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  fun syncUpdateOfficialVisit(
+    @Valid @RequestBody request: SyncUpdateOfficialVisitRequest,
+    @Parameter(description = "The official visit ID to update", required = true)
+    @PathVariable(required = true)
+    officialVisitId: Long,
+  ): SyncOfficialVisit = syncFacade.updateOfficialVisit(officialVisitId, request)
 
   @DeleteMapping("/official-visit/id/{officialVisitId}")
   @Operation(
