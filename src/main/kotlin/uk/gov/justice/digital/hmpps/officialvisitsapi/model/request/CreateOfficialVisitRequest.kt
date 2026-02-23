@@ -40,7 +40,7 @@ data class CreateOfficialVisitRequest(
   val dpsLocationId: UUID?,
 
   @field:NotNull(message = "Visit type code is mandatory")
-  @Schema(description = "The visit type code", example = "IN_PERSON", required = true)
+  @Schema(description = "The visit type code", example = "IN_PERSON", required = true, allowableValues = ["IN_PERSON", "TELEPHONE", "VIDEO"])
   val visitTypeCode: VisitType?,
 
   @field:Size(max = 240, message = "The staff notes should not exceed {max} characters")

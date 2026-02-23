@@ -1,11 +1,11 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.Mockito.mock
+import org.mockito.Mockito
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
@@ -21,15 +21,16 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AvailableSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitBookedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
 class AvailableSlotServiceTest {
-  private val visitBookedRepository: VisitBookedRepository = mock()
-  private val availableSlotRepository: AvailableSlotRepository = mock()
-  private val locationsService: LocationsService = mock()
+  private val visitBookedRepository: VisitBookedRepository = Mockito.mock()
+  private val availableSlotRepository: AvailableSlotRepository = Mockito.mock()
+  private val locationsService: LocationsService = Mockito.mock()
   private lateinit var availableSlotService: AvailableSlotService
 
   @Nested
@@ -220,7 +221,14 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
-      availableSlotRepository.stub { on { findAvailableSlotsForPrison(MOORLAND, mondayAtMidday.toLocalDate()) } doReturn availableSlots }
+      availableSlotRepository.stub {
+        on {
+          findAvailableSlotsForPrison(
+            MOORLAND,
+            mondayAtMidday.toLocalDate(),
+          )
+        } doReturn availableSlots
+      }
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -355,7 +363,14 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
-      availableSlotRepository.stub { on { findAvailableVideoSlotsForPrison(MOORLAND, mondayAtMidday.toLocalDate()) } doReturn availableSlots }
+      availableSlotRepository.stub {
+        on {
+          findAvailableVideoSlotsForPrison(
+            MOORLAND,
+            mondayAtMidday.toLocalDate(),
+          )
+        } doReturn availableSlots
+      }
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -447,7 +462,14 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtEightAm)
-      availableSlotRepository.stub { on { findAvailableVideoSlotsForPrison(MOORLAND, mondayAtEightAm.toLocalDate()) } doReturn availableSlots }
+      availableSlotRepository.stub {
+        on {
+          findAvailableVideoSlotsForPrison(
+            MOORLAND,
+            mondayAtEightAm.toLocalDate(),
+          )
+        } doReturn availableSlots
+      }
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -462,7 +484,17 @@ class AvailableSlotServiceTest {
     @Test
     fun `should leave 1 free slot for video on Monday morning and ignore an expired slot`() {
       availableSlots.add(availableSlot(Day.MON, 10, 5, 5, 3, effectiveDate = mondayAtEightAm.toLocalDate()))
-      availableSlots.add(availableSlot(Day.MON, 11, 5, 5, 3, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().minusDays(1)))
+      availableSlots.add(
+        availableSlot(
+          Day.MON,
+          11,
+          5,
+          5,
+          3,
+          effectiveDate = mondayAtEightAm.toLocalDate(),
+          expiryDate = mondayAtEightAm.toLocalDate().minusDays(1),
+        ),
+      )
 
       bookedSlots.add(bookedSlot(mondayAtEightAm.plusHours(2), officialVisitId = 1, videoOnly = true))
       bookedSlots.add(bookedSlot(mondayAtEightAm.plusHours(2), officialVisitId = 2, videoOnly = true))
@@ -494,8 +526,28 @@ class AvailableSlotServiceTest {
       availableSlots.add(availableSlot(Day.MON, 11, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate().plusDays(7)))
 
       // Both expired
-      availableSlots.add(availableSlot(Day.MON, 11, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate().minusDays(3), expiryDate = mondayAtEightAm.toLocalDate().minusDays(1)))
-      availableSlots.add(availableSlot(Day.MON, 12, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate().minusDays(3), expiryDate = mondayAtEightAm.toLocalDate().minusDays(1)))
+      availableSlots.add(
+        availableSlot(
+          Day.MON,
+          11,
+          1,
+          1,
+          1,
+          effectiveDate = mondayAtEightAm.toLocalDate().minusDays(3),
+          expiryDate = mondayAtEightAm.toLocalDate().minusDays(1),
+        ),
+      )
+      availableSlots.add(
+        availableSlot(
+          Day.MON,
+          12,
+          1,
+          1,
+          1,
+          effectiveDate = mondayAtEightAm.toLocalDate().minusDays(3),
+          expiryDate = mondayAtEightAm.toLocalDate().minusDays(1),
+        ),
+      )
 
       bookedSlots.add(bookedSlot(mondayAtEightAm.plusHours(2), officialVisitId = 1, videoOnly = true))
 
@@ -519,9 +571,39 @@ class AvailableSlotServiceTest {
 
     @Test
     fun `should all be available slots if the expiry dates are in the future`() {
-      availableSlots.add(availableSlot(Day.MON, 9, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().plusDays(2)))
-      availableSlots.add(availableSlot(Day.MON, 10, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().plusDays(2)))
-      availableSlots.add(availableSlot(Day.MON, 11, 1, 1, 1, effectiveDate = mondayAtEightAm.toLocalDate(), expiryDate = mondayAtEightAm.toLocalDate().plusDays(2)))
+      availableSlots.add(
+        availableSlot(
+          Day.MON,
+          9,
+          1,
+          1,
+          1,
+          effectiveDate = mondayAtEightAm.toLocalDate(),
+          expiryDate = mondayAtEightAm.toLocalDate().plusDays(2),
+        ),
+      )
+      availableSlots.add(
+        availableSlot(
+          Day.MON,
+          10,
+          1,
+          1,
+          1,
+          effectiveDate = mondayAtEightAm.toLocalDate(),
+          expiryDate = mondayAtEightAm.toLocalDate().plusDays(2),
+        ),
+      )
+      availableSlots.add(
+        availableSlot(
+          Day.MON,
+          11,
+          1,
+          1,
+          1,
+          effectiveDate = mondayAtEightAm.toLocalDate(),
+          expiryDate = mondayAtEightAm.toLocalDate().plusDays(2),
+        ),
+      )
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
@@ -567,27 +649,29 @@ class AvailableSlotServiceTest {
     maxVideoSessions = maxVideo,
   )
 
-  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1, videoOnly: Boolean = false) = VisitBookedEntity(
-    officialVisitId = officialVisitId,
-    prisonCode = MOORLAND,
-    dayCode = dateTime.dayOfWeek.toString().take(3).uppercase(),
-    dayDescription = dateTime.dayOfWeek.toString(),
-    prisonVisitSlotId = dateTime.toLocalTime().hour.toLong(),
-    prisonTimeSlotId = dateTime.toLocalTime().hour.toLong(),
-    visitDate = dateTime.toLocalDate(),
-    startTime = dateTime.toLocalTime(),
-    endTime = dateTime.toLocalTime(),
-    visitStatusCode = "--",
-    visitTypeCode = if (videoOnly) VisitType.VIDEO.toString() else VisitType.IN_PERSON.toString(),
-    prisonerNumber = "--",
-    contactId = -1,
-    visitorTypeCode = "--",
-    relationshipTypeCode = RelationshipType.OFFICIAL.toString(),
-    relationshipCode = "--",
-    firstName = "first name",
-    lastName = "last name",
-    dpsLocationId = UUID.randomUUID(),
-  )
+  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1, videoOnly: Boolean = false) = run {
+    VisitBookedEntity(
+      officialVisitId = officialVisitId,
+      prisonCode = MOORLAND,
+      dayCode = dateTime.dayOfWeek.toString().take(3).uppercase(),
+      dayDescription = dateTime.dayOfWeek.toString(),
+      prisonVisitSlotId = dateTime.toLocalTime().hour.toLong(),
+      prisonTimeSlotId = dateTime.toLocalTime().hour.toLong(),
+      visitDate = dateTime.toLocalDate(),
+      startTime = dateTime.toLocalTime(),
+      endTime = dateTime.toLocalTime(),
+      visitStatusCode = "--",
+      visitTypeCode = if (videoOnly) VisitType.VIDEO.toString() else VisitType.IN_PERSON.toString(),
+      prisonerNumber = "--",
+      contactId = -1,
+      visitorTypeCode = "--",
+      relationshipTypeCode = RelationshipType.OFFICIAL.toString(),
+      relationshipCode = "--",
+      firstName = "first name",
+      lastName = "last name",
+      dpsLocationId = UUID.randomUUID(),
+    )
+  }
 
   private fun officialVisitLocations() = listOf(
     Location(
