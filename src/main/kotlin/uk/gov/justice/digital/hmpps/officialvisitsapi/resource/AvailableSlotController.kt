@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.AvailableSlotService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
 import java.time.LocalDate
 
 @Tag(name = "Available slots")

@@ -19,6 +19,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOffic
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecification
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecificationFactory
 import java.time.LocalDateTime.now
 
 @Service
@@ -121,10 +124,10 @@ class OfficialVisitCreateService(
       videoOnly = visitTypeCode!! == VisitType.VIDEO,
     )
 
-    require(
-      availableSlots.any { it.visitSlotId == prisonVisitSlot.prisonVisitSlotId && it.startTime == startTime && it.dpsLocationId == dpsLocationId },
-    ) {
-      "Prison visit slot ${prisonVisitSlot.prisonVisitSlotId} is no longer available for the requested date and time."
+    val availableSlotSpecification: AvailableSlotSpecification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(this)
+
+    require(availableSlots.any { slot -> availableSlotSpecification.isSatisfiedBy(slot, prisonVisitSlot) }) {
+      "Prison visit slot ${prisonVisitSlot.prisonVisitSlotId} is not available for the requested date, time and number of visitors."
     }
   }
 
