@@ -83,23 +83,18 @@ class OfficialVisitEntity(
 
   @Enumerated(EnumType.STRING)
   var visitStatusCode: VisitStatusType = VisitStatusType.SCHEDULED
-    private set
 
   @Enumerated(EnumType.STRING)
   var completionCode: VisitCompletionType? = null
-    private set
 
   var completionNotes: String? = null
 
   @Enumerated(EnumType.STRING)
   var searchTypeCode: SearchLevelType? = null
-    private set
 
   var updatedBy: String? = null
-    private set
 
   var updatedTime: LocalDateTime? = null
-    private set
 
   fun addVisitor(
     visitorTypeCode: VisitorType,
@@ -208,57 +203,8 @@ class OfficialVisitEntity(
     this.visitStatusCode = VisitStatusType.CANCELLED
     this.completionCode = cancellationCode
     this.completionNotes = cancellationNotes
-
     this.updatedBy = cancelledBy.username
     this.updatedTime = timestamp
-  }
-
-  fun update(
-    prisonVisitSlot: PrisonVisitSlotEntity,
-    visitDate: LocalDate,
-    startTime: LocalTime,
-    endTime: LocalTime,
-    dpsLocationId: UUID,
-    visitTypeCode: VisitType,
-    prisonCode: String,
-    prisonerNumber: String,
-    currentTerm: Boolean,
-    staffNotes: String?,
-    prisonerNotes: String?,
-    visitorConcernNotes: String?,
-    overrideBanBy: String?,
-    offenderBookId: Long?,
-    offenderVisitId: Long?,
-    visitOrderNumber: Long?,
-    visitStatusCode: VisitStatusType,
-    completionCode: VisitCompletionType?,
-    completionNotes: String?,
-    prisonerSearchType: SearchLevelType?,
-    updatedBy: String,
-    updatedTime: LocalDateTime,
-  ) = apply {
-    this.prisonVisitSlot = prisonVisitSlot
-    this.visitDate = visitDate
-    this.startTime = startTime
-    this.endTime = endTime
-    this.dpsLocationId = dpsLocationId
-    this.visitTypeCode = visitTypeCode
-    this.prisonCode = prisonCode
-    this.prisonerNumber = prisonerNumber
-    this.currentTerm = currentTerm
-    this.staffNotes = staffNotes
-    this.prisonerNotes = prisonerNotes
-    this.visitorConcernNotes = visitorConcernNotes
-    this.overrideBanBy = overrideBanBy
-    this.offenderBookId = offenderBookId
-    this.offenderVisitId = offenderVisitId
-    this.visitOrderNumber = visitOrderNumber
-    this.visitStatusCode = visitStatusCode
-    this.completionCode = completionCode
-    this.completionNotes = completionNotes
-    this.searchTypeCode = prisonerSearchType
-    this.updatedBy = updatedBy
-    this.updatedTime = updatedTime
   }
 
   companion object {
