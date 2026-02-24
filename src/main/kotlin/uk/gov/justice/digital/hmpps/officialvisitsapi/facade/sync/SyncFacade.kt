@@ -193,20 +193,6 @@ class SyncFacade(
     return response.visitor
   }
 
-  fun removeOfficialVisitor(officialVisitId: Long, officialVisitorId: Long) {
-    syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)?.also { response ->
-      outboundEventsService.send(
-        outboundEvent = OutboundEvent.VISITOR_DELETED,
-        prisonCode = response.prisonCode,
-        identifier = response.officialVisitId,
-        secondIdentifier = response.officialVisitorId,
-        contactId = response.contactId,
-        source = Source.NOMIS,
-        user = UserService.getClientAsUser("NOMIS"),
-      )
-    }
-  }
-
   fun updateOfficialVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncOfficialVisitor {
     val response = syncOfficialVisitorService.updateVisitor(officialVisitId, officialVisitorId, request)
     outboundEventsService.send(
@@ -219,6 +205,20 @@ class SyncFacade(
       user = userOrDefault(response.visitor.updatedBy),
     )
     return response.visitor
+  }
+
+  fun deleteOfficialVisitor(officialVisitId: Long, officialVisitorId: Long) {
+    syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)?.also { response ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
+        prisonCode = response.prisonCode,
+        identifier = response.officialVisitId,
+        secondIdentifier = response.officialVisitorId,
+        contactId = response.contactId,
+        source = Source.NOMIS,
+        user = UserService.getClientAsUser("NOMIS"),
+      )
+    }
   }
 
   private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()

@@ -227,7 +227,7 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
     @Parameter(description = "The official visitor ID to remove", required = true)
     @PathVariable(required = true)
     officialVisitorId: Long,
-  ) = syncFacade.removeOfficialVisitor(officialVisitId, officialVisitorId)
+  ) = syncFacade.deleteOfficialVisitor(officialVisitId, officialVisitorId)
 
   @PutMapping(path = ["/official-visit/{officialVisitId}/visitor/{officialVisitorId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody

@@ -39,44 +39,44 @@ class OfficialVisitEntity(
 
   @OneToOne
   @JoinColumn(name = "prison_visit_slot_id")
-  val prisonVisitSlot: PrisonVisitSlotEntity,
+  var prisonVisitSlot: PrisonVisitSlotEntity,
 
-  val visitDate: LocalDate,
+  var visitDate: LocalDate,
 
-  val startTime: LocalTime,
+  var startTime: LocalTime,
 
-  val endTime: LocalTime,
+  var endTime: LocalTime,
 
-  val dpsLocationId: UUID,
+  var dpsLocationId: UUID,
 
   @Enumerated(EnumType.STRING)
-  val visitTypeCode: VisitType,
+  var visitTypeCode: VisitType,
 
-  val prisonCode: String,
+  var prisonCode: String,
 
-  val prisonerNumber: String,
+  var prisonerNumber: String,
 
-  val currentTerm: Boolean = true,
+  var currentTerm: Boolean = true,
 
-  val staffNotes: String? = null,
+  var staffNotes: String? = null,
 
-  val prisonerNotes: String? = null,
+  var prisonerNotes: String? = null,
 
-  val visitorConcernNotes: String? = null,
+  var visitorConcernNotes: String? = null,
 
   val overrideBanTime: LocalDateTime? = null,
 
-  val overrideBanBy: String? = null,
+  var overrideBanBy: String? = null,
 
   val createdBy: String,
 
   val createdTime: LocalDateTime = now(),
 
-  val offenderBookId: Long? = null,
+  var offenderBookId: Long? = null,
 
-  val offenderVisitId: Long? = null,
+  var offenderVisitId: Long? = null,
 
-  val visitOrderNumber: Long? = null,
+  var visitOrderNumber: Long? = null,
 ) {
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
@@ -211,6 +211,54 @@ class OfficialVisitEntity(
 
     this.updatedBy = cancelledBy.username
     this.updatedTime = timestamp
+  }
+
+  fun update(
+    prisonVisitSlot: PrisonVisitSlotEntity,
+    visitDate: LocalDate,
+    startTime: LocalTime,
+    endTime: LocalTime,
+    dpsLocationId: UUID,
+    visitTypeCode: VisitType,
+    prisonCode: String,
+    prisonerNumber: String,
+    currentTerm: Boolean,
+    staffNotes: String?,
+    prisonerNotes: String?,
+    visitorConcernNotes: String?,
+    overrideBanBy: String?,
+    offenderBookId: Long?,
+    offenderVisitId: Long?,
+    visitOrderNumber: Long?,
+    visitStatusCode: VisitStatusType,
+    completionCode: VisitCompletionType?,
+    completionNotes: String?,
+    prisonerSearchType: SearchLevelType?,
+    updatedBy: String,
+    updatedTime: LocalDateTime,
+  ) = apply {
+    this.prisonVisitSlot = prisonVisitSlot
+    this.visitDate = visitDate
+    this.startTime = startTime
+    this.endTime = endTime
+    this.dpsLocationId = dpsLocationId
+    this.visitTypeCode = visitTypeCode
+    this.prisonCode = prisonCode
+    this.prisonerNumber = prisonerNumber
+    this.currentTerm = currentTerm
+    this.staffNotes = staffNotes
+    this.prisonerNotes = prisonerNotes
+    this.visitorConcernNotes = visitorConcernNotes
+    this.overrideBanBy = overrideBanBy
+    this.offenderBookId = offenderBookId
+    this.offenderVisitId = offenderVisitId
+    this.visitOrderNumber = visitOrderNumber
+    this.visitStatusCode = visitStatusCode
+    this.completionCode = completionCode
+    this.completionNotes = completionNotes
+    this.searchTypeCode = prisonerSearchType
+    this.updatedBy = updatedBy
+    this.updatedTime = updatedTime
   }
 
   companion object {

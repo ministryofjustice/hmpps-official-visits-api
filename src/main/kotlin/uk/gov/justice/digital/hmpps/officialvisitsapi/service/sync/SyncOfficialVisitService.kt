@@ -50,7 +50,7 @@ class SyncOfficialVisitService(
 
     val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request))
 
-    val prisonVisited = prisonerVisitedRepository.saveAndFlush(
+    val prisonerVisited = prisonerVisitedRepository.saveAndFlush(
       PrisonerVisitedEntity(
         officialVisit = visit,
         prisonerNumber = visit.prisonerNumber,
@@ -59,32 +59,69 @@ class SyncOfficialVisitService(
       ),
     )
 
-    return visit.toSyncModel(prisonVisited)
+    return visit.toSyncModel(prisonerVisited)
   }
 
   fun updateVisit(officialVisitId: Long, request: SyncUpdateOfficialVisitRequest): SyncOfficialVisit {
-    val ove = officialVisitRepository.findById(officialVisitId).orElseThrow {
-      EntityNotFoundException("Official visit with id $officialVisitId not found")
+    val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
+      EntityNotFoundException("Official visit with ID $officialVisitId not found")
     }
 
-    val pve = prisonerVisitedRepository.findByOfficialVisit(ove)
+    val pve = prisonerVisitedRepository.findByOfficialVisit(visit)
       ?: throw EntityNotFoundException("Prisoner visited not found for visit ID $officialVisitId")
 
-    // Has the prisoner / booking id  changed?
-    // Has the offenderVisitId changed?
-    // Has the visit slot changed?
-    // Date / time
-    // Location
-    // How do we know that it can fit into the slot?
-    // Has the visit type changed??? NOMIS sync can't change it.
-    // Implement the updates
-    // Do not include anything about the visitors here
-    // Check what has changed?
-    // Record the changes?
-    // Implement a copy command on the OfficialVisitEntity?
-    // What can change? Everything... prisoner, booking, visit slot, - need special cases.
+    // Deal with a change of prisoner
+    val prisonerVisited = if (request.prisonerNumber != pve.prisonerNumber) {
+      prisonerVisitedRepository.deleteById(pve.prisonerVisitedId)
+      prisonerVisitedRepository.saveAndFlush(
+        PrisonerVisitedEntity(
+          officialVisit = visit,
+          prisonerNumber = request.prisonerNumber,
+          createdBy = request.updateUsername,
+          createdTime = request.updateDateTime,
+        ),
+      )
+    } else {
+      pve
+    }
 
-    return ove.toSyncModel(pve)
+    // Deal with a change of visit slot
+    val visitSlot = if (request.prisonVisitSlotId != visit.prisonVisitSlot.prisonVisitSlotId) {
+      prisonVisitSlotRepository.findById(request.prisonVisitSlotId).orElseThrow {
+        EntityNotFoundException("Visit slot with ID ${request.prisonVisitSlotId} not found")
+      }
+    } else {
+      visit.prisonVisitSlot
+    }
+
+    visit.update(
+      prisonVisitSlot = visitSlot,
+      visitDate = request.visitDate,
+      startTime = request.startTime,
+      endTime = request.endTime,
+      dpsLocationId = request.dpsLocationId,
+      visitTypeCode = visit.visitTypeCode, // Can't change the type via sync
+      prisonCode = request.prisonCode,
+      prisonerNumber = request.prisonerNumber,
+      currentTerm = visit.currentTerm, // Current term managed in the service
+      staffNotes = visit.staffNotes, // Can't change staff notes via sync
+      prisonerNotes = request.commentText,
+      visitorConcernNotes = request.visitorConcernText,
+      overrideBanBy = request.overrideBanStaffUsername,
+      offenderBookId = request.offenderBookId,
+      offenderVisitId = request.offenderVisitId,
+      visitOrderNumber = request.visitOrderNumber,
+      visitStatusCode = request.visitStatusCode,
+      completionCode = request.visitCompletionCode,
+      completionNotes = visit.completionNotes, // Can't see the completion notes via sync
+      prisonerSearchType = request.searchTypeCode,
+      updatedTime = request.updateDateTime,
+      updatedBy = request.updateUsername,
+    )
+
+    val savedVisit = officialVisitRepository.saveAndFlush(visit)
+
+    return savedVisit.toSyncModel(prisonerVisited)
   }
 
   fun deleteVisit(officialVisitId: Long) = officialVisitRepository.findByIdOrNull(officialVisitId)?.also { officialVisit ->

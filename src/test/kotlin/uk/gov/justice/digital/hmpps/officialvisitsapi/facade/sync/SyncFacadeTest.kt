@@ -652,7 +652,7 @@ class SyncFacadeTest {
 
       whenever(syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)).thenReturn(response)
 
-      facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
+      facade.deleteOfficialVisitor(officialVisitId, officialVisitorId)
 
       verify(syncOfficialVisitorService).deleteVisitor(officialVisitId, officialVisitorId)
       verify(outboundEventsService).send(
@@ -670,7 +670,7 @@ class SyncFacadeTest {
     fun `remove a visitor - should silently succeed if the visit or visitor does not exist`() {
       whenever(syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)).thenReturn(null)
 
-      facade.removeOfficialVisitor(officialVisitId, officialVisitorId)
+      facade.deleteOfficialVisitor(officialVisitId, officialVisitorId)
 
       verify(syncOfficialVisitorService).deleteVisitor(officialVisitId, officialVisitorId)
       verifyNoInteractions(outboundEventsService)
