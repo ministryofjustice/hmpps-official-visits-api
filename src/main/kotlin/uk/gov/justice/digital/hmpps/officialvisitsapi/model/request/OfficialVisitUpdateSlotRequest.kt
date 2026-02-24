@@ -3,13 +3,12 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
-import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
-data class OfficialVisitUpdate(
+data class OfficialVisitUpdateSlotRequest(
   @field:NotNull(message = "The prison visit slot identifier for the official visit is mandatory")
   val prisonVisitSlotId: Long?,
 
@@ -35,14 +34,4 @@ data class OfficialVisitUpdate(
   @field:NotNull(message = "Visit type code is mandatory")
   @Schema(description = "The visit type code", example = "IN_PERSON", required = true)
   val visitTypeCode: VisitType?,
-
-  @field:Size(max = 240, message = "The staff notes should not exceed {max} characters")
-  @Schema(description = "Notes for staff that will not be shared on movement slips", example = "Staff notes")
-  val staffNotes: String?,
-
-  @field:Size(max = 240, message = "The prisoner notes should not exceed {max} characters")
-  @Schema(description = "Notes for prisoners that may be shared on movement slips", example = "Prisoner notes")
-  val prisonerNotes: String?,
-
-  val officialVisitors: List<OfficialVisitor>,
 )
