@@ -64,6 +64,7 @@ class OfficialVisitFacadeTest {
           visitorTypeCode = VisitorType.CONTACT,
           contactId = 1L,
           prisonerContactId = 2L,
+          officialVisitorId = 0L,
         ),
       ),
     )

@@ -36,6 +36,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
     assistedVisit = true,
     visitorEquipment = VisitorEquipment("Laptop"),
     assistedNotes = "Wheelchair access needed",
+    officialVisitorId = 0L,
   )
 
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)

@@ -32,6 +32,7 @@ class AvailableSlotSpecificationFactoryTest {
     assistedVisit = false,
     assistedNotes = "visitor notes",
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
+    officialVisitorId = 0L,
   )
 
   private val nextMondayAt9 = CreateOfficialVisitRequest(

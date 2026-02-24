@@ -176,6 +176,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       relationshipCode = "POM",
       leadVisitor = true,
       assistedVisit = false,
+      officialVisitorId = 0L,
     )
 
     val officialVisitRequest = CreateOfficialVisitRequest(
