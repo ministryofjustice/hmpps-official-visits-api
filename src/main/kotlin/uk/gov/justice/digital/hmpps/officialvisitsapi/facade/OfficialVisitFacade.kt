@@ -208,7 +208,7 @@ class OfficialVisitFacade(
 
     ov.visitorDeleted.forEach { visitor ->
       outboundEventsService.send(
-        outboundEvent = OutboundEvent.VISITOR_CREATED,
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = ov.prisonCode,
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
