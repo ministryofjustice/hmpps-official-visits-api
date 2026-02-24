@@ -63,8 +63,8 @@ class OfficialVisitUpdateService(
 
     val existingVisitors = ove.officialVisitors()
     val updatedVisitor =
-      request.officialVisitors.filter { it.officialVisitorId != null }.associateBy { it.officialVisitorId }
-    val newVisitors = request.officialVisitors.filter { it.officialVisitorId == null }
+      request.officialVisitors.filter { it.officialVisitorId != 0L }.associateBy { it.officialVisitorId }
+    val newVisitors = request.officialVisitors.filter { it.officialVisitorId == 0L }
     // Add new visitors
     ove.addVisitors(newVisitors, matchingVisitors, user)
 
