@@ -94,30 +94,26 @@ class SyncOfficialVisitService(
       visit.prisonVisitSlot
     }
 
-    visit.update(
-      prisonVisitSlot = visitSlot,
-      visitDate = request.visitDate,
-      startTime = request.startTime,
-      endTime = request.endTime,
-      dpsLocationId = request.dpsLocationId,
-      visitTypeCode = visit.visitTypeCode, // Can't change the type via sync
-      prisonCode = request.prisonCode,
-      prisonerNumber = request.prisonerNumber,
-      currentTerm = visit.currentTerm, // Current term managed in the service
-      staffNotes = visit.staffNotes, // Can't change staff notes via sync
-      prisonerNotes = request.commentText,
-      visitorConcernNotes = request.visitorConcernText,
-      overrideBanBy = request.overrideBanStaffUsername,
-      offenderBookId = request.offenderBookId,
-      offenderVisitId = request.offenderVisitId,
-      visitOrderNumber = request.visitOrderNumber,
-      visitStatusCode = request.visitStatusCode,
-      completionCode = request.visitCompletionCode,
-      completionNotes = visit.completionNotes, // Can't see the completion notes via sync
-      prisonerSearchType = request.searchTypeCode,
-      updatedTime = request.updateDateTime,
-      updatedBy = request.updateUsername,
-    )
+    visit.apply {
+      prisonVisitSlot = visitSlot
+      visitDate = request.visitDate
+      startTime = request.startTime
+      endTime = request.endTime
+      dpsLocationId = request.dpsLocationId
+      prisonCode = request.prisonCode
+      prisonerNumber = request.prisonerNumber
+      prisonerNotes = request.commentText
+      visitorConcernNotes = request.visitorConcernText
+      overrideBanBy = request.overrideBanStaffUsername
+      offenderBookId = request.offenderBookId
+      offenderVisitId = request.offenderVisitId
+      visitOrderNumber = request.visitOrderNumber
+      visitStatusCode = request.visitStatusCode
+      completionCode = request.visitCompletionCode
+      searchTypeCode = request.searchTypeCode
+      updatedTime = request.updateDateTime
+      updatedBy = request.updateUsername
+    }
 
     val savedVisit = officialVisitRepository.saveAndFlush(visit)
 
