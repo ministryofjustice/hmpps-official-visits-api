@@ -15,10 +15,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEnti
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
@@ -162,6 +165,51 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
+  fun `update a visit - should update an official visit`() {
+    val officialVisitId = 1L
+    val visitSlotId = 1L
+    val visitSlotEntity = prisonVisitSlotEntity(visitSlotId)
+    val createRequest = createVisitRequest(visitSlotId)
+    val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, createRequest)
+    val prisonerVisitedEntity = PrisonerVisitedEntity(
+      officialVisit = officialVisitEntity,
+      prisonerNumber = officialVisitEntity.prisonerNumber,
+      createdBy = officialVisitEntity.createdBy,
+      createdTime = officialVisitEntity.createdTime,
+    )
+
+    val request = updateVisitRequest(visitSlotId)
+
+    whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
+    whenever(prisonerVisitedRepository.findByOfficialVisit(officialVisitEntity)).thenReturn(prisonerVisitedEntity)
+    whenever(officialVisitRepository.saveAndFlush(officialVisitEntity)).thenReturn(officialVisitEntity)
+
+    syncOfficialVisitService.updateVisit(officialVisitId, request)
+
+    verify(officialVisitRepository).findById(officialVisitId)
+    verify(prisonerVisitedRepository).findByOfficialVisit(officialVisitEntity)
+    verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
+  }
+
+  @Test
+  fun `update a visit - should fail when the visit is not found`() {
+    val officialVisitId = 99L
+    val visitSlotId = 1L
+    val request = updateVisitRequest(visitSlotId)
+
+    whenever(officialVisitRepository.findById(1L)).thenReturn(Optional.empty())
+
+    val exception = assertThrows<EntityNotFoundException> {
+      syncOfficialVisitService.updateVisit(officialVisitId, request)
+    }
+
+    assertThat(exception.message).isEqualTo("Official visit with ID $officialVisitId not found")
+
+    verify(officialVisitRepository).findById(officialVisitId)
+    verifyNoInteractions(prisonerVisitedRepository, prisonVisitSlotRepository)
+  }
+
+  @Test
   fun `delete a visit - should succeed`() {
     val visitEntity = createAVisitEntity(1L)
 
@@ -205,6 +253,24 @@ class SyncOfficialVisitServiceTest {
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
     createDateTime = createdTime,
     createUsername = "Bob",
+  )
+
+  private fun updateVisitRequest(visitSlotId: Long) = SyncUpdateOfficialVisitRequest(
+    offenderVisitId = 2L,
+    prisonVisitSlotId = visitSlotId,
+    offenderBookId = MOORLAND_PRISONER.bookingId,
+    prisonCode = MOORLAND,
+    prisonerNumber = MOORLAND_PRISONER.number,
+    visitDate = tomorrow(),
+    startTime = LocalTime.of(10, 0),
+    endTime = LocalTime.of(11, 0),
+    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    visitStatusCode = VisitStatusType.EXPIRED,
+    commentText = "updated comment",
+    visitorConcernText = "updated concern",
+    visitOrderNumber = 5678,
+    updateUsername = MOORLAND_PRISON_USER.username,
+    updateDateTime = LocalDateTime.now().minusMinutes(5),
   )
 
   private fun prisonVisitSlotEntity(prisonVisitSlotId: Long = 1L) = PrisonVisitSlotEntity(
