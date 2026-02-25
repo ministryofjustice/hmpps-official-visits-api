@@ -227,6 +227,20 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     facade.cancelOfficialVisit(prisonCode, officialVisitId, request, httpRequest.getLocalRequestContext().user)
   }
 
+  @Operation(summary = "Update  visit type and slot details for an official visit")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit cancelled successfully",
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No official visit found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
   @PutMapping(
     path = ["/prison/{prisonCode}/id/{officialVisitId}/update-type-and-slot"],
     consumes = [MediaType.APPLICATION_JSON_VALUE],
@@ -255,6 +269,20 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     facade.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, httpRequest.getLocalRequestContext().user)
   }
 
+  @Operation(summary = "Update  prisoner and staff notes details for an official visit")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit cancelled successfully",
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No official visit found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
   @PutMapping(
     path = ["/prison/{prisonCode}/id/{officialVisitId}/update-comments"],
     consumes = [MediaType.APPLICATION_JSON_VALUE],
@@ -283,6 +311,20 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     facade.updateComments(officialVisitId, prisonCode, request, httpRequest.getLocalRequestContext().user)
   }
 
+  @Operation(summary = "Update  visitors details for an official visit")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Official visit cancelled successfully",
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No official visit found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
   @PutMapping(
     path = ["/prison/{prisonCode}/id/{officialVisitId}/visitors"],
     consumes = [MediaType.APPLICATION_JSON_VALUE],
