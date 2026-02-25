@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -27,6 +28,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
@@ -153,7 +157,10 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       ),
     ],
   )
-  @PostMapping(path = ["/prison/{prisonCode}/id/{officialVisitId}/complete"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(
+    path = ["/prison/{prisonCode}/id/{officialVisitId}/complete"],
+    consumes = [MediaType.APPLICATION_JSON_VALUE],
+  )
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun complete(
@@ -192,7 +199,10 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       ),
     ],
   )
-  @PostMapping(path = ["/prison/{prisonCode}/id/{officialVisitId}/cancel"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(
+    path = ["/prison/{prisonCode}/id/{officialVisitId}/cancel"],
+    consumes = [MediaType.APPLICATION_JSON_VALUE],
+  )
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun cancel(
@@ -215,5 +225,89 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     httpRequest: HttpServletRequest,
   ) {
     facade.cancelOfficialVisit(prisonCode, officialVisitId, request, httpRequest.getLocalRequestContext().user)
+  }
+
+  @PutMapping(
+    path = ["/prison/{prisonCode}/id/{officialVisitId}/update-type-and-slot"],
+    consumes = [MediaType.APPLICATION_JSON_VALUE],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun updateVisitTypeAndSlot(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @PathVariable("officialVisitId") @Parameter(
+      name = "officialVisitId",
+      description = "The official visit identifier",
+      example = "123",
+      required = true,
+    ) officialVisitId: Long,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request body for updating  visit type and slot details for an official visit", required = true)
+    request: OfficialVisitUpdateSlotRequest,
+    httpRequest: HttpServletRequest,
+  ) {
+    facade.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, httpRequest.getLocalRequestContext().user)
+  }
+
+  @PutMapping(
+    path = ["/prison/{prisonCode}/id/{officialVisitId}/update-comments"],
+    consumes = [MediaType.APPLICATION_JSON_VALUE],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun updateComments(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @PathVariable("officialVisitId") @Parameter(
+      name = "officialVisitId",
+      description = "The official visit identifier",
+      example = "123",
+      required = true,
+    ) officialVisitId: Long,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request body for updating prisoner and staff notes details for an official visit", required = true)
+    request: OfficialVisitUpdateCommentRequest,
+    httpRequest: HttpServletRequest,
+  ) {
+    facade.updateComments(officialVisitId, prisonCode, request, httpRequest.getLocalRequestContext().user)
+  }
+
+  @PutMapping(
+    path = ["/prison/{prisonCode}/id/{officialVisitId}/visitors"],
+    consumes = [MediaType.APPLICATION_JSON_VALUE],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun updateVisitors(
+    @PathVariable("prisonCode") @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @PathVariable("officialVisitId") @Parameter(
+      name = "officialVisitId",
+      description = "The official visit identifier",
+      example = "123",
+      required = true,
+    ) officialVisitId: Long,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request body for updating  visitors details for an official visit", required = true)
+    request: OfficialVisitUpdateVisitorsRequest,
+    httpRequest: HttpServletRequest,
+  ) {
+    facade.updateVisitors(officialVisitId, prisonCode, request, httpRequest.getLocalRequestContext().user)
   }
 }
