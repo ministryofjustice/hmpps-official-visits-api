@@ -194,7 +194,7 @@ class OfficialVisitFacade(
       )
     }
 
-    ov.visitorAdded.forEach { visitor ->
+    ov.visitorsAdded.forEach { visitor ->
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISITOR_CREATED,
         prisonCode = ov.prisonCode,
@@ -206,7 +206,7 @@ class OfficialVisitFacade(
       )
     }
 
-    ov.visitorDeleted.forEach { visitor ->
+    ov.visitorsDeleted.forEach { visitor ->
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISITOR_DELETED,
         prisonCode = ov.prisonCode,
