@@ -35,7 +35,6 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     prisonerContactId = 456,
     leadVisitor = true,
     assistedVisit = false,
-    officialVisitorId = 0L,
   )
 
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)

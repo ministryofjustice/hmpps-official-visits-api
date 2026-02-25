@@ -50,7 +50,6 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
     assistedVisit = false,
     assistedNotes = "visitor notes",
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
-    officialVisitorId = 0L,
   )
 
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)

@@ -48,7 +48,6 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     assistedVisit = false,
     assistedNotes = "visitor notes",
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
-    officialVisitorId = 0L,
   )
 
   private final val startDate = today().next(DayOfWeek.MONDAY)
