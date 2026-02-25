@@ -73,9 +73,9 @@ class OfficialVisitUpdateService(
     val newVisitors = request.officialVisitors.filter { it.officialVisitorId == 0L }
 
     // Add new visitors
-    ove.addVisitorsorUpdate(newVisitors, matchingVisitors, user)
+    ove.addOrUpdateVisitors(newVisitors, matchingVisitors, user)
     // updated visitors
-    ove.addVisitorsorUpdate(request.officialVisitors.filter { it.officialVisitorId != 0L }, matchingVisitors, user)
+    ove.addOrUpdateVisitors(request.officialVisitors.filter { it.officialVisitorId != 0L }, matchingVisitors, user)
 
     val removedVisitorList = existingVisitors.filter {
       it.officialVisitorId !in updateVisitors
@@ -122,7 +122,7 @@ class OfficialVisitUpdateService(
     )
   }
 
-  private fun OfficialVisitEntity.addVisitorsorUpdate(
+  private fun OfficialVisitEntity.addOrUpdateVisitors(
     officialVisitors: List<OfficialVisitor>,
     matchingVisitors: List<ApprovedContact>,
     user: User,
@@ -157,7 +157,6 @@ class OfficialVisitUpdateService(
       requireNotNull(matchingVisitor) {
         "Visitor with contact ID ${requestedVisitor.contactId} and prisoner contact ID ${requestedVisitor.prisonerContactId} is not approved for visiting prisoner number $prisonerNumber."
       }
-
       matchingVisitor
     }
   }
