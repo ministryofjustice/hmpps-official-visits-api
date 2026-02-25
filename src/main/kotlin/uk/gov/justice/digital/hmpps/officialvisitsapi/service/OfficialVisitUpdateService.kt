@@ -69,7 +69,7 @@ class OfficialVisitUpdateService(
     val matchingVisitors = request.getVisitorDetails(ove.prisonerNumber)
     val existingVisitors = ove.officialVisitors()
     val updateVisitors =
-      request.officialVisitors.filter { it.officialVisitorId != 0L }.associateBy { it.officialVisitorId }
+      request.officialVisitors.filter { it.officialVisitorId in existingVisitors.map { it.officialVisitorId } }.associateBy { it.officialVisitorId }
     val newVisitors = request.officialVisitors.filter { it.officialVisitorId == 0L }
 
     // Add new visitors
