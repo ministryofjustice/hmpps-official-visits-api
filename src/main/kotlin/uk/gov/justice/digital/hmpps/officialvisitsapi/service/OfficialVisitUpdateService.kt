@@ -26,13 +26,13 @@ class OfficialVisitUpdateService(
   private val contactsService: ContactsService,
 ) {
 
-  fun updateVisitTypeAndSlot(id: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
-    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
-      ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
-    val newPrisonVisitSlots = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!)
+  fun updateVisitTypeAndSlot(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
+    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
+      ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
+    val newPrisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
     val changedOVEntity = ove.apply {
-      prisonVisitSlot = newPrisonVisitSlots
+      prisonVisitSlot = newPrisonVisitSlot
       visitDate = request.visitDate!!
       startTime = request.startTime!!
       endTime = request.endTime!!
@@ -44,9 +44,9 @@ class OfficialVisitUpdateService(
     officialVisitRepository.saveAndFlush(changedOVEntity)
   }
 
-  fun updateComments(id: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
-    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
-      ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
+  fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
+    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
+      ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
     officialVisitRepository.saveAndFlush(
       ove.apply {
@@ -59,13 +59,13 @@ class OfficialVisitUpdateService(
   }
 
   fun updateVisitors(
-    id: Long,
+    officialVisitId: Long,
     prisonCode: String,
     request: OfficialVisitUpdateVisitorsRequest,
     user: User,
   ): OfficialVisitVisitorUpdate {
-    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
-      ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
+    val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
+      ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
     val matchingVisitors = request.getVisitorDetails(ove.prisonerNumber)
     val existingVisitors = ove.officialVisitors()
     val updateVisitors =
@@ -73,9 +73,9 @@ class OfficialVisitUpdateService(
     val newVisitors = request.officialVisitors.filter { it.officialVisitorId == 0L }
 
     // Add new visitors
-    ove.addVisitors(newVisitors, matchingVisitors, user)
+    ove.addVisitorsorUpdate(newVisitors, matchingVisitors, user)
     // updated visitors
-    ove.addVisitors(request.officialVisitors.filter { it.officialVisitorId != 0L }, matchingVisitors, user)
+    ove.addVisitorsorUpdate(request.officialVisitors.filter { it.officialVisitorId != 0L }, matchingVisitors, user)
 
     val removedVisitorList = existingVisitors.filter {
       it.officialVisitorId !in updateVisitors
@@ -113,16 +113,16 @@ class OfficialVisitUpdateService(
       }
 
     return OfficialVisitVisitorUpdate(
-      officialVisitId = id,
+      officialVisitId = officialVisitId,
       prisonCode = prisonCode,
       prisonerNumber = updatedOV.prisonerNumber,
-      visitorAdded = addedVisitorsList,
-      visitorDeleted = removedVisitorList,
-      visitorUpdated = updatedVisitorsList,
+      visitorsAdded = addedVisitorsList,
+      visitorsDeleted = removedVisitorList,
+      visitorsUpdated = updatedVisitorsList,
     )
   }
 
-  private fun OfficialVisitEntity.addVisitors(
+  private fun OfficialVisitEntity.addVisitorsorUpdate(
     officialVisitors: List<OfficialVisitor>,
     matchingVisitors: List<ApprovedContact>,
     user: User,

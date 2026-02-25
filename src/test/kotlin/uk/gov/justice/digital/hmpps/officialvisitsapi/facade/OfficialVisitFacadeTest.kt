@@ -48,7 +48,6 @@ class OfficialVisitFacadeTest {
     officialVisitCancellationService,
     officialVisitUpdateService,
     outboundEventsService,
-
   )
 
   @Test

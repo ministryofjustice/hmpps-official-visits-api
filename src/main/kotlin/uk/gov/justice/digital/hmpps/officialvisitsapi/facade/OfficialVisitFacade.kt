@@ -154,42 +154,42 @@ class OfficialVisitFacade(
       }
   }
 
-  fun updateVisitTypeAndSlot(id: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
-    officialVisitUpdateService.updateVisitTypeAndSlot(id, prisonCode, request, user)
+  fun updateVisitTypeAndSlot(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
+    officialVisitUpdateService.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = id,
+      identifier = officialVisitId,
       user = user,
     )
   }
 
-  open fun updateComments(id: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
-    officialVisitUpdateService.updateComments(id, prisonCode, request, user)
+  open fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
+    officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = id,
+      identifier = officialVisitId,
       user = user,
     )
   }
 
-  fun updateVisitors(id: Long, prisonCode: String, request: OfficialVisitUpdateVisitorsRequest, user: User) {
-    val ov = officialVisitUpdateService.updateVisitors(id, prisonCode, request, user)
+  fun updateVisitors(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateVisitorsRequest, user: User) {
+    val ov = officialVisitUpdateService.updateVisitors(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = id,
+      identifier = officialVisitId,
       user = user,
     )
-    ov.visitorUpdated.forEach { visitor ->
+    ov.visitorsUpdated.forEach { visitor ->
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISITOR_UPDATED,
         prisonCode = ov.prisonCode,
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
         contactId = visitor.contactId,
-        source = Source.NOMIS,
+        source = Source.DPS,
         user = user,
       )
     }
@@ -201,7 +201,7 @@ class OfficialVisitFacade(
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
         contactId = visitor.contactId,
-        source = Source.NOMIS,
+        source = Source.DPS,
         user = user,
       )
     }
@@ -213,7 +213,7 @@ class OfficialVisitFacade(
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
         contactId = visitor.contactId,
-        source = Source.NOMIS,
+        source = Source.DPS,
         user = user,
       )
     }

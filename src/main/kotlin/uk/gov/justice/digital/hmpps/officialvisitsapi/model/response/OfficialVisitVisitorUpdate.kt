@@ -13,11 +13,11 @@ data class OfficialVisitVisitorUpdate(
   val prisonerNumber: String,
 
   @Schema(description = "The list of new visitors")
-  var visitorAdded: List<OfficialVisitorUpdated>,
+  var visitorsAdded: List<OfficialVisitorUpdated>,
 
   @Schema(description = "The list of deleted visitors")
-  var visitorDeleted: List<OfficialVisitorUpdated>,
+  var visitorsDeleted: List<OfficialVisitorUpdated>,
 
   @Schema(description = "The list of updated visitors")
-  var visitorUpdated: List<OfficialVisitorUpdated>,
+  var visitorsUpdated: List<OfficialVisitorUpdated>,
 )
