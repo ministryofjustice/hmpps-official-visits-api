@@ -71,7 +71,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
   @Operation(
     summary = "Returns the data for a prison time slot by ID",
     description = """
-      Requires role: ROLE_OFFICIAL_VISIT_ADMIN.
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
       Used to get the details for one prison time slot.
       """,
   )
@@ -90,7 +90,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   fun getPrisonTimeSlotById(
     @Parameter(description = "The internal ID for a prison time slot", required = true)
     @PathVariable prisonTimeSlotId: Long,
@@ -101,7 +101,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
   @Operation(
     summary = "Creates a new prison time slot for official visits",
     description = """
-      Requires role: ROLE_OFFICIAL_VISIT_ADMIN.
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
       Used to create a new prison time slot for official visits.
       """,
   )
@@ -124,7 +124,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   fun createTimeSlot(
     @Valid @RequestBody request: CreateTimeSlotRequest,
     httpRequest: HttpServletRequest,
@@ -135,7 +135,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
   @Operation(
     summary = "Updates a prison time slot",
     description = """
-      Requires role: ROLE_OFFICIAL_VISIT_ADMIN.
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
       Used to update a prison time slot for official visits.
       """,
   )
@@ -161,7 +161,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   fun updateTimeSlot(
     @Parameter(description = "The internal ID for the prison time slot", required = true)
     @PathVariable prisonTimeSlotId: Long,
@@ -194,7 +194,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
   fun deleteTimeSlot(
     @PathVariable timeSlotId: Long,
