@@ -38,7 +38,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
   @Operation(
     summary = "Create a visit slot in an existing prison time slot",
     description = """
-      Requires role: ROLE_OFFICIAL_VISIT_ADMIN.
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
       Creates a new visit slot for the given prison time slot.
       """,
   )
@@ -57,7 +57,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
       ApiResponse(responseCode = "404", description = "Prison time slot not found"),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   fun createVisitSlot(
     @Parameter(description = "The internal ID for prison time slot", required = true)
     @PathVariable prisonTimeSlotId: Long,
@@ -69,7 +69,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
   @Operation(
     summary = "Update capacities for a visit slot",
     description = """
-      Requires role: ROLE_OFFICIAL_VISIT_ADMIN.
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
       Only capacities (max groups, adults, and video) may be updated.
       """,
   )
@@ -84,7 +84,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
       ApiResponse(responseCode = "400", description = "The request was invalid"),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   fun updateVisitSlot(
     @Parameter(description = "The internal ID for the prison visit slot", required = true)
     @PathVariable visitSlotId: Long,
@@ -96,7 +96,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
   @Operation(
     summary = "Delete a prison visit slot",
     description = """
-      Requires role: ROLE_OFFICIAL_VISIT_ADMIN.
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
       Delete a visit slot if there are no official visits associated with it.
       """,
   )
@@ -115,7 +115,7 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISIT_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
   fun deleteVisitSlot(
     @Parameter(description = "The internal ID for the prison visit slot", required = true)
