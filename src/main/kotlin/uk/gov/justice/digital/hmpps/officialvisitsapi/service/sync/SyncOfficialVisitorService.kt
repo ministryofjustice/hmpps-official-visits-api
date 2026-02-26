@@ -4,7 +4,6 @@ import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
@@ -50,9 +49,6 @@ class SyncOfficialVisitorService(
     if (thisContact != null) {
       if (!thisContact.isApprovedVisitor) {
         log.info("UNAPPROVED VISITOR - Sync added an unapproved visitor to visitId ${visit.officialVisitId}, contactId: ${request.personId}, prisoner: ${visit.prisonerNumber}")
-      }
-      if (!thisContact.currentTerm) {
-        log.info("CURRENT TERM VISITOR - Sync added an old relationship visitor to visitId ${visit.officialVisitId}, contactId: ${request.personId}, prisoner: ${visit.prisonerNumber}")
       }
     }
 
@@ -115,28 +111,41 @@ class SyncOfficialVisitorService(
     val visitor = officialVisitorRepository.findById(officialVisitorId).getOrNull()
       ?: throw EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
 
-    val changedVisitorEntity = buildChangedEntity(visit, visitor, request)
-    val changes = describeVisitorChanges(old = visitor, new = changedVisitorEntity)
+    // Check if the request has changed the person visiting and if so, get their relationship to the prisoner
+    val updatedPrisonerContactId = if (visitor.contactId != request.personId) {
+      val contactSummary = contactsService.getPrisonerContactSummary(visit.prisonerNumber, request.personId!!)
+      val thisContact = contactSummary.find { it.contactId == request.personId && it.currentTerm }
+      if (thisContact != null) {
+        if (!thisContact.isApprovedVisitor) {
+          log.info("UNAPPROVED VISITOR - Sync updated an unapproved visitor on visitId ${visit.officialVisitId}, contactId: ${request.personId}, prisoner: ${visit.prisonerNumber}")
+        }
+        thisContact.prisonerContactId
+      } else {
+        null
+      }
+    } else {
+      visitor.prisonerContactId
+    }
+
+    val changes = describeVisitorChanges(old = visitor, new = request)
     log.info(changes)
 
     val savedVisitorEntity = officialVisitorRepository.saveAndFlush(
-      visitor.copy(
-        visitorTypeCode = changedVisitorEntity.visitorTypeCode,
-        firstName = changedVisitorEntity.firstName,
-        lastName = changedVisitorEntity.lastName,
-        contactId = changedVisitorEntity.contactId,
-        prisonerContactId = changedVisitorEntity.prisonerContactId,
-        relationshipTypeCode = changedVisitorEntity.relationshipTypeCode,
-        relationshipCode = changedVisitorEntity.relationshipCode,
-        leadVisitor = changedVisitorEntity.leadVisitor,
-        assistedVisit = changedVisitorEntity.assistedVisit,
-        visitorNotes = changedVisitorEntity.visitorNotes,
-        offenderVisitVisitorId = changedVisitorEntity.offenderVisitVisitorId,
-        visitorEquipment = visitor.visitorEquipment,
-        attendanceCode = changedVisitorEntity.attendanceCode,
-        updatedBy = changedVisitorEntity.updatedBy,
-        updatedTime = changedVisitorEntity.updatedTime,
-      ),
+      visitor.apply {
+        firstName = request.firstName
+        lastName = request.lastName
+        prisonerContactId = updatedPrisonerContactId
+        contactId = request.personId
+        relationshipTypeCode = request.relationshipTypeCode ?: RelationshipType.OFFICIAL
+        relationshipCode = request.relationshipToPrisoner
+        leadVisitor = request.groupLeaderFlag ?: false
+        assistedVisit = request.assistedVisitFlag ?: false
+        visitorNotes = request.commentText
+        offenderVisitVisitorId = request.offenderVisitVisitorId
+        attendanceCode = request.attendanceCode
+        updatedBy = request.updateUsername
+        updatedTime = request.updateDateTime
+      },
     )
 
     return SyncUpdateVisitorResponse(
@@ -148,33 +157,7 @@ class SyncOfficialVisitorService(
     )
   }
 
-  private fun buildChangedEntity(
-    visit: OfficialVisitEntity,
-    visitor: OfficialVisitorEntity,
-    request: SyncUpdateOfficialVisitorRequest,
-  ) = OfficialVisitorEntity(
-    officialVisitorId = visitor.officialVisitorId,
-    officialVisit = visit,
-    visitorTypeCode = visitor.visitorTypeCode,
-    firstName = request.firstName,
-    lastName = request.lastName,
-    contactId = request.personId,
-    prisonerContactId = if (visitor.contactId == request.personId) visitor.prisonerContactId else null,
-    relationshipTypeCode = request.relationshipTypeCode,
-    relationshipCode = request.relationshipToPrisoner,
-    leadVisitor = request.groupLeaderFlag ?: false,
-    assistedVisit = request.assistedVisitFlag ?: false,
-    visitorNotes = request.commentText,
-    createdBy = visitor.createdBy,
-    createdTime = visitor.createdTime,
-  ).apply {
-    visitorEquipment = visitor.visitorEquipment
-    attendanceCode = request.attendanceCode
-    updatedTime = request.updateDateTime
-    updatedBy = request.updateUsername
-  }
-
-  private fun describeVisitorChanges(old: OfficialVisitorEntity, new: OfficialVisitorEntity): String {
+  private fun describeVisitorChanges(old: OfficialVisitorEntity, new: SyncUpdateOfficialVisitorRequest): String {
     val changes = mutableListOf<String>()
 
     if (old.firstName != new.firstName) {
@@ -183,37 +166,28 @@ class SyncOfficialVisitorService(
     if (old.lastName != new.lastName) {
       changes.add("Last name changed from '${old.lastName}' to '${new.lastName}'")
     }
-    if (old.leadVisitor != new.leadVisitor) {
-      val status = if (new.leadVisitor) "Is now the lead visitor" else "Is no longer the lead visitor"
+    if (old.leadVisitor != new.groupLeaderFlag) {
+      val status = if (new.groupLeaderFlag ?: false) "Is now the lead visitor" else "Is no longer the lead visitor"
       changes.add(status)
     }
-    if (old.assistedVisit != new.assistedVisit) {
-      val status = if (new.assistedVisit) "Is now an assisted visitor" else "Is no longer an assisted visitor"
+    if (old.assistedVisit != new.assistedVisitFlag) {
+      val status = if (new.assistedVisitFlag ?: false) "Is now an assisted visitor" else "Is no longer an assisted visitor"
       changes.add(status)
     }
-    if (old.visitorTypeCode != new.visitorTypeCode) {
-      changes.add("Visitor type changed from '${old.visitorTypeCode}' to '${new.visitorTypeCode}'")
-    }
-    if (old.contactId != new.contactId) {
-      changes.add("Contact ID changed from '${old.contactId}' to '${new.contactId}'")
-    }
-    if (old.prisonerContactId != new.prisonerContactId) {
-      changes.add("Prisoner contact ID changed from '${old.prisonerContactId}' to '${new.prisonerContactId}'")
+    if (old.contactId != new.personId) {
+      changes.add("Contact ID changed from '${old.contactId}' to '${new.personId}'")
     }
     if (old.relationshipTypeCode != new.relationshipTypeCode) {
       changes.add("Relationship type code changed from '${old.relationshipTypeCode}' to '${new.relationshipTypeCode}'")
     }
-    if (old.relationshipCode != new.relationshipCode) {
-      changes.add("Relationship code changed from '${old.relationshipCode}' to '${new.relationshipCode}'")
+    if (old.relationshipCode != new.relationshipToPrisoner) {
+      changes.add("Relationship code changed from '${old.relationshipCode}' to '${new.relationshipToPrisoner}'")
     }
-    if (old.visitorNotes != new.visitorNotes) {
-      changes.add("Visitor notes changed from '${old.visitorNotes}' to '${new.visitorNotes}'")
+    if (old.visitorNotes != new.commentText) {
+      changes.add("Visitor notes changed from '${old.visitorNotes}' to '${new.commentText}'")
     }
     if (old.attendanceCode != new.attendanceCode) {
       changes.add("Attendance code changed from '${old.attendanceCode}' to '${new.attendanceCode}'")
-    }
-    if (old.visitorEquipment?.description != new.visitorEquipment?.description) {
-      changes.add("Visitor equipment changed from '${old.visitorEquipment?.description}' to '${new.visitorEquipment?.description}'")
     }
     if (old.offenderVisitVisitorId != new.offenderVisitVisitorId) {
       changes.add("NOMIS offender visit visitor ID changed from '${old.offenderVisitVisitorId}' to '${new.offenderVisitVisitorId}'")

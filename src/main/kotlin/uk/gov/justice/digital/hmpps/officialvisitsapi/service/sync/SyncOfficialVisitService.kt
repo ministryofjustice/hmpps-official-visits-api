@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
 import jakarta.persistence.EntityNotFoundException
-import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,10 +23,6 @@ class SyncOfficialVisitService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
 ) {
-  companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
-  }
-
   @Transactional(readOnly = true)
   fun getVisitById(officialVisitId: Long): SyncOfficialVisit {
     val ove = officialVisitRepository.findById(officialVisitId).orElseThrow {
@@ -46,7 +41,7 @@ class SyncOfficialVisitService(
     }
 
     // TODO: Check whether another visit exists with this offenderVisitId - 409 Conflict if it does
-    // TODO: Check whether NOMIS sends visitCompletionType / searchType / prisoner attendance for create requests
+    // TODO: Check whether NOMIS sends prisoner attendance for create requests
 
     val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request))
 
