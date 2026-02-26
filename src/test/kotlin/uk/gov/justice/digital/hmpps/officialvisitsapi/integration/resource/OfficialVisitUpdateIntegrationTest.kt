@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -10,6 +9,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PR
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
@@ -138,11 +138,11 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     )
     val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
     with(result) {
-      visitDate = visitDateInTheFuture.plusMonths(20)
-      startTime = LocalTime.of(10, 0)
-      endTime = LocalTime.of(11, 0)
-      dpsLocationId = location.id
-      visitTypeCode = VisitType.VIDEO
+      visitDate isEqualTo visitDateInTheFuture.plusMonths(20)
+      startTime isEqualTo LocalTime.of(10, 0)
+      endTime isEqualTo LocalTime.of(11, 0)
+      dpsLocationId isEqualTo location.id
+      visitTypeCode isEqualTo VisitType.VIDEO
     }
   }
 
@@ -190,8 +190,8 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
 
     with(result) {
-      staffNotes = "New staff Notes"
-      prisonerNotes = "New prison Notes"
+      staffNotes isEqualTo "New staff Notes"
+      prisonerNotes isEqualTo "New prison Notes"
     }
   }
 
@@ -251,12 +251,12 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           OfficialVisitor(
             officialVisitorId = scheduledVisit.officialVisitorIds.first(),
             visitorTypeCode = VisitorType.CONTACT,
-            relationshipCode = "POM1",
+            relationshipCode = "POM2",
             contactId = 124,
             prisonerContactId = 457,
             leadVisitor = true,
             assistedVisit = true,
-            assistedNotes = "visitor notes two new updated1",
+            assistedNotes = "visitor notes two new updated2",
           ),
         ),
       ),
@@ -303,7 +303,20 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         officialVisitId = result.officialVisitId,
       ),
     )
-    assertThat(result.officialVisitors().size).isEqualTo(2)
+    with(result) {
+      officialVisitors().size isEqualTo 2
+    }
+    val updatedVisitor = officialVisitorRepository.findById(existingVisitorID).get()
+    with(updatedVisitor) {
+      officialVisitorId isEqualTo scheduledVisit.officialVisitorIds.first()
+      visitorTypeCode isEqualTo VisitorType.CONTACT
+      relationshipCode isEqualTo "POM2"
+      contactId isEqualTo 124
+      prisonerContactId isEqualTo 457
+      leadVisitor isEqualTo true
+      assistedVisit isEqualTo true
+      visitorNotes isEqualTo "visitor notes two new updated2"
+    }
   }
 
   private fun WebTestClient.updateSlot(
