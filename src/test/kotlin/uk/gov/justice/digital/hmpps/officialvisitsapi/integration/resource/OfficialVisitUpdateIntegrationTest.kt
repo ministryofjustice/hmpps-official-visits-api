@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquip
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -126,6 +127,23 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       officialVisitId = scheduledVisit.officialVisitId,
       request = updateSlot,
     )
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = scheduledVisit.officialVisitId,
+      ),
+    )
+    val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
+    with(result) {
+      visitDate = visitDateInTheFuture.plusMonths(20)
+      startTime = LocalTime.of(10, 0)
+      endTime = LocalTime.of(11, 0)
+      dpsLocationId = location.id
+      visitTypeCode = VisitType.VIDEO
+    }
   }
 
   @Test
@@ -160,6 +178,21 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         prisonerNotes = "New prison Notes",
       ),
     )
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = scheduledVisit.officialVisitId,
+      ),
+    )
+    val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
+
+    with(result) {
+      staffNotes = "New staff Notes"
+      prisonerNotes = "New prison Notes"
+    }
   }
 
   @Test
