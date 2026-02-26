@@ -50,7 +50,7 @@ class OfficialVisitFacade(
           prisonCode = prisonCode,
           identifier = creationResult.officialVisitId,
           secondIdentifier = visitorId,
-          // TODO: Should have the contactId for the visitor set here, for use in the PersonReference, but accepts nulls for now
+          // TODO: Needs the contactId here
           user = user,
         )
       }
@@ -75,13 +75,13 @@ class OfficialVisitFacade(
         user = user,
       )
 
-      completedVisitDto.officialVisitorIds.forEach { visitorId ->
+      completedVisitDto.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = completedVisitDto.prisonCode,
           identifier = completedVisitDto.officialVisitId,
-          secondIdentifier = visitorId,
-          // TODO: Should have the contactId for the visitor here, for the PersonReference, but accepts nulls for now
+          secondIdentifier = pair.first,
+          contactId = pair.second,
           user = user,
         )
       }
@@ -113,13 +113,13 @@ class OfficialVisitFacade(
         user = user,
       )
 
-      cancelledVisitDto.officialVisitorIds.forEach { visitorId ->
+      cancelledVisitDto.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = cancelledVisitDto.prisonCode,
           identifier = cancelledVisitDto.officialVisitId,
-          secondIdentifier = visitorId,
-          // TODO: Should have the contactId for the visitor here, for the PersonReference, but accepts nulls for now
+          secondIdentifier = pair.first,
+          contactId = pair.second,
           user = user,
         )
       }

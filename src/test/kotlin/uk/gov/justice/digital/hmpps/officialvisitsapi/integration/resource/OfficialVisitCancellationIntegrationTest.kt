@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PrisonerInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
@@ -148,6 +149,9 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         officialVisitorId = cancelledVisit.officialVisitors.single().officialVisitorId,
         officialVisitId = cancelledVisit.officialVisitId,
+      ),
+      personReference = PersonReference(
+        contactId = 123,
       ),
     )
 
