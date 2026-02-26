@@ -3,10 +3,10 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.3.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.0.3"
   id("org.openapi.generator") version "7.16.0"
-  kotlin("plugin.spring") version "2.2.20"
-  kotlin("plugin.jpa") version "2.2.20"
+  kotlin("plugin.spring") version "2.3.10"
+  kotlin("plugin.jpa") version "2.3.10"
 }
 
 allOpen {
@@ -17,45 +17,66 @@ allOpen {
   )
 }
 
-configurations {
-  testImplementation { exclude(group = "org.junit.vintage") }
-}
-
 dependencies {
+  // HMPPS dependencies
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.0.1")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.0.1")
+
   // Spring boot dependencies
+  implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.springframework.boot:spring-boot-starter-security")
-  implementation("org.springframework.boot:spring-boot-starter-webflux")
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0")
-  implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.5.0")
+  implementation("org.springframework.boot:spring-boot-starter-webclient")
+  implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
-  implementation("org.openapitools:jackson-databind-nullable:0.2.7")
 
-  // Database dependencies
-  runtimeOnly("org.flywaydb:flyway-database-postgresql")
-  runtimeOnly("org.postgresql:postgresql:42.7.8")
+  // ??
+  implementation("org.springframework.boot:spring-boot-gson:4.0.0")
 
   // OpenAPI dependencies
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.0.1")
+
+  // ?? Jackson databind
+  implementation("org.openapitools:jackson-databind-nullable:0.2.7")
+
+  // Postgresql dependencies
+  runtimeOnly("org.flywaydb:flyway-database-postgresql")
+  runtimeOnly("org.postgresql:postgresql:42.7.10")
 
   // Open telemetry dependencies
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.20.1")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.21.0")
 
   // Test dependencies
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.0.1")
+  testImplementation("org.springframework.security:spring-security-test:7.0.2")
+  testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
+
+  testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
+
+  // JSON web token
   testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit:4.1.1")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:4.1.1")
-  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:4.1.1")
-  testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
+
+  // JUnit
+  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.0")
+
+  // Mockito
   testImplementation("org.mockito:mockito-inline:5.2.0")
-  testImplementation("org.springframework.boot:spring-boot-starter-test")
-  testImplementation("org.springframework.security:spring-security-test")
+
+  // Test containers
   testImplementation("org.testcontainers:postgresql:1.21.3")
-  testImplementation("org.wiremock:wiremock-standalone:3.13.1")
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.5.0")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.32") {
+
+  // Wiremock
+  testImplementation("org.wiremock:wiremock-standalone:3.13.2")
+
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.37") {
     exclude(group = "io.swagger.core.v3")
   }
 }

@@ -13,9 +13,9 @@ import java.time.Duration
 class WebClientConfiguration(
   @param:Value("\${api.base.url.hmpps-auth}") val hmppsAuthBaseUri: String,
   @param:Value("\${api.base.url.locations-inside-prison}") val locationsInsidePrisonApiBaseUri: String,
-  @Value("\${api.base.url.manage-users}") private val manageUsersBaseUri: String,
-  @Value("\${api.base.url.prisoner-search}") val prisonerSearchBaseUri: String,
-  @Value("\${api.base.url.personal-relationships}") val personalRelationshipUri: String,
+  @param:Value("\${api.base.url.manage-users}") val manageUsersBaseUri: String,
+  @param:Value("\${api.base.url.prisoner-search}") val prisonerSearchBaseUri: String,
+  @param:Value("\${api.base.url.personal-relationships}") val personalRelationshipUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
 ) {

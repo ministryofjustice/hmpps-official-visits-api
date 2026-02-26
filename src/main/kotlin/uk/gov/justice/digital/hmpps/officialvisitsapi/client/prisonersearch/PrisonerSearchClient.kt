@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
 import java.time.LocalDate
 
-inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
+inline fun <reified T : Any> typeReference() = object : ParameterizedTypeReference<T>() {}
 
 @Component
 class PrisonerSearchClient(private val prisonerSearchApiWebClient: WebClient) {

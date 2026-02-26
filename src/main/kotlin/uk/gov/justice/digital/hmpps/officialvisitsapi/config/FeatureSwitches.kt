@@ -17,7 +17,7 @@ class FeatureSwitches(private val environment: Environment) {
 
   fun isEnabled(outboundEvent: OutboundEvent, defaultValue: Boolean = false): Boolean = get("feature.event.${outboundEvent.eventType}", Boolean::class.java, defaultValue)
 
-  private inline fun <reified T> get(property: String, type: Class<T>, defaultValue: T) = environment.getProperty(property, type).let {
+  private inline fun <reified T : Any> get(property: String, type: Class<T>, defaultValue: T) = environment.getProperty(property, type).let {
     if (it == null) {
       log.info("property '$property' not configured, defaulting to $defaultValue")
       defaultValue
