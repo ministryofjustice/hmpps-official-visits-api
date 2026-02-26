@@ -155,23 +155,24 @@ class OfficialVisitUpdateService(
         run {
           val matchingVisitor =
             matchingVisitors.single { mv -> mv.contactId == changedVisitorEntity.contactId && mv.prisonerContactId == changedVisitorEntity.prisonerContactId }
-          visitor.copy(
-            visitorTypeCode = changedVisitorEntity.visitorTypeCode!!,
-            firstName = matchingVisitor.firstName,
-            lastName = matchingVisitor.lastName,
-            contactId = changedVisitorEntity.contactId,
-            prisonerContactId = changedVisitorEntity.prisonerContactId,
-            relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL,
-            relationshipCode = changedVisitorEntity.relationshipCode,
-            leadVisitor = changedVisitorEntity.leadVisitor!!,
-            assistedVisit = changedVisitorEntity.assistedVisit!!,
-            visitorNotes = changedVisitorEntity.assistedNotes,
-            offenderVisitVisitorId = visitor.offenderVisitVisitorId,
-            visitorEquipment = visitor.visitorEquipment!!,
-            attendanceCode = visitor.attendanceCode,
-            updatedBy = user.username,
-            updatedTime = LocalDateTime.now(),
-          )
+          visitor.apply {
+            visitorTypeCode = changedVisitorEntity.visitorTypeCode!!
+            contactId = changedVisitorEntity.contactId
+            prisonerContactId = changedVisitorEntity.prisonerContactId
+            relationshipCode = changedVisitorEntity.relationshipCode
+            leadVisitor = changedVisitorEntity.leadVisitor!!
+            assistedVisit = changedVisitorEntity.assistedVisit!!
+            visitorNotes = changedVisitorEntity.assistedNotes
+            visitorEquipment = visitor.visitorEquipment!!
+            updatedBy = user.username
+            updatedTime = LocalDateTime.now()
+            firstName = matchingVisitor.firstName
+            lastName = matchingVisitor.lastName
+            relationshipTypeCode =
+              if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
+            offenderVisitVisitorId = visitor.offenderVisitVisitorId
+            attendanceCode = visitor.attendanceCode
+          }
         }
       }
     }
