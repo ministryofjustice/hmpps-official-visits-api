@@ -16,6 +16,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
@@ -140,6 +142,35 @@ class OfficialVisitFacadeTest {
       facade.createOfficialVisit(MOORLAND, request, UserService.getServiceAsUser())
     }
       .message isEqualTo "Visits can only be created by a digital prison user"
+  }
+
+  @Test
+  fun `should update visit type and slot details for an official scheduled visit`() {
+    val request: OfficialVisitUpdateSlotRequest = mock()
+    facade.updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    Mockito.verify(officialVisitUpdateService).updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    // should emit update event
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      user = user,
+    )
+  }
+
+  @Test
+  fun `should update prisoner and staff notes details for an official scheduled visit`() {
+    val request: OfficialVisitUpdateCommentRequest = mock()
+
+    facade.updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    Mockito.verify(officialVisitUpdateService).updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    // should emit update event
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      user = user,
+    )
   }
 
   @Test
