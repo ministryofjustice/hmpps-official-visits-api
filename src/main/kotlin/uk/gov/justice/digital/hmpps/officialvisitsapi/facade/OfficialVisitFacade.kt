@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 
 @Component
 class OfficialVisitFacade(
@@ -164,7 +163,7 @@ class OfficialVisitFacade(
     )
   }
 
-  open fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
+  fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
     officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
@@ -189,7 +188,6 @@ class OfficialVisitFacade(
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
         contactId = visitor.contactId,
-        source = Source.DPS,
         user = user,
       )
     }
@@ -201,7 +199,6 @@ class OfficialVisitFacade(
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
         contactId = visitor.contactId,
-        source = Source.DPS,
         user = user,
       )
     }
@@ -213,7 +210,6 @@ class OfficialVisitFacade(
         identifier = ov.officialVisitId,
         secondIdentifier = visitor.officialVisitorId,
         contactId = visitor.contactId,
-        source = Source.DPS,
         user = user,
       )
     }

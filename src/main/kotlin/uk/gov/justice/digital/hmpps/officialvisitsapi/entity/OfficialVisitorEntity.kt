@@ -29,32 +29,32 @@ class OfficialVisitorEntity(
   val officialVisit: OfficialVisitEntity,
 
   @Enumerated(EnumType.STRING)
-  val visitorTypeCode: VisitorType,
+  var visitorTypeCode: VisitorType,
 
-  val firstName: String? = null,
+  var firstName: String? = null,
 
-  val lastName: String? = null,
+  var lastName: String? = null,
 
-  val contactId: Long? = null,
+  var contactId: Long? = null,
 
-  val prisonerContactId: Long? = null,
+  var prisonerContactId: Long? = null,
 
   @Enumerated(EnumType.STRING)
-  val relationshipTypeCode: RelationshipType? = null,
+  var relationshipTypeCode: RelationshipType? = null,
 
-  val relationshipCode: String? = null,
+  var relationshipCode: String? = null,
 
-  val leadVisitor: Boolean = false,
+  var leadVisitor: Boolean = false,
 
-  val assistedVisit: Boolean = false,
+  var assistedVisit: Boolean = false,
 
-  val visitorNotes: String? = null,
+  var visitorNotes: String? = null,
 
   val createdBy: String,
 
   val createdTime: LocalDateTime = LocalDateTime.now(),
 
-  val offenderVisitVisitorId: Long? = null,
+  var offenderVisitVisitorId: Long? = null,
 ) {
   @OneToOne(mappedBy = "officialVisitor", cascade = [CascadeType.ALL], orphanRemoval = true)
   var visitorEquipment: VisitorEquipmentEntity? = null

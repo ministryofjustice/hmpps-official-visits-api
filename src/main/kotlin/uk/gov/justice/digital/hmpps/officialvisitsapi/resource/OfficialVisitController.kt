@@ -232,7 +232,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Official visit cancelled successfully",
+        description = "Official visit updated successfully",
       ),
       ApiResponse(
         responseCode = "404",
@@ -274,7 +274,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Official visit cancelled successfully",
+        description = "Official visit updated successfully",
       ),
       ApiResponse(
         responseCode = "404",
@@ -316,7 +316,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Official visit cancelled successfully",
+        description = "Official visit updated successfully",
       ),
       ApiResponse(
         responseCode = "404",
