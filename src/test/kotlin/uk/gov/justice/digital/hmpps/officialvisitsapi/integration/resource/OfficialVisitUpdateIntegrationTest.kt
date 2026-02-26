@@ -319,6 +319,25 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `should  error when  ID does not exist and slot update is requested`() {
+    webTestClient.notExistentOfficialVisit(
+      request = updateSlot,
+      prisonCode = MOORLAND_PRISONER.prison,
+      officialVisitId = 99,
+      prisonUser = MOORLAND_PRISON_USER,
+    )
+  }
+
+  @Test
+  fun `should  error when  ID does not exist and comments update is requested`() {
+    webTestClient.notExistentOfficialVisit(
+      request = updateSlot,
+      prisonCode = MOORLAND_PRISONER.prison,
+      officialVisitId = 99,
+      prisonUser = MOORLAND_PRISON_USER,
+    )
+  }
   private fun WebTestClient.updateSlot(
     prisonCode: String,
     officialVisitId: Long,
@@ -360,4 +379,19 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isOk
+
+  private fun WebTestClient.notExistentOfficialVisit(
+    request: OfficialVisitUpdateSlotRequest,
+    prisonCode: String,
+    officialVisitId: Long,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = this
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/update-type-and-slot")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"))).exchange()
+    .expectStatus().is4xxClientError
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id $officialVisitId and prison code $prisonCode not found")
 }
