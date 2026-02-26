@@ -69,7 +69,7 @@ class OfficialVisitFacadeTest {
     )
 
     whenever(officialVisitCreateService.create(MOORLAND, request, user)).thenReturn(
-      CreateOfficialVisitResponse(officialVisitId = 1L, officialVisitorIds = listOf(2L)),
+      CreateOfficialVisitResponse(officialVisitId = 1L, prisonerNumber = "A1234AA", visitorAndContactIds = listOf(Pair(1L, 1L))),
     )
 
     facade.createOfficialVisit(MOORLAND, request, MOORLAND_PRISON_USER)
@@ -91,7 +91,8 @@ class OfficialVisitFacadeTest {
       outboundEvent = OutboundEvent.VISITOR_CREATED,
       prisonCode = MOORLAND,
       identifier = 1L, // visitId
-      secondIdentifier = 2L, // visitorId
+      secondIdentifier = 1L, // visitorId
+      contactId = 1L,
       source = Source.DPS,
       user = user,
     )

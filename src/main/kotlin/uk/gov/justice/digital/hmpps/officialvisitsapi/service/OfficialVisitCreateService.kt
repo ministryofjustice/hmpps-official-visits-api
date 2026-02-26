@@ -66,7 +66,11 @@ class OfficialVisitCreateService(
       ).addVisitorsAndAnyEquipment(request.officialVisitors, matchingVisitors, user),
     ).savePrisonerBeingVisited()
       .let { it ->
-        CreateOfficialVisitResponse(it.officialVisitId, it.officialVisitors().map { visitor -> visitor.officialVisitorId })
+        CreateOfficialVisitResponse(
+          officialVisitId = it.officialVisitId,
+          prisonerNumber = it.prisonerNumber,
+          visitorAndContactIds = it.officialVisitors().map { visitor -> visitor.officialVisitorId to visitor.contactId },
+        )
       }.also {
         logger.info("Official visit created with ID ${it.officialVisitId}")
       }

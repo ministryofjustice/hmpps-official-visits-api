@@ -55,6 +55,7 @@ class OfficialVisitCompletionService(
       prisonCode = prisonCode,
       officialVisitId = officialVisitId,
       prisonerVisitedId = prisonerVisited.prisonerVisitedId,
+      prisonerNumber = prisonerVisited.prisonerNumber,
       visitorAndContactIds = officialVisit.officialVisitors().map { it.officialVisitorId to it.contactId },
     ).also {
       logger.info("Official visit with ID $officialVisitId completed.")
@@ -65,6 +66,7 @@ class OfficialVisitCompletionService(
     val prisonCode: String,
     val officialVisitId: Long,
     val prisonerVisitedId: Long,
+    val prisonerNumber: String,
     val visitorAndContactIds: List<Pair<Long, Long?>>,
   )
 }

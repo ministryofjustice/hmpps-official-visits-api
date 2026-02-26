@@ -40,17 +40,17 @@ class OfficialVisitFacade(
         outboundEvent = OutboundEvent.VISIT_CREATED,
         prisonCode = prisonCode,
         identifier = creationResult.officialVisitId,
-        noms = request.prisonerNumber!!,
+        noms = creationResult.prisonerNumber,
         user = user,
       )
 
-      creationResult.officialVisitorIds.forEach { visitorId ->
+      creationResult.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_CREATED,
           prisonCode = prisonCode,
           identifier = creationResult.officialVisitId,
-          secondIdentifier = visitorId,
-          // TODO: Needs the contactId here
+          secondIdentifier = pair.first,
+          contactId = pair.second,
           user = user,
         )
       }
@@ -87,13 +87,12 @@ class OfficialVisitFacade(
       }
 
       // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
-
       outboundEventsService.send(
         outboundEvent = OutboundEvent.PRISONER_UPDATED,
         prisonCode = completedVisitDto.prisonCode,
         identifier = completedVisitDto.officialVisitId,
         secondIdentifier = completedVisitDto.prisonerVisitedId,
-        // TODO: Should have the noms = prisonerNumber here, for the PersonReference, but accepts nulls for now
+        noms = completedVisitDto.prisonerNumber,
         user = user,
       )
     }
@@ -125,13 +124,12 @@ class OfficialVisitFacade(
       }
 
       // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
-
       outboundEventsService.send(
         outboundEvent = OutboundEvent.PRISONER_UPDATED,
         prisonCode = cancelledVisitDto.prisonCode,
         identifier = cancelledVisitDto.officialVisitId,
         secondIdentifier = cancelledVisitDto.prisonerVisitedId,
-        // TODO: Should have the noms = prisonerNumber here, for the PersonReference, but accepts nulls for now
+        noms = cancelledVisitDto.prisonerNumber,
         user = user,
       )
     }
