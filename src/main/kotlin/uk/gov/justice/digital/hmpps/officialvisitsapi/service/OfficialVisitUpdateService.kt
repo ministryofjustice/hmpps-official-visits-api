@@ -98,11 +98,11 @@ class OfficialVisitUpdateService(
     val newVisitors = request.officialVisitors.filter { it.officialVisitorId == 0L }
 
     val updatedVisitors = request.officialVisitors.filter {
-      it.officialVisitorId in existingVisitors.map { it.officialVisitorId }
+      it.officialVisitorId in existingVisitors.map { existing -> existing.officialVisitorId }
     }.associateBy { it.officialVisitorId }
 
-    // Add new visitors
     ove.addVisitors(newVisitors, matchingVisitors, user)
+
     ove.updateVisitors(updatedVisitors, matchingVisitors, user)
 
     val removedVisitorList = existingVisitors.filter {
@@ -121,7 +121,7 @@ class OfficialVisitUpdateService(
     val visitors = updatedVisit.officialVisitors()
 
     val addedVisitorsList = visitors.filter {
-      it.officialVisitorId !in existingVisitors.map { it.officialVisitorId }
+      it.officialVisitorId !in existingVisitors.map { existing -> existing.officialVisitorId }
     }
       .map {
         OfficialVisitorUpdated(
