@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 
 data class OfficialVisitor(
 
-  @Schema(description = "Official Visitor ID, its zero for new official visitor")
+  @Schema(description = "Official Visitor ID - only required for updates and should be 0 when creating official visitors")
   val officialVisitorId: Long = 0L,
 
   @field:NotBlank(message = "The visitor type code for the official visitor is mandatory")

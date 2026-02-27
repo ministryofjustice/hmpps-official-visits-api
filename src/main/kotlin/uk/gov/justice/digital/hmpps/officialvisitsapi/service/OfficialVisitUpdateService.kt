@@ -12,7 +12,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitVisitorUpdate
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateCommentsResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateSlotResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateVisitorsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
@@ -26,7 +28,12 @@ class OfficialVisitUpdateService(
   private val contactsService: ContactsService,
 ) {
 
-  fun updateVisitTypeAndSlot(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
+  fun updateVisitTypeAndSlot(
+    officialVisitId: Long,
+    prisonCode: String,
+    request: OfficialVisitUpdateSlotRequest,
+    user: User,
+  ): OfficialVisitUpdateSlotResponse {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
@@ -44,20 +51,34 @@ class OfficialVisitUpdateService(
       updatedTime = LocalDateTime.now()
     }
 
-    officialVisitRepository.saveAndFlush(changedOVEntity)
+    val updatedVisit = officialVisitRepository.saveAndFlush(changedOVEntity)
+    return OfficialVisitUpdateSlotResponse(
+      officialVisitId = updatedVisit.officialVisitId,
+      prisonerNumber = updatedVisit.prisonerNumber,
+    )
   }
 
-  fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
+  fun updateComments(
+    officialVisitId: Long,
+    prisonCode: String,
+    request: OfficialVisitUpdateCommentRequest,
+    user: User,
+  ): OfficialVisitUpdateCommentsResponse {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
-    officialVisitRepository.saveAndFlush(
+    val updatedVisit = officialVisitRepository.saveAndFlush(
       ove.apply {
-        staffNotes = request.staffNotes!!
-        prisonerNotes = request.prisonerNotes!!
+        staffNotes = request.staffNotes
+        prisonerNotes = request.prisonerNotes
         updatedBy = user.username
         updatedTime = LocalDateTime.now()
       },
+    )
+
+    return OfficialVisitUpdateCommentsResponse(
+      officialVisitId = updatedVisit.officialVisitId,
+      prisonerNumber = updatedVisit.prisonerNumber,
     )
   }
 
@@ -66,7 +87,7 @@ class OfficialVisitUpdateService(
     prisonCode: String,
     request: OfficialVisitUpdateVisitorsRequest,
     user: User,
-  ): OfficialVisitVisitorUpdate {
+  ): OfficialVisitUpdateVisitorsResponse {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
@@ -119,7 +140,7 @@ class OfficialVisitUpdateService(
         )
       }
 
-    return OfficialVisitVisitorUpdate(
+    return OfficialVisitUpdateVisitorsResponse(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
       prisonerNumber = updatedVisit.prisonerNumber,

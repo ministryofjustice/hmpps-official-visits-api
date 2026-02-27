@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 
-data class OfficialVisitVisitorUpdate(
+data class OfficialVisitUpdateVisitorsResponse(
   @Schema(description = "The official visit ID")
   val officialVisitId: Long,
 

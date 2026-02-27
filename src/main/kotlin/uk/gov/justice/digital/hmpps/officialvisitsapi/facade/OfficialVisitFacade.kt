@@ -152,36 +152,38 @@ class OfficialVisitFacade(
   }
 
   fun updateVisitTypeAndSlot(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
-    officialVisitUpdateService.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, user)
+    val response = officialVisitUpdateService.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = officialVisitId,
-      // TODO: Needs the noms=prisonerNumber on visit events
+      identifier = response.officialVisitId,
+      noms = response.prisonerNumber,
       user = user,
     )
   }
 
   fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
-    officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
+    val response = officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = officialVisitId,
-      // TODO: Needs the noms=prisonerNumber on visit events
+      identifier = response.officialVisitId,
+      noms = response.prisonerNumber,
       user = user,
     )
   }
 
   fun updateVisitors(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateVisitorsRequest, user: User) {
     val ov = officialVisitUpdateService.updateVisitors(officialVisitId, prisonCode, request, user)
+
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = officialVisitId,
-      // TODO: Needs the noms=prisonerNumber on visit events
+      identifier = ov.officialVisitId,
+      noms = ov.prisonerNumber,
       user = user,
     )
+
     ov.visitorsUpdated.forEach { visitor ->
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISITOR_UPDATED,
