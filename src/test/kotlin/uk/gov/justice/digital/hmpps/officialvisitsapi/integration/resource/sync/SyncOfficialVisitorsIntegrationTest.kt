@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
@@ -149,6 +150,9 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
       ),
+      personReference = PersonReference(
+        contactId = contactId,
+      ),
     )
   }
 
@@ -158,21 +162,24 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
     val savedVisit = testAPIClient.createOfficialVisit(officialVisitRequest, MOORLAND_PRISON_USER)
     stubEvents.reset()
 
-    assertThat(savedVisit.officialVisitorIds).hasSize(1)
+    assertThat(savedVisit.visitorAndContactIds).hasSize(1)
 
     webTestClient.syncDeleteVisitor(
       officialVisitId = savedVisit.officialVisitId,
-      officialVisitorId = savedVisit.officialVisitorIds.first(),
+      officialVisitorId = savedVisit.visitorAndContactIds.first().first,
     ).expectStatus().isNoContent
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_DELETED,
       additionalInfo = VisitorInfo(
         officialVisitId = savedVisit.officialVisitId,
-        officialVisitorId = savedVisit.officialVisitorIds.first(),
+        officialVisitorId = savedVisit.visitorAndContactIds.first().first,
         source = Source.NOMIS,
         username = "NOMIS",
         prisonId = MOORLAND,
+      ),
+      personReference = PersonReference(
+        contactId = savedVisit.visitorAndContactIds.first().second ?: 0L,
       ),
     )
 
@@ -295,6 +302,9 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
         source = Source.NOMIS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
+      ),
+      personReference = PersonReference(
+        contactId = contactId,
       ),
     )
   }

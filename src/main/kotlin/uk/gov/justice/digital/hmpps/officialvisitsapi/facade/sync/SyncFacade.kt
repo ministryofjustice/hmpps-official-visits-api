@@ -170,6 +170,7 @@ class SyncFacade(
             prisonCode = deletedOfficialVisit.prisonCode,
             identifier = deletedOfficialVisit.officialVisitId,
             secondIdentifier = visitor.officialVisitorId,
+            contactId = visitor.contactId,
             source = Source.NOMIS,
             user = UserService.getClientAsUser("NOMIS"),
           )

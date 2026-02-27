@@ -319,10 +319,13 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       event = OutboundEvent.VISITOR_DELETED,
       additionalInfo = VisitorInfo(
         officialVisitId = officialVisit.officialVisitId,
-        officialVisitorId = officialVisit.officialVisitorIds.first(),
+        officialVisitorId = officialVisit.visitorAndContactIds.first().first,
         source = Source.NOMIS,
         username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
+      ),
+      PersonReference(
+        contactId = officialVisit.visitorAndContactIds.first().second ?: 0L,
       ),
     )
 
@@ -333,6 +336,9 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
         source = Source.NOMIS,
         username = UserService.getClientAsUser("NOMIS").username,
         prisonId = MOORLAND,
+      ),
+      PersonReference(
+        nomsNumber = officialVisit.prisonerNumber,
       ),
     )
   }
