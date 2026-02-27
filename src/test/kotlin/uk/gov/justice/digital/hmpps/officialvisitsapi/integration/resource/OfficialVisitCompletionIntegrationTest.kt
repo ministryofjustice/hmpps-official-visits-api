@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PrisonerInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
@@ -147,6 +148,9 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         officialVisitId = completedVisit.officialVisitId,
       ),
+      personReference = PersonReference(
+        nomsNumber = completedVisit.prisonerVisited.prisonerNumber,
+      ),
     )
 
     stubEvents.assertHasEvent(
@@ -158,6 +162,9 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
         officialVisitorId = completedVisit.officialVisitors.single().officialVisitorId,
         officialVisitId = completedVisit.officialVisitId,
       ),
+      personReference = PersonReference(
+        contactId = 123,
+      ),
     )
 
     stubEvents.assertHasEvent(
@@ -168,6 +175,9 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         prisonerVisitedId = prisonerVisitedRepository.findByOfficialVisitId(completedVisit.officialVisitId)!!.prisonerVisitedId,
         officialVisitId = completedVisit.officialVisitId,
+      ),
+      personReference = PersonReference(
+        nomsNumber = completedVisit.prisonerVisited.prisonerNumber,
       ),
     )
   }

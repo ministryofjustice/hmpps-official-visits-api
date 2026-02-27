@@ -49,17 +49,17 @@ class OfficialVisitFacade(
         outboundEvent = OutboundEvent.VISIT_CREATED,
         prisonCode = prisonCode,
         identifier = creationResult.officialVisitId,
-        noms = request.prisonerNumber!!,
+        noms = creationResult.prisonerNumber,
         user = user,
       )
 
-      creationResult.officialVisitorIds.forEach { visitorId ->
+      creationResult.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_CREATED,
           prisonCode = prisonCode,
           identifier = creationResult.officialVisitId,
-          secondIdentifier = visitorId,
-          // TODO: Should have the contactId for the visitor set here, for use in the PersonReference, but accepts nulls for now
+          secondIdentifier = pair.first,
+          contactId = pair.second,
           user = user,
         )
       }
@@ -81,37 +81,36 @@ class OfficialVisitFacade(
     request: OfficialVisitCompletionRequest,
     user: User,
   ) {
-    officialVisitCompletionService.completeOfficialVisit(prisonCode, officialVisitId, request, user)
-      .also { completedVisitDto ->
+    officialVisitCompletionService.completeOfficialVisit(prisonCode, officialVisitId, request, user).also { completedVisitDto ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_UPDATED,
+        prisonCode = completedVisitDto.prisonCode,
+        identifier = completedVisitDto.officialVisitId,
+        noms = completedVisitDto.prisonerNumber,
+        user = user,
+      )
+
+      completedVisitDto.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
-          outboundEvent = OutboundEvent.VISIT_UPDATED,
+          outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = completedVisitDto.prisonCode,
           identifier = completedVisitDto.officialVisitId,
-          user = user,
-        )
-
-        completedVisitDto.officialVisitorIds.forEach { visitorId ->
-          outboundEventsService.send(
-            outboundEvent = OutboundEvent.VISITOR_UPDATED,
-            prisonCode = completedVisitDto.prisonCode,
-            identifier = completedVisitDto.officialVisitId,
-            secondIdentifier = visitorId,
-            // TODO: Should have the contactId for the visitor here, for the PersonReference, but accepts nulls for now
-            user = user,
-          )
-        }
-
-        // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
-
-        outboundEventsService.send(
-          outboundEvent = OutboundEvent.PRISONER_UPDATED,
-          prisonCode = completedVisitDto.prisonCode,
-          identifier = completedVisitDto.officialVisitId,
-          secondIdentifier = completedVisitDto.prisonerVisitedId,
-          // TODO: Should have the noms = prisonerNumber here, for the PersonReference, but accepts nulls for now
+          secondIdentifier = pair.first,
+          contactId = pair.second,
           user = user,
         )
       }
+
+      // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.PRISONER_UPDATED,
+        prisonCode = completedVisitDto.prisonCode,
+        identifier = completedVisitDto.officialVisitId,
+        secondIdentifier = completedVisitDto.prisonerVisitedId,
+        noms = completedVisitDto.prisonerNumber,
+        user = user,
+      )
+    }
   }
 
   fun cancelOfficialVisit(
@@ -120,67 +119,71 @@ class OfficialVisitFacade(
     request: OfficialVisitCancellationRequest,
     user: User,
   ) {
-    officialVisitCancellationService.cancelOfficialVisit(prisonCode, officialVisitId, request, user)
-      .also { cancelledVisitDto ->
+    officialVisitCancellationService.cancelOfficialVisit(prisonCode, officialVisitId, request, user).also { cancelledVisitDto ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISIT_UPDATED,
+        prisonCode = cancelledVisitDto.prisonCode,
+        identifier = cancelledVisitDto.officialVisitId,
+        noms = cancelledVisitDto.prisonerNumber,
+        user = user,
+      )
+
+      cancelledVisitDto.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
-          outboundEvent = OutboundEvent.VISIT_UPDATED,
+          outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = cancelledVisitDto.prisonCode,
           identifier = cancelledVisitDto.officialVisitId,
-          user = user,
-        )
-
-        cancelledVisitDto.officialVisitorIds.forEach { visitorId ->
-          outboundEventsService.send(
-            outboundEvent = OutboundEvent.VISITOR_UPDATED,
-            prisonCode = cancelledVisitDto.prisonCode,
-            identifier = cancelledVisitDto.officialVisitId,
-            secondIdentifier = visitorId,
-            // TODO: Should have the contactId for the visitor here, for the PersonReference, but accepts nulls for now
-            user = user,
-          )
-        }
-
-        // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
-
-        outboundEventsService.send(
-          outboundEvent = OutboundEvent.PRISONER_UPDATED,
-          prisonCode = cancelledVisitDto.prisonCode,
-          identifier = cancelledVisitDto.officialVisitId,
-          secondIdentifier = cancelledVisitDto.prisonerVisitedId,
-          // TODO: Should have the noms = prisonerNumber here, for the PersonReference, but accepts nulls for now
+          secondIdentifier = pair.first,
+          contactId = pair.second,
           user = user,
         )
       }
+
+      // TODO: Confirm with Andy whether he needs this event for updated prisoner attendance
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.PRISONER_UPDATED,
+        prisonCode = cancelledVisitDto.prisonCode,
+        identifier = cancelledVisitDto.officialVisitId,
+        secondIdentifier = cancelledVisitDto.prisonerVisitedId,
+        noms = cancelledVisitDto.prisonerNumber,
+        user = user,
+      )
+    }
   }
 
   fun updateVisitTypeAndSlot(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
-    officialVisitUpdateService.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, user)
+    val response = officialVisitUpdateService.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = officialVisitId,
+      identifier = response.officialVisitId,
+      noms = response.prisonerNumber,
       user = user,
     )
   }
 
   fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
-    officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
+    val response = officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = officialVisitId,
+      identifier = response.officialVisitId,
+      noms = response.prisonerNumber,
       user = user,
     )
   }
 
   fun updateVisitors(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateVisitorsRequest, user: User) {
     val ov = officialVisitUpdateService.updateVisitors(officialVisitId, prisonCode, request, user)
+
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = prisonCode,
-      identifier = officialVisitId,
+      identifier = ov.officialVisitId,
+      noms = ov.prisonerNumber,
       user = user,
     )
+
     ov.visitorsUpdated.forEach { visitor ->
       outboundEventsService.send(
         outboundEvent = OutboundEvent.VISITOR_UPDATED,

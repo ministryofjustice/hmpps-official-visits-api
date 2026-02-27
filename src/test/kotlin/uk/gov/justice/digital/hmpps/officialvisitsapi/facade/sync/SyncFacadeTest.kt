@@ -495,6 +495,7 @@ class SyncFacadeTest {
         source = Source.NOMIS,
         identifier = 1L, // official visit ID
         secondIdentifier = 1L, // official visitor ID
+        contactId = 2L,
         user = UserService.getClientAsUser("NOMIS"),
       )
     }
