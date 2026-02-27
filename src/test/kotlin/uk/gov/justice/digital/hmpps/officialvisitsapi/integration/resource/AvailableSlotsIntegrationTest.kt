@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assumptions.assumingThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -10,10 +9,18 @@ import org.springframework.test.web.reactive.server.expectBodyList
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 import java.time.DayOfWeek.FRIDAY
 import java.time.LocalDate
@@ -22,13 +29,38 @@ import java.time.LocalTime
 import java.util.UUID
 
 class AvailableSlotsIntegrationTest : IntegrationTestBase() {
-  private val today = LocalDate.now()
+
+  private val officialVisitor = OfficialVisitor(
+    visitorTypeCode = VisitorType.CONTACT,
+    relationshipCode = "POM",
+    contactId = 123,
+    prisonerContactId = 456,
+    leadVisitor = true,
+    assistedVisit = false,
+    assistedNotes = "visitor notes",
+    visitorEquipment = VisitorEquipment("Bringing secure laptop"),
+  )
+
+  private final val nextFridaySlot9At11 = CreateOfficialVisitRequest(
+    prisonerNumber = MOORLAND_PRISONER.number,
+    prisonVisitSlotId = 9,
+    visitDate = today().next(FRIDAY),
+    startTime = LocalTime.of(11, 0),
+    endTime = LocalTime.of(12, 0),
+    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    visitTypeCode = VisitType.IN_PERSON,
+    staffNotes = "private notes",
+    prisonerNotes = "public notes",
+    searchTypeCode = SearchLevelType.PAT,
+    officialVisitors = listOf(officialVisitor),
+  )
 
   @BeforeEach
   @Transactional
   fun setupTest() {
     clearAllVisitData()
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, fakeOfficialVisitLocations())
+    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = officialVisitor.contactId!!, prisonerContactId = officialVisitor.prisonerContactId!!)
   }
 
   @AfterEach
@@ -39,7 +71,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should perform basic GET with no visits and ignoring expired and inactive slots`() {
-    val nextFriday = today.next(FRIDAY)
+    val nextFriday = today().next(FRIDAY)
 
     // An expired slot from 2023 exists in base data for Fridays at 9:10 until 10:10
     // A future-dated slot for 2040 exists in base data for Fridays at 9:15 until 10:15
@@ -96,44 +128,101 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should perform GET with existing Friday visits for slot 7 and 9`() {
-    assumingThat(today.dayOfWeek == FRIDAY && LocalTime.now() < LocalTime.of(9, 0)) {
-      val response = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = today, toDate = today)
+  fun `should perform GET with slot 9 on Friday at 11 no longer available`() {
+    val nextFriday = today().next(FRIDAY)
 
-      // Slot 9 is fully booked so should not be in the response
-      response containsExactlyInAnyOrder listOf(
-        AvailableSlot(
-          visitSlotId = 7,
-          timeSlotId = 7,
-          prisonCode = "MDI",
-          dayCode = "FRI",
-          dayDescription = "Friday",
-          visitDate = today,
-          startTime = LocalTime.of(9, 0),
-          endTime = LocalTime.of(10, 0),
-          dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-          availableVideoSessions = 0,
-          availableAdults = 9,
-          availableGroups = 4,
-          locationDescription = "Location description A",
-        ),
-        AvailableSlot(
-          visitSlotId = 8,
-          timeSlotId = 8,
-          prisonCode = "MDI",
-          dayCode = "FRI",
-          dayDescription = "Friday",
-          visitDate = today,
-          startTime = LocalTime.of(10, 0),
-          endTime = LocalTime.of(11, 0),
-          dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
-          availableVideoSessions = 0,
-          availableAdults = 10,
-          availableGroups = 5,
-          locationDescription = "Location description B",
-        ),
-      )
-    }
+    // An expired slot from 2023 exists in base data for Fridays at 9:10 until 10:10
+    // A future-dated slot for 2040 exists in base data for Fridays at 9:15 until 10:15
+
+    val responseWithSlot9At11Fri = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
+
+    // Slot 9 on the Friday at 11 should be in the response
+    responseWithSlot9At11Fri containsExactlyInAnyOrder listOf(
+      AvailableSlot(
+        visitSlotId = 7,
+        timeSlotId = 7,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(9, 0),
+        endTime = LocalTime.of(10, 0),
+        dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description A",
+      ),
+      AvailableSlot(
+        visitSlotId = 8,
+        timeSlotId = 8,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+        dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description B",
+      ),
+      AvailableSlot(
+        visitSlotId = 9,
+        timeSlotId = 9,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(11, 0),
+        endTime = LocalTime.of(12, 0),
+        dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        availableVideoSessions = 1,
+        availableAdults = 1,
+        availableGroups = 1,
+        locationDescription = "Location description A",
+      ),
+    )
+
+    // Fill up capacity for slot 9 at 11 on Friday
+    testAPIClient.createOfficialVisit(request = nextFridaySlot9At11, MOORLAND_PRISON_USER)
+
+    val responseWithoutSlot9At11Fri = webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
+
+    // Slot 9 on the Friday at 11 should not be in the response
+    responseWithoutSlot9At11Fri containsExactlyInAnyOrder listOf(
+      AvailableSlot(
+        visitSlotId = 7,
+        timeSlotId = 7,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(9, 0),
+        endTime = LocalTime.of(10, 0),
+        dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description A",
+      ),
+      AvailableSlot(
+        visitSlotId = 8,
+        timeSlotId = 8,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+        dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description B",
+      ),
+    )
   }
 
   private fun WebTestClient.availableSlots(prisonCode: String, fromDate: LocalDate, toDate: LocalDate) = this
