@@ -139,6 +139,9 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         officialVisitId = cancelledVisit.officialVisitId,
       ),
+      personReference = PersonReference(
+        nomsNumber = cancelledVisit.prisonerVisited.prisonerNumber,
+      ),
     )
 
     stubEvents.assertHasEvent(
@@ -163,6 +166,9 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         prisonerVisitedId = prisonerVisitedRepository.findByOfficialVisitId(cancelledVisit.officialVisitId)!!.prisonerVisitedId,
         officialVisitId = cancelledVisit.officialVisitId,
+      ),
+      personReference = PersonReference(
+        nomsNumber = cancelledVisit.prisonerVisited.prisonerNumber,
       ),
     )
   }

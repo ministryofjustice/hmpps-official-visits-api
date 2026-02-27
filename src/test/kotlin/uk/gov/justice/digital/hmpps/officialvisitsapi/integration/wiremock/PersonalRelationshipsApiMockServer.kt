@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactEmailDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactPhoneDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
@@ -65,6 +66,23 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
                     prisonerContactId = prisonerContactId,
                   ),
                 ),
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubAllApprovedContacts(prisonerNumber: String, pagedSummary: PagedModelPrisonerContactSummary) {
+    stubFor(
+      get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
+        .withQueryParam("active", equalTo("true"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                pagedSummary,
               ),
             )
             .withStatus(200),

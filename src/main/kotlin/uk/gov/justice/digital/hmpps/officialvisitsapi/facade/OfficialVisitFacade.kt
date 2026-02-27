@@ -5,12 +5,16 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitUpdateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
@@ -24,6 +28,7 @@ class OfficialVisitFacade(
   private val officialVisitSearchService: OfficialVisitSearchService,
   private val officialVisitCompletionService: OfficialVisitCompletionService,
   private val officialVisitCancellationService: OfficialVisitCancellationService,
+  private val officialVisitUpdateService: OfficialVisitUpdateService,
   private val outboundEventsService: OutboundEventsService,
 ) {
   fun createOfficialVisit(
@@ -33,7 +38,11 @@ class OfficialVisitFacade(
   ): CreateOfficialVisitResponse = run {
     require(user is PrisonUser) { "Visits can only be created by a digital prison user" }
 
-    checkPrisonUsersActiveCaseload(prisonCode, user, "This visit cannot be created in a prison which is not the active caseload for the user")
+    checkPrisonUsersActiveCaseload(
+      prisonCode,
+      user,
+      "This visit cannot be created in a prison which is not the active caseload for the user",
+    )
 
     officialVisitCreateService.create(prisonCode, request, user).also { creationResult ->
       outboundEventsService.send(
@@ -59,7 +68,12 @@ class OfficialVisitFacade(
 
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, officialVisitId: Long): OfficialVisitDetails = officialVisitsRetrievalService.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
 
-  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int) = officialVisitSearchService.searchForOfficialVisitSummaries(prisonCode, request, page, size)
+  fun searchForOfficialVisitSummaries(
+    prisonCode: String,
+    request: OfficialVisitSummarySearchRequest,
+    page: Int,
+    size: Int,
+  ) = officialVisitSearchService.searchForOfficialVisitSummaries(prisonCode, request, page, size)
 
   fun completeOfficialVisit(
     prisonCode: String,
@@ -72,6 +86,7 @@ class OfficialVisitFacade(
         outboundEvent = OutboundEvent.VISIT_UPDATED,
         prisonCode = completedVisitDto.prisonCode,
         identifier = completedVisitDto.officialVisitId,
+        noms = completedVisitDto.prisonerNumber,
         user = user,
       )
 
@@ -109,6 +124,7 @@ class OfficialVisitFacade(
         outboundEvent = OutboundEvent.VISIT_UPDATED,
         prisonCode = cancelledVisitDto.prisonCode,
         identifier = cancelledVisitDto.officialVisitId,
+        noms = cancelledVisitDto.prisonerNumber,
         user = user,
       )
 
@@ -130,6 +146,71 @@ class OfficialVisitFacade(
         identifier = cancelledVisitDto.officialVisitId,
         secondIdentifier = cancelledVisitDto.prisonerVisitedId,
         noms = cancelledVisitDto.prisonerNumber,
+        user = user,
+      )
+    }
+  }
+
+  fun updateVisitTypeAndSlot(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateSlotRequest, user: User) {
+    officialVisitUpdateService.updateVisitTypeAndSlot(officialVisitId, prisonCode, request, user)
+    outboundEventsService.send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = prisonCode,
+      identifier = officialVisitId,
+      // TODO: Needs the noms=prisonerNumber on visit events
+      user = user,
+    )
+  }
+
+  fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
+    officialVisitUpdateService.updateComments(officialVisitId, prisonCode, request, user)
+    outboundEventsService.send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = prisonCode,
+      identifier = officialVisitId,
+      // TODO: Needs the noms=prisonerNumber on visit events
+      user = user,
+    )
+  }
+
+  fun updateVisitors(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateVisitorsRequest, user: User) {
+    val ov = officialVisitUpdateService.updateVisitors(officialVisitId, prisonCode, request, user)
+    outboundEventsService.send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = prisonCode,
+      identifier = officialVisitId,
+      // TODO: Needs the noms=prisonerNumber on visit events
+      user = user,
+    )
+    ov.visitorsUpdated.forEach { visitor ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISITOR_UPDATED,
+        prisonCode = ov.prisonCode,
+        identifier = ov.officialVisitId,
+        secondIdentifier = visitor.officialVisitorId,
+        contactId = visitor.contactId,
+        user = user,
+      )
+    }
+
+    ov.visitorsAdded.forEach { visitor ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISITOR_CREATED,
+        prisonCode = ov.prisonCode,
+        identifier = ov.officialVisitId,
+        secondIdentifier = visitor.officialVisitorId,
+        contactId = visitor.contactId,
+        user = user,
+      )
+    }
+
+    ov.visitorsDeleted.forEach { visitor ->
+      outboundEventsService.send(
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
+        prisonCode = ov.prisonCode,
+        identifier = ov.officialVisitId,
+        secondIdentifier = visitor.officialVisitorId,
+        contactId = visitor.contactId,
         user = user,
       )
     }

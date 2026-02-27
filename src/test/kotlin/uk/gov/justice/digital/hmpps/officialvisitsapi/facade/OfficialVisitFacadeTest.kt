@@ -2,11 +2,13 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
@@ -14,12 +16,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitVisitorUpdate
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitUpdateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
@@ -36,6 +44,7 @@ class OfficialVisitFacadeTest {
   private val outboundEventsService: OutboundEventsService = mock()
   private val officialVisitCompletionService: OfficialVisitCompletionService = mock()
   private val officialVisitCancellationService: OfficialVisitCancellationService = mock()
+  private val officialVisitUpdateService: OfficialVisitUpdateService = mock()
   private val user = MOORLAND_PRISON_USER
 
   private val facade = OfficialVisitFacade(
@@ -44,6 +53,7 @@ class OfficialVisitFacadeTest {
     officialVisitSearchService,
     officialVisitCompletionService,
     officialVisitCancellationService,
+    officialVisitUpdateService,
     outboundEventsService,
   )
 
@@ -64,6 +74,7 @@ class OfficialVisitFacadeTest {
           visitorTypeCode = VisitorType.CONTACT,
           contactId = 1L,
           prisonerContactId = 2L,
+          officialVisitorId = 0L,
         ),
       ),
     )
@@ -132,5 +143,95 @@ class OfficialVisitFacadeTest {
       facade.createOfficialVisit(MOORLAND, request, UserService.getServiceAsUser())
     }
       .message isEqualTo "Visits can only be created by a digital prison user"
+  }
+
+  @Test
+  fun `should update visit type and slot details for an official scheduled visit`() {
+    val request: OfficialVisitUpdateSlotRequest = mock()
+    facade.updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    Mockito.verify(officialVisitUpdateService).updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    // should emit update event
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      user = user,
+    )
+  }
+
+  @Test
+  fun `should update prisoner and staff notes details for an official scheduled visit`() {
+    val request: OfficialVisitUpdateCommentRequest = mock()
+
+    facade.updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    Mockito.verify(officialVisitUpdateService).updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    // should emit update event
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISIT_UPDATED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      user = user,
+    )
+  }
+
+  @Test
+  fun `should update existing visitors details, add new visitor and remove existing visitor for an official scheduled visit`() {
+    val request: OfficialVisitUpdateVisitorsRequest = mock()
+    val response = OfficialVisitVisitorUpdate(
+      officialVisitId = 1,
+      prisonCode = MOORLAND,
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitorsAdded = listOf(
+        OfficialVisitorUpdated(
+          officialVisitorId = 1,
+          contactId = 1,
+        ),
+      ),
+      visitorsDeleted = listOf(
+        OfficialVisitorUpdated(
+          officialVisitorId = 2,
+          contactId = 2,
+        ),
+      ),
+      visitorsUpdated = listOf(
+        OfficialVisitorUpdated(
+          officialVisitorId = 3,
+          contactId = 3,
+        ),
+      ),
+    )
+    whenever(officialVisitUpdateService.updateVisitors(1, MOORLAND, request, MOORLAND_PRISON_USER)).thenReturn(response)
+
+    facade.updateVisitors(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    Mockito.verify(officialVisitUpdateService).updateVisitors(1, MOORLAND, request, MOORLAND_PRISON_USER)
+
+    // should emit create,update and delete events
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISITOR_UPDATED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      secondIdentifier = 3,
+      contactId = 3,
+      user = user,
+      source = Source.DPS,
+    )
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISITOR_DELETED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      secondIdentifier = 2,
+      contactId = 2,
+      user = user,
+      source = Source.DPS,
+    )
+    Mockito.verify(outboundEventsService).send(
+      outboundEvent = OutboundEvent.VISITOR_CREATED,
+      prisonCode = MOORLAND,
+      identifier = 1,
+      secondIdentifier = 1,
+      contactId = 1,
+      user = user,
+      source = Source.DPS,
+    )
   }
 }

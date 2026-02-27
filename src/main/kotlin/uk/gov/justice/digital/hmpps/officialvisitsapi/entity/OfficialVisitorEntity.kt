@@ -29,7 +29,7 @@ class OfficialVisitorEntity(
   val officialVisit: OfficialVisitEntity,
 
   @Enumerated(EnumType.STRING)
-  val visitorTypeCode: VisitorType,
+  var visitorTypeCode: VisitorType,
 
   var firstName: String? = null,
 

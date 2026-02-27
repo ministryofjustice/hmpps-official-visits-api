@@ -148,6 +148,9 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         officialVisitId = completedVisit.officialVisitId,
       ),
+      personReference = PersonReference(
+        nomsNumber = completedVisit.prisonerVisited.prisonerNumber,
+      ),
     )
 
     stubEvents.assertHasEvent(
@@ -172,6 +175,9 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
         prisonId = MOORLAND,
         prisonerVisitedId = prisonerVisitedRepository.findByOfficialVisitId(completedVisit.officialVisitId)!!.prisonerVisitedId,
         officialVisitId = completedVisit.officialVisitId,
+      ),
+      personReference = PersonReference(
+        nomsNumber = completedVisit.prisonerVisited.prisonerNumber,
       ),
     )
   }
