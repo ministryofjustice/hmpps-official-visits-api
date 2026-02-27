@@ -4,12 +4,14 @@ import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ReferenceDataItem
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.ReferenceDataRepository
 
 @Service
+@Transactional(readOnly = true)
 class ReferenceDataService(private val referenceDataRepository: ReferenceDataRepository) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
