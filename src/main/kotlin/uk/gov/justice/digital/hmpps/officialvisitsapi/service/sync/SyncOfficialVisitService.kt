@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitRequest
@@ -40,8 +41,14 @@ class SyncOfficialVisitService(
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
     }
 
-    // TODO: Check whether another visit exists with this offenderVisitId - 409 Conflict if it does
-    // TODO: Check whether NOMIS sends prisoner attendance for create requests
+    // When an offenderVisitId is supplied perform a check for duplicates
+    request.offenderVisitId?.let { offenderVisitId ->
+      officialVisitRepository.findByOffenderVisitId(offenderVisitId)?.let { duplicate ->
+        throw EntityInUseException(
+          "Official visit with offenderVisitId $offenderVisitId already exists (DPS ID ${duplicate.officialVisitId})",
+        )
+      }
+    }
 
     val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request))
 
