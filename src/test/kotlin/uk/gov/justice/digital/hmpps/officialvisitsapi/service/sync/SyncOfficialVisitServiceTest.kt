@@ -9,10 +9,12 @@ import org.mockito.Mockito.mock
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
+import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -106,6 +108,7 @@ class SyncOfficialVisitServiceTest {
     )
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
+    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(null)
     whenever(officialVisitRepository.saveAndFlush(officialVisitEntity)).thenReturn(officialVisitEntity)
     whenever(prisonerVisitedRepository.saveAndFlush(prisonerVisitedEntity)).thenReturn(prisonerVisitedEntity)
 
@@ -121,6 +124,7 @@ class SyncOfficialVisitServiceTest {
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
+    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
     verify(prisonerVisitedRepository).saveAndFlush(prisonerVisitedEntity)
   }
@@ -152,6 +156,7 @@ class SyncOfficialVisitServiceTest {
     )
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
+    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(null)
     whenever(officialVisitRepository.saveAndFlush(officialVisitEntity)).thenReturn(officialVisitEntity)
     whenever(prisonerVisitedRepository.saveAndFlush(prisonerVisitedEntity)).thenThrow(RuntimeException("bang!"))
 
@@ -160,8 +165,31 @@ class SyncOfficialVisitServiceTest {
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
+    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
     verify(prisonerVisitedRepository).saveAndFlush(prisonerVisitedEntity)
+  }
+
+  @Test
+  fun `create a visit - should fail if a duplicate offender visit ID is present`() {
+    val visitSlotEntity = prisonVisitSlotEntity(1L)
+    val request = createVisitRequest(1L)
+    val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, request)
+
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
+    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(officialVisitEntity)
+
+    val exception = assertThrows<EntityInUseException> {
+      syncOfficialVisitService.createVisit(request)
+    }
+
+    assertThat(exception.message).isEqualTo(
+      "Official visit with offenderVisitId ${request.offenderVisitId} already exists (DPS ID ${officialVisitEntity.officialVisitId})",
+    )
+
+    verify(prisonVisitSlotRepository).findById(1L)
+    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
+    verifyNoMoreInteractions(officialVisitRepository, prisonerVisitedRepository)
   }
 
   @Test

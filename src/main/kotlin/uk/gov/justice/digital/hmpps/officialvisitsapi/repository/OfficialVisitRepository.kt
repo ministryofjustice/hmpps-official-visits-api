@@ -29,4 +29,6 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   fun findAllPrisonerVisits(prisonerNumber: String, currentTerm: Boolean, fromDate: LocalDate?, toDate: LocalDate?): List<OfficialVisitEntity>
 
   fun existsByPrisonVisitSlotPrisonVisitSlotId(prisonVisitSlotId: Long): Boolean
+
+  fun findByOffenderVisitId(offenderVisitId: Long): OfficialVisitEntity?
 }

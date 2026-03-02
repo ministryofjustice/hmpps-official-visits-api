@@ -78,13 +78,18 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
         ],
       ),
       ApiResponse(
+        responseCode = "400",
+        description = "The request was invalid",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
         responseCode = "404",
         description = "The prison visit slot did not exist",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
-        responseCode = "400",
-        description = "The request was invalid",
+        responseCode = "409",
+        description = "Another visit exists with the same offender visit ID",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

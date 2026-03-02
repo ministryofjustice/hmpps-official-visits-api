@@ -181,6 +181,35 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `create a visit - should fail due to duplicate offenderVisitId`() {
+    val request = syncCreateOfficialVisitRequest(
+      offenderVisitId = 1L,
+      prisonVisitSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    )
+
+    // First request should succeed
+    val response1 = webTestClient.syncCreateOfficialVisit(request)
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncOfficialVisit>()
+      .returnResult().responseBody!!
+
+    stubEvents.reset()
+
+    // Second request for the same offenderVisitId should fail
+    val response2 = webTestClient.syncCreateOfficialVisit(request)
+      .expectStatus().is4xxClientError
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<ErrorResponse>()
+      .returnResult().responseBody!!
+
+    assertThat(response2.userMessage).isEqualTo("Official visit with offenderVisitId ${request.offenderVisitId} already exists (DPS ID ${response1.officialVisitId})")
+
+    stubEvents.assertHasNoEvents(OutboundEvent.VISIT_CREATED)
+  }
+
+  @Test
   fun `update a visit - should update a visit`() {
     val request = syncCreateOfficialVisitRequest(
       offenderVisitId = 1L,
