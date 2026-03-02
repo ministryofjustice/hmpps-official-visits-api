@@ -212,14 +212,15 @@ class OfficialVisitUpdateService(
             relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
             offenderVisitVisitorId = visitor.offenderVisitVisitorId
             attendanceCode = visitor.attendanceCode
-          }.apply {
-            changedVisitorEntity.visitorEquipment?.description?.let { description ->
-              visitorEquipment = VisitorEquipmentEntity(
-                officialVisitor = this,
-                description = description,
-                createdBy = user.username,
-              )
-            }
+            visitorEquipment = changedVisitorEntity.visitorEquipment?.description
+              ?.takeIf { it.isNotBlank() }
+              ?.let {
+                VisitorEquipmentEntity(
+                  officialVisitor = this,
+                  description = it,
+                  createdBy = user.username,
+                )
+              }
           }
         }
       }
