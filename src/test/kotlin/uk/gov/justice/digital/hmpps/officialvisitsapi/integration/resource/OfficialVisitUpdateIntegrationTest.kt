@@ -267,6 +267,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
             leadVisitor = true,
             assistedVisit = true,
             assistedNotes = "visitor notes two new updated1",
+            visitorEquipment = VisitorEquipment("Bringing secure laptop"),
           ),
           // modify - contactId = 123
           OfficialVisitor(
@@ -278,6 +279,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
             leadVisitor = true,
             assistedVisit = true,
             assistedNotes = "visitor notes two new updated2",
+            visitorEquipment = VisitorEquipment("Bringing secure laptop Updated"),
           ),
           // delete - contactId = 130
         ),
@@ -349,6 +351,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       leadVisitor isEqualTo true
       assistedVisit isEqualTo true
       visitorNotes isEqualTo "visitor notes two new updated2"
+      visitorEquipment?.description isEqualTo "Bringing secure laptop Updated"
     }
   }
 
