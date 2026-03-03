@@ -46,6 +46,11 @@ class PrisonTimeSlotService(
   fun update(prisonTimeSlotId: Long, request: UpdateTimeSlotRequest, user: User): TimeSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
+    // check association with visit slot
+    require(noVisitSlotsExistFor(prisonTimeSlotId)) {
+      throw EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be updated.")
+    }
+
     request.validate()
     val changedTimeSlotEntity = timeSlotEntity.copy(
       dayCode = request.dayCode,
@@ -72,6 +77,7 @@ class PrisonTimeSlotService(
   private fun noVisitSlotsExistFor(prisonTimeSlotId: Long): Boolean = !prisonVisitSlotRepository.existsByPrisonTimeSlotId(prisonTimeSlotId)
 
   private fun UpdateTimeSlotRequest.validate() = also {
+    require(effectiveDate >= LocalDate.now()) { "Prison time slot effective date must be today or in the future" }
     require(startTime < endTime) { "Prison time slot start time must be before end time" }
     require(expiryDate == null || expiryDate >= LocalDate.now()) { "Prison time slot expiry date must not be in the past" }
   }
