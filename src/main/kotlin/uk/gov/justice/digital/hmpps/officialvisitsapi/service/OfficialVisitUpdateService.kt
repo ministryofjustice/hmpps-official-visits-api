@@ -5,6 +5,7 @@ import jakarta.xml.bind.ValidationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
@@ -172,7 +173,15 @@ class OfficialVisitUpdateService(
         assistedVisit = ov.assistedVisit ?: false,
         assistedNotes = ov.assistedNotes,
         createdBy = user,
-      )
+      ).apply {
+        ov.visitorEquipment?.description?.let { description ->
+          visitorEquipment = VisitorEquipmentEntity(
+            officialVisitor = this,
+            description = description,
+            createdBy = user.username,
+          )
+        }
+      }
     }
   }
 
@@ -196,7 +205,6 @@ class OfficialVisitUpdateService(
             leadVisitor = changedVisitorEntity.leadVisitor ?: false
             assistedVisit = changedVisitorEntity.assistedVisit ?: false
             visitorNotes = changedVisitorEntity.assistedNotes
-            visitorEquipment = visitor.visitorEquipment
             updatedBy = user.username
             updatedTime = LocalDateTime.now()
             firstName = matchingVisitor.firstName
@@ -204,6 +212,15 @@ class OfficialVisitUpdateService(
             relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
             offenderVisitVisitorId = visitor.offenderVisitVisitorId
             attendanceCode = visitor.attendanceCode
+            visitorEquipment = changedVisitorEntity.visitorEquipment?.description
+              ?.takeIf { it.isNotBlank() }
+              ?.let {
+                VisitorEquipmentEntity(
+                  officialVisitor = this,
+                  description = it,
+                  createdBy = user.username,
+                )
+              }
           }
         }
       }
