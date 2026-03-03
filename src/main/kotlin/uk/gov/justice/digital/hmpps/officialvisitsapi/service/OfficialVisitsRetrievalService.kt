@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 
 @Service
-@Transactional(readOnly = true)
 class OfficialVisitsRetrievalService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
@@ -30,6 +29,8 @@ class OfficialVisitsRetrievalService(
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
   private val personalRelationshipsApiClient: PersonalRelationshipsApiClient,
 ) {
+
+  @Transactional(readOnly = true)
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, id: Long): OfficialVisitDetails {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")
