@@ -47,6 +47,7 @@ jobs:
     with:
       upload-build-artifacts: ${{ github.ref == 'refs/head/main' }}
       artifact-name: 'unit-test-results'
+      java-version: '25'
 
   gradle_integration_tests:
     name: Run the integration tests
