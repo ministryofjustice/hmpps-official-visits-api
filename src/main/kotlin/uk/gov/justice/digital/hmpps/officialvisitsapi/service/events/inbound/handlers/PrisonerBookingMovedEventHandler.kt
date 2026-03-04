@@ -15,6 +15,7 @@ class PrisonerBookingMovedEventHandler : DomainEventHandler<PrisonerBookingMoved
   override fun handle(event: PrisonerBookingMovedEvent) {
     val prisoner = event.prisonerNumber()
     val prison = event.prisonCode()
-    log.info("PRISONER BOOKING MOVED EVENT:  Prisoner $prisoner with prison $prison booking moved - Not actioned")
+    val bookingId = event.bookingId()
+    log.info("PRISONER BOOKING MOVED EVENT:  Prisoner $prisoner for prison $prison with booking ID $bookingId moved - Not actioned")
   }
 }
