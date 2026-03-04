@@ -46,7 +46,6 @@ class PrisonTimeSlotService(
   fun update(prisonTimeSlotId: Long, request: UpdateTimeSlotRequest, user: User): TimeSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
-    // check association with visit slot
     require(noVisitSlotsExistFor(prisonTimeSlotId)) {
       throw EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be updated.")
     }
