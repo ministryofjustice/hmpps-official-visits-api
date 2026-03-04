@@ -82,15 +82,26 @@ dependencies {
 }
 
 kotlin {
-  jvmToolchain(21)
+  jvmToolchain(25)
+  compilerOptions {
+    freeCompilerArgs.addAll("-Xwhen-guards", "-Xannotation-default-target=param-property")
+  }
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_24
+  targetCompatibility = JavaVersion.VERSION_24
 }
 
 tasks {
   withType<KotlinCompile> {
     dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel")
-    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
     compilerOptions.freeCompilerArgs.add("-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled")
+  }
+  withType<Test> {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
   }
 }
 
