@@ -58,12 +58,11 @@ class PrisonerMergedEvent(additionalInformation: MergeInformation) : DomainEvent
 data class MergeInformation(val nomsNumber: String, val removedNomsNumber: String) : AdditionalInformation
 
 class PrisonerBookingMovedEvent(additionalInformation: BookingMovedInformation) : DomainEvent<BookingMovedInformation>(DomainEventType.PRISONER_BOOKING_MOVED, additionalInformation) {
-  fun prisonerNumber() = additionalInformation.nomsNumber
-  fun prisonCode() = additionalInformation.prisonId
-  fun bookingId() = additionalInformation.bookingId
+  fun movedFromNomsNumber() = additionalInformation.movedFromNomsNumber
+  fun movedToNomsNumber() = additionalInformation.movedToNomsNumber
 }
 
-data class BookingMovedInformation(val nomsNumber: String, val prisonId: String, val bookingId: String) : AdditionalInformation
+data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String) : AdditionalInformation
 
 data class PersonReference(val identifiers: List<Identifier>)
 
