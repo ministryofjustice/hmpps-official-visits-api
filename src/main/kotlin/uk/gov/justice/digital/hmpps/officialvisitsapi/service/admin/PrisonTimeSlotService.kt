@@ -24,7 +24,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
-@Transactional
 class PrisonTimeSlotService(
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
@@ -38,11 +37,13 @@ class PrisonTimeSlotService(
     return prisonTimeSlotEntity.toModel()
   }
 
+  @Transactional
   fun create(request: CreateTimeSlotRequest, user: User): TimeSlot {
     request.validate()
     return prisonTimeSlotRepository.saveAndFlush(request.toEntity(user.username)).toModel()
   }
 
+  @Transactional
   fun update(prisonTimeSlotId: Long, request: UpdateTimeSlotRequest, user: User): TimeSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
@@ -63,6 +64,7 @@ class PrisonTimeSlotService(
     return prisonTimeSlotRepository.saveAndFlush(changedTimeSlotEntity).toModel()
   }
 
+  @Transactional
   fun delete(prisonTimeSlotId: Long): TimeSlot {
     val deleted = prisonTimeSlotRepository.findById(prisonTimeSlotId).orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
     // check association with visit slot
@@ -86,6 +88,7 @@ class PrisonTimeSlotService(
     require(expiryDate == null || expiryDate >= LocalDate.now()) { "Prison time slot expiry date must not be in the past" }
   }
 
+  @Transactional(readOnly = true)
   fun getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode: String, activeOnly: Boolean): TimeSlotSummary {
     val timeSlots = if (activeOnly) {
       prisonTimeSlotRepository.findAllActiveByPrisonCode(prisonCode)
