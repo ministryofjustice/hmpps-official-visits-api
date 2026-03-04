@@ -5,6 +5,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.BIRMINGHAM
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerMergedEventHandler
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerMovedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerReceivedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerReleasedEventHandler
 
@@ -12,11 +13,13 @@ class InboundEventsServiceTest {
   private val prisonerReleasedEventHandler: PrisonerReleasedEventHandler = mock()
   private val prisonerMergedEventHandler: PrisonerMergedEventHandler = mock()
   private val prisonerReceivedEventHandler: PrisonerReceivedEventHandler = mock()
+  private val prisonerMovedEventHandler: PrisonerMovedEventHandler = mock()
 
   private val service = InboundEventsService(
     prisonerReleasedEventHandler,
     prisonerMergedEventHandler,
     prisonerReceivedEventHandler,
+    prisonerMovedEventHandler,
   )
 
   @Test
@@ -42,5 +45,12 @@ class InboundEventsServiceTest {
     val event = mock<PrisonerReceivedEvent>()
     service.process(event)
     verify(prisonerReceivedEventHandler).handle(event)
+  }
+
+  @Test
+  fun `should call prisoner moved event handler when prisoner moved event`() {
+    val event = mock<PrisonerMovedEvent>()
+    service.process(event)
+    verify(prisonerMovedEventHandler).handle(event)
   }
 }
