@@ -13,7 +13,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.Pri
 class PrisonerMergedEventHandler(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  private val prisonerSearchClient: PrisonerSearchClient,) : DomainEventHandler<PrisonerMergedEvent> {
+  private val prisonerSearchClient: PrisonerSearchClient,
+) : DomainEventHandler<PrisonerMergedEvent> {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
@@ -25,7 +26,7 @@ class PrisonerMergedEventHandler(
 
     // Get new prisoner details
     val prisoner = prisonerSearchClient.getPrisoner(newPrisonerNumber)
-      ?: throw EntityNotFoundException("Prisoner not found ${newPrisonerNumber}")
+      ?: throw EntityNotFoundException("Prisoner not found $newPrisonerNumber")
 
     log.info("Booking Id for prisoner $newPrisonerNumber is  $prisoner.bookingId?.toLong()")
 
