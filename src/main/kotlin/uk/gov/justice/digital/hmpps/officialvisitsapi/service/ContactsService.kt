@@ -4,7 +4,9 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
+import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toPrisonerContactModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerContact
 
 @Service
 class ContactsService(private val personalRelationshipsApiClient: PersonalRelationshipsApiClient) {
@@ -21,5 +23,9 @@ class ContactsService(private val personalRelationshipsApiClient: PersonalRelati
 
   fun getPrisonerContactSummary(prisonerNumber: String, contactId: Long): List<PrisonerContactSummary> = run {
     personalRelationshipsApiClient.getPrisonerContactRelationships(prisonerNumber, contactId)
+  }
+
+  fun getAllPrisonerContacts(prisonerNumber: String, approved: Boolean?, currentTerm: Boolean?): List<PrisonerContact> = run {
+    personalRelationshipsApiClient.getAllPrisonerContacts(prisonerNumber, approved, currentTerm).toPrisonerContactModel()
   }
 }
