@@ -26,7 +26,7 @@ class LocationsServiceTest {
     val loc = location(prisonCode = WANDSWORTH, locationKeySuffix = "A-1-001", localName = "Room A", id = id)
     whenever(locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(WANDSWORTH)).thenReturn(listOf(loc))
 
-    val result = service.getAllVisitLocationsAtPrison(WANDSWORTH)
+    val result = service.getOfficialVisitLocationsAtPrison(WANDSWORTH)
 
     assertThat(result).hasSize(1)
     assertThat(result.first().id).isEqualTo(id)

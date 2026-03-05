@@ -119,7 +119,7 @@ class PrisonTimeSlotService(
   }
 
   private fun decorateWithLocationDescription(prisonCode: String, slots: List<VisitSlot>): List<VisitSlot> {
-    val activeVisitLocations = locationService.getAllVisitLocationsAtPrison(prisonCode)
+    val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
     val locationById = activeVisitLocations.associateBy { it.id }
     val decoratedSlots = slots.map { slot ->
       val location = locationById[slot.dpsLocationId]

@@ -24,10 +24,10 @@ class LocationsFacadeTest {
   fun `should map locations to VisitLocation response`() {
     val id = UUID.randomUUID()
     val loc = location(prisonCode = WANDSWORTH, locationKeySuffix = "A-1-001", localName = "Room A", id = id)
-    whenever(locationsService.getAllVisitLocationsAtPrison(WANDSWORTH)).thenReturn(listOf(loc))
+    whenever(locationsService.getOfficialVisitLocationsAtPrison(WANDSWORTH)).thenReturn(listOf(loc))
 
     // call with same prison code used for the mocked location
-    val result = facade.getAllVisitLocationsAtPrison(WANDSWORTH)
+    val result = facade.getOfficialVisitLocationsAtPrison(WANDSWORTH)
 
     assertThat(result).hasSize(1)
     assertThat(result.first().locationId).isEqualTo(id)

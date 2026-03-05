@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 
 @Component
 class LocationsFacade(private val locationsService: LocationsService) {
-  fun getAllVisitLocationsAtPrison(prisonCode: String): List<VisitLocation> = locationsService.getAllVisitLocationsAtPrison(prisonCode).map { loc ->
+  fun getOfficialVisitLocationsAtPrison(prisonCode: String): List<VisitLocation> = locationsService.getOfficialVisitLocationsAtPrison(prisonCode).map { loc ->
     VisitLocation(locationId = loc.id, locationName = loc.localName)
   }
 }

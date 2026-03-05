@@ -11,12 +11,12 @@ import java.util.UUID
 class LocationsControllerIntegrationTest : IntegrationTestBase() {
 
   @Test
-  fun `get all visit locations at prison returns list`() {
+  fun `get all official visit locations at prison returns list`() {
     val id = UUID.randomUUID()
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(WANDSWORTH, listOf(location(prisonCode = WANDSWORTH, locationKeySuffix = "A-1-001", localName = "Room 1", id = id)))
 
     webTestClient.get()
-      .uri("/admin/prison/WWI/visit-locations")
+      .uri("/admin/prison/WWI/official-visit-locations")
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
       .accept(MediaType.APPLICATION_JSON)
       .exchange()

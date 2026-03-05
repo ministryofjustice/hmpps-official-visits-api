@@ -22,9 +22,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 @AuthApiResponses
 class LocationsController(private val facade: LocationsFacade) {
 
-  @GetMapping(path = ["/prison/{prisonCode}/visit-locations"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @GetMapping(path = ["/prison/{prisonCode}/official-visit-locations"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
-    summary = "Get all visit locations at a prison",
+    summary = "Get all official visit locations at a prison",
     description = "Requires role: ROLE_OFFICIAL_VISITS_ADMIN.",
   )
   @ApiResponses(
@@ -36,8 +36,8 @@ class LocationsController(private val facade: LocationsFacade) {
       ),
     ],
   )
-  fun getAllVisitLocationsAtPrison(
+  fun getOfficialVisitLocationsAtPrison(
     @Parameter(description = "prison code", required = true)
     @PathVariable prisonCode: String,
-  ): List<VisitLocation> = facade.getAllVisitLocationsAtPrison(prisonCode)
+  ): List<VisitLocation> = facade.getOfficialVisitLocationsAtPrison(prisonCode)
 }
