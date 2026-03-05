@@ -4,9 +4,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToMono
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.typeReference
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.maybeQueryParam
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
@@ -26,7 +27,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
           .build(contactId)
       }
       .retrieve()
-      .bodyToMono(ContactDetails::class.java)
+      .bodyToMono<ContactDetails>()
       .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
       .block()
   }
@@ -43,7 +44,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
           .build(prisonerNumber)
       }
       .retrieve()
-      .bodyToMono(PagedModelPrisonerContactSummary::class.java)
+      .bodyToMono<PagedModelPrisonerContactSummary>()
       .doOnError { error ->
         log.info(
           "Error fetching approved contacts for $prisonerNumber in personal relationship client",
@@ -52,7 +53,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       }
       .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
       .block()
-    return pagedModelMono?.content?.toList() ?: emptyList()
+    return pagedModelMono?.content ?: emptyList()
   }
 
   fun getApprovedContacts(prisonerNumber: String): List<PrisonerContactSummary> {
@@ -66,7 +67,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
           .build(prisonerNumber)
       }
       .retrieve()
-      .bodyToMono(PagedModelPrisonerContactSummary::class.java)
+      .bodyToMono<PagedModelPrisonerContactSummary>()
       .doOnError { error ->
         log.info(
           "Error fetching approved contacts for $prisonerNumber in personal relationship client",
@@ -85,7 +86,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
         .build(groupCode)
     }
     .retrieve()
-    .bodyToMono(typeReference<List<ReferenceCode>>())
+    .bodyToMono<List<ReferenceCode>>()
     .block()
 
   fun getPrisonerContactRelationships(prisonerNumber: String, contactId: Long) = personalRelationshipsApiWebClient.get()
@@ -95,7 +96,7 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
         .build(prisonerNumber, contactId)
     }
     .retrieve()
-    .bodyToMono(typeReference<List<PrisonerContactSummary>>())
+    .bodyToMono<List<PrisonerContactSummary>>()
     .doOnError { error ->
       log.info(
         "Error fetching relationships for contactId $contactId and $prisonerNumber in personal relationships client",
@@ -104,4 +105,33 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
     }
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block() ?: emptyList()
+
+  fun getAllPrisonerContacts(prisonerNumber: String, approved: Boolean? = null, currentTerm: Boolean? = null): List<PrisonerContactSummary> {
+    val pagedModelMono = personalRelationshipsApiWebClient.get()
+      .uri { uriBuilder: UriBuilder ->
+        uriBuilder
+          .path("/prisoner/{prisonerNumber}/contact")
+          .maybeQueryParam("approvedVisitor", approved)
+          .queryParam("page", 0)
+          .queryParam("size", 200)
+          .build(prisonerNumber)
+      }
+      .retrieve()
+      .bodyToMono<PagedModelPrisonerContactSummary>()
+      .doOnError { error ->
+        log.info(
+          "Error fetching contacts for $prisonerNumber in personal relationship client",
+          error,
+        )
+      }
+      .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
+      .block()
+    return pagedModelMono?.content?.let { contacts ->
+      if (currentTerm == null) {
+        contacts
+      } else {
+        contacts.filter { contact -> contact.currentTerm == currentTerm }
+      }
+    } ?: emptyList()
+  }
 }
