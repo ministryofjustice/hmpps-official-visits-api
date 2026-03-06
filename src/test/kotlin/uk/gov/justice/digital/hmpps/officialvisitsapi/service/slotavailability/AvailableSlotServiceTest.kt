@@ -42,7 +42,7 @@ class AvailableSlotServiceTest {
       // This is only used to decorate available slots with location descriptions
       locationsService.stub {
         on {
-          getAllVisitLocationsAtPrison(eq(MOORLAND))
+          getOfficialVisitLocationsAtPrison(eq(MOORLAND))
         } doReturn officialVisitLocations()
       }
     }
