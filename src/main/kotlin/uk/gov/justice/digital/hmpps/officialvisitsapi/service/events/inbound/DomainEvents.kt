@@ -57,6 +57,13 @@ class PrisonerMergedEvent(additionalInformation: MergeInformation) : DomainEvent
 
 data class MergeInformation(val nomsNumber: String, val removedNomsNumber: String) : AdditionalInformation
 
+class PrisonerBookingMovedEvent(additionalInformation: BookingMovedInformation) : DomainEvent<BookingMovedInformation>(DomainEventType.PRISONER_BOOKING_MOVED, additionalInformation) {
+  fun movedFromNomsNumber() = additionalInformation.movedFromNomsNumber
+  fun movedToNomsNumber() = additionalInformation.movedToNomsNumber
+}
+
+data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String) : AdditionalInformation
+
 data class PersonReference(val identifiers: List<Identifier>)
 
 data class Identifier(val type: String, val value: String)
@@ -70,6 +77,9 @@ enum class DomainEventType(val eventType: String, val description: String = "") 
   },
   PRISONER_MERGED("prison-offender-events.prisoner.merged") {
     override fun toInboundEvent(mapper: ObjectMapper, message: String) = mapper.readValue<PrisonerMergedEvent>(message)
+  },
+  PRISONER_BOOKING_MOVED("prison-offender-events.prisoner.booking.moved") {
+    override fun toInboundEvent(mapper: ObjectMapper, message: String) = mapper.readValue<PrisonerBookingMovedEvent>(message)
   },
   ;
 

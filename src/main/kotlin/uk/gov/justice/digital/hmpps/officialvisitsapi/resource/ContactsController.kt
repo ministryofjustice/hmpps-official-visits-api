@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -24,6 +25,8 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 @AuthApiResponses
 @RequestMapping(value = ["prisoner"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class ContactsController(private val contactsService: ContactsService) {
+
+  @Deprecated(message = "Use /{prisonerNumber}/all-contacts instead")
   @Operation(summary = "Get the approved contacts for a prisoner for official or social visits")
   @ApiResponses(
     value = [
@@ -52,10 +55,36 @@ class ContactsController(private val contactsService: ContactsService) {
   @GetMapping(value = ["/{prisonerNumber}/approved-relationships"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
   fun getApprovedContacts(
-    @PathVariable("prisonerNumber", required = true)
-    prisonerNumber: String,
+    @PathVariable(required = true) prisonerNumber: String,
     @Parameter(description = "The relationship type should be S for social or O for official", required = false)
     @RequestParam(name = "relationshipType", required = true, defaultValue = "O")
     relationshipType: String,
   ): List<ApprovedContact> = contactsService.getApprovedContacts(prisonerNumber, relationshipType)
+
+  @Operation(summary = "Get all of the available contacts for a prisoner for official visits")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "The contacts for the prisoner",
+        content = [
+          Content(
+            mediaType = "application/json",
+            array = ArraySchema(schema = Schema(implementation = PrisonerContact::class)),
+          ),
+        ],
+      ),
+    ],
+  )
+  @GetMapping(value = ["/{prisonerNumber}/all-contacts"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS__RW')")
+  fun getAllContacts(
+    @PathVariable(required = true) prisonerNumber: String,
+    @Parameter(description = "Restricts to approved only contacts when true", required = false)
+    @RequestParam(name = "approved", required = false)
+    approved: Boolean? = null,
+    @Parameter(description = "Restricts to current term only contacts when true", required = false)
+    @RequestParam(name = "currentTerm", required = false)
+    currentTerm: Boolean? = null,
+  ): List<PrisonerContact> = contactsService.getAllPrisonerContacts(prisonerNumber, approved, currentTerm)
 }

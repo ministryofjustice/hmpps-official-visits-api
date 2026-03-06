@@ -208,6 +208,19 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
         ),
     )
   }
+
+  fun stubAllContacts(prisonerNumber: String, prisonerContacts: List<PrisonerContactSummary>, approved: Boolean? = null) {
+    stubFor(
+      get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
+        .maybeQueryParam("approvedVisitor", approved)
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(mapper.writeValueAsString(pagedModelPrisonerContactSummary(*prisonerContacts.toTypedArray())))
+            .withStatus(200),
+        ),
+    )
+  }
 }
 
 class PersonalRelationshipsApiExtension :
