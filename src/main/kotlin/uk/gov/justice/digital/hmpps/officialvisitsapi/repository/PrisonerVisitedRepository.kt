@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -17,4 +18,8 @@ interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long>
   fun findAllByOfficialVisitOfficialVisitIdIn(officialVisitIds: Collection<Long>): List<PrisonerVisitedEntity>
 
   fun deleteByOfficialVisit(officialVisitEntity: OfficialVisitEntity)
+
+  @Query(value = "UPDATE PrisonerVisitedEntity pv SET pv.prisonerNumber = :replacementNumber WHERE pv.prisonerNumber = :removedNumber")
+  @Modifying
+  fun mergePrisonerNumber(removedNumber: String, replacementNumber: String)
 }
