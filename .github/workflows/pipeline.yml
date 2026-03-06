@@ -39,15 +39,25 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ matrix.environments }}
-
+  app_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.app_version.outputs.version }}
+    steps:
+      - id: app_version
+        name: Application version creators
+        uses: ministryofjustice/hmpps-github-actions/.github/actions/build-test-and-deploy/create_app_version@v2 # WORKFLOW_VERSION
   gradle_validate:
     name: Build the application and run the unit tests
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
+      gradle-command: 'BUILD_NUMBER=${{ needs.app_version.outputs.version}} ./gradlew assemble check'
       upload-build-artifacts: ${{ github.ref == 'refs/head/main' }}
       artifact-name: 'unit-test-results'
       java-version: '25'
+    needs:
+      - app_version
 
   gradle_integration_tests:
     name: Run the integration tests
@@ -68,14 +78,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - gradle_validate
       - gradle_integration_tests
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
       additional_docker_tag: ${{ inputs.additional_docker_tag }}
-      push: ${{ inputs.push || true }}
+      push: ${{ inputs.push || inputs.push == null }}
       docker_multiplatform: false
+      download_build_artifacts: true
 
   deploy_dev:
     name: Deploy to the development environment
