@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import java.util.UUID
 
-class LocationsControllerIntegrationTest : IntegrationTestBase() {
+class LocationsIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `get all official visit locations at prison returns list`() {
