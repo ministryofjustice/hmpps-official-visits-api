@@ -31,7 +31,7 @@ class PrisonerMergedEventHandler(
     log.info("Booking Id for prisoner $newPrisonerNumber is  $prisoner.bookingId?.toLong()")
 
     // get count of visits by old /removed prisoner number
-    officialVisitRepository.countOVByPrisonerNumber(removedPrisonerNumber).takeIf { it > 0 }?.let { numberOfOVAffected ->
+    officialVisitRepository.countOVByPrisonerNumber(removedPrisonerNumber).takeIf { it > 0 }?.let {
       officialVisitRepository.mergePrisonerNumber(removedPrisonerNumber, newPrisonerNumber, prisoner.bookingId?.toLong())
       prisonerVisitedRepository.mergePrisonerNumber(removedPrisonerNumber, newPrisonerNumber)
     }
