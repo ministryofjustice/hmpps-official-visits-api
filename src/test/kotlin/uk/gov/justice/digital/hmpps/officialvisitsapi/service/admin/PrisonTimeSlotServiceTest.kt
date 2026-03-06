@@ -135,6 +135,21 @@ class PrisonTimeSlotServiceTest {
   }
 
   @Test
+  fun `should fail to update time slot when there is associated visit slot exists and throw EntityInUseException exception`() {
+    val updateRequest = updateTimeSlotRequest()
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
+    whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotId(1L)).thenReturn(true)
+    val exception = assertThrows<EntityInUseException> {
+      timeSlotService.update(1L, updateRequest, MOORLAND_PRISON_USER)
+    }
+    val expectedException = EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be updated.")
+    assertThat(exception.message).isEqualTo(expectedException.message)
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).existsByPrisonTimeSlotId(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository)
+  }
+
+  @Test
   fun `should fail to delete time slot if it does not exist`() {
     val expectedException = EntityNotFoundException("Prison time slot with ID 99 was not found")
 

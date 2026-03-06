@@ -13,20 +13,25 @@ import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.TimeSlotInfo
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 class TimeSlotIntegrationTest : IntegrationTestBase() {
   private var savedPrisonTimeSlotId = 0L
+  private val location = moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
 
   @BeforeEach
   fun initialiseData() {
@@ -258,8 +263,51 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
         endTime = LocalTime.now(),
       ),
       "Prison time slot start time must be before end time",
+      savedPrisonTimeSlotId,
     )
     stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_UPDATED)
+  }
+
+  @Test
+  fun `should fail update when there are associated visit slots and throw EntityInUseException exception`() {
+    val timeSlot = webTestClient.createTimeSlot()
+
+    // Create a visit slot associated with the newly created prison time slot so that
+    // there is an actual visit-slot record tied to this time slot.
+    val createdVisitSlot = webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", timeSlot.prisonTimeSlotId)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+      .bodyValue(createVisitSlotRequest())
+      .exchange()
+      .expectStatus().isOk
+      .expectBody<VisitSlot>()
+      .returnResult().responseBody!!
+
+    // sanity check - the created visit slot is associated with the time slot under test
+    assertThat(createdVisitSlot.prisonTimeSlotId).isEqualTo(timeSlot.prisonTimeSlotId)
+
+    // The presence of the visit slot should prevent updates to the parent time slot.
+    val expectedMessage = "The prison time slot has one or more visit slots associated with it and cannot be updated."
+    webTestClient.conflictRequest(
+      updateTimeSlotRequest().copy(
+        startTime = LocalTime.now().plusMinutes(10),
+        endTime = LocalTime.now(),
+      ),
+      expectedMessage,
+      timeSlot.prisonTimeSlotId,
+    )
+    stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_UPDATED)
+  }
+
+  @Test
+  fun `should fail update when effective date is in past`() {
+    webTestClient.badRequest(
+      updateTimeSlotRequest().copy(effectiveDate = LocalDate.now().minusDays(1)),
+      "Prison time slot effective date must be today or in the future",
+      savedPrisonTimeSlotId,
+    )
   }
 
   @Test
@@ -276,6 +324,7 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
     webTestClient.badRequest(
       updateTimeSlotRequest().copy(expiryDate = LocalDate.now().minusDays(1)),
       "Prison time slot expiry date must not be in the past",
+      savedPrisonTimeSlotId,
     )
     stubEvents.assertHasNoEvents(event = OutboundEvent.TIME_SLOT_UPDATED)
   }
@@ -337,9 +386,10 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
   private fun WebTestClient.badRequest(
     request: UpdateTimeSlotRequest,
     errorMessage: String,
+    prisonTimeSlotId: Long = 1L,
   ) = this
     .put()
-    .uri("/admin/time-slot/{prisonTimeSlotId}", 1L)
+    .uri("/admin/time-slot/{prisonTimeSlotId}", prisonTimeSlotId)
     .accept(MediaType.APPLICATION_JSON)
     .contentType(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
@@ -347,4 +397,21 @@ class TimeSlotIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isBadRequest
     .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
+
+  private fun WebTestClient.conflictRequest(
+    request: UpdateTimeSlotRequest,
+    errorMessage: String,
+    prisonTimeSlotId: Long = 1L,
+  ) = this
+    .put()
+    .uri("/admin/time-slot/{prisonTimeSlotId}", prisonTimeSlotId)
+    .accept(MediaType.APPLICATION_JSON)
+    .contentType(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .bodyValue(request)
+    .exchange()
+    .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+    .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
+
+  private fun createVisitSlotRequest(): CreateVisitSlotRequest = CreateVisitSlotRequest(dpsLocationId = location.id, maxAdults = 10, maxGroups = 5, maxVideo = 2)
 }
