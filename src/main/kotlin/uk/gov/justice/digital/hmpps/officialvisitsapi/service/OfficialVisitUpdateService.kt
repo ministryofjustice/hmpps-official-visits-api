@@ -2,9 +2,11 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import jakarta.persistence.EntityNotFoundException
 import jakarta.xml.bind.ValidationException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
@@ -12,23 +14,31 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateCommentsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateSlotResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateVisitorsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import java.time.LocalDateTime
 
 @Service
-@Transactional
 class OfficialVisitUpdateService(
   private val officialVisitRepository: OfficialVisitRepository,
+  private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
 ) {
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
+  }
 
+  /**
+   * Update the visit type and its date, time and location
+   */
+  @Transactional
   fun updateVisitTypeAndSlot(
     officialVisitId: Long,
     prisonCode: String,
@@ -59,6 +69,10 @@ class OfficialVisitUpdateService(
     )
   }
 
+  /**
+   * Update only the staff and prisoner notes.
+   */
+  @Transactional
   fun updateComments(
     officialVisitId: Long,
     prisonCode: String,
@@ -83,6 +97,10 @@ class OfficialVisitUpdateService(
     )
   }
 
+  /**
+   * Update the visitors on the visit, adding, removing and updating as required.
+   */
+  @Transactional
   fun updateVisitors(
     officialVisitId: Long,
     prisonCode: String,
@@ -92,156 +110,168 @@ class OfficialVisitUpdateService(
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
-    val matchingVisitors = request.getVisitorDetails(ove.prisonerNumber)
-
     val existingVisitors = ove.officialVisitors()
 
-    val newVisitors = request.officialVisitors.filter { it.officialVisitorId == 0L }
+    val visitorsToAdd = request.officialVisitors.filter {
+      it.officialVisitorId !in existingVisitors.map { existing -> existing.officialVisitorId }
+    }
 
-    val updatedVisitors = request.officialVisitors.filter {
+    val visitorsToUpdate = request.officialVisitors.filter {
       it.officialVisitorId in existingVisitors.map { existing -> existing.officialVisitorId }
     }.associateBy { it.officialVisitorId }
 
-    ove.addVisitors(newVisitors, matchingVisitors, user)
-
-    ove.updateVisitors(updatedVisitors, matchingVisitors, user)
-
-    val removedVisitorList = existingVisitors.filter {
-      it.officialVisitorId !in updatedVisitors
+    val visitorsToRemove = existingVisitors.filter {
+      it.officialVisitorId !in request.officialVisitors.map { req -> req.officialVisitorId }
     }
-      .map {
-        ove.removeVisitor(it)
-        OfficialVisitorUpdated(
-          officialVisitorId = it.officialVisitorId,
-          contactId = it.contactId!!,
-        )
-      }
 
-    val updatedVisit = officialVisitRepository.saveAndFlush(ove)
+    val matchingContacts = request.getMatchingContactDetails(ove.prisonerNumber).filterNotNull()
 
-    val visitors = updatedVisit.officialVisitors()
-
-    val addedVisitorsList = visitors.filter {
-      it.officialVisitorId !in existingVisitors.map { existing -> existing.officialVisitorId }
-    }
-      .map {
-        OfficialVisitorUpdated(
-          officialVisitorId = it.officialVisitorId,
-          contactId = it.contactId!!,
-        )
-      }
-
-    val updatedVisitorsList = visitors.filter {
-      it.officialVisitorId in existingVisitors.map { existing -> existing.officialVisitorId }
-    }
-      .map {
-        OfficialVisitorUpdated(
-          officialVisitorId = it.officialVisitorId,
-          contactId = it.contactId!!,
-        )
-      }
+    val visitorsAdded = addNewVisitors(ove, visitorsToAdd, matchingContacts, user)
+    val visitorsDeleted = deleteExistingVisitors(ove, visitorsToRemove)
+    val visitorsUpdated = updateExistingVisitors(visitorsToUpdate, matchingContacts, user)
 
     return OfficialVisitUpdateVisitorsResponse(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
-      prisonerNumber = updatedVisit.prisonerNumber,
-      visitorsAdded = addedVisitorsList,
-      visitorsDeleted = removedVisitorList,
-      visitorsUpdated = updatedVisitorsList,
+      prisonerNumber = ove.prisonerNumber,
+      visitorsAdded = visitorsAdded,
+      visitorsDeleted = visitorsDeleted,
+      visitorsUpdated = visitorsUpdated,
     )
   }
 
-  private fun OfficialVisitEntity.addVisitors(
-    officialVisitors: List<OfficialVisitor>,
-    matchingVisitors: List<ApprovedContact>,
-    user: User,
-  ) = apply {
-    officialVisitors.forEach { ov ->
-      val matchingVisitor = matchingVisitors.single { mv ->
-        mv.contactId == ov.contactId && mv.prisonerContactId == ov.prisonerContactId
-      }
-
-      addVisitor(
-        visitorTypeCode = ov.visitorTypeCode!!,
-        relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL,
-        relationshipCode = ov.relationshipCode!!,
-        contactId = ov.contactId,
-        prisonerContactId = ov.prisonerContactId,
-        firstName = matchingVisitor.firstName,
-        lastName = matchingVisitor.lastName,
-        leadVisitor = ov.leadVisitor ?: false,
-        assistedVisit = ov.assistedVisit ?: false,
-        assistedNotes = ov.assistedNotes,
-        createdBy = user,
-      ).apply {
-        ov.visitorEquipment?.description?.let { description ->
-          visitorEquipment = VisitorEquipmentEntity(
-            officialVisitor = this,
-            description = description,
-            createdBy = user.username,
-          )
-        }
-      }
-    }
+  private fun deleteExistingVisitors(ove: OfficialVisitEntity, visitorsToRemove: List<OfficialVisitorEntity>) = visitorsToRemove.map { visitor ->
+    ove.removeVisitor(visitor)
+    OfficialVisitorUpdated(officialVisitorId = visitor.officialVisitorId, contactId = visitor.contactId!!)
   }
 
-  private fun OfficialVisitEntity.updateVisitors(
-    updateVisitors: Map<Long, OfficialVisitor>,
-    matchingVisitors: List<ApprovedContact>,
+  private fun addNewVisitors(
+    visit: OfficialVisitEntity,
+    visitorsToAdd: List<OfficialVisitor>,
+    matchingContacts: List<PrisonerContact>,
     user: User,
-  ) = run {
-    officialVisitors().forEach { visitor ->
-      updateVisitors[visitor.officialVisitorId]?.let { changedVisitorEntity ->
-        run {
-          val matchingVisitor = matchingVisitors.single { mv ->
-            mv.contactId == changedVisitorEntity.contactId && mv.prisonerContactId == changedVisitorEntity.prisonerContactId
-          }
+  ): List<OfficialVisitorUpdated> {
+    val response: MutableList<OfficialVisitorUpdated> = emptyList<OfficialVisitorUpdated>().toMutableList()
 
-          visitor.apply {
-            visitorTypeCode = changedVisitorEntity.visitorTypeCode!!
-            contactId = changedVisitorEntity.contactId
-            prisonerContactId = changedVisitorEntity.prisonerContactId
-            relationshipCode = changedVisitorEntity.relationshipCode
-            leadVisitor = changedVisitorEntity.leadVisitor ?: false
-            assistedVisit = changedVisitorEntity.assistedVisit ?: false
-            visitorNotes = changedVisitorEntity.assistedNotes
-            updatedBy = user.username
-            updatedTime = LocalDateTime.now()
-            firstName = matchingVisitor.firstName
-            lastName = matchingVisitor.lastName
-            relationshipTypeCode = if (matchingVisitor.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
-            offenderVisitVisitorId = visitor.offenderVisitVisitorId
-            attendanceCode = visitor.attendanceCode
-            visitorEquipment = changedVisitorEntity.visitorEquipment?.description
-              ?.takeIf { it.isNotBlank() }
-              ?.let {
-                VisitorEquipmentEntity(
-                  officialVisitor = this,
-                  description = it,
-                  createdBy = user.username,
-                )
-              }
+    visitorsToAdd.forEach { visitor ->
+      val matchingPerson = matchingContacts.singleOrNull { it.contactId == visitor.contactId }
+
+      val savedVisitor = officialVisitorRepository.saveAndFlush(
+        OfficialVisitorEntity(
+          officialVisit = visit,
+          visitorTypeCode = VisitorType.CONTACT,
+          relationshipTypeCode = if (matchingPerson?.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL,
+          relationshipCode = matchingPerson?.relationshipToPrisonerCode,
+          contactId = visitor.contactId,
+          prisonerContactId = matchingPerson?.prisonerContactId,
+          firstName = matchingPerson?.firstName ?: "Unknown",
+          lastName = matchingPerson?.lastName ?: "Unknown",
+          leadVisitor = visitor.leadVisitor ?: false,
+          assistedVisit = visitor.assistedVisit ?: false,
+          visitorNotes = visitor.assistedNotes,
+          createdBy = user.username,
+          createdTime = LocalDateTime.now(),
+        ).apply {
+          visitor.visitorEquipment?.description?.let { description ->
+            visitorEquipment = VisitorEquipmentEntity(
+              officialVisitor = this,
+              description = description,
+              createdBy = user.username,
+            )
           }
-        }
-      }
+        },
+      )
+
+      response.add(
+        OfficialVisitorUpdated(officialVisitorId = savedVisitor.officialVisitorId, contactId = savedVisitor.contactId!!),
+      )
     }
+    return response
   }
 
-  // TODO: Revisit this when relaxing the rules about whether contacts are active or approved
-  private fun OfficialVisitUpdateVisitorsRequest.getVisitorDetails(prisonerNumber: String) = run {
-    val requestedVisitors = officialVisitors.filter { it.visitorTypeCode == VisitorType.CONTACT }.toSet()
-    val approvedVisitors = contactsService.getApprovedContacts(prisonerNumber)
+  private fun updateExistingVisitors(
+    visitorsToUpdate: Map<Long, OfficialVisitor>,
+    matchingContacts: List<PrisonerContact>,
+    user: User,
+  ): List<OfficialVisitorUpdated> {
+    val response: MutableList<OfficialVisitorUpdated> = emptyList<OfficialVisitorUpdated>().toMutableList()
 
-    requestedVisitors.map { requestedVisitor ->
-      val matchingVisitor = approvedVisitors.singleOrNull { approvedVisitor ->
-        approvedVisitor.contactId == requestedVisitor.contactId && approvedVisitor.prisonerContactId == requestedVisitor.prisonerContactId
+    visitorsToUpdate.forEach { (officialVisitorId, visitor) ->
+      val matchingPerson = matchingContacts.singleOrNull { it.contactId == visitor.contactId }
+
+      val visitorEntity = officialVisitorRepository.findById(officialVisitorId).orElseThrow {
+        EntityNotFoundException("Cannot find visitor with id $officialVisitorId to update")
       }
 
-      requireNotNull(matchingVisitor) {
-        "Visitor with contact ID ${requestedVisitor.contactId} and prisoner contact ID ${requestedVisitor.prisonerContactId} is not approved for visiting prisoner number $prisonerNumber."
-      }
+      if (visitorChanged(visitorEntity, visitor, matchingPerson)) {
+        visitorEntity.apply {
+          relationshipTypeCode = if (matchingPerson?.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
+          relationshipCode = matchingPerson?.relationshipToPrisonerCode
+          prisonerContactId = visitorEntity?.prisonerContactId ?: matchingPerson?.prisonerContactId
+          firstName = visitorEntity?.firstName ?: matchingPerson?.firstName ?: "Unknown"
+          lastName = visitorEntity?.lastName ?: matchingPerson?.lastName ?: "Unknown"
+          leadVisitor = visitor.leadVisitor ?: false
+          assistedVisit = visitor.assistedVisit ?: false
+          visitorNotes = visitor.assistedNotes
+          visitorEquipment = visitor.visitorEquipment?.description
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+              VisitorEquipmentEntity(
+                officialVisitor = this,
+                description = it,
+                createdBy = user.username,
+              )
+            }
+          updatedBy = user.username
+          updatedTime = LocalDateTime.now()
+        }
 
+        val savedVisitor = officialVisitorRepository.saveAndFlush(visitorEntity)
+
+        response.add(
+          OfficialVisitorUpdated(officialVisitorId = savedVisitor.officialVisitorId, contactId = savedVisitor.contactId!!),
+        )
+      }
+    }
+
+    return response
+  }
+
+  private fun OfficialVisitUpdateVisitorsRequest.getMatchingContactDetails(prisonerNumber: String) = run {
+    val contacts = contactsService.getAllPrisonerContacts(prisonerNumber = prisonerNumber, approved = null, currentTerm = true)
+
+    officialVisitors.map { requestedVisitor ->
+      val matchingVisitor = contacts.singleOrNull { visitor -> visitor.contactId == requestedVisitor.contactId }
+      if (matchingVisitor == null) {
+        log.info("INFO only - Contact ID ${requestedVisitor.contactId} was not found in the current relationships for prisoner number $prisonerNumber.")
+      }
       matchingVisitor
     }
+  }
+
+  private fun visitorChanged(old: OfficialVisitorEntity, new: OfficialVisitor, person: PrisonerContact?): Boolean {
+    var hasChanged = false
+    if (old.firstName != person?.firstName) {
+      hasChanged = true
+    }
+    if (old.lastName != person?.lastName) {
+      hasChanged = true
+    }
+    if (old.leadVisitor != new.leadVisitor) {
+      hasChanged = true
+    }
+    if (old.assistedVisit != new.assistedVisit) {
+      hasChanged = true
+    }
+    if (old.relationshipCode != new.relationshipCode) {
+      hasChanged = true
+    }
+    if (old.visitorNotes != new.assistedNotes) {
+      hasChanged = true
+    }
+    if (old.visitorEquipment?.description != new.visitorEquipment?.description) {
+      hasChanged = true
+    }
+    return hasChanged
   }
 }
