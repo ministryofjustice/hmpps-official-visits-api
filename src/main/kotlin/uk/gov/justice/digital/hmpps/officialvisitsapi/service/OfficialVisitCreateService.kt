@@ -14,8 +14,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.ApprovedContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
@@ -76,8 +76,9 @@ class OfficialVisitCreateService(
       }
   }
 
-  private fun OfficialVisitEntity.addVisitorsAndAnyEquipment(officialVisitors: List<OfficialVisitor>, matchingVisitors: List<ApprovedContact>, user: User) = apply {
+  private fun OfficialVisitEntity.addVisitorsAndAnyEquipment(officialVisitors: List<OfficialVisitor>, matchingVisitors: List<PrisonerContact>, user: User) = apply {
     officialVisitors.forEach { ov ->
+      // As we are creating a visit locally in DPS the check for contactId and prisonerContactId is fine here
       val matchingVisitor = matchingVisitors.single { mv -> mv.contactId == ov.contactId && mv.prisonerContactId == ov.prisonerContactId }
 
       addVisitor(
@@ -143,9 +144,12 @@ class OfficialVisitCreateService(
     require(officialVisitors.isNotEmpty()) { "At least one official visitor must be supplied." }
 
     val requestedVisitors = officialVisitors.filter { it.visitorTypeCode == VisitorType.CONTACT }.toSet()
-    val approvedVisitors = contactsService.getApprovedContacts(prisonerNumber!!)
+
+    // This will intentionally allow either active or inactive contacts - as long as they are currentTerm=true and approved=true
+    val approvedVisitors = contactsService.getAllPrisonerContacts(prisonerNumber = prisonerNumber!!, approved = true, currentTerm = true)
 
     requestedVisitors.map { requestedVisitor ->
+      // As we are creating a visit locally in DPS the check for contactId and prisonerContactId is fine here
       val matchingVisitor = approvedVisitors.singleOrNull { approvedVisitor -> approvedVisitor.contactId == requestedVisitor.contactId && approvedVisitor.prisonerContactId == requestedVisitor.prisonerContactId }
 
       requireNotNull(matchingVisitor) {
