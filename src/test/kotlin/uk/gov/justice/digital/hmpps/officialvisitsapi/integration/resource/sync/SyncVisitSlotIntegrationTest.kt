@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -188,8 +189,21 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should fail to delete visit slot which has associated official visit`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = 123,
+          prisonerContactId = 456,
+        ),
+      ),
+    )
+
     webTestClient.createOfficialVisit(officialVisitRequest)
+
     webTestClient.delete()
       .uri("/sync/visit-slot/{prisonVisitSlotId}", 1)
       .accept(MediaType.APPLICATION_JSON)

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -95,7 +97,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .bodyValue(createRequest)
       .exchange()
       .expectStatus().isOk
-      .expectBody(VisitSlot::class.java)
+      .expectBody<VisitSlot>()
       .returnResult().responseBody!!
 
     assertThat(created.prisonTimeSlotId).isEqualTo(1)
@@ -116,7 +118,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .bodyValue(updateRequest)
       .exchange()
       .expectStatus().isOk
-      .expectBody(VisitSlot::class.java)
+      .expectBody<VisitSlot>()
       .returnResult().responseBody!!
 
     assertThat(updated.maxAdults).isEqualTo(8)
@@ -154,10 +156,21 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .bodyValue(createRequest)
       .exchange()
       .expectStatus().isOk
-      .expectBody(VisitSlot::class.java)
+      .expectBody<VisitSlot>()
       .returnResult().responseBody!!
 
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = 123,
+          prisonerContactId = 456,
+        ),
+      ),
+    )
 
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
       prisonCode = MOORLAND,

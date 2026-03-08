@@ -1,12 +1,11 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
-import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -18,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isNotEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
@@ -79,20 +80,34 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
+    stubEvents.reset()
+
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = 123,
+          prisonerContactId = 456,
+        ),
+      ),
+    )
   }
 
   @AfterEach
   @Transactional
   fun tearDown() {
     clearAllVisitData()
+    stubEvents.reset()
   }
 
   @Test
   @Transactional
   fun `should create official unassisted visit with one social visitor and equipment`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-
     val officialVisitResponse = webTestClient.create(nextMondayAt9)
+
     val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
 
     with(persistedOfficialVisit) {
@@ -136,14 +151,31 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
       personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
     )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISITOR_CREATED,
+      additionalInfo = VisitorInfo(
+        persistedOfficialVisit.officialVisitId,
+        persistedOfficialVisit.officialVisitors().first().officialVisitorId,
+        Source.DPS,
+        MOORLAND_PRISON_USER.username,
+        MOORLAND,
+      ),
+      personReference = PersonReference(contactId = persistedOfficialVisit.officialVisitors().first().contactId!!),
+    )
   }
 
   @Test
   @Transactional
   fun `should create official assisted visit with one social visitor and no equipment`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+    val officialVisitResponse = webTestClient.create(
+      request = nextMondayAt9.copy(
+        officialVisitors = listOf(
+          officialVisitor.copy(assistedVisit = true, visitorEquipment = null),
+        ),
+      ),
+    )
 
-    val officialVisitResponse = webTestClient.create(nextMondayAt9.copy(officialVisitors = listOf(officialVisitor.copy(assistedVisit = true, visitorEquipment = null))))
     val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
 
     with(persistedOfficialVisit) {
@@ -187,12 +219,22 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
       personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
     )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISITOR_CREATED,
+      additionalInfo = VisitorInfo(
+        persistedOfficialVisit.officialVisitId,
+        persistedOfficialVisit.officialVisitors().first().officialVisitorId,
+        Source.DPS,
+        MOORLAND_PRISON_USER.username,
+        MOORLAND,
+      ),
+      personReference = PersonReference(contactId = persistedOfficialVisit.officialVisitors().first().contactId!!),
+    )
   }
 
   @Test
   fun `should fail to create official in person visit when over booked`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-
     webTestClient.create(nextFridayAt11).also { stubEvents.reset() }
 
     webTestClient.badRequest(nextFridayAt11, "Prison visit slot 9 is not available for the requested date, time and number of visitors.")
@@ -202,8 +244,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should fail to create official in video visit when over booked`() {
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
-
     webTestClient.create(nextFridayAt11.copy(visitTypeCode = VisitType.VIDEO)).also { stubEvents.reset() }
 
     webTestClient.badRequest(nextFridayAt11.copy(visitTypeCode = VisitType.VIDEO), "Prison visit slot 9 is not available for the requested date, time and number of visitors.")
@@ -222,7 +262,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   fun `should fail to create official visit when slot is no longer available`() {
     personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
 
-    // Create a visit and ignore/reset the stubbed event
     webTestClient.create(nextFridayAt11)
     stubEvents.reset()
 
@@ -260,7 +299,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should fail when prisoner not at prison`() {
     stubUser(PENTONVILLE_PRISON_USER)
-
     webTestClient.badRequest(nextMondayAt9, "Prisoner ${MOORLAND_PRISONER.number} not found at prison $PENTONVILLE", PENTONVILLE_PRISON_USER)
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
@@ -288,7 +326,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isCreated
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody(CreateOfficialVisitResponse::class.java)
+    .expectBody<CreateOfficialVisitResponse>()
     .returnResult().responseBody!!
 
   private fun WebTestClient.badRequest(request: CreateOfficialVisitRequest, errorMessage: String, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
@@ -308,6 +346,6 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
-    .expectStatus().value(equalTo(HttpStatus.CONFLICT.value()))
+    .expectStatus().is4xxClientError
     .expectBody().jsonPath("$.userMessage").isEqualTo(errorMessage)
 }

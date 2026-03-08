@@ -63,6 +63,7 @@ class OfficialVisitUpdateService(
     }
 
     val updatedVisit = officialVisitRepository.saveAndFlush(changedOVEntity)
+
     return OfficialVisitUpdateSlotResponse(
       officialVisitId = updatedVisit.officialVisitId,
       prisonerNumber = updatedVisit.prisonerNumber,
