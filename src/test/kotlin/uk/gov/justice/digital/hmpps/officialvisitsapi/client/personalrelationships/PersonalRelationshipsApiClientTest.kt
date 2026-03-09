@@ -26,8 +26,8 @@ class PersonalRelationshipsApiClientTest {
   fun `should get a list of reference codes by reference group`() {
     server.stubReferenceGroup()
     val output = client.getReferenceDataByGroup(ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString())
-    output?.size isEqualTo 1
-    output?.single()?.groupCode isEqualTo ReferenceCodeGroup.OFFICIAL_RELATIONSHIP
+    output?.size isEqualTo 2
+    output?.first()?.groupCode isEqualTo ReferenceCodeGroup.OFFICIAL_RELATIONSHIP
   }
 
   @Test

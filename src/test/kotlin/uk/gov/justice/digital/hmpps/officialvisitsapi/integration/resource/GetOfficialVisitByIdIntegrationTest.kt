@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
@@ -57,6 +59,22 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
+
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = CONTACT_MOORLAND_PRISONER.contactId,
+          prisonerContactId = CONTACT_MOORLAND_PRISONER.prisonerContactId,
+        ),
+      ),
+    )
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
+    personalRelationshipsApi().stubReferenceGroup()
+    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
   }
 
   @AfterEach
@@ -72,12 +90,8 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should get an official visit by prison code and ID`() {
-    personalRelationshipsApi().stubAllApprovedContact(CONTACT_MOORLAND_PRISONER)
-    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
-    personalRelationshipsApi().stubReferenceGroup()
-    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
-
     val response = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
     val visitDetail = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND_PRISONER.prison, response.officialVisitId)
 
     with(visitDetail) {
@@ -122,6 +136,6 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody(OfficialVisitDetails::class.java)
+    .expectBody<OfficialVisitDetails>()
     .returnResult().responseBody!!
 }

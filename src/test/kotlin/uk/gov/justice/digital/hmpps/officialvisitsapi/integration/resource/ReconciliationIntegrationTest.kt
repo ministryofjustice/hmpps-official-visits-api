@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
@@ -64,7 +65,19 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
-    personalRelationshipsApi().stubAllApprovedContacts(MOORLAND_PRISONER.number, contactId = 123, prisonerContactId = 456)
+
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = 123,
+          prisonerContactId = 456,
+        ),
+      ),
+    )
   }
 
   @AfterEach
@@ -208,9 +221,11 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<SyncTimeSlotSummary>()
       .returnResult().responseBody!!
+
     assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
     assertThat(summary.timeSlots).size().isGreaterThan(0)
     assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
+
     with(summary.timeSlots.first().visitSlots.first()) {
       prisonCode isEqualTo MOORLAND_PRISONER.prison
       prisonTimeSlotId isEqualTo summary.timeSlots.first().timeSlot.prisonTimeSlotId
@@ -229,6 +244,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<SyncTimeSlotSummary>()
       .returnResult().responseBody!!
+
     assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
     assertThat(summary.timeSlots).size().isGreaterThan(0)
     assertThat(summary.timeSlots.first().timeSlot.effectiveDate).isBeforeOrEqualTo(today())
@@ -252,6 +268,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody<SyncTimeSlotSummary>()
       .returnResult().responseBody!!
+
     assertThat(summary.prisonCode).isEqualTo("MDIN")
     assertThat(summary.timeSlots).size().isEqualTo(0)
   }

@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -78,11 +79,20 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
       MOORLAND,
       MOORLAND_PRISON_USER.username,
     )
-    personalRelationshipsApi().stubAllApprovedContacts(
-      MOORLAND_PRISONER.number,
-      contactId = 123,
-      prisonerContactId = 456,
+
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = 123,
+          prisonerContactId = 456,
+        ),
+      ),
     )
+
     personalRelationshipsApi().stubPrisonerContactRelationships(MOORLAND_PRISONER.number, 2L)
     locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(

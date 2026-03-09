@@ -27,6 +27,7 @@ class OfficialVisitCompletionService(
   ): OfficialVisitCompletedDto {
     val officialVisit = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
+
     val prisonerVisited = prisonerVisitedRepository.findByOfficialVisit(officialVisit)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId prisoner not found")
 
