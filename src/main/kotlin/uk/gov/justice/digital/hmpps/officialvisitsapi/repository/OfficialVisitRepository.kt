@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Repository
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
@@ -45,4 +46,23 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   @Query(value = "UPDATE OfficialVisitEntity ov SET ov.prisonerNumber = :replacementNumber, ov.offenderBookId = :bookingId WHERE ov.prisonerNumber = :removedNumber")
   @Modifying
   fun mergePrisonerNumber(removedNumber: String, replacementNumber: String, bookingId: Long?)
+
+  @Query(
+    value = """
+      UPDATE OfficialVisitEntity ov
+      SET ov.prisonerNumber = :replacementNumber 
+      WHERE ov.prisonerNumber = :removedNumber and ov.offenderBookId = :bookingId and ov.createdTime >= :startDateTime
+       """,
+  )
+  @Modifying
+  fun bookingMove(removedNumber: String, replacementNumber: String, bookingId: Long, startDateTime: LocalDateTime)
+
+  @Query(
+    value = """
+      SELECT count(distinct ov)
+      FROM OfficialVisitEntity ov
+      WHERE ov.prisonerNumber = :prisonerNumber and ov.offenderBookId = :bookingId and ov.createdTime >= :startDateTime
+    """,
+  )
+  fun countOVByPrisonerNumberAndBookingId(prisonerNumber: String, bookingId: Long, startDateTime: LocalDateTime): Long
 }

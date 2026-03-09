@@ -29,7 +29,7 @@ class PrisonerMergedEventHandlerTest {
     whenever(officialVisitRepository.countOVByPrisonerNumber("ABC111")).thenReturn(1)
     handler.handle(mergeEvent)
     verify(officialVisitRepository).mergePrisonerNumber("ABC111", "ABC222", 1L)
-    verify(prisonerVisitedRepository).mergePrisonerNumber("ABC111", "ABC222")
+    verify(prisonerVisitedRepository).replacePrisonerNumber("ABC111", "ABC222")
   }
 
   @Test
