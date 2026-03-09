@@ -42,15 +42,15 @@ class PrisonerReleasedEventHandler(
     if (enabledPrisons()?.contains(prison) ?: false) {
       log.info("RELEASE EVENT HANDLER: Handling permanent release event for - $prisonerNumber from $prison")
 
-      val visitsToCancel = officialVisitRepository.findAllPrisonerVisits(
+      val visitsToCancel = officialVisitRepository.findAllPrisonerVisitsForReleaseCancel(
         prisonerNumber = prisonerNumber,
+        prisonCode = prison,
+        visitStatusCode = VisitStatusType.SCHEDULED,
         currentTerm = true,
         fromDate = LocalDate.now().plusDays(1),
         toDate = LocalDate.now().plusDays(DAYS_TO_LOOK_AHEAD),
       )
         .map { visit -> VisitCancellationCandidate(visit.prisonCode, visit.officialVisitId, visit.visitDate, visit.visitStatusCode) }
-        .filter { it.prisonCode == prison }
-        .filter { it.visitStatusCode == VisitStatusType.SCHEDULED }
 
       visitsToCancel.forEach { candidate ->
         // Cancel them via the facade to emit sync events

@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
@@ -54,8 +55,10 @@ class PrisonerReleasedEventHandlerTest {
   @BeforeEach
   fun setup() {
     whenever(
-      officialVisitRepository.findAllPrisonerVisits(
+      officialVisitRepository.findAllPrisonerVisitsForReleaseCancel(
         prisonerNumber = PENTONVILLE_PRISONER.number,
+        prisonCode = PENTONVILLE,
+        visitStatusCode = VisitStatusType.SCHEDULED,
         currentTerm = true,
         fromDate = LocalDate.now().plusDays(1),
         toDate = LocalDate.now().plusDays(DAYS_TO_LOOK_AHEAD),
@@ -74,8 +77,10 @@ class PrisonerReleasedEventHandlerTest {
   fun `should cancel visits for a permanent release event when enabled for DPS official visits`() {
     handler.handle(permanentReleaseEvent)
 
-    verify(officialVisitRepository).findAllPrisonerVisits(
+    verify(officialVisitRepository).findAllPrisonerVisitsForReleaseCancel(
       prisonerNumber = PENTONVILLE_PRISONER.number,
+      prisonCode = PENTONVILLE,
+      visitStatusCode = VisitStatusType.SCHEDULED,
       currentTerm = true,
       fromDate = LocalDate.now().plusDays(1),
       toDate = LocalDate.now().plusDays(DAYS_TO_LOOK_AHEAD),
