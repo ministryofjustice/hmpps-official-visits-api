@@ -27,7 +27,7 @@ class PrisonerBookingMovedEventHandler(
     // update prisoner booking if exists
     officialVisitRepository.countOVByPrisonerNumberAndBookingId(movedFromNomsNumber, bookingId, startDateTime).takeIf { it > 0 }?.let {
       officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
-      prisonerVisitedRepository.mergePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
+      prisonerVisitedRepository.replacePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
     }
     log.info("PRISONER BOOKING MOVED EVENT:  Prisoner booking moved from $movedFromNomsNumber to $movedToNomsNumber ")
   }

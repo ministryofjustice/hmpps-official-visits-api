@@ -20,7 +20,7 @@ class PrisonerBookingMovedEventHandlerTest {
   private val handler = PrisonerBookingMovedEventHandler(officialVisitRepository, prisonerVisitedRepository)
 
   @Test
-  fun `should merge old prisoner booking with new prisoner`() {
+  fun `should move old prisoner booking with new prisoner`() {
     val starTime = LocalDateTime.now()
     val mergeBooking = PrisonerBookingMovedEvent(
       BookingMovedInformation("ABC222", "ABC111", 1L, starTime),
@@ -28,11 +28,11 @@ class PrisonerBookingMovedEventHandlerTest {
     whenever(officialVisitRepository.countOVByPrisonerNumberAndBookingId("ABC222", 1L, starTime)).thenReturn(2)
     handler.handle(mergeBooking)
     verify(officialVisitRepository).bookingMove("ABC222", "ABC111", 1L, starTime)
-    verify(prisonerVisitedRepository).mergePrisonerNumber("ABC222", "ABC111")
+    verify(prisonerVisitedRepository).replacePrisonerNumber("ABC222", "ABC111")
   }
 
   @Test
-  fun `should not merge if there are no matching booking found `() {
+  fun `should not move if there are no matching prisoner booking found `() {
     whenever(officialVisitRepository.countOVByPrisonerNumberAndBookingId("ABC222", 1L, LocalDateTime.now())).thenReturn(0)
     handler.handle(movedBookingEvent)
     verifyNoInteractions(prisonerVisitedRepository)
