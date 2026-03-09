@@ -4,15 +4,16 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER_ADDED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
@@ -25,6 +26,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
@@ -38,15 +41,27 @@ import java.util.UUID
 class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   private val location = moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
 
-  private val officialVisitor = OfficialVisitor(
-    visitorTypeCode = VisitorType.CONTACT,
-    relationshipCode = "POM",
-    contactId = 123,
-    prisonerContactId = 456,
-    leadVisitor = true,
-    assistedVisit = false,
-    assistedNotes = "visitor notes",
-    visitorEquipment = VisitorEquipment("Bringing secure laptop"),
+  private val listOfOfficialVisitors = listOf(
+    OfficialVisitor(
+      visitorTypeCode = VisitorType.CONTACT,
+      relationshipCode = "FRI",
+      contactId = 123,
+      prisonerContactId = 456,
+      leadVisitor = true,
+      assistedVisit = true,
+      assistedNotes = "visitor 1 notes",
+      visitorEquipment = VisitorEquipment("Bringing secure laptop"),
+    ),
+    OfficialVisitor(
+      visitorTypeCode = VisitorType.CONTACT,
+      relationshipCode = "FRI",
+      contactId = 130,
+      prisonerContactId = 460,
+      leadVisitor = false,
+      assistedVisit = true,
+      assistedNotes = "visitor 2 notes",
+      visitorEquipment = VisitorEquipment("Bringing phone"),
+    ),
   )
 
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
@@ -62,29 +77,10 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     staffNotes = "private notes",
     prisonerNotes = "public notes",
     searchTypeCode = SearchLevelType.PAT,
-    officialVisitors = listOf(
-      officialVisitor,
-      OfficialVisitor(
-        visitorTypeCode = VisitorType.CONTACT,
-        relationshipCode = "POM2",
-        contactId = 130,
-        prisonerContactId = 460,
-        leadVisitor = true,
-        assistedVisit = false,
-        assistedNotes = "visitor notes",
-        visitorEquipment = VisitorEquipment("Bringing secure laptop"),
-      ),
-    ),
+    officialVisitors = listOfOfficialVisitors,
   )
 
-  private val updateSlot = OfficialVisitUpdateSlotRequest(
-    prisonVisitSlotId = 1,
-    visitDate = visitDateInTheFuture.plusMonths(20),
-    startTime = LocalTime.of(10, 0),
-    endTime = LocalTime.of(11, 0),
-    dpsLocationId = location.id,
-    visitTypeCode = VisitType.VIDEO,
-  )
+  private var scheduledVisit: CreateOfficialVisitResponse? = null
 
   @BeforeEach
   @Transactional
@@ -92,136 +88,15 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     clearAllVisitData()
     stubEvents.reset()
 
-    personalRelationshipsApi().stubAllApprovedContacts(CONTACT_MOORLAND_PRISONER)
-
-    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
-      prisonCode = MOORLAND,
-      locations = listOf(location),
-    )
-
+    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(prisonCode = MOORLAND, locations = listOf(location))
     locationsInsidePrisonApi().stubGetLocationById(location)
-  }
-
-  @Test
-  fun `should update the visit type and slot`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
-
     personalRelationshipsApi().stubReferenceGroup()
-
-    personalRelationshipsApi().stubAllApprovedContacts(
-      MOORLAND_PRISONER.number,
-      pagedModelPrisonerContactSummary(
-        prisonerContact(
-          prisonerNumber = MOORLAND_PRISONER.number,
-          type = "O",
-          contactId = 123,
-          prisonerContactId = 456,
-        ),
-        prisonerContact(
-          prisonerNumber = MOORLAND_PRISONER.number,
-          type = "O",
-          contactId = 130,
-          prisonerContactId = 460,
-        ),
-      ),
-    )
-
-    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-
-    webTestClient.updateSlot(
-      MOORLAND_PRISONER.prison,
-      officialVisitId = scheduledVisit.officialVisitId,
-      request = updateSlot,
-    )
-
-    stubEvents.assertHasEvent(
-      event = OutboundEvent.VISIT_UPDATED,
-      additionalInfo = VisitInfo(
-        source = Source.DPS,
-        username = MOORLAND_PRISON_USER.username,
-        prisonId = MOORLAND,
-        officialVisitId = scheduledVisit.officialVisitId,
-      ),
-      personReference = PersonReference(
-        nomsNumber = MOORLAND_PRISONER.number,
-      ),
-    )
-
-    val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
-
-    with(result) {
-      visitDate isEqualTo visitDateInTheFuture.plusMonths(20)
-      startTime isEqualTo LocalTime.of(10, 0)
-      endTime isEqualTo LocalTime.of(11, 0)
-      dpsLocationId isEqualTo location.id
-      visitTypeCode isEqualTo VisitType.VIDEO
-    }
-  }
-
-  @Test
-  fun `should update prisoner and staff notes`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
-    personalRelationshipsApi().stubAllApprovedContacts(
-      MOORLAND_PRISONER.number,
-      pagedModelPrisonerContactSummary(
-        prisonerContact(
-          prisonerNumber = MOORLAND_PRISONER.number,
-          type = "O",
-          contactId = 123,
-          prisonerContactId = 456,
-        ),
-        prisonerContact(
-          prisonerNumber = MOORLAND_PRISONER.number,
-          type = "O",
-          contactId = 130,
-          prisonerContactId = 460,
-        ),
-      ),
-    )
-    personalRelationshipsApi().stubReferenceGroup()
-
-    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-
-    webTestClient.updateComments(
-      MOORLAND_PRISONER.prison,
-      officialVisitId = scheduledVisit.officialVisitId,
-      request = OfficialVisitUpdateCommentRequest(
-        staffNotes = "New staff Notes",
-        prisonerNotes = "New prison Notes",
-      ),
-    )
-
-    stubEvents.assertHasEvent(
-      event = OutboundEvent.VISIT_UPDATED,
-      additionalInfo = VisitInfo(
-        source = Source.DPS,
-        username = MOORLAND_PRISON_USER.username,
-        prisonId = MOORLAND,
-        officialVisitId = scheduledVisit.officialVisitId,
-      ),
-      personReference = PersonReference(
-        nomsNumber = MOORLAND_PRISONER.number,
-      ),
-    )
-
-    val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
-
-    with(result) {
-      staffNotes isEqualTo "New staff Notes"
-      prisonerNotes isEqualTo "New prison Notes"
-    }
-  }
-
-  @Test
-  @Transactional
-  fun `should add, update and delete visitors as requested`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
-
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER)
-
-    personalRelationshipsApi().stubAllApprovedContacts(
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER_ADDED)
+    personalRelationshipsApi().stubAllContacts(
       MOORLAND_PRISONER.number,
-      pagedModelPrisonerContactSummary(
+      listOf(
         prisonerContact(
           prisonerNumber = MOORLAND_PRISONER.number,
           type = "O",
@@ -249,48 +124,127 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    personalRelationshipsApi().stubReferenceGroup()
+    // Before each test, create a visit and reset the stubbed events
+    scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+    stubEvents.reset()
+  }
 
-    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+  @Test
+  fun `should update the visit type and slot`() {
+    val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
+      prisonVisitSlotId = 1,
+      visitDate = visitDateInTheFuture.plusMonths(20),
+      startTime = LocalTime.of(10, 0),
+      endTime = LocalTime.of(11, 0),
+      dpsLocationId = location.id,
+      visitTypeCode = VisitType.VIDEO,
+    )
 
+    webTestClient.updateSlot(
+      MOORLAND_PRISONER.prison,
+      officialVisitId = scheduledVisit?.officialVisitId!!,
+      request = updateVisitSlotRequest,
+    )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = scheduledVisit?.officialVisitId!!,
+      ),
+      personReference = PersonReference(
+        nomsNumber = MOORLAND_PRISONER.number,
+      ),
+    )
+
+    val result = officialVisitRepository.findById(scheduledVisit?.officialVisitId!!).get()
+
+    with(result) {
+      visitDate isEqualTo visitDateInTheFuture.plusMonths(20)
+      startTime isEqualTo LocalTime.of(10, 0)
+      endTime isEqualTo LocalTime.of(11, 0)
+      dpsLocationId isEqualTo location.id
+      visitTypeCode isEqualTo VisitType.VIDEO
+    }
+  }
+
+  @Test
+  fun `should update prisoner and staff notes`() {
+    val updateVisitCommentRequest = OfficialVisitUpdateCommentRequest(
+      staffNotes = "New staff notes",
+      prisonerNotes = "New prisoner notes",
+    )
+
+    webTestClient.updateComments(
+      prisonCode = MOORLAND,
+      officialVisitId = scheduledVisit?.officialVisitId!!,
+      request = updateVisitCommentRequest,
+    )
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = scheduledVisit?.officialVisitId!!,
+      ),
+      personReference = PersonReference(
+        nomsNumber = MOORLAND_PRISONER.number,
+      ),
+    )
+
+    val result = officialVisitRepository.findById(scheduledVisit?.officialVisitId!!).get()
+
+    with(result) {
+      staffNotes isEqualTo "New staff notes"
+      prisonerNotes isEqualTo "New prisoner notes"
+    }
+  }
+
+  @Test
+  fun `should add, update and delete visitors as requested`() {
+    // Update the visitors - add one, delete one, update one
     webTestClient.updateVisitors(
       MOORLAND_PRISONER.prison,
-      officialVisitId = scheduledVisit.officialVisitId,
+      officialVisitId = scheduledVisit?.officialVisitId!!,
       request = OfficialVisitUpdateVisitorsRequest(
         officialVisitors = listOf(
-          // add - contactId = 125
+          // Add - contactId = 125
           OfficialVisitor(
             visitorTypeCode = VisitorType.CONTACT,
-            relationshipCode = "POM1",
+            relationshipCode = "POM",
             contactId = 125,
             prisonerContactId = 458,
             leadVisitor = true,
             assistedVisit = true,
-            assistedNotes = "visitor notes two new updated1",
+            assistedNotes = "visitor notes added",
             visitorEquipment = VisitorEquipment("Bringing secure laptop"),
           ),
-          // modify - contactId = 123 and delete equipment
+          // Update - contactId = 123 and delete their equipment
           OfficialVisitor(
-            officialVisitorId = scheduledVisit.visitorAndContactIds.first().first,
+            officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first!!,
             visitorTypeCode = VisitorType.CONTACT,
-            relationshipCode = "POM2",
-            contactId = scheduledVisit.visitorAndContactIds.first().second,
+            relationshipCode = "POM",
+            contactId = scheduledVisit?.visitorAndContactIds?.first()?.second,
             prisonerContactId = 456,
-            leadVisitor = true,
+            leadVisitor = false,
             assistedVisit = true,
-            assistedNotes = "visitor notes two new updated2",
+            assistedNotes = "visitor notes updated",
             visitorEquipment = VisitorEquipment(""),
           ),
-          // delete - contactId = 130
+          // Delete - contactId = 130 (which existed in the earlier create)
         ),
       ),
     )
 
-    val existingVisitorId = scheduledVisit.visitorAndContactIds.first().first
+    val existingVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first
+    val deletedVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.first
 
-    val deletedVisitorId = scheduledVisit.visitorAndContactIds.last().first
-
-    val result = officialVisitRepository.findById(scheduledVisit.officialVisitId).get()
+    // Get the visit to check the changes have been applied
+    val result = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND, scheduledVisit?.officialVisitId!!)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_UPDATED,
@@ -298,11 +252,11 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
-        officialVisitorId = existingVisitorId,
+        officialVisitorId = existingVisitorId!!,
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(
-        contactId = scheduledVisit.visitorAndContactIds.first().second!!,
+        contactId = scheduledVisit?.visitorAndContactIds?.first()?.second!!,
       ),
     )
 
@@ -312,15 +266,16 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
-        officialVisitorId = deletedVisitorId,
+        officialVisitorId = deletedVisitorId!!,
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(
-        contactId = nextMondayAt9.officialVisitors.last().contactId!!,
+        contactId = scheduledVisit?.visitorAndContactIds?.last()?.second!!,
       ),
     )
 
-    val createdVisitor = result.officialVisitors().filter { visitor -> visitor.officialVisitorId != existingVisitorId }
+    // The created visitor must be the one which does not match the updated visitor ID
+    val createdVisitor = result.officialVisitors?.filter { visitor -> visitor.officialVisitorId != existingVisitorId }
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_CREATED,
@@ -328,37 +283,47 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
-        officialVisitorId = createdVisitor.first().officialVisitorId,
+        officialVisitorId = createdVisitor!!.last().officialVisitorId,
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(
-        contactId = 125,
+        contactId = createdVisitor.last().contactId!!,
       ),
     )
 
     with(result) {
-      officialVisitors().size isEqualTo 2
+      officialVisitors?.size isEqualTo 2
     }
 
-    val updatedVisitor = officialVisitorRepository.findById(existingVisitorId).get()
+    val updatedVisitor = result.officialVisitors.filter { visitor -> visitor.officialVisitorId == existingVisitorId }
 
-    with(updatedVisitor) {
-      officialVisitorId isEqualTo scheduledVisit.visitorAndContactIds.first().first
+    // Check that the changes to the existing visitor have been applied
+    with(updatedVisitor[0]) {
+      officialVisitorId isEqualTo updatedVisitor.first().officialVisitorId
       visitorTypeCode isEqualTo VisitorType.CONTACT
-      relationshipCode isEqualTo "POM2"
+      relationshipCode isEqualTo "FRI" // From stubbed PR API response
       contactId isEqualTo 123
       prisonerContactId isEqualTo 456
-      leadVisitor isEqualTo true
+      leadVisitor isEqualTo false
       assistedVisit isEqualTo true
-      visitorNotes isEqualTo "visitor notes two new updated2"
+      visitorNotes isEqualTo "visitor notes updated"
       visitorEquipment isEqualTo null
     }
   }
 
   @Test
-  fun `should fail to update visit when the visit ID does not exist`() {
+  fun `should fail to update a visit when the visit ID does not exist`() {
+    val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
+      prisonVisitSlotId = 1,
+      visitDate = visitDateInTheFuture.plusMonths(20),
+      startTime = LocalTime.of(10, 0),
+      endTime = LocalTime.of(11, 0),
+      dpsLocationId = location.id,
+      visitTypeCode = VisitType.VIDEO,
+    )
+
     webTestClient.notExistentOfficialVisit(
-      request = updateSlot,
+      request = updateVisitSlotRequest,
       prisonCode = MOORLAND_PRISONER.prison,
       officialVisitId = 99,
       prisonUser = MOORLAND_PRISON_USER,
@@ -367,8 +332,17 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should fail to update comments when the visit ID does not exist`() {
+    val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
+      prisonVisitSlotId = 1,
+      visitDate = visitDateInTheFuture.plusMonths(20),
+      startTime = LocalTime.of(10, 0),
+      endTime = LocalTime.of(11, 0),
+      dpsLocationId = location.id,
+      visitTypeCode = VisitType.VIDEO,
+    )
+
     webTestClient.notExistentOfficialVisit(
-      request = updateSlot,
+      request = updateVisitSlotRequest,
       prisonCode = MOORLAND_PRISONER.prison,
       officialVisitId = 99,
       prisonUser = MOORLAND_PRISON_USER,
@@ -431,4 +405,15 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     .expectStatus().is4xxClientError
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id $officialVisitId and prison code $prisonCode not found")
+
+  private fun WebTestClient.getOfficialVisitByPrisonAndId(prisonCode: String, officialVisitId: Long) = this
+    .get()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody<OfficialVisitDetails>()
+    .returnResult().responseBody!!
 }

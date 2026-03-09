@@ -61,7 +61,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__RW')")
   fun createOfficialVisit(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
@@ -100,13 +100,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   )
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
   fun getOfficialVisitByPrisonCodeAndId(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MIC",
       required = true,
     ) prisonCode: String,
-    @PathVariable("officialVisitId") @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit ID",
       example = "123456",
@@ -119,7 +119,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
   fun findByCriteria(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
@@ -164,13 +164,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun complete(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
       required = true,
     ) prisonCode: String,
-    @PathVariable("officialVisitId") @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit identifier",
       example = "123",
@@ -206,13 +206,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun cancel(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
       required = true,
     ) prisonCode: String,
-    @PathVariable("officialVisitId") @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit identifier",
       example = "123",
@@ -248,13 +248,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun updateVisitTypeAndSlot(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
       required = true,
     ) prisonCode: String,
-    @PathVariable("officialVisitId") @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit identifier",
       example = "123",
@@ -290,13 +290,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun updateComments(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
       required = true,
     ) prisonCode: String,
-    @PathVariable("officialVisitId") @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit identifier",
       example = "123",
@@ -332,13 +332,13 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
   fun updateVisitors(
-    @PathVariable("prisonCode") @Parameter(
+    @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
       example = "MDI",
       required = true,
     ) prisonCode: String,
-    @PathVariable("officialVisitId") @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit identifier",
       example = "123",

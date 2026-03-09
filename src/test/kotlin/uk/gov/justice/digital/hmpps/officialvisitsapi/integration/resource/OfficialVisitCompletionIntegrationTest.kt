@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
@@ -75,17 +76,27 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
     clearAllVisitData()
     stubEvents.reset()
 
-    personalRelationshipsApi().stubAllApprovedContacts(CONTACT_MOORLAND_PRISONER)
+    // Stub a known contact
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = CONTACT_MOORLAND_PRISONER.contactId,
+          prisonerContactId = CONTACT_MOORLAND_PRISONER.prisonerContactId,
+        ),
+      ),
+    )
+    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER)
+    personalRelationshipsApi().stubReferenceGroup()
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(prisonCode = MOORLAND, locations = listOf(location))
     locationsInsidePrisonApi().stubGetLocationById(location)
   }
 
   @Test
   fun `should complete an official scheduled visit`() {
-    prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
-    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER)
-    personalRelationshipsApi().stubReferenceGroup()
-
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
       .let { response -> testAPIClient.getOfficialVisitBy(response.officialVisitId, MOORLAND_PRISON_USER) }
 

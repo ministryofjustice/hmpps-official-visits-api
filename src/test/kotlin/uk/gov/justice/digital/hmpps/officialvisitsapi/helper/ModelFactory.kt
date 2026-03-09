@@ -180,4 +180,12 @@ fun referenceCode() = listOf(
     displayOrder = 1,
     isActive = true,
   ),
+  ReferenceCode(
+    referenceCodeId = 2,
+    groupCode = ReferenceCodeGroup.OFFICIAL_RELATIONSHIP,
+    code = "FRI",
+    description = "Description",
+    displayOrder = 2,
+    isActive = true,
+  ),
 )
