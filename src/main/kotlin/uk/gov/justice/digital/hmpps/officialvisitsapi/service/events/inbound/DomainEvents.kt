@@ -61,9 +61,10 @@ class PrisonerBookingMovedEvent(additionalInformation: BookingMovedInformation) 
   fun movedFromNomsNumber() = additionalInformation.movedFromNomsNumber
   fun movedToNomsNumber() = additionalInformation.movedToNomsNumber
   fun bookingId() = additionalInformation.bookingId
+  fun startDateTime() = additionalInformation.startDateTime
 }
 
-data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String, val bookingId: Long) : AdditionalInformation
+data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String, val bookingId: Long, val startDateTime: LocalDateTime) : AdditionalInformation
 
 data class PersonReference(val identifiers: List<Identifier>)
 

@@ -21,11 +21,12 @@ class PrisonerBookingMovedEventHandler(
     val movedToNomsNumber = event.movedToNomsNumber()
     val movedFromNomsNumber = event.movedFromNomsNumber()
     val bookingId = event.bookingId()
+    val startDateTime = event.startDateTime()
 
     log.info("handling booking moved from $movedFromNomsNumber to $movedToNomsNumber")
     // update prisoner booking if exists
-    officialVisitRepository.countOVByPrisonerNumberAndBookingId(movedFromNomsNumber, bookingId).takeIf { it > 0 }?.let {
-      officialVisitRepository.mergePrisonersBooking(movedFromNomsNumber, movedToNomsNumber, bookingId)
+    officialVisitRepository.countOVByPrisonerNumberAndBookingId(movedFromNomsNumber, bookingId, startDateTime).takeIf { it > 0 }?.let {
+      officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
       prisonerVisitedRepository.mergePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
     }
     log.info("PRISONER BOOKING MOVED EVENT:  Prisoner booking moved from $movedFromNomsNumber to $movedToNomsNumber ")
