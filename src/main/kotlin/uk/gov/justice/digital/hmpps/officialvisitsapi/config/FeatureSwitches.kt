@@ -13,11 +13,13 @@ class FeatureSwitches(private val environment: Environment) {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun isEnabled(feature: Feature, defaultValue: Boolean = false): Boolean = get(feature.label, Boolean::class.java, defaultValue)
+  fun isEnabled(feature: Feature, defaultValue: Boolean = false): Boolean = get(feature.label, Boolean::class.java, defaultValue) == true
 
-  fun isEnabled(outboundEvent: OutboundEvent, defaultValue: Boolean = false): Boolean = get("feature.event.${outboundEvent.eventType}", Boolean::class.java, defaultValue)
+  fun isEnabled(outboundEvent: OutboundEvent, defaultValue: Boolean = false): Boolean = get("feature.event.${outboundEvent.eventType}", Boolean::class.java, defaultValue) == true
 
-  private inline fun <reified T : Any> get(property: String, type: Class<T>, defaultValue: T) = environment.getProperty(property, type).let {
+  fun getValue(feature: StringFeature, defaultValue: String? = null): String? = get(feature.label, String::class.java, defaultValue)
+
+  private inline fun <reified T : Any> get(property: String, type: Class<T>, defaultValue: T?) = environment.getProperty(property, type).let {
     if (it == null) {
       log.info("property '$property' not configured, defaulting to $defaultValue")
       defaultValue
@@ -29,4 +31,8 @@ class FeatureSwitches(private val environment: Environment) {
 
 enum class Feature(val label: String) {
   OUTBOUND_EVENTS_ENABLED("feature.events.sns.enabled"),
+}
+
+enum class StringFeature(val label: String) {
+  FEATURE_DPS_ENABLED_PRISONS("feature.dps.enabled.prisons"),
 }
