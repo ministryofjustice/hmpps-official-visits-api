@@ -63,6 +63,8 @@ generic-service:
       HMPPS_SQS_QUEUES_OV_QUEUE_NAME: "sqs_name"
     sqs-domain-events-dlq:
       HMPPS_SQS_QUEUES_OV_DLQ_NAME: "sqs_name"
+    feature-toggles:
+      FEATURE_DPS_ENABLED_PRISONS: "FEATURE_DPS_ENABLED_PRISONS?"
 
   allowlist:
     groups:
