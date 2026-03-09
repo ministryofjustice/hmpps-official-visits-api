@@ -45,4 +45,17 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   @Query(value = "UPDATE OfficialVisitEntity ov SET ov.prisonerNumber = :replacementNumber, ov.offenderBookId = :bookingId WHERE ov.prisonerNumber = :removedNumber")
   @Modifying
   fun mergePrisonerNumber(removedNumber: String, replacementNumber: String, bookingId: Long?)
+
+  @Query(value = "UPDATE OfficialVisitEntity ov SET ov.prisonerNumber = :replacementNumber WHERE ov.prisonerNumber = :removedNumber and ov.offenderBookId = :bookingId")
+  @Modifying
+  fun mergePrisonersBooking(removedNumber: String, replacementNumber: String, bookingId: Long)
+
+  @Query(
+    value = """
+      SELECT count(distinct ov)
+      FROM OfficialVisitEntity ov
+      WHERE ov.prisonerNumber = :prisonerNumber and ov.offenderBookId = :bookingId
+    """,
+  )
+  fun countOVByPrisonerNumberAndBookingId(prisonerNumber: String, bookingId: Long): Long
 }
