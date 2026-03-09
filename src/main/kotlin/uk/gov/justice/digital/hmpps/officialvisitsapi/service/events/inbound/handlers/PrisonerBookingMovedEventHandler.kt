@@ -3,10 +3,15 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.ha
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.PrisonerBookingMovedEvent
 
 @Component
-class PrisonerBookingMovedEventHandler : DomainEventHandler<PrisonerBookingMovedEvent> {
+class PrisonerBookingMovedEventHandler(
+  private val officialVisitRepository: OfficialVisitRepository,
+  private val prisonerVisitedRepository: PrisonerVisitedRepository,
+) : DomainEventHandler<PrisonerBookingMovedEvent> {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
@@ -15,6 +20,15 @@ class PrisonerBookingMovedEventHandler : DomainEventHandler<PrisonerBookingMoved
   override fun handle(event: PrisonerBookingMovedEvent) {
     val movedToNomsNumber = event.movedToNomsNumber()
     val movedFromNomsNumber = event.movedFromNomsNumber()
-    log.info("PRISONER BOOKING MOVED EVENT:  Prisoner booking moved from $movedFromNomsNumber to $movedToNomsNumber - Not actioned")
+    val bookingId = event.bookingId()
+    val startDateTime = event.startDateTime()
+
+    log.info("handling booking moved from $movedFromNomsNumber to $movedToNomsNumber")
+    // update prisoner booking if exists
+    officialVisitRepository.countOVByPrisonerNumberAndBookingId(movedFromNomsNumber, bookingId, startDateTime).takeIf { it > 0 }?.let {
+      officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
+      prisonerVisitedRepository.replacePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
+    }
+    log.info("PRISONER BOOKING MOVED EVENT:  Prisoner booking moved from $movedFromNomsNumber to $movedToNomsNumber ")
   }
 }

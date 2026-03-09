@@ -21,5 +21,5 @@ interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long>
 
   @Query(value = "UPDATE PrisonerVisitedEntity pv SET pv.prisonerNumber = :replacementNumber WHERE pv.prisonerNumber = :removedNumber")
   @Modifying
-  fun mergePrisonerNumber(removedNumber: String, replacementNumber: String)
+  fun replacePrisonerNumber(removedNumber: String, replacementNumber: String)
 }
