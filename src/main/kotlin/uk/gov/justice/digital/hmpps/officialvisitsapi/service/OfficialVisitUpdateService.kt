@@ -151,9 +151,7 @@ class OfficialVisitUpdateService(
     visitorsToAdd: List<OfficialVisitor>,
     matchingContacts: List<PrisonerContact>,
     user: User,
-  ): List<OfficialVisitorUpdated> {
-    val response: MutableList<OfficialVisitorUpdated> = emptyList<OfficialVisitorUpdated>().toMutableList()
-
+  ) = buildList {
     visitorsToAdd.forEach { visitor ->
       val matchingPerson = matchingContacts.singleOrNull { it.contactId == visitor.contactId }
 
@@ -183,20 +181,15 @@ class OfficialVisitUpdateService(
         },
       )
 
-      response.add(
-        OfficialVisitorUpdated(officialVisitorId = savedVisitor.officialVisitorId, contactId = savedVisitor.contactId!!),
-      )
+      add(OfficialVisitorUpdated(officialVisitorId = savedVisitor.officialVisitorId, contactId = savedVisitor.contactId!!))
     }
-    return response
   }
 
   private fun updateExistingVisitors(
     visitorsToUpdate: Map<Long, OfficialVisitor>,
     matchingContacts: List<PrisonerContact>,
     user: User,
-  ): List<OfficialVisitorUpdated> {
-    val response: MutableList<OfficialVisitorUpdated> = emptyList<OfficialVisitorUpdated>().toMutableList()
-
+  ) = buildList {
     visitorsToUpdate.forEach { (officialVisitorId, visitor) ->
       val matchingPerson = matchingContacts.singleOrNull { it.contactId == visitor.contactId }
 
@@ -206,7 +199,8 @@ class OfficialVisitUpdateService(
 
       if (visitorChanged(visitorEntity, visitor, matchingPerson)) {
         visitorEntity.apply {
-          relationshipTypeCode = if (matchingPerson?.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
+          relationshipTypeCode =
+            if (matchingPerson?.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
           relationshipCode = matchingPerson?.relationshipToPrisonerCode
           prisonerContactId = visitorEntity?.prisonerContactId ?: matchingPerson?.prisonerContactId
           firstName = visitorEntity?.firstName ?: matchingPerson?.firstName ?: "Unknown"
@@ -216,26 +210,16 @@ class OfficialVisitUpdateService(
           visitorNotes = visitor.assistedNotes
           visitorEquipment = visitor.visitorEquipment?.description
             ?.takeIf { it.isNotBlank() }
-            ?.let {
-              VisitorEquipmentEntity(
-                officialVisitor = this,
-                description = it,
-                createdBy = user.username,
-              )
-            }
+            ?.let { VisitorEquipmentEntity(officialVisitor = this, description = it, createdBy = user.username) }
           updatedBy = user.username
           updatedTime = LocalDateTime.now()
         }
 
         val savedVisitor = officialVisitorRepository.saveAndFlush(visitorEntity)
 
-        response.add(
-          OfficialVisitorUpdated(officialVisitorId = savedVisitor.officialVisitorId, contactId = savedVisitor.contactId!!),
-        )
+        add(OfficialVisitorUpdated(officialVisitorId = savedVisitor.officialVisitorId, contactId = savedVisitor.contactId!!))
       }
     }
-
-    return response
   }
 
   private fun OfficialVisitUpdateVisitorsRequest.getMatchingContactDetails(prisonerNumber: String) = run {
@@ -251,28 +235,27 @@ class OfficialVisitUpdateService(
   }
 
   private fun visitorChanged(old: OfficialVisitorEntity, new: OfficialVisitor, person: PrisonerContact?): Boolean {
-    var hasChanged = false
     if (old.firstName != person?.firstName) {
-      hasChanged = true
+      return true
     }
     if (old.lastName != person?.lastName) {
-      hasChanged = true
+      return true
     }
     if (old.leadVisitor != new.leadVisitor) {
-      hasChanged = true
+      return true
     }
     if (old.assistedVisit != new.assistedVisit) {
-      hasChanged = true
+      return true
     }
     if (old.relationshipCode != new.relationshipCode) {
-      hasChanged = true
+      return true
     }
     if (old.visitorNotes != new.assistedNotes) {
-      hasChanged = true
+      return true
     }
     if (old.visitorEquipment?.description != new.visitorEquipment?.description) {
-      hasChanged = true
+      return true
     }
-    return hasChanged
+    return false
   }
 }
