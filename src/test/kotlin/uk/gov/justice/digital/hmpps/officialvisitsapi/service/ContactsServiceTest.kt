@@ -7,9 +7,9 @@ import org.mockito.Mockito.mock
 import org.mockito.MockitoAnnotations.openMocks
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
-import java.time.LocalDate
 
 class ContactsServiceTest {
   private val personalRelationshipsApiClient: PersonalRelationshipsApiClient = mock()
@@ -23,28 +23,45 @@ class ContactsServiceTest {
   }
 
   @Test
-  fun `getApprovedContacts should return approved contacts for valid prisonerNumber and relationship type`() {
-    val listOfCodes = listOf(
+  fun `should return approved contacts for a prisoner number and relationship type`() {
+    val listOfContacts = listOf(
       prisonerContact(prisonerNumber, relationshipType, true, true, true, null),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(listOfCodes)
+    whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(listOfContacts)
     assertThat(contactService.getApprovedContacts(prisonerNumber, relationshipType).single().relationshipTypeDescription isEqualTo "Friend")
   }
 
   @Test
-  fun `getApprovedContacts should return empty  approved contacts when currentTerm is false `() {
-    val listOfCodes = listOf(
-      prisonerContact(prisonerNumber, relationshipType, false, true, true, null),
+  fun `should return all contacts (inactive and active) where approved and currentTerm`() {
+    val listOfContacts = listOf(
+      prisonerContact(
+        prisonerNumber = prisonerNumber,
+        type = relationshipType,
+        currentTerm = true,
+        isApprovedVisitor = true,
+        isRelationshipActive = true,
+        contactId = 1L,
+        prisonerContactId = 1L,
+      ),
+      prisonerContact(
+        prisonerNumber = prisonerNumber,
+        type = relationshipType,
+        currentTerm = true,
+        isApprovedVisitor = true,
+        isRelationshipActive = false,
+        contactId = 2L,
+        prisonerContactId = 2L,
+      ),
     )
-    whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(emptyList())
-    assertThat(contactService.getApprovedContacts(prisonerNumber, relationshipType) isEqualTo emptyList())
+
+    whenever(personalRelationshipsApiClient.getAllPrisonerContacts(prisonerNumber = prisonerNumber, approved = true, currentTerm = true))
+      .thenReturn(listOfContacts)
+
+    assertThat(contactService.getAllPrisonerContacts(prisonerNumber, true, true) hasSize 2)
   }
 
   @Test
-  fun `getApprovedContacts should return empty  approved contacts when deceasedDate is not  `() {
-    val listOfCodes = listOf(
-      prisonerContact(prisonerNumber, relationshipType, true, true, true, LocalDate.now()),
-    )
+  fun `should return empty approved contacts when no contacts are defined`() {
     whenever(personalRelationshipsApiClient.getApprovedContacts(prisonerNumber, relationshipType)).thenReturn(emptyList())
     assertThat(contactService.getApprovedContacts(prisonerNumber, relationshipType) isEqualTo emptyList())
   }
