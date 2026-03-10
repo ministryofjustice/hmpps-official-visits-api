@@ -147,7 +147,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should return bad request if get request has invalid visit slot id`() {
+  fun `should return not found if get request has invalid visit slot id`() {
     webTestClient.get()
       .uri("/admin/visit-slot/id/{visitSlotId}", 1001)
       .accept(MediaType.APPLICATION_JSON)
