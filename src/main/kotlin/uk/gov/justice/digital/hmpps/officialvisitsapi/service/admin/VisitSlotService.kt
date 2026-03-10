@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.admin.toVisitSlotModel
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.Visit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDateTime
 
@@ -21,6 +23,7 @@ class VisitSlotService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository,
   private val officialVisitRepository: OfficialVisitRepository,
+  private val locationsService: LocationsService,
 ) {
 
   fun getById(prisonVisitSlotId: Long): VisitSlot {
@@ -28,7 +31,17 @@ class VisitSlotService(
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
     val timeSlotEntity = prisonTimeSlotRepository.findById(visitSlotEntity.prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${visitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
-    return visitSlotEntity.toVisitSlotModel(timeSlotEntity.prisonCode)
+    return enhanceVisitSlotDetails(visitSlotEntity, timeSlotEntity)
+  }
+
+  private fun enhanceVisitSlotDetails(
+    visitSlotEntity: PrisonVisitSlotEntity,
+    timeSlotEntity: PrisonTimeSlotEntity,
+  ): VisitSlot {
+    val officialVisitLocation = locationsService.getLocationById(visitSlotEntity.dpsLocationId)
+    val toVisitSlotModel = visitSlotEntity.toVisitSlotModel(timeSlotEntity.prisonCode)
+    val visitSlot = toVisitSlotModel.copy(locationDescription = officialVisitLocation?.localName ?: "Unknown")
+    return visitSlot
   }
 
   fun create(prisonTimeSlotId: Long, request: CreateVisitSlotRequest, user: User): VisitSlot {
@@ -46,7 +59,8 @@ class VisitSlotService(
       createdBy = user.username,
     )
 
-    return prisonVisitSlotRepository.saveAndFlush(entity).toVisitSlotModel(timeSlotEntity.prisonCode)
+    val toVisitSlotModel = prisonVisitSlotRepository.saveAndFlush(entity)
+    return enhanceVisitSlotDetails(toVisitSlotModel, timeSlotEntity)
   }
 
   fun update(prisonVisitSlotId: Long, request: UpdateVisitSlotRequest, user: User): VisitSlot {
@@ -66,7 +80,8 @@ class VisitSlotService(
       updatedTime = LocalDateTime.now(),
     )
 
-    return prisonVisitSlotRepository.saveAndFlush(changed).toVisitSlotModel(timeSlotEntity.prisonCode)
+    val toVisitSlotModel = prisonVisitSlotRepository.saveAndFlush(changed)
+    return enhanceVisitSlotDetails(toVisitSlotModel, timeSlotEntity)
   }
 
   fun delete(prisonVisitSlotId: Long): VisitSlot {

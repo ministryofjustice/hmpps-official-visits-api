@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateVisitSlotRequest
@@ -23,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.Visit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -33,14 +35,15 @@ class VisitSlotServiceTest {
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
+  private val locationsService: LocationsService = mock()
 
-  private val service = VisitSlotService(prisonVisitSlotRepository, prisonTimeSlotRepository, officialVisitRepository)
+  private val service = VisitSlotService(prisonVisitSlotRepository, prisonTimeSlotRepository, officialVisitRepository, locationsService)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
 
   @AfterEach
   fun afterEach() {
-    reset(prisonVisitSlotRepository, prisonTimeSlotRepository, officialVisitRepository)
+    reset(prisonVisitSlotRepository, prisonTimeSlotRepository, officialVisitRepository, locationsService)
   }
 
   @Test
@@ -50,6 +53,7 @@ class VisitSlotServiceTest {
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
+    whenever(locationsService.getLocationById(visitSlotEntity.dpsLocationId)).thenReturn(moorlandLocation)
 
     val model = service.getById(1L)
 
@@ -76,6 +80,7 @@ class VisitSlotServiceTest {
 
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
     whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>())).thenAnswer { it.arguments[0] }
+    whenever(locationsService.getLocationById(request.dpsLocationId)).thenReturn(moorlandLocation)
 
     val created = service.create(1L, request, MOORLAND_PRISON_USER)
 
@@ -104,11 +109,13 @@ class VisitSlotServiceTest {
 
   @Test
   fun `should update a visit slot capacities and return it`() {
-    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1, dpsLocationId = UUID.randomUUID())
+    val dpsLocationId = UUID.randomUUID()
+    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1, dpsLocationId = dpsLocationId)
     val existing = prisonVisitSlotEntity()
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(existing))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
     whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>())).thenAnswer { it.arguments[0] }
+    whenever(locationsService.getLocationById(dpsLocationId)).thenReturn(moorlandLocation)
 
     val updated = service.update(1L, request, MOORLAND_PRISON_USER)
 
@@ -164,6 +171,7 @@ class VisitSlotServiceTest {
     assertThat(prisonVisitSlotId).isEqualTo(model.visitSlotId)
     assertThat(prisonTimeSlotId).isEqualTo(model.prisonTimeSlotId)
     assertThat(dpsLocationId).isEqualTo(model.dpsLocationId)
+    assertThat(moorlandLocation.localName).isEqualTo(model.locationDescription)
     assertThat(maxAdults).isEqualTo(model.maxAdults)
     assertThat(maxGroups).isEqualTo(model.maxGroups)
     assertThat(maxVideoSessions).isEqualTo(model.maxVideo)

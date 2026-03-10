@@ -54,6 +54,13 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should return unauthorized if no token is provided`() {
+    webTestClient.get()
+      .uri("/admin/visit-slot/id/{visitSlotId}", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+
     webTestClient.post()
       .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
       .accept(MediaType.APPLICATION_JSON)
@@ -78,6 +85,118 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isUnauthorized
+  }
+
+  @Test
+  fun `should return forbidden if user does not have admin role`() {
+    webTestClient.get()
+      .uri("/admin/visit-slot/id/{visitSlotId}", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+        ),
+      )
+      .exchange()
+      .expectStatus()
+      .isForbidden
+
+    webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+        ),
+      )
+      .bodyValue(createVisitSlotRequest())
+      .exchange()
+      .expectStatus()
+      .isForbidden
+
+    webTestClient.put()
+      .uri("/admin/visit-slot/id/{visitSlotId}", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+        ),
+      )
+      .bodyValue(updateVisitSlotRequest())
+      .exchange()
+      .expectStatus()
+      .isForbidden
+
+    webTestClient.delete()
+      .uri("/admin/visit-slot/id/{visitSlotId}", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+        ),
+      )
+      .exchange()
+      .expectStatus()
+      .isForbidden
+  }
+
+  @Test
+  fun `should return not found if get request has invalid visit slot id`() {
+    webTestClient.get()
+      .uri("/admin/visit-slot/id/{visitSlotId}", 1001)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
+        ),
+      )
+      .exchange()
+      .expectStatus()
+      .isNotFound
+  }
+
+  @Test
+  fun `should return valid response if get request has valid visit slot id`() {
+    val createRequest = createVisitSlotRequest()
+
+    val created = webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
+        ),
+      )
+      .bodyValue(createRequest)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(VisitSlot::class.java)
+      .returnResult().responseBody!!
+
+    val response = webTestClient.get()
+      .uri("/admin/visit-slot/id/{visitSlotId}", created.visitSlotId)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
+        ),
+      )
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(VisitSlot::class.java)
+      .returnResult().responseBody!!
+
+    assertThat(response).usingRecursiveComparison().ignoringFields("createdTime", "updatedTime").isEqualTo(created)
   }
 
   @Test
@@ -171,11 +290,21 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
         ),
       ),
     )
+    personalRelationshipsApi().stubAllApprovedContacts(
+      MOORLAND_PRISONER.number,
+      contactId = 123,
+      prisonerContactId = 456,
+    )
 
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
       prisonCode = MOORLAND,
       locations = listOf(
-        location(prisonCode = MOORLAND, locationKeySuffix = "1-1", localName = "Visit place", id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
+        location(
+          prisonCode = MOORLAND,
+          locationKeySuffix = "1-1",
+          localName = "Visit place",
+          id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        ),
       ),
     )
 

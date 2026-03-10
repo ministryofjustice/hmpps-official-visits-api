@@ -29,6 +29,28 @@ class VisitSlotFacadeTest {
   private val createdTime = LocalDateTime.now().minusDays(2)
 
   @Test
+  fun `should get a visit slot by ID`() {
+    val response = VisitSlot(
+      visitSlotId = 1,
+      prisonCode = "MDI",
+      prisonTimeSlotId = 1,
+      dpsLocationId = UUID.randomUUID(),
+      createdBy = MOORLAND_PRISON_USER.username,
+      createdTime = createdTime,
+      maxAdults = 1,
+      maxGroups = 1,
+      maxVideo = 1,
+    )
+
+    whenever(visitSlotService.getById(any())).thenReturn(response)
+
+    val result = facade.getVisitSlot(1L)
+    assertThat(result).isEqualTo(response)
+    verify(visitSlotService).getById(1L)
+    verifyNoInteractions(outboundEventsService)
+  }
+
+  @Test
   fun `should send a domain event when a visit slot is created`() {
     val request = CreateVisitSlotRequest(dpsLocationId = UUID.randomUUID(), maxAdults = 1, maxGroups = 1, maxVideo = 1)
     val response = VisitSlot(

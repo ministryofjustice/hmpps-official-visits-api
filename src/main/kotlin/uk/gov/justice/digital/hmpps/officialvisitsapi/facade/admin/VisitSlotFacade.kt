@@ -14,6 +14,9 @@ class VisitSlotFacade(
   private val visitSlotService: VisitSlotService,
   private val outboundEventsService: OutboundEventsService,
 ) {
+
+  fun getVisitSlot(visitSlotId: Long) = visitSlotService.getById(visitSlotId)
+
   fun createVisitSlot(prisonTimeSlotId: Long, request: CreateVisitSlotRequest, user: User) = visitSlotService.create(prisonTimeSlotId, request, user).also {
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,
