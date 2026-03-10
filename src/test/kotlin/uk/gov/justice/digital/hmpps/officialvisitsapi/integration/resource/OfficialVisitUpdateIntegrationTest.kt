@@ -188,6 +188,8 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should add, update and delete visitors as requested`() {
+    stubEvents.assertNoEvents()
+
     // Update the visitors - add one, delete one, update one
     webTestClient.updateVisitors(
       MOORLAND_PRISONER.prison,
@@ -227,6 +229,21 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
     // Get the visit to check the changes have been applied
     val result = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND, scheduledVisit?.officialVisitId!!)
+
+    stubEvents.assertEventsSize(4)
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = result.officialVisitId,
+      ),
+      personReference = PersonReference(
+        nomsNumber = MOORLAND_PRISONER.number,
+      ),
+    )
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_UPDATED,
@@ -291,6 +308,29 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       visitorNotes isEqualTo "visitor notes updated"
       visitorEquipment isEqualTo null
     }
+  }
+
+  @Test
+  fun `should fail to update a visit when the visitor ID does not exist`() {
+    webTestClient.nonExistingVisitors(
+      MOORLAND_PRISONER.prison,
+      officialVisitId = scheduledVisit?.officialVisitId!!,
+      request = OfficialVisitUpdateVisitorsRequest(
+        officialVisitors = listOf(
+          OfficialVisitor(
+            officialVisitorId = Long.MAX_VALUE,
+            visitorTypeCode = VisitorType.CONTACT,
+            relationshipCode = "POM",
+            contactId = scheduledVisit?.visitorAndContactIds?.first()?.second,
+            prisonerContactId = 456,
+            leadVisitor = false,
+            assistedVisit = true,
+            assistedNotes = "visitor notes updated",
+            visitorEquipment = VisitorEquipment(""),
+          ),
+        ),
+      ),
+    )
   }
 
   @Test
@@ -372,6 +412,22 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isOk
+
+  private fun WebTestClient.nonExistingVisitors(
+    prisonCode: String,
+    officialVisitId: Long,
+    request: OfficialVisitUpdateVisitorsRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = this
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/visitors")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().is4xxClientError
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Request contains visitors which do not exist on official visit with id $officialVisitId")
 
   private fun WebTestClient.notExistentOfficialVisit(
     request: OfficialVisitUpdateSlotRequest,
