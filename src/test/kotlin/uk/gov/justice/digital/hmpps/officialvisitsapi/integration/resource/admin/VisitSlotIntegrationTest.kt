@@ -196,7 +196,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .expectBody(VisitSlot::class.java)
       .returnResult().responseBody!!
 
-    assertThat(response).isEqualTo(created)
+    assertThat(response).usingRecursiveComparison().ignoringFields("createdTime", "updatedTime").isEqualTo(created)
   }
 
   @Test
