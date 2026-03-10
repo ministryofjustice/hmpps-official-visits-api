@@ -111,35 +111,33 @@ class OfficialVisitUpdateService(
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
-    val existingVisitors = ove.officialVisitors()
+    val existingVisitors = ove.officialVisitors().associateBy { it.officialVisitorId }
 
-    val visitorsToAdd = request.officialVisitors.filter {
-      it.officialVisitorId !in existingVisitors.map { existing -> existing.officialVisitorId }
-    }
+    val (newVisitors, updatedVisitors, removedVisitors) = run {
+      val new = request.officialVisitors.filter { it.isNewVisitor() }.associateBy { it.officialVisitorId }
+      val updates = request.officialVisitors.filterNot { it.isNewVisitor() }.associateBy { it.officialVisitorId }
+      val removals = existingVisitors.values.filterNot { new.plus(updates).containsKey(it.officialVisitorId) }
 
-    val visitorsToUpdate = request.officialVisitors.filter {
-      it.officialVisitorId in existingVisitors.map { existing -> existing.officialVisitorId }
-    }.associateBy { it.officialVisitorId }
+      require(updates.keys.all { existingVisitors.containsKey(it) }) {
+        "Request contains visitors which do not exist on official visit with id $officialVisitId"
+      }
 
-    val visitorsToRemove = existingVisitors.filter {
-      it.officialVisitorId !in request.officialVisitors.map { req -> req.officialVisitorId }
+      Triple(new, updates, removals)
     }
 
     val matchingContacts = request.getMatchingContactDetails(ove.prisonerNumber).filterNotNull()
-
-    val visitorsAdded = addNewVisitors(ove, visitorsToAdd, matchingContacts, user)
-    val visitorsDeleted = deleteExistingVisitors(ove, visitorsToRemove)
-    val visitorsUpdated = updateExistingVisitors(visitorsToUpdate, matchingContacts, user)
 
     return OfficialVisitUpdateVisitorsResponse(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
       prisonerNumber = ove.prisonerNumber,
-      visitorsAdded = visitorsAdded,
-      visitorsDeleted = visitorsDeleted,
-      visitorsUpdated = visitorsUpdated,
+      visitorsAdded = addNewVisitors(ove, newVisitors.values, matchingContacts, user),
+      visitorsDeleted = deleteExistingVisitors(ove, removedVisitors),
+      visitorsUpdated = updateExistingVisitors(updatedVisitors, matchingContacts, user),
     )
   }
+
+  private fun OfficialVisitor.isNewVisitor() = officialVisitorId == 0L
 
   private fun deleteExistingVisitors(ove: OfficialVisitEntity, visitorsToRemove: List<OfficialVisitorEntity>) = visitorsToRemove.map { visitor ->
     ove.removeVisitor(visitor)
@@ -148,7 +146,7 @@ class OfficialVisitUpdateService(
 
   private fun addNewVisitors(
     visit: OfficialVisitEntity,
-    visitorsToAdd: List<OfficialVisitor>,
+    visitorsToAdd: Collection<OfficialVisitor>,
     matchingContacts: List<PrisonerContact>,
     user: User,
   ) = buildList {
