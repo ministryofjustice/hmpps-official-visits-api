@@ -10,21 +10,17 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
-import java.time.DayOfWeek
-import java.time.LocalTime
 import java.util.UUID
 
 class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
@@ -40,20 +36,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
     assistedNotes = "Wheelchair access needed",
   )
 
-  private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
-
-  private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 1,
-    visitDate = visitDateInTheFuture,
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    officialVisitors = listOf(officialVisitor),
-  )
+  private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
   @BeforeEach
   @Transactional
@@ -104,7 +87,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
       visitStatus isEqualTo VisitStatusType.SCHEDULED
       staffNotes isEqualTo nextMondayAt9.staffNotes
       prisonerNotes isEqualTo nextMondayAt9.prisonerNotes
-      visitDate isEqualTo visitDateInTheFuture
+      visitDate isEqualTo nextMondayAt9.visitDate
       startTime isEqualTo nextMondayAt9.startTime
       endTime isEqualTo nextMondayAt9.endTime
     }
