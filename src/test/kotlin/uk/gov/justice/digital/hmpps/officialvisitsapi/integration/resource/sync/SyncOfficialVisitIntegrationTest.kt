@@ -93,13 +93,8 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     personalRelationshipsApi().stubPrisonerContactRelationships(MOORLAND_PRISONER.number, 2L)
 
     // Stub locations for visits
-    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
-    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
-      MOORLAND,
-      listOf(
-        moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
-      ),
-    )
+    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation)
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation))
   }
 
   @AfterEach

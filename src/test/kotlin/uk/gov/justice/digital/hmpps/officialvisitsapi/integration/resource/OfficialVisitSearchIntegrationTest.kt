@@ -12,12 +12,12 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.location
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
@@ -34,8 +33,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
-import java.time.DayOfWeek
-import java.time.LocalTime
 import java.util.UUID
 
 class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
@@ -51,28 +48,9 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
-  private final val startDate = today().next(DayOfWeek.MONDAY)
+  private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
-  private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 1,
-    visitDate = startDate,
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    searchTypeCode = SearchLevelType.PAT,
-    officialVisitors = listOf(officialVisitor),
-  )
-
-  private val nextWednesdayAt9 = nextMondayAt9.copy(
-    prisonVisitSlotId = 4,
-    visitDate = startDate.next(DayOfWeek.WEDNESDAY),
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-  )
+  private val nextWednesdayAt9 = createOfficialVisitRequest(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
   @BeforeEach
   @Transactional
@@ -117,8 +95,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val searchRequest = OfficialVisitSummarySearchRequest(
         searchTerm = "    ${MOORLAND_PRISONER.firstName}    ",
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -154,8 +132,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val searchRequest = OfficialVisitSummarySearchRequest(
         searchTerm = "    ${MOORLAND_PRISONER.number}    ",
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -190,8 +168,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
       val searchRequest = OfficialVisitSummarySearchRequest(
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -218,8 +196,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val searchRequest = OfficialVisitSummarySearchRequest(
         searchTerm = "    UNKNOWN    ",
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -264,8 +242,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       }
 
       val searchRequest = OfficialVisitSummarySearchRequest(
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -340,8 +318,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       }
 
       val searchRequest = OfficialVisitSummarySearchRequest(
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -382,8 +360,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     @Test
     fun `should fail on invalid search terms`() {
       val searchRequest = OfficialVisitSummarySearchRequest(
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -396,8 +374,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     @Test
     fun `should fail on invalid page criteria`() {
       val searchRequest = OfficialVisitSummarySearchRequest(
-        startDate = startDate,
-        endDate = startDate.next(DayOfWeek.WEDNESDAY),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextWednesdayAt9.visitDate,
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),
@@ -410,8 +388,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     @Test
     fun `should fail on invalid dates`() {
       val searchRequest = OfficialVisitSummarySearchRequest(
-        startDate = startDate,
-        endDate = startDate.minusDays(1),
+        startDate = nextMondayAt9.visitDate,
+        endDate = nextMondayAt9.visitDate!!.minusDays(1),
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),

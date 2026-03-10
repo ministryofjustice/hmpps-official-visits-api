@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
 class TestApiClient(private val webTestClient: WebTestClient, private val jwtAuthHelper: JwtAuthorisationHelper) {
-  fun createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser) = webTestClient
+  fun createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .post()
     .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
     .bodyValue(request)

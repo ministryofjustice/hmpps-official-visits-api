@@ -11,16 +11,14 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PR
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
@@ -34,14 +32,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Pe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
-import java.time.DayOfWeek
 import java.time.LocalTime
-import java.util.UUID
 
 class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
-  private val location = moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
+  private val location = moorlandLocation
 
-  private val listOfOfficialVisitors = listOf(
+  private val prisonerVisitors = listOf(
     OfficialVisitor(
       visitorTypeCode = VisitorType.CONTACT,
       relationshipCode = "FRI",
@@ -64,23 +60,9 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     ),
   )
 
-  private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
-
-  private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 1,
-    visitDate = visitDateInTheFuture,
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-    dpsLocationId = location.id,
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    searchTypeCode = SearchLevelType.PAT,
-    officialVisitors = listOfOfficialVisitors,
-  )
-
   private var scheduledVisit: CreateOfficialVisitResponse? = null
+
+  private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, prisonerVisitors)
 
   @BeforeEach
   @Transactional
@@ -125,7 +107,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     )
 
     // Before each test, create a visit and reset the stubbed events
-    scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+    scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9)
     stubEvents.reset()
   }
 
@@ -133,7 +115,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   fun `should update the visit type and slot`() {
     val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1,
-      visitDate = visitDateInTheFuture.plusMonths(20),
+      visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       dpsLocationId = location.id,
@@ -162,7 +144,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     val result = officialVisitRepository.findById(scheduledVisit?.officialVisitId!!).get()
 
     with(result) {
-      visitDate isEqualTo visitDateInTheFuture.plusMonths(20)
+      visitDate isEqualTo nextMondayAt9.visitDate.plusMonths(20)
       startTime isEqualTo LocalTime.of(10, 0)
       endTime isEqualTo LocalTime.of(11, 0)
       dpsLocationId isEqualTo location.id
@@ -206,6 +188,8 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should add, update and delete visitors as requested`() {
+    stubEvents.assertNoEvents()
+
     // Update the visitors - add one, delete one, update one
     webTestClient.updateVisitors(
       MOORLAND_PRISONER.prison,
@@ -245,6 +229,21 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
     // Get the visit to check the changes have been applied
     val result = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND, scheduledVisit?.officialVisitId!!)
+
+    stubEvents.assertEventsSize(4)
+
+    stubEvents.assertHasEvent(
+      event = OutboundEvent.VISIT_UPDATED,
+      additionalInfo = VisitInfo(
+        source = Source.DPS,
+        username = MOORLAND_PRISON_USER.username,
+        prisonId = MOORLAND,
+        officialVisitId = result.officialVisitId,
+      ),
+      personReference = PersonReference(
+        nomsNumber = MOORLAND_PRISONER.number,
+      ),
+    )
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_UPDATED,
@@ -312,10 +311,33 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should fail to update a visit when the visitor ID does not exist`() {
+    webTestClient.nonExistingVisitors(
+      MOORLAND_PRISONER.prison,
+      officialVisitId = scheduledVisit?.officialVisitId!!,
+      request = OfficialVisitUpdateVisitorsRequest(
+        officialVisitors = listOf(
+          OfficialVisitor(
+            officialVisitorId = Long.MAX_VALUE,
+            visitorTypeCode = VisitorType.CONTACT,
+            relationshipCode = "POM",
+            contactId = scheduledVisit?.visitorAndContactIds?.first()?.second,
+            prisonerContactId = 456,
+            leadVisitor = false,
+            assistedVisit = true,
+            assistedNotes = "visitor notes updated",
+            visitorEquipment = VisitorEquipment(""),
+          ),
+        ),
+      ),
+    )
+  }
+
+  @Test
   fun `should fail to update a visit when the visit ID does not exist`() {
     val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1,
-      visitDate = visitDateInTheFuture.plusMonths(20),
+      visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       dpsLocationId = location.id,
@@ -334,7 +356,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   fun `should fail to update comments when the visit ID does not exist`() {
     val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1,
-      visitDate = visitDateInTheFuture.plusMonths(20),
+      visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       dpsLocationId = location.id,
@@ -390,6 +412,22 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isOk
+
+  private fun WebTestClient.nonExistingVisitors(
+    prisonCode: String,
+    officialVisitId: Long,
+    request: OfficialVisitUpdateVisitorsRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = this
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/visitors")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().is4xxClientError
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Request contains visitors which do not exist on official visit with id $officialVisitId")
 
   private fun WebTestClient.notExistentOfficialVisit(
     request: OfficialVisitUpdateSlotRequest,

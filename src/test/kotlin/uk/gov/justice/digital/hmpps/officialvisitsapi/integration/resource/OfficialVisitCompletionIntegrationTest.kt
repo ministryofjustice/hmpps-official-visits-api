@@ -9,21 +9,19 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PR
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitorAttendance
@@ -35,8 +33,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Pr
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
-import java.time.DayOfWeek
-import java.time.LocalTime
 import java.util.UUID
 
 class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
@@ -54,21 +50,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
-  private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
-
-  private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 1,
-    visitDate = visitDateInTheFuture,
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-    dpsLocationId = location.id,
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    searchTypeCode = SearchLevelType.PAT,
-    officialVisitors = listOf(officialVisitor),
-  )
+  private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
   @BeforeEach
   @Transactional

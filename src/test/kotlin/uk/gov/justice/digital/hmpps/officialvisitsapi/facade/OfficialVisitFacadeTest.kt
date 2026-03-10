@@ -256,4 +256,14 @@ class OfficialVisitFacadeTest {
       source = Source.DPS,
     )
   }
+
+  @Test
+  fun `should fail to update visitors if user is not in the correct caseload`() {
+    val request: OfficialVisitUpdateVisitorsRequest = mock()
+
+    assertThrows<CaseloadAccessException> {
+      facade.updateVisitors(1, MOORLAND, request, PENTONVILLE_PRISON_USER)
+    }
+      .message isEqualTo "This visit cannot be updated in a prison which is not the active caseload for the user"
+  }
 }
