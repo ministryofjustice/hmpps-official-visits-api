@@ -10,56 +10,25 @@ import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlotSummary
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
 class ReconciliationIntegrationTest : IntegrationTestBase() {
 
-  private val officialVisitor = OfficialVisitor(
-    visitorTypeCode = VisitorType.CONTACT,
-    relationshipCode = "POM",
-    contactId = 123,
-    prisonerContactId = 456,
-    leadVisitor = true,
-    assistedVisit = false,
-  )
+  private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(Moorland.VISITOR))
 
-  private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
-
-  private val nextMondayAt9 = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 1,
-    visitDate = visitDateInTheFuture,
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    officialVisitors = listOf(officialVisitor),
-  )
-
-  private final val nextFridayAt11 = nextMondayAt9.copy(
-    visitDate = visitDateInTheFuture.next(DayOfWeek.FRIDAY),
-    startTime = LocalTime.of(11, 0),
-    endTime = LocalTime.of(12, 0),
-    prisonVisitSlotId = 9,
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-  )
+  private final val nextFridayAt11 = createOfficialVisitRequest(Moorland.FRIDAY_11_TO_12_VISIT_SLOT, listOf(Moorland.VISITOR))
 
   @BeforeEach
   @Transactional
@@ -73,8 +42,8 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
         prisonerContact(
           prisonerNumber = MOORLAND_PRISONER.number,
           type = "O",
-          contactId = 123,
-          prisonerContactId = 456,
+          contactId = Moorland.VISITOR.contactId!!,
+          prisonerContactId = Moorland.VISITOR.prisonerContactId!!,
         ),
       ),
     )
@@ -139,7 +108,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY), true)
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, nextMondayAt9.visitDate, nextFridayAt11.visitDate, true)
     officialVisits.size isEqualTo 2
     with(officialVisits.first()) {
       prisonCode isEqualTo MOORLAND_PRISONER.prison
@@ -155,7 +124,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     }
     with(officialVisits.last()) {
       prisonVisitSlotId isEqualTo 9
-      visitDate isEqualTo visitDateInTheFuture.next(DayOfWeek.FRIDAY)
+      visitDate isEqualTo nextFridayAt11.visitDate
       visitors.size isEqualTo 1
       dpsLocationId isEqualTo UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
       startTime isEqualTo LocalTime.of(11, 0)
@@ -172,13 +141,13 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY), false)
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, nextMondayAt9.visitDate, nextFridayAt11.visitDate, false)
     officialVisits.size isEqualTo 2
   }
 
   @Test
   fun `Get empty official visits list between the  invalid visit dates and  currentTermOnly set to true`() {
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture, visitDateInTheFuture.next(DayOfWeek.FRIDAY), true)
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, nextMondayAt9.visitDate, nextFridayAt11.visitDate, true)
     officialVisits.size isEqualTo 0
   }
 
@@ -187,7 +156,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, visitDateInTheFuture.next(DayOfWeek.FRIDAY))
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner(MOORLAND_PRISONER.number, nextFridayAt11.visitDate)
     officialVisits.size isEqualTo 2
   }
 
@@ -196,7 +165,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
-    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner("123", visitDateInTheFuture.next(DayOfWeek.FRIDAY))
+    val officialVisits = webTestClient.getAllOfficialVisitForPrisoner("123", nextFridayAt11.visitDate)
     officialVisits.size isEqualTo 0
   }
 

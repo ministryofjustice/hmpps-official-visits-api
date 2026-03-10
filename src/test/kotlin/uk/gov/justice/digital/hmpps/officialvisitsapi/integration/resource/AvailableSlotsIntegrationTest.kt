@@ -11,15 +11,14 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsidepris
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
@@ -42,19 +41,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
-  private final val nextFridaySlot9At11 = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 9,
-    visitDate = today().next(FRIDAY),
-    startTime = LocalTime.of(11, 0),
-    endTime = LocalTime.of(12, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    searchTypeCode = SearchLevelType.PAT,
-    officialVisitors = listOf(officialVisitor),
-  )
+  private final val nextFridaySlot9At11 = createOfficialVisitRequest(Moorland.FRIDAY_11_TO_12_VISIT_SLOT.copy(date = today().next(FRIDAY)), listOf(officialVisitor))
 
   @BeforeEach
   @Transactional
