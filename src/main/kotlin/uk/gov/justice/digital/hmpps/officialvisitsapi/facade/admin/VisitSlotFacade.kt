@@ -17,6 +17,8 @@ class VisitSlotFacade(
 
   fun getVisitSlot(visitSlotId: Long) = visitSlotService.getById(visitSlotId)
 
+  fun hasVisitsForVisitSlot(visitSlotId: Long) = visitSlotService.hasVisitsForVisitSlot(visitSlotId)
+
   fun createVisitSlot(prisonTimeSlotId: Long, request: CreateVisitSlotRequest, user: User) = visitSlotService.create(prisonTimeSlotId, request, user).also {
     outboundEventsService.send(
       outboundEvent = OutboundEvent.VISIT_SLOT_CREATED,

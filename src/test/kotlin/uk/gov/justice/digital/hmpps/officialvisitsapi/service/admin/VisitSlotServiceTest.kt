@@ -74,6 +74,24 @@ class VisitSlotServiceTest {
   }
 
   @Test
+  fun `should return true when visits exist for a prison visit slot`() {
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
+
+    val result = service.hasVisitsForVisitSlot(1L)
+
+    assertThat(result).isTrue()
+  }
+
+  @Test
+  fun `should return false when no visits exist for a prison visit slot`() {
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(2L)).thenReturn(false)
+
+    val result = service.hasVisitsForVisitSlot(2L)
+
+    assertThat(result).isFalse()
+  }
+
+  @Test
   fun `should create a visit slot and return it`() {
     val request = CreateVisitSlotRequest(dpsLocationId = UUID.randomUUID(), maxAdults = 10, maxGroups = 5, maxVideo = 2)
     val timeSlotEntity = prisonTimeSlotEntity()

@@ -34,6 +34,8 @@ class VisitSlotService(
     return enhanceVisitSlotDetails(visitSlotEntity, timeSlotEntity)
   }
 
+  fun hasVisitsForVisitSlot(prisonVisitSlotId: Long): Boolean = officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(prisonVisitSlotId)
+
   private fun enhanceVisitSlotDetails(
     visitSlotEntity: PrisonVisitSlotEntity,
     timeSlotEntity: PrisonTimeSlotEntity,

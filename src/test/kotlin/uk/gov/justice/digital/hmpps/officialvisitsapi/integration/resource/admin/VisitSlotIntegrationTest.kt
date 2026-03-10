@@ -200,24 +200,45 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should create update and delete visit slot for admin role`() {
-    val createRequest = createVisitSlotRequest()
+  fun `should return true when visits exist for visit slot`() {
+    val created = createOfficialVisitAndVisitSlot()
 
-    val created = webTestClient.post()
-      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
+    webTestClient.get()
+      .uri("/admin/visit/visit-slot/{visitSlotId}", created.visitSlotId)
       .accept(MediaType.APPLICATION_JSON)
-      .contentType(MediaType.APPLICATION_JSON)
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
           roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
         ),
       )
-      .bodyValue(createRequest)
       .exchange()
       .expectStatus().isOk
-      .expectBody<VisitSlot>()
-      .returnResult().responseBody!!
+      .expectBody(Boolean::class.java)
+      .consumeWith { response -> assertThat(response.responseBody).isTrue() }
+  }
+
+  @Test
+  fun `should return false when no visits exist for visit slot`() {
+    val created = createVisitSlot()
+    webTestClient.get()
+      .uri("/admin/visit/visit-slot/{visitSlotId}", created.visitSlotId)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
+        ),
+      )
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(Boolean::class.java)
+      .consumeWith { response -> assertThat(response.responseBody).isFalse() }
+  }
+
+  @Test
+  fun `should create update and delete visit slot for admin role`() {
+    val created = createVisitSlot()
 
     assertThat(created.prisonTimeSlotId).isEqualTo(1)
     assertThat(created.dpsLocationId).isEqualTo(location.id)
@@ -260,23 +281,25 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should not delete visit slot when official visits exist`() {
     // create slot
-    val createRequest = createVisitSlotRequest()
+    val created = createOfficialVisitAndVisitSlot()
 
-    val created = webTestClient.post()
-      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
+    webTestClient.delete()
+      .uri("/admin/visit-slot/id/{visitSlotId}", created.visitSlotId)
       .accept(MediaType.APPLICATION_JSON)
-      .contentType(MediaType.APPLICATION_JSON)
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
           roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
         ),
       )
-      .bodyValue(createRequest)
       .exchange()
-      .expectStatus().isOk
-      .expectBody<VisitSlot>()
-      .returnResult().responseBody!!
+      .expectStatus().isEqualTo(org.springframework.http.HttpStatus.CONFLICT)
+      .expectBody().jsonPath("$.userMessage")
+      .isEqualTo("The prison visit slot has visits associated with it and cannot be deleted.")
+  }
+
+  private fun createOfficialVisitAndVisitSlot(): VisitSlot {
+    val created = createVisitSlot()
 
     // Stub a known contact
     personalRelationshipsApi().stubAllContacts(
@@ -335,20 +358,27 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
     )
 
     testAPIClient.createOfficialVisit(officialVisitRequest, MOORLAND_PRISON_USER)
+    return created
+  }
 
-    webTestClient.delete()
-      .uri("/admin/visit-slot/id/{visitSlotId}", created.visitSlotId)
+  private fun createVisitSlot(): VisitSlot {
+    val createRequest = createVisitSlotRequest()
+
+    return webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
       .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
           roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
         ),
       )
+      .bodyValue(createRequest)
       .exchange()
-      .expectStatus().isEqualTo(org.springframework.http.HttpStatus.CONFLICT)
-      .expectBody().jsonPath("$.userMessage")
-      .isEqualTo("The prison visit slot has visits associated with it and cannot be deleted.")
+      .expectStatus().isOk
+      .expectBody<VisitSlot>()
+      .returnResult().responseBody!!
   }
 
   private fun updateVisitSlotRequest(): UpdateVisitSlotRequest = UpdateVisitSlotRequest(maxAdults = 8, maxGroups = 4, maxVideo = 1)

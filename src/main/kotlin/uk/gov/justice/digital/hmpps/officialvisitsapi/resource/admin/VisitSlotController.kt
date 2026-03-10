@@ -59,6 +59,23 @@ class VisitSlotController(private val facade: VisitSlotFacade) {
     @PathVariable visitSlotId: Long,
   ): VisitSlot = facade.getVisitSlot(visitSlotId)
 
+  @GetMapping("/visit/visit-slot/{visitSlotId}")
+  @Operation(
+    summary = "Check whether any visits are associated with a prison visit slot",
+    description = "Requires role: ROLE_OFFICIAL_VISITS_ADMIN. Returns true if there are any visits referencing the given prison visit slot id.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Boolean indicating whether visits exist for the visit slot", content = [Content(schema = Schema(implementation = Boolean::class))]),
+      ApiResponse(responseCode = "403", description = "Access denied"),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
+  fun hasVisitsForVisitSlot(
+    @Parameter(description = "The internal ID for the prison visit slot", required = true)
+    @PathVariable visitSlotId: Long,
+  ): Boolean = facade.hasVisitsForVisitSlot(visitSlotId)
+
   @PostMapping(path = ["/time-slot/{prisonTimeSlotId}/visit-slot"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Create a visit slot in an existing prison time slot",
