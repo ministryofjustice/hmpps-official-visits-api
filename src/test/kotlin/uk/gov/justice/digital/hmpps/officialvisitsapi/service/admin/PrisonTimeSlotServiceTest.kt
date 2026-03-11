@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.Update
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummaryItem
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
@@ -44,14 +45,15 @@ class PrisonTimeSlotServiceTest {
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val prisonerSearchClient: PrisonerSearchClient = mock()
   private val locationService: LocationsService = mock()
-  private val timeSlotService = PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService)
+  private val officialVisitRepository: OfficialVisitRepository = mock()
+  private val timeSlotService = PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
 
   private val dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
   private val prisonTimeSlotService =
-    PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService)
+    PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository)
 
   @AfterEach
   fun afterEach() {
@@ -376,6 +378,45 @@ class PrisonTimeSlotServiceTest {
     )
 
     verify(prisonTimeSlotRepository).findAllByPrisonCode(MOORLAND_PRISONER.prison)
+    verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
+    verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should return summary with visit slot has visit when hasVisit is true`() {
+    val timeSlotEntity = PrisonTimeSlotEntity(
+      prisonTimeSlotId = 1L,
+      prisonCode = MOORLAND_PRISONER.prison,
+      dayCode = DayType.MON,
+      startTime = LocalTime.of(10, 0),
+      endTime = LocalTime.of(11, 0),
+      effectiveDate = LocalDate.now(),
+      expiryDate = LocalDate.now().plusDays(365),
+      createdBy = "Test",
+      createdTime = LocalDateTime.now(),
+    )
+
+    val visitSlotEntity = PrisonVisitSlotEntity(
+      prisonVisitSlotId = 1L,
+      prisonTimeSlotId = 1L,
+      dpsLocationId = dpsLocationId,
+      maxAdults = 10,
+      createdBy = "Test",
+      createdTime = LocalDateTime.now(),
+    )
+
+    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(visitSlotEntity))
+    whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
+
+    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(officialVisitLocations(dpsLocationId))
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(visitSlotEntity.prisonVisitSlotId)).thenReturn(true)
+
+    val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, true)
+
+    assertThat(summary.timeSlots.first().visitSlots.first().hasVisit).isTrue()
+
+    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }

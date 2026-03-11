@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeS
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummaryItem
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
@@ -29,6 +30,7 @@ class PrisonTimeSlotService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationService: LocationsService,
+  private val officialVisitRepository: OfficialVisitRepository,
 ) {
   @Transactional(readOnly = true)
   fun getPrisonTimeSlotById(prisonTimeSlotId: Long): TimeSlot {
@@ -139,8 +141,11 @@ class PrisonTimeSlotService(
         )
       }
     }
+    return decorateHasVisits(decoratedSlots)
+  }
 
-    return decoratedSlots
+  private fun decorateHasVisits(decoratedSlots: List<VisitSlot>): List<VisitSlot> = decoratedSlots.map { slot ->
+    slot.copy(hasVisit = officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(slot.visitSlotId))
   }
 
   private fun getCapacityForVisitType(location: Location): Int? = location.usage?.firstNotNullOfOrNull { dto -> if (dto.usageType.name == "VISIT") dto.capacity else null }

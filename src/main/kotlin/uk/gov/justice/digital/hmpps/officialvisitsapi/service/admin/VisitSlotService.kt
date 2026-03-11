@@ -31,17 +31,8 @@ class VisitSlotService(
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
     val timeSlotEntity = prisonTimeSlotRepository.findById(visitSlotEntity.prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${visitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
-    return enhanceVisitSlotDetails(visitSlotEntity, timeSlotEntity)
-  }
-
-  private fun enhanceVisitSlotDetails(
-    visitSlotEntity: PrisonVisitSlotEntity,
-    timeSlotEntity: PrisonTimeSlotEntity,
-  ): VisitSlot {
-    val officialVisitLocation = locationsService.getLocationById(visitSlotEntity.dpsLocationId)
-    val toVisitSlotModel = visitSlotEntity.toVisitSlotModel(timeSlotEntity.prisonCode)
-    val visitSlot = toVisitSlotModel.copy(locationDescription = officialVisitLocation?.localName ?: "Unknown")
-    return visitSlot
+    val enhanceVisitSlotDetails = enhanceVisitSlotDetails(visitSlotEntity, timeSlotEntity)
+    return enhanceVisitSlotDetails.copy(hasVisit = officialVisitsExistFor(enhanceVisitSlotDetails.visitSlotId))
   }
 
   fun create(prisonTimeSlotId: Long, request: CreateVisitSlotRequest, user: User): VisitSlot {
@@ -81,7 +72,8 @@ class VisitSlotService(
     )
 
     val toVisitSlotModel = prisonVisitSlotRepository.saveAndFlush(changed)
-    return enhanceVisitSlotDetails(toVisitSlotModel, timeSlotEntity)
+    val enhanceVisitSlotDetails = enhanceVisitSlotDetails(toVisitSlotModel, timeSlotEntity)
+    return enhanceVisitSlotDetails.copy(hasVisit = officialVisitsExistFor(enhanceVisitSlotDetails.visitSlotId))
   }
 
   fun delete(prisonVisitSlotId: Long): VisitSlot {
@@ -98,6 +90,15 @@ class VisitSlotService(
     prisonVisitSlotRepository.deleteById(prisonVisitSlotId)
 
     return visitSlotEntity.toVisitSlotModel(timeSlotEntity.prisonCode)
+  }
+
+  private fun enhanceVisitSlotDetails(
+    visitSlotEntity: PrisonVisitSlotEntity,
+    timeSlotEntity: PrisonTimeSlotEntity,
+  ): VisitSlot {
+    val officialVisitLocation = locationsService.getLocationById(visitSlotEntity.dpsLocationId)
+    val toVisitSlotModel = visitSlotEntity.toVisitSlotModel(timeSlotEntity.prisonCode)
+    return toVisitSlotModel.copy(locationDescription = officialVisitLocation?.localName ?: "Unknown")
   }
 
   private fun officialVisitsExistFor(prisonVisitSlotId: Long): Boolean = officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(prisonVisitSlotId)
