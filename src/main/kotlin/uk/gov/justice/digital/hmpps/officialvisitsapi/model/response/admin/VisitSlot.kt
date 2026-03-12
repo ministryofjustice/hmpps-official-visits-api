@@ -36,6 +36,9 @@ data class VisitSlot(
   @Schema(description = "Maximum groups allowed in the visit slot")
   val maxGroups: Int? = null,
 
+  @Schema(description = "Whether there are any visits booked for this visit slot")
+  val hasVisit: Boolean = false,
+
   @Schema(description = "Username who created the visit slot", example = "admin")
   val createdBy: String,
 
