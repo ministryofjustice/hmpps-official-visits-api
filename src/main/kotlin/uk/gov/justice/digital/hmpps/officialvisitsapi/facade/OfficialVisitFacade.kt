@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitUpdat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 
@@ -30,6 +31,7 @@ class OfficialVisitFacade(
   private val officialVisitCancellationService: OfficialVisitCancellationService,
   private val officialVisitUpdateService: OfficialVisitUpdateService,
   private val outboundEventsService: OutboundEventsService,
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
