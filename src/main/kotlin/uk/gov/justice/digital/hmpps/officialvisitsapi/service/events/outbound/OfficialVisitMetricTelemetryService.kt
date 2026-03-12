@@ -31,6 +31,7 @@ data class OfficialVisitMetricTelemetry(
     "username" to additionalInformation.username,
     "source" to additionalInformation.source.toString(),
   )
+
   // code change condition required to override only for few events
   override fun metrics() = mapOf(additionalInformation.hoursBeforeStartTimeMetric(), additionalInformation.numberOfVisitors())
 }
