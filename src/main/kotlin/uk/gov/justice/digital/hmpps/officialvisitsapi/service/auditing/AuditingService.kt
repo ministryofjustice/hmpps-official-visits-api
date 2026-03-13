@@ -1,12 +1,34 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing
 
+import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AuditedEventEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import java.time.LocalDateTime
 import kotlin.properties.Delegates
 
-fun auditCreateEvent(initializer: CreateDsl.() -> Unit): AuditedEventEntity = CreateDsl().apply(initializer).toAuditEvent()
+@Service
+class AuditingService(private val auditedEventRepository: AuditedEventRepository) {
+  fun recordAuditEvent(auditEvent: AuditEventDto) {
+    auditedEventRepository.saveAndFlush(
+      AuditedEventEntity(
+        officialVisitId = auditEvent.officialVisitId,
+        prisonCode = auditEvent.prisonCode,
+        prisonerNumber = auditEvent.prisonerNumber,
+        eventSource = auditEvent.eventSource,
+        userName = auditEvent.username,
+        userFullName = auditEvent.userFullName,
+        summaryText = auditEvent.summaryText,
+        detailText = auditEvent.detailText,
+        eventDateTime = auditEvent.eventDateTime,
+      ),
+    )
+  }
+}
 
-fun auditChangeEvent(initializer: ChangeDsl.() -> Unit): AuditedEventEntity = ChangeDsl().apply(initializer).toAuditEvent()
+fun auditCreateEvent(initializer: CreateDsl.() -> Unit): AuditEventDto = CreateDsl().apply(initializer).toAuditEvent()
+
+fun auditChangeEvent(initializer: ChangeDsl.() -> Unit): AuditEventDto = ChangeDsl().apply(initializer).toAuditEvent()
 
 @DslMarker
 annotation class AuditEventDslMarker
@@ -16,8 +38,9 @@ abstract class AuditEventDsl {
   private var officialVisitId by Delegates.notNull<Long>()
   private lateinit var summaryText: String
   private lateinit var eventSource: String
+  private lateinit var prisonCode: String
+  private lateinit var prisonerNumber: String
   private lateinit var user: User
-  private lateinit var prisonerDetails: PrisonerDetails
 
   fun officialVisitId(ovId: Long) {
     officialVisitId = ovId
@@ -31,36 +54,31 @@ abstract class AuditEventDsl {
     eventSource = es
   }
 
+  fun prisonCode(pc: String) {
+    prisonCode = pc
+  }
+
+  fun prisonerNumber(pn: String) {
+    prisonerNumber = pn
+  }
+
   fun user(u: User) {
     user = u
   }
 
-  fun prisonerDetails(initializer: PrisonerDetails.() -> Unit) {
-    prisonerDetails = PrisonerDetails()
-    prisonerDetails.initializer()
-  }
-
   abstract fun detailsText(): String
 
-  open fun toAuditEvent(): AuditedEventEntity = run {
-    AuditedEventEntity(
+  open fun toAuditEvent(): AuditEventDto = run {
+    AuditEventDto(
       officialVisitId = officialVisitId,
-      prisonCode = prisonerDetails.prisonCode,
-      prisonDescription = prisonerDetails.prisonDescription,
-      prisonerNumber = prisonerDetails.prisonerNumber,
+      prisonCode = prisonCode,
+      prisonerNumber = prisonerNumber,
       eventSource = eventSource,
       username = user.username,
       userFullName = user.name,
       summaryText = summaryText,
       detailText = detailsText(),
     )
-  }
-
-  @AuditEventDslMarker
-  class PrisonerDetails {
-    lateinit var prisonCode: String
-    lateinit var prisonDescription: String
-    lateinit var prisonerNumber: String
   }
 }
 
@@ -103,3 +121,15 @@ class ChangeDsl : AuditEventDsl() {
     data class Change<T : Any>(val descriptiveText: String, val old: () -> T?, val new: () -> T?)
   }
 }
+
+data class AuditEventDto(
+  val officialVisitId: Long,
+  val prisonCode: String,
+  val prisonerNumber: String,
+  val eventSource: String,
+  val username: String,
+  val userFullName: String,
+  val summaryText: String,
+  val detailText: String,
+  val eventDateTime: LocalDateTime = LocalDateTime.now(),
+)

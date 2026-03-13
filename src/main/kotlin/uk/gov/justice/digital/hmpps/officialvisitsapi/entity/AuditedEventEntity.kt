@@ -1,25 +1,27 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.entity
 
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import org.hibernate.Hibernate
 import java.time.LocalDateTime
 
-// TODO and missing entity annotation
+@Entity(name = "audited_event")
 class AuditedEventEntity(
   @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   val auditedEventId: Long = 0L,
 
   val officialVisitId: Long,
 
   val prisonCode: String,
 
-  val prisonDescription: String,
-
   val prisonerNumber: String,
 
   val eventSource: String,
 
-  val username: String,
+  val userName: String,
 
   val userFullName: String,
 

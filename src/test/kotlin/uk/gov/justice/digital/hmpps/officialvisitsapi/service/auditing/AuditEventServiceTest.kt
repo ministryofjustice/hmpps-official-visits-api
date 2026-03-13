@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 
-class AuditEventFactoryTest {
+class AuditEventServiceTest {
   @Test
   fun `should be audit create event when recorded changes`() {
     val auditEvent = auditCreateEvent {
@@ -15,11 +15,8 @@ class AuditEventFactoryTest {
       summaryText("Test summary create text")
       eventSource("DPS")
       user(MOORLAND_PRISON_USER)
-      prisonerDetails {
-        prisonCode = "MDI"
-        prisonerNumber = "A1234AA"
-        prisonDescription = "Moorland"
-      }
+      prisonCode(MOORLAND)
+      prisonerNumber("A1234AA")
       detailsText("Details of create event")
     }
 
@@ -30,9 +27,7 @@ class AuditEventFactoryTest {
       eventDateTime isCloseTo now()
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo "A1234AA"
-      prisonDescription isEqualTo "Moorland"
       detailText isEqualTo "Details of create event"
     }
   }
@@ -44,11 +39,8 @@ class AuditEventFactoryTest {
       summaryText("Test summary change text")
       eventSource("DPS")
       user(MOORLAND_PRISON_USER)
-      prisonerDetails {
-        prisonCode = "MDI"
-        prisonerNumber = "A1234AA"
-        prisonDescription = "Moorland"
-      }
+      prisonCode(MOORLAND)
+      prisonerNumber("A1234AA")
       changes {
         change("FIELD_1", { 1 }, { 2 })
         change("FIELD_2", { "a" }, { "b" })
@@ -62,9 +54,7 @@ class AuditEventFactoryTest {
       eventDateTime isCloseTo now()
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo "A1234AA"
-      prisonDescription isEqualTo "Moorland"
       detailText isEqualTo "FIELD_1 changed from 1 to 2; FIELD_2 changed from a to b."
     }
   }
