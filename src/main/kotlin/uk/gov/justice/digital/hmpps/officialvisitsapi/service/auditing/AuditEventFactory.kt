@@ -4,18 +4,19 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AuditedEventEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import kotlin.properties.Delegates
 
-fun auditEvent(initializer: AuditEventDsl.() -> Unit): AuditedEventEntity? = AuditEventDsl().apply(initializer).toAuditEvent()
+fun auditCreateEvent(initializer: CreateDsl.() -> Unit): AuditedEventEntity = CreateDsl().apply(initializer).toAuditEvent()
+
+fun auditChangeEvent(initializer: ChangeDsl.() -> Unit): AuditedEventEntity = ChangeDsl().apply(initializer).toAuditEvent()
 
 @DslMarker
 annotation class AuditEventDslMarker
 
 @AuditEventDslMarker
-class AuditEventDsl {
+abstract class AuditEventDsl {
   private var officialVisitId by Delegates.notNull<Long>()
   private lateinit var summaryText: String
   private lateinit var eventSource: String
   private lateinit var user: User
-  private lateinit var changes: Changes
   private lateinit var prisonerDetails: PrisonerDetails
 
   fun officialVisitId(ovId: Long) {
@@ -34,21 +35,14 @@ class AuditEventDsl {
     user = u
   }
 
-  fun changes(initializer: Changes.() -> Unit) {
-    changes = Changes()
-    changes.initializer()
-  }
-
   fun prisonerDetails(initializer: PrisonerDetails.() -> Unit) {
     prisonerDetails = PrisonerDetails()
     prisonerDetails.initializer()
   }
 
-  fun toAuditEvent(): AuditedEventEntity? = run {
-    val changes = this.changes.changes()
+  abstract fun detailsText(): String
 
-    if (changes.isEmpty()) return null
-
+  open fun toAuditEvent(): AuditedEventEntity = run {
     AuditedEventEntity(
       officialVisitId = officialVisitId,
       prisonCode = prisonerDetails.prisonCode,
@@ -58,11 +52,42 @@ class AuditEventDsl {
       username = user.username,
       userFullName = user.name,
       summaryText = summaryText,
-      detailText = changes.joinToString(
-        separator = "; ",
-        postfix = ".",
-      ) { "${it.descriptiveText} changed from ${it.old()} to ${it.new()}" },
+      detailText = detailsText(),
     )
+  }
+
+  @AuditEventDslMarker
+  class PrisonerDetails {
+    lateinit var prisonCode: String
+    lateinit var prisonDescription: String
+    lateinit var prisonerNumber: String
+  }
+}
+
+@AuditEventDslMarker
+class CreateDsl : AuditEventDsl() {
+  private lateinit var detailsText: String
+
+  fun detailsText(detailsText: String) {
+    this.detailsText = detailsText
+  }
+
+  override fun detailsText(): String = detailsText
+}
+
+class ChangeDsl : AuditEventDsl() {
+  private lateinit var changes: Changes
+
+  fun changes(initializer: Changes.() -> Unit) {
+    changes = Changes()
+    changes.initializer()
+  }
+
+  override fun detailsText(): String = run {
+    changes.changes().joinToString(
+      separator = "; ",
+      postfix = ".",
+    ) { "${it.descriptiveText} changed from ${it.old()} to ${it.new()}" }
   }
 
   @AuditEventDslMarker
@@ -76,12 +101,5 @@ class AuditEventDsl {
     fun changes() = changes.filter { it.old() != it.new() }
 
     data class Change<T : Any>(val descriptiveText: String, val old: () -> T?, val new: () -> T?)
-  }
-
-  @AuditEventDslMarker
-  class PrisonerDetails {
-    lateinit var prisonCode: String
-    lateinit var prisonDescription: String
-    lateinit var prisonerNumber: String
   }
 }

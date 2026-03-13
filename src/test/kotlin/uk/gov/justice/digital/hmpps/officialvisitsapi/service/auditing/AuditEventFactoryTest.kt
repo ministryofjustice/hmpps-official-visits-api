@@ -8,12 +8,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 
 class AuditEventFactoryTest {
-
   @Test
-  fun `should be no audit event when no recorded changes`() {
-    val auditEvent = auditEvent {
+  fun `should be audit create event when recorded changes`() {
+    val auditEvent = auditCreateEvent {
       officialVisitId(1)
-      summaryText("Test summary")
+      summaryText("Test summary create text")
       eventSource("DPS")
       user(MOORLAND_PRISON_USER)
       prisonerDetails {
@@ -21,19 +20,28 @@ class AuditEventFactoryTest {
         prisonerNumber = "A1234AA"
         prisonDescription = "Moorland"
       }
-      changes {
-        change("ID", { 1 }, { 1 })
-      }
+      detailsText("Details of create event")
     }
 
-    auditEvent isEqualTo null
+    with(auditEvent) {
+      officialVisitId isEqualTo 1
+      summaryText isEqualTo "Test summary create text"
+      eventSource isEqualTo "DPS"
+      eventDateTime isCloseTo now()
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo "A1234AA"
+      prisonDescription isEqualTo "Moorland"
+      detailText isEqualTo "Details of create event"
+    }
   }
 
   @Test
-  fun `should be audit event when recorded changes`() {
-    val auditEvent = auditEvent {
+  fun `should be audit change event when recorded changes`() {
+    val auditEvent = auditChangeEvent {
       officialVisitId(1)
-      summaryText("Test summary text")
+      summaryText("Test summary change text")
       eventSource("DPS")
       user(MOORLAND_PRISON_USER)
       prisonerDetails {
@@ -47,9 +55,9 @@ class AuditEventFactoryTest {
       }
     }
 
-    with(auditEvent!!) {
+    with(auditEvent) {
       officialVisitId isEqualTo 1
-      summaryText isEqualTo "Test summary text"
+      summaryText isEqualTo "Test summary change text"
       eventSource isEqualTo "DPS"
       eventDateTime isCloseTo now()
       username isEqualTo MOORLAND_PRISON_USER.username
