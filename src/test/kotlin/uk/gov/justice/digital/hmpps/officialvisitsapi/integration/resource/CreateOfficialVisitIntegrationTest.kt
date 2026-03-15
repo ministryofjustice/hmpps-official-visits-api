@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isNotEqualTo
@@ -106,6 +107,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   @Test
   @Transactional
   fun `should create official unassisted visit with one social visitor and equipment`() {
+    auditedEventRepository.findAll() hasSize 0
+
     val officialVisitResponse = webTestClient.create(nextMondayAt9)
 
     val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
@@ -163,6 +166,18 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       ),
       personReference = PersonReference(contactId = persistedOfficialVisit.officialVisitors().first().contactId!!),
     )
+
+    with(auditedEventRepository.findAll().single()) {
+      officialVisitId isEqualTo persistedOfficialVisit.officialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      summaryText isEqualTo "Official visit created"
+      detailText isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number} with 1 visitor(s)"
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test

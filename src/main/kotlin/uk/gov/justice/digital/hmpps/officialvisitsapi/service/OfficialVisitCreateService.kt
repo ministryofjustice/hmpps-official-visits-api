@@ -19,6 +19,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecificationFactory
@@ -32,6 +34,7 @@ class OfficialVisitCreateService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val contactsService: ContactsService,
+  private val auditingService: AuditingService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -73,6 +76,20 @@ class OfficialVisitCreateService(
         )
       }.also {
         logger.info("Official visit created with ID ${it.officialVisitId}")
+      }.also {
+        auditingService.recordAuditEvent(
+          auditCreateEvent {
+            officialVisitId(it.officialVisitId)
+            summaryText("Official visit created")
+            eventSource("DPS")
+            user(user)
+            prisonCode(prisonCode)
+            prisonerNumber(it.prisonerNumber)
+            detailsText(
+              "Official visit created for prisoner number ${it.prisonerNumber} with ${it.visitorAndContactIds.size} visitor(s)",
+            )
+          },
+        )
       }
   }
 

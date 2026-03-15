@@ -63,6 +63,23 @@ class VisitSlotServiceTest {
   }
 
   @Test
+  fun `should get a visit slot by ID and return hasVisit as true when official visits exist for the visit slot`() {
+    val visitSlotEntity = prisonVisitSlotEntity()
+    val timeSlotEntity = prisonTimeSlotEntity()
+
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
+    whenever(locationsService.getLocationById(visitSlotEntity.dpsLocationId)).thenReturn(moorlandLocation)
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
+
+    val model = service.getById(1L)
+
+    assertThat(model.hasVisit).isTrue()
+
+    verify(prisonVisitSlotRepository).findById(1L)
+  }
+
+  @Test
   fun `should fail to get a visit slot by ID`() {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.empty())
 
@@ -123,6 +140,23 @@ class VisitSlotServiceTest {
     verify(prisonVisitSlotRepository).saveAndFlush(visitSlotCaptor.capture())
 
     visitSlotCaptor.firstValue.assertWithResponse(updated)
+    verify(prisonVisitSlotRepository).findById(1L)
+  }
+
+  @Test
+  fun `should update visit slot with existing visits associated then should return hasVisit as true`() {
+    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1)
+    val existing = prisonVisitSlotEntity()
+    whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(existing))
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
+    whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>())).thenAnswer { it.arguments[0] }
+    whenever(locationsService.getLocationById(existing.dpsLocationId)).thenReturn(moorlandLocation)
+    whenever(officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(1L)).thenReturn(true)
+
+    val updated = service.update(1L, request, MOORLAND_PRISON_USER)
+
+    assertThat(updated.hasVisit).isTrue()
+
     verify(prisonVisitSlotRepository).findById(1L)
   }
 
