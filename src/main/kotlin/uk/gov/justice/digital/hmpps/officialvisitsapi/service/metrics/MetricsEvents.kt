@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.MetricTelemetryEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 enum class MetricsEvents(val eventType: String) {
   CREATE("OfficialVisitCreated") {
@@ -57,6 +58,15 @@ data class OfficialVisitMetricTelemetry(
     additionalInformation.hoursAfterStartTimeTimeMetrics()
       .takeIf { eventType == MetricsEvents.CREATE.eventType },
   ).toMap()
+
+  fun VisitMetricInfo.hoursBeforeStartTimeMetric(): Pair<String, Double> = "hoursBeforeStartTime" to ChronoUnit.HOURS.between(
+    startTime,
+    LocalTime.now(),
+  ).toDouble()
+
+  fun VisitMetricInfo.hoursAfterStartTimeTimeMetrics(): Pair<String, Double> = "hoursAfterStartTime" to ChronoUnit.HOURS.between(LocalTime.now(), startTime).toDouble()
+
+  fun VisitMetricInfo.numberOfVisitors(): Pair<String, Double> = "number_of_visitors" to numberOfVisitors.toDouble()
 }
 
 data class VisitMetricInfo(
