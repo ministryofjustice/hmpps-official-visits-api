@@ -94,6 +94,8 @@ class OfficialVisitCreateService(
   }
 
   private fun OfficialVisitEntity.addVisitorsAndAnyEquipment(officialVisitors: List<OfficialVisitor>, matchingVisitors: List<PrisonerContact>, user: User) = apply {
+    officialVisitors.rejectIfAnyDuplicateVisitors()
+
     officialVisitors.forEach { ov ->
       // As we are creating a visit locally in DPS the check for contactId and prisonerContactId is fine here
       val matchingVisitor = matchingVisitors.single { mv -> mv.contactId == ov.contactId && mv.prisonerContactId == ov.prisonerContactId }
@@ -120,6 +122,12 @@ class OfficialVisitCreateService(
         }
       }
     }
+  }
+
+  private fun List<OfficialVisitor>.rejectIfAnyDuplicateVisitors() = apply {
+    val duplicateVisitors = groupBy { it.contactId }.filter { it.value.size > 1 }.keys
+
+    require(duplicateVisitors.isEmpty()) { "Visitors with contact IDs $duplicateVisitors are duplicated" }
   }
 
   private fun OfficialVisitEntity.savePrisonerBeingVisited() = also {

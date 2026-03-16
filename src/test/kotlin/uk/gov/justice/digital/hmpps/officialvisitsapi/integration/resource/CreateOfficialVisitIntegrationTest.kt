@@ -292,6 +292,12 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should fail when duplicate official visitors are provided`() {
+    webTestClient.badRequest(nextMondayAt9.copy(officialVisitors = listOf(officialVisitor, officialVisitor)), "Visitors with contact IDs [123] are duplicated")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
+  }
+
+  @Test
   fun `should fail when unknown prison visit slot id`() {
     webTestClient.badRequest(nextMondayAt9.copy(prisonVisitSlotId = -99), "Prison visit slot with id -99 not found.")
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
