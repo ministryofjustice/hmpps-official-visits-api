@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService

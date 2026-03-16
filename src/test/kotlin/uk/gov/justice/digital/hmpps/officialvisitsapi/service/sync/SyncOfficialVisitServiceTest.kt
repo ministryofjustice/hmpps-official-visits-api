@@ -30,10 +30,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional

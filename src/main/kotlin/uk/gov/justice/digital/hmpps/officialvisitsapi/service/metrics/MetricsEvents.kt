@@ -1,28 +1,29 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.MetricTelemetryEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import java.time.LocalTime
 
 enum class MetricsEvents(val eventType: String) {
-  CREATE("create") {
+  CREATE("OfficialVisitCreated") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
-  AMEND("amend") {
+  AMEND("OfficialVisitUpdated") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
-  CANCEL("cancel") {
+  CANCEL("OfficialVisitCancelled") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
-  COMPLETE("complete") {
+  COMPLETE("OfficialVisitCompleted") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,

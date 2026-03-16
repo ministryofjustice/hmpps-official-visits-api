@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 

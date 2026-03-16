@@ -21,9 +21,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditCreateEvent
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecificationFactory
