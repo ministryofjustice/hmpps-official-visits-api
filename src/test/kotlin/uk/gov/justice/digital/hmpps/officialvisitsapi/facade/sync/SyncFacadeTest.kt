@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -61,6 +62,7 @@ class SyncFacadeTest {
   private val syncOfficialVisitService: SyncOfficialVisitService = mock()
   private val syncOfficialVisitorService: SyncOfficialVisitorService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService = mock()
   private val userService: UserService = mock()
 
   private val facade = SyncFacade(
@@ -69,6 +71,7 @@ class SyncFacadeTest {
     syncOfficialVisitService,
     syncOfficialVisitorService,
     outboundEventsService,
+    officialVisitMetricTelemetryService,
     userService,
   )
 
