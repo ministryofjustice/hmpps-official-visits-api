@@ -23,11 +23,16 @@ sealed class TelemetryEvent(open val eventType: String) {
 abstract class MetricTelemetryEvent(eventType: String) : TelemetryEvent(eventType) {
   abstract fun metrics(): Map<String, Double>
 
-  // code change condition required to override only for create and update
-  protected fun VisitMetricInfo.hoursBeforeStartTimeMetric(): Pair<String, Double> = "hoursBeforeStartTime" to ChronoUnit.HOURS.between(LocalTime.now(), startTime).toDouble()
+  protected fun VisitMetricInfo.hoursBeforeStartTimeMetric(): Pair<String, Double>? = startTime?.let {
+    "hoursBeforeStartTime" to ChronoUnit.HOURS.between(
+      startTime,
+      LocalTime.now(),
+    ).toDouble()
+  }
 
-  // code change required to use this only for completion
-  protected fun VisitMetricInfo.hoursAfterStartTimeTimeMetrics(): Pair<String, Double> = "hoursAfterStartTime" to ChronoUnit.HOURS.between(startTime, endTime).toDouble()
+  protected fun VisitMetricInfo.hoursAfterStartTimeTimeMetrics(): Pair<String, Double>? = startTime?.let {
+    "hoursAfterStartTime" to ChronoUnit.HOURS.between(LocalTime.now(), startTime).toDouble()
+  }
 
   protected fun VisitMetricInfo.numberOfVisitors(): Pair<String, Double> = "number_of_visitors" to numberOfVisitors.toDouble()
 }
