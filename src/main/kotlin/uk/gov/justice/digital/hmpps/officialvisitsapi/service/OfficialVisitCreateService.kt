@@ -21,6 +21,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditCreateEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OVActions
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecificationFactory
@@ -35,6 +39,7 @@ class OfficialVisitCreateService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val contactsService: ContactsService,
   private val auditingService: AuditingService,
+  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -76,6 +81,19 @@ class OfficialVisitCreateService(
         )
       }.also {
         logger.info("Official visit created with ID ${it.officialVisitId}")
+      }.also {
+        officialVisitMetricTelemetryService.send(
+          MetricsEvents.VISIT_CREATED,
+          action = OVActions.CREATE,
+          VisitMetricInfo(
+            username = user.username,
+            officialVisitId = it.officialVisitId,
+            prisonCode = prisonCode,
+            prisonerNumber = it.prisonerNumber,
+            numberOfVisitors = it.visitorAndContactIds.size.toLong(),
+            startTime = request.startTime,
+          ),
+        )
       }.also {
         auditingService.recordAuditEvent(
           auditCreateEvent {

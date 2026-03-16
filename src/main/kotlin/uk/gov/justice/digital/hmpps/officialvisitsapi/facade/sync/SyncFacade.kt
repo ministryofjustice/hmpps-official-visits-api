@@ -12,13 +12,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OVActions
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitorService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
@@ -49,7 +45,6 @@ class SyncFacade(
   val syncOfficialVisitService: SyncOfficialVisitService,
   val syncOfficialVisitorService: SyncOfficialVisitorService,
   val outboundEventsService: OutboundEventsService,
-  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
   val userService: UserService,
 ) {
 
@@ -144,18 +139,6 @@ class SyncFacade(
         source = Source.NOMIS,
         user = userOrDefault(it.createdBy),
       )
-      officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_CREATED,
-        action = OVActions.CREATE,
-        VisitMetricInfo(
-          username = userOrDefault(it.createdBy).username,
-          officialVisitId = it.officialVisitId,
-          prisonCode = it.prisonCode,
-          prisonerNumber = it.prisonerNumber,
-          numberOfVisitors = it.visitors.size.toLong(),
-          startTime = request.startTime,
-        ),
-      )
     }
 
   fun updateOfficialVisit(officialVisitId: Long, request: SyncUpdateOfficialVisitRequest) = syncOfficialVisitService.updateVisit(officialVisitId, request)
@@ -167,18 +150,6 @@ class SyncFacade(
         noms = it.prisonerNumber,
         source = Source.NOMIS,
         user = userOrDefault(it.updatedBy),
-      )
-      officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_UPDATED,
-        action = OVActions.AMEND,
-        VisitMetricInfo(
-          username = userOrDefault(it.createdBy).username,
-          officialVisitId = it.officialVisitId,
-          prisonCode = it.prisonCode,
-          prisonerNumber = it.prisonerNumber,
-          numberOfVisitors = it.visitors.size.toLong(),
-          startTime = request.startTime,
-        ),
       )
     }
 

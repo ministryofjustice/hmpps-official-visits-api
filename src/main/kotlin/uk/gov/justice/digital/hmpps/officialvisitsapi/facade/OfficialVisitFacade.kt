@@ -18,12 +18,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitUpdat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OVActions
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 
 @Component
 class OfficialVisitFacade(
@@ -34,7 +30,6 @@ class OfficialVisitFacade(
   private val officialVisitCancellationService: OfficialVisitCancellationService,
   private val officialVisitUpdateService: OfficialVisitUpdateService,
   private val outboundEventsService: OutboundEventsService,
-  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
@@ -68,18 +63,6 @@ class OfficialVisitFacade(
           user = user,
         )
       }
-      officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_CREATED,
-        action = OVActions.CREATE,
-        VisitMetricInfo(
-          username = user.username,
-          officialVisitId = creationResult.officialVisitId,
-          prisonCode = prisonCode,
-          prisonerNumber = creationResult.prisonerNumber,
-          numberOfVisitors = creationResult.visitorAndContactIds.size.toLong(),
-          startTime = request.startTime,
-        ),
-      )
     }
   }
 
@@ -107,16 +90,6 @@ class OfficialVisitFacade(
         user = user,
       )
 
-      officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_UPDATED,
-        action = OVActions.COMPLETE,
-        VisitMetricInfo(
-          username = user.username,
-          officialVisitId = completedVisitDto.officialVisitId,
-          prisonCode = prisonCode,
-          prisonerNumber = completedVisitDto.prisonerNumber,
-        ),
-      )
       completedVisitDto.visitorAndContactIds.forEach { pair ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_UPDATED,
@@ -175,17 +148,6 @@ class OfficialVisitFacade(
         noms = cancelledVisitDto.prisonerNumber,
         user = user,
       )
-
-      officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_CANCELLED,
-        action = OVActions.CANCEL,
-        VisitMetricInfo(
-          username = user.username,
-          officialVisitId = cancelledVisitDto.officialVisitId,
-          prisonCode = prisonCode,
-          prisonerNumber = cancelledVisitDto.prisonerNumber,
-        ),
-      )
     }
   }
 
@@ -198,17 +160,6 @@ class OfficialVisitFacade(
       noms = response.prisonerNumber,
       user = user,
     )
-    officialVisitMetricTelemetryService.send(
-      MetricsEvents.VISIT_UPDATED,
-      action = OVActions.AMEND,
-      VisitMetricInfo(
-        username = user.username,
-        officialVisitId = response.officialVisitId,
-        prisonCode = prisonCode,
-        prisonerNumber = response.prisonerNumber,
-        startTime = request.startTime,
-      ),
-    )
   }
 
   fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
@@ -219,16 +170,6 @@ class OfficialVisitFacade(
       identifier = response.officialVisitId,
       noms = response.prisonerNumber,
       user = user,
-    )
-    officialVisitMetricTelemetryService.send(
-      MetricsEvents.VISIT_UPDATED,
-      action = OVActions.AMEND,
-      VisitMetricInfo(
-        username = user.username,
-        officialVisitId = response.officialVisitId,
-        prisonCode = prisonCode,
-        prisonerNumber = response.prisonerNumber,
-      ),
     )
   }
 

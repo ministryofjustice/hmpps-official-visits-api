@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
@@ -39,6 +40,7 @@ class SyncOfficialVisitServiceTest {
   private val officialVisitorRepository: OfficialVisitorRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
 
@@ -47,6 +49,7 @@ class SyncOfficialVisitServiceTest {
     officialVisitorRepository,
     prisonerVisitedRepository,
     prisonVisitSlotRepository,
+    officialVisitMetricTelemetryService,
   )
 
   @AfterEach
