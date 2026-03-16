@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 
 @Service
@@ -64,6 +65,7 @@ class SyncOfficialVisitService(
           prisonerNumber = it.prisonerNumber,
           numberOfVisitors = it.officialVisitors().size.toLong(),
           startTime = request.startTime,
+          source = Source.NOMIS,
         ),
       )
     }
@@ -143,6 +145,7 @@ class SyncOfficialVisitService(
           prisonerNumber = it.prisonerNumber,
           numberOfVisitors = it.officialVisitors().size.toLong(),
           startTime = request.startTime,
+          source = Source.NOMIS,
         ),
       )
     }
