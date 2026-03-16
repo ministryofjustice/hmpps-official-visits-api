@@ -4,25 +4,25 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.MetricTelemetryEve
 import java.time.LocalTime
 
 enum class MetricsEvents(val eventType: String) {
-  CREATE("CREATE") {
+  CREATE("create") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
-  AMEND("AMEND") {
+  AMEND("amend") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
-  CANCEL("CANCEL") {
+  CANCEL("cancel") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
-  COMPLETE("COMPLETE") {
+  COMPLETE("complete") {
     override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
@@ -51,10 +51,10 @@ data class OfficialVisitMetricTelemetry(
   // numberOfVisitors is only applicable for Create
   override fun metrics() = listOfNotNull(
     additionalInformation.hoursBeforeStartTimeMetric()
-      .takeIf { eventType == "CREATE" || eventType == "AMEND" || eventType == "CANCEL" },
-    additionalInformation.numberOfVisitors().takeIf { eventType == "CREATE" },
+      .takeIf { eventType == MetricsEvents.CREATE.eventType || eventType == MetricsEvents.AMEND.eventType || eventType == MetricsEvents.CANCEL.eventType },
+    additionalInformation.numberOfVisitors().takeIf { eventType == MetricsEvents.CREATE.eventType },
     additionalInformation.hoursAfterStartTimeTimeMetrics()
-      .takeIf { eventType == "COMPLETE" },
+      .takeIf { eventType == MetricsEvents.CREATE.eventType },
   ).toMap()
 }
 
