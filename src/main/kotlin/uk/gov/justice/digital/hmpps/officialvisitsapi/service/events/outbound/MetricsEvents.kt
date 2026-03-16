@@ -4,37 +4,39 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.MetricTelemetryEve
 import java.time.LocalTime
 
 enum class MetricsEvents(val eventType: String) {
-  VISIT_CREATED("official-visits-api.visit.created") {
-    override fun event(additionalInformation: VisitMetricInfo, action: OVActions) = OfficialVisitMetricTelemetry(
+  CREATE("CREATE") {
+    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
-      action = action,
       additionalInformation = additionalInformation,
     )
   },
-  VISIT_UPDATED("official-visits-api.visit.updated") {
-    override fun event(additionalInformation: VisitMetricInfo, action: OVActions) = OfficialVisitMetricTelemetry(
+  AMEND("AMEND") {
+    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
-      action = action,
       additionalInformation = additionalInformation,
     )
   },
-  VISIT_CANCELLED("official-visits-api.visit.cancelled") {
-    override fun event(additionalInformation: VisitMetricInfo, action: OVActions) = OfficialVisitMetricTelemetry(
+  CANCEL("CANCEL") {
+    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
-      action = action,
       additionalInformation = additionalInformation,
     )
-  }, ;
+  },
+  COMPLETE("COMPLETE") {
+    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+    )
+  },
+  ;
 
   abstract fun event(
     additionalInformation: VisitMetricInfo,
-    action: OVActions,
   ): OfficialVisitMetricTelemetry
 }
 
 data class OfficialVisitMetricTelemetry(
   override val eventType: String,
-  val action: OVActions,
   val additionalInformation: VisitMetricInfo,
 ) : MetricTelemetryEvent(eventType) {
   override fun properties() = mapOf(
@@ -49,10 +51,10 @@ data class OfficialVisitMetricTelemetry(
   // numberOfVisitors is only applicable for Create
   override fun metrics() = listOfNotNull(
     additionalInformation.hoursBeforeStartTimeMetric()
-      .takeIf { action == OVActions.CREATE || action == OVActions.AMEND || action == OVActions.CANCEL },
-    additionalInformation.numberOfVisitors().takeIf { action == OVActions.CREATE },
+      .takeIf { eventType == "CREATE" || eventType == "AMEND" || eventType == "CANCEL" },
+    additionalInformation.numberOfVisitors().takeIf { eventType == "CREATE" },
     additionalInformation.hoursAfterStartTimeTimeMetrics()
-      .takeIf { action == OVActions.COMPLETE },
+      .takeIf { eventType == "COMPLETE" },
   ).toMap()
 }
 
@@ -66,10 +68,3 @@ data class VisitMetricInfo(
   val locationType: String? = null,
   val startTime: LocalTime? = null,
 )
-
-enum class OVActions {
-  CREATE,
-  AMEND,
-  CANCEL,
-  COMPLETE,
-}

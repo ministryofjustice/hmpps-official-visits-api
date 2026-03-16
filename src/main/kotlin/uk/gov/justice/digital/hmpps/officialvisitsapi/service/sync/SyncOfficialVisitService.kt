@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OVActions
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 
@@ -57,8 +56,7 @@ class SyncOfficialVisitService(
 
     val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request)).also {
       officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_CREATED,
-        action = OVActions.CREATE,
+        MetricsEvents.CREATE,
         VisitMetricInfo(
           username = it.createdBy,
           officialVisitId = it.officialVisitId,
@@ -137,8 +135,7 @@ class SyncOfficialVisitService(
 
     val savedVisit = officialVisitRepository.saveAndFlush(visit).also {
       officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_UPDATED,
-        action = OVActions.AMEND,
+        MetricsEvents.AMEND,
         VisitMetricInfo(
           username = request.updateUsername,
           officialVisitId = it.officialVisitId,

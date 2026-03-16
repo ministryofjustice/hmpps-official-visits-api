@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisited
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OVActions
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
@@ -83,8 +82,7 @@ class OfficialVisitCreateService(
         logger.info("Official visit created with ID ${it.officialVisitId}")
       }.also {
         officialVisitMetricTelemetryService.send(
-          MetricsEvents.VISIT_CREATED,
-          action = OVActions.CREATE,
+          MetricsEvents.CREATE,
           VisitMetricInfo(
             username = user.username,
             officialVisitId = it.officialVisitId,

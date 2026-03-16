@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OVActions
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitMetricInfo
 import java.time.LocalDateTime
@@ -49,8 +48,7 @@ class OfficialVisitCompletionService(
       ),
     ).also {
       officialVisitMetricTelemetryService.send(
-        MetricsEvents.VISIT_UPDATED,
-        action = OVActions.COMPLETE,
+        MetricsEvents.COMPLETE,
         VisitMetricInfo(
           username = user.username,
           officialVisitId = it.officialVisitId,
