@@ -143,7 +143,6 @@ class SyncOfficialVisitService(
           officialVisitId = it.officialVisitId,
           prisonCode = it.prisonCode,
           prisonerNumber = it.prisonerNumber,
-          numberOfVisitors = it.officialVisitors().size.toLong(),
           startTime = request.startTime,
           source = Source.NOMIS,
         ),
