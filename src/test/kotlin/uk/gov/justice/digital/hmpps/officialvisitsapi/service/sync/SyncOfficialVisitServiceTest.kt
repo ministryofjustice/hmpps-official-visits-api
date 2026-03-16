@@ -160,7 +160,7 @@ class SyncOfficialVisitServiceTest {
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
-    verifyNoInteractions(officialVisitRepository, prisonerVisitedRepository)
+    verifyNoInteractions(officialVisitRepository, prisonerVisitedRepository, officialVisitMetricTelemetryService)
   }
 
   @Test
@@ -209,7 +209,7 @@ class SyncOfficialVisitServiceTest {
 
     verify(prisonVisitSlotRepository).findById(1L)
     verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
-    verifyNoMoreInteractions(officialVisitRepository, prisonerVisitedRepository)
+    verifyNoMoreInteractions(officialVisitRepository, prisonerVisitedRepository, officialVisitMetricTelemetryService)
   }
 
   @Test
@@ -266,7 +266,7 @@ class SyncOfficialVisitServiceTest {
     assertThat(exception.message).isEqualTo("Official visit with ID $officialVisitId not found")
 
     verify(officialVisitRepository).findById(officialVisitId)
-    verifyNoInteractions(prisonerVisitedRepository, prisonVisitSlotRepository)
+    verifyNoInteractions(prisonerVisitedRepository, prisonVisitSlotRepository, officialVisitMetricTelemetryService)
   }
 
   @Test
