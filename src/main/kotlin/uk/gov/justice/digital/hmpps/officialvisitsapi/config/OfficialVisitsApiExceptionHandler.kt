@@ -13,6 +13,8 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.CaseloadAccessException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -109,6 +111,17 @@ class OfficialVisitsApiExceptionHandler {
         ),
       )
   }
+
+  @ExceptionHandler(DuplicateOffenderVisitIdConflictException::class)
+  fun handleOffenderVisitIdConflictException(e: DuplicateOffenderVisitIdConflictException) = ResponseEntity
+    .status(CONFLICT)
+    .body(
+      DuplicateOffenderVisitIdErrorResponse(
+        e.offenderVisitId,
+        e.officialVisitId,
+        e.message,
+      ),
+    )
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitRequest
@@ -49,7 +49,9 @@ class SyncOfficialVisitService(
     // When an offenderVisitId is supplied perform a check for duplicates
     request.offenderVisitId?.let { offenderVisitId ->
       officialVisitRepository.findByOffenderVisitId(offenderVisitId)?.let { duplicate ->
-        throw EntityInUseException(
+        throw DuplicateOffenderVisitIdConflictException(
+          offenderVisitId,
+          duplicate.officialVisitId,
           "Official visit with offenderVisitId $offenderVisitId already exists (DPS ID ${duplicate.officialVisitId})",
         )
       }
