@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
-import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderErrorResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderVisitIdConflictException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderIdErrorResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.CaseloadAccessException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -112,11 +112,11 @@ class OfficialVisitsApiExceptionHandler {
       )
   }
 
-  @ExceptionHandler(OffenderVisitIdConflictException::class)
-  fun handleOffenderVisitIdConflictException(e: OffenderVisitIdConflictException) = ResponseEntity
+  @ExceptionHandler(DuplicateOffenderVisitIdConflictException::class)
+  fun handleOffenderVisitIdConflictException(e: DuplicateOffenderVisitIdConflictException) = ResponseEntity
     .status(CONFLICT)
     .body(
-      OffenderErrorResponse(
+      DuplicateOffenderIdErrorResponse(
         e.offenderVisitId,
         e.officialVisitId,
         e.message,

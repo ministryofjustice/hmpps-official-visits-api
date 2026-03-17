@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderErrorResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderIdErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.sync.SyncFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateOfficialVisitRequest
@@ -91,7 +91,7 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
       ApiResponse(
         responseCode = "409",
         description = "Another visit exists with the same offender visit ID",
-        content = [Content(schema = Schema(implementation = OffenderErrorResponse::class))],
+        content = [Content(schema = Schema(implementation = DuplicateOffenderIdErrorResponse::class))],
       ),
     ],
   )

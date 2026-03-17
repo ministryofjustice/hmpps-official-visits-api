@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.exception
 
-class OffenderVisitIdConflictException(
+class DuplicateOffenderVisitIdConflictException(
   val offenderVisitId: Long,
   val officialVisitId: Long,
   override val message: String,
