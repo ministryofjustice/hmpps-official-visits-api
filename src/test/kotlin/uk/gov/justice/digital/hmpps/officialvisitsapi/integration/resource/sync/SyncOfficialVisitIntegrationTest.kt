@@ -10,6 +10,7 @@ import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -213,10 +214,10 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     val response2 = webTestClient.syncCreateOfficialVisit(request)
       .expectStatus().is4xxClientError
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody<ErrorResponse>()
+      .expectBody<OffenderErrorResponse>()
       .returnResult().responseBody!!
 
-    assertThat(response2.userMessage).isEqualTo("Official visit with offenderVisitId ${request.offenderVisitId} already exists (DPS ID ${response1.officialVisitId})")
+    assertThat(response2.message).isEqualTo("Official visit with offenderVisitId ${request.offenderVisitId} already exists (DPS ID ${response1.officialVisitId})")
 
     stubEvents.assertHasNoEvents(OutboundEvent.VISIT_CREATED)
   }

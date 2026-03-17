@@ -15,7 +15,7 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -199,7 +199,7 @@ class SyncOfficialVisitServiceTest {
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
     whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(officialVisitEntity)
 
-    val exception = assertThrows<EntityInUseException> {
+    val exception = assertThrows<OffenderVisitIdConflictException> {
       syncOfficialVisitService.createVisit(request)
     }
 

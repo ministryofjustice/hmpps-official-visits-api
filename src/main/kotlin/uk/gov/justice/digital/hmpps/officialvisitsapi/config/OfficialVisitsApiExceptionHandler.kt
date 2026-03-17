@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderErrorResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.OffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.CaseloadAccessException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -109,6 +111,17 @@ class OfficialVisitsApiExceptionHandler {
         ),
       )
   }
+
+  @ExceptionHandler(OffenderVisitIdConflictException::class)
+  fun handleOffenderVisitIdConflictException(e: OffenderVisitIdConflictException) = ResponseEntity
+    .status(CONFLICT)
+    .body(
+      OffenderErrorResponse(
+        e.offenderVisitId,
+        e.officialVisitId,
+        e.message,
+      ),
+    )
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
