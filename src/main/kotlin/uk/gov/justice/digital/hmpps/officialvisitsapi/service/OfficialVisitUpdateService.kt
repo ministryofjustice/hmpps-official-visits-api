@@ -22,6 +22,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 
 @Service
@@ -30,6 +33,7 @@ class OfficialVisitUpdateService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
+  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -62,7 +66,19 @@ class OfficialVisitUpdateService(
       updatedTime = LocalDateTime.now()
     }
 
-    val updatedVisit = officialVisitRepository.saveAndFlush(changedOVEntity)
+    val updatedVisit = officialVisitRepository.saveAndFlush(changedOVEntity).also {
+      officialVisitMetricTelemetryService.send(
+        MetricsEvents.AMEND,
+        VisitMetricInfo(
+          username = user.username,
+          officialVisitId = it.officialVisitId,
+          prisonCode = it.prisonCode,
+          prisonerNumber = it.prisonerNumber,
+          numberOfVisitors = it.officialVisitors().size.toLong(),
+          startTime = it.startTime,
+        ),
+      )
+    }
 
     return OfficialVisitUpdateSlotResponse(
       officialVisitId = updatedVisit.officialVisitId,
@@ -90,7 +106,19 @@ class OfficialVisitUpdateService(
         updatedBy = user.username
         updatedTime = LocalDateTime.now()
       },
-    )
+    ).also {
+      officialVisitMetricTelemetryService.send(
+        MetricsEvents.AMEND,
+        VisitMetricInfo(
+          username = user.username,
+          officialVisitId = it.officialVisitId,
+          prisonCode = it.prisonCode,
+          prisonerNumber = it.prisonerNumber,
+          numberOfVisitors = it.officialVisitors().size.toLong(),
+          startTime = it.startTime,
+        ),
+      )
+    }
 
     return OfficialVisitUpdateCommentsResponse(
       officialVisitId = updatedVisit.officialVisitId,

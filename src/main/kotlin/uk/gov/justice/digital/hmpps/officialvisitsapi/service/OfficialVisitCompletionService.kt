@@ -7,6 +7,9 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 
 @Service
@@ -14,6 +17,7 @@ import java.time.LocalDateTime
 class OfficialVisitCompletionService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -42,7 +46,19 @@ class OfficialVisitCompletionService(
         ),
         completedBy = user,
       ),
-    )
+    ).also {
+      officialVisitMetricTelemetryService.send(
+        MetricsEvents.COMPLETE,
+        VisitMetricInfo(
+          username = user.username,
+          officialVisitId = it.officialVisitId,
+          prisonCode = it.prisonCode,
+          prisonerNumber = it.prisonerNumber,
+          numberOfVisitors = it.officialVisitors().size.toLong(),
+          startTime = it.startTime,
+        ),
+      )
+    }
 
     prisonerVisitedRepository.saveAndFlush(
       prisonerVisited.copy(

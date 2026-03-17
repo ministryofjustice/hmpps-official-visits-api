@@ -15,6 +15,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 
 @Service
 @Transactional
@@ -23,6 +27,7 @@ class SyncOfficialVisitService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
+  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   @Transactional(readOnly = true)
   fun getVisitById(officialVisitId: Long): SyncOfficialVisit {
@@ -50,7 +55,20 @@ class SyncOfficialVisitService(
       }
     }
 
-    val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request))
+    val visit = officialVisitRepository.saveAndFlush(OfficialVisitEntity.synchronised(visitSlot, request)).also {
+      officialVisitMetricTelemetryService.send(
+        MetricsEvents.CREATE,
+        VisitMetricInfo(
+          username = it.createdBy,
+          officialVisitId = it.officialVisitId,
+          prisonCode = it.prisonCode,
+          prisonerNumber = it.prisonerNumber,
+          numberOfVisitors = it.officialVisitors().size.toLong(),
+          startTime = request.startTime,
+          source = Source.NOMIS,
+        ),
+      )
+    }
 
     val prisonerVisited = prisonerVisitedRepository.saveAndFlush(
       PrisonerVisitedEntity(
@@ -117,7 +135,19 @@ class SyncOfficialVisitService(
       updatedBy = request.updateUsername
     }
 
-    val savedVisit = officialVisitRepository.saveAndFlush(visit)
+    val savedVisit = officialVisitRepository.saveAndFlush(visit).also {
+      officialVisitMetricTelemetryService.send(
+        MetricsEvents.AMEND,
+        VisitMetricInfo(
+          username = request.updateUsername,
+          officialVisitId = it.officialVisitId,
+          prisonCode = it.prisonCode,
+          prisonerNumber = it.prisonerNumber,
+          startTime = request.startTime,
+          source = Source.NOMIS,
+        ),
+      )
+    }
 
     return savedVisit.toSyncModel(prisonerVisited)
   }

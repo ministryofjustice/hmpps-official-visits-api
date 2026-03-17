@@ -8,6 +8,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 
 @Service
@@ -15,6 +18,7 @@ import java.time.LocalDateTime
 class OfficialVisitCancellationService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -39,7 +43,17 @@ class OfficialVisitCancellationService(
         updatedTime = LocalDateTime.now(),
       ),
     )
-
+    officialVisitMetricTelemetryService.send(
+      MetricsEvents.CANCEL,
+      VisitMetricInfo(
+        username = user.username,
+        officialVisitId = officialVisit.officialVisitId,
+        prisonCode = officialVisit.prisonCode,
+        prisonerNumber = officialVisit.prisonerNumber,
+        numberOfVisitors = officialVisit.officialVisitors().size.toLong(),
+        startTime = officialVisit.startTime,
+      ),
+    )
     return OfficialVisitCancelledDto(
       prisonCode = prisonCode,
       officialVisitId = officialVisitId,
