@@ -65,7 +65,7 @@ class OfficialVisitSearchService(
         startDate = request.startDate,
         searchTerm = mayBeSearchTerm.orEmpty(),
         endDate = request.endDate,
-        visitTypes = request.visitTypes.takeUnless { !it.isNullOrEmpty() },
+        visitTypes = request.visitTypes.takeUnless { it.isNullOrEmpty() },
         locationIds = request.locationIds.takeUnless { it.isNullOrEmpty() },
         visitStatuses = request.visitStatuses.takeUnless { it.isNullOrEmpty() },
         numberOfResults = results.content.size,
