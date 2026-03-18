@@ -62,7 +62,6 @@ data class OfficialVisitMetricTelemetry(
       is VisitMetricInfo -> {
         baseMap + additionalInformation.visitAdditionalInfo()
       }
-
       is SearchInfo -> {
         baseMap + additionalInformation.searchAdditionalInfo()
       }
@@ -73,7 +72,6 @@ data class OfficialVisitMetricTelemetry(
     is VisitMetricInfo -> {
       visitMetrics(additionalInformation)
     }
-
     is SearchInfo -> {
       mapOf(
         "number_of_results" to additionalInformation.numberOfResults.toDouble(),
