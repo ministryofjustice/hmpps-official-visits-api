@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
 class OfficialVisitMetricTelemetryService(private val telemetryService: TelemetryService) {
   fun send(
     eventType: MetricsEvents,
-    info: VisitMetricInfo,
+    info: MetricInfo,
   ) {
     telemetryService.track(eventType.event(additionalInformation = info))
   }

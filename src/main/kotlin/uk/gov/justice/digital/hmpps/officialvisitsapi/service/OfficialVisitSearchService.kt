@@ -16,6 +16,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVisitedDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitSummaryRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
 import java.util.UUID
 
 @Service
@@ -26,6 +30,7 @@ class OfficialVisitSearchService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
     require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
@@ -52,6 +57,21 @@ class OfficialVisitSearchService(
       pageable = PageRequest.of(page, size, Sort.by("visitDate", "startTime").ascending()),
     )
 
+    officialVisitMetricTelemetryService.send(
+      eventType = MetricsEvents.SEARCH,
+      info = SearchInfo(
+        source = Source.DPS,
+        username = "",
+        prisonCode = prisonCode,
+        startDate = request.startDate,
+        searchTerm = mayBeSearchTerm.orEmpty(),
+        endDate = request.endDate,
+        visitTypes = request.visitTypes.takeIf { !it.isNullOrEmpty() }?.toList(),
+        locationIds = request.locationIds?.takeIf { it.isNotEmpty() }?.toList(),
+        visitStatuses = request.visitStatuses?.takeIf { it.isNotEmpty() }?.toList(),
+        numberOfResults = results.content.size,
+      ),
+    )
     if (results.isEmpty) {
       return PagedModel(Page.empty())
     }

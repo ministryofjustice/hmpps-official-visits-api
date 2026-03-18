@@ -1,31 +1,42 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics
 
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.MetricTelemetryEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
+import kotlin.collections.plus
 
 enum class MetricsEvents(val eventType: String) {
   CREATE("OfficialVisitCreated") {
-    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
   AMEND("OfficialVisitUpdated") {
-    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
   CANCEL("OfficialVisitCancelled") {
-    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
   },
   COMPLETE("OfficialVisitCompleted") {
-    override fun event(additionalInformation: VisitMetricInfo) = OfficialVisitMetricTelemetry(
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+    )
+  },
+  SEARCH("OfficialVisitSearched") {
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
     )
@@ -33,31 +44,58 @@ enum class MetricsEvents(val eventType: String) {
   ;
 
   abstract fun event(
-    additionalInformation: VisitMetricInfo,
+    additionalInformation: MetricInfo,
   ): OfficialVisitMetricTelemetry
 }
 
 data class OfficialVisitMetricTelemetry(
   override val eventType: String,
-  val additionalInformation: VisitMetricInfo,
+  val additionalInformation: MetricInfo,
 ) : MetricTelemetryEvent(eventType) {
-  override fun properties() = mapOf(
-    "official_visit_id" to "$additionalInformation.officialVisitId",
-    "prison_code" to additionalInformation.prisonCode,
-    "prisoner_number" to additionalInformation.prisonerNumber,
-    "username" to additionalInformation.username,
-    "source" to additionalInformation.source.toString(),
-  )
 
-  // hoursBeforeStartTime is only applicable for update/create
-  // numberOfVisitors is only applicable for Create
-  override fun metrics() = listOfNotNull(
-    additionalInformation.hoursBeforeStartTimeMetric()
-      .takeIf { eventType == MetricsEvents.CREATE.eventType || eventType == MetricsEvents.AMEND.eventType || eventType == MetricsEvents.CANCEL.eventType },
-    additionalInformation.numberOfVisitors().takeIf { eventType == MetricsEvents.CREATE.eventType },
-    additionalInformation.hoursAfterStartTimeTimeMetrics()
-      .takeIf { eventType == MetricsEvents.CREATE.eventType },
-  ).toMap()
+  override fun properties(): Map<String, String> {
+    val baseMap = mapOf(
+      "prison_code" to additionalInformation.prisonCode,
+      "source" to additionalInformation.source.toString(),
+    )
+    return when (additionalInformation) {
+      is VisitMetricInfo -> {
+        baseMap + mapOf(
+          "prisoner_number" to additionalInformation.prisonerNumber,
+          "username" to additionalInformation.username,
+        )
+      }
+
+      is SearchInfo -> {
+        baseMap + mapOf(
+          "start_date" to "$additionalInformation.startDate",
+          "end_date" to "$additionalInformation.endDate",
+          "search_term" to additionalInformation.searchTerm.orEmpty(),
+          "visit_types" to "$additionalInformation.visitTypes",
+          "visit_statuses" to "$additionalInformation.visitStatuses",
+          "location_Ids" to "$additionalInformation.locationIds",
+        )
+      }
+    }
+  }
+
+  override fun metrics(): Map<String, Double> = when (additionalInformation) {
+    is VisitMetricInfo -> {
+      listOfNotNull(
+        additionalInformation.hoursBeforeStartTimeMetric()
+          .takeIf { eventType == MetricsEvents.CREATE.eventType || eventType == MetricsEvents.AMEND.eventType || eventType == MetricsEvents.CANCEL.eventType },
+        additionalInformation.numberOfVisitors().takeIf { eventType == MetricsEvents.CREATE.eventType },
+        additionalInformation.hoursAfterStartTimeTimeMetrics()
+          .takeIf { eventType == MetricsEvents.CREATE.eventType },
+      ).toMap()
+    }
+
+    is SearchInfo -> {
+      mapOf(
+        "number_of_results" to additionalInformation.numberOfResults.toDouble(),
+      )
+    }
+  }
 
   fun VisitMetricInfo.hoursBeforeStartTimeMetric(): Pair<String, Double> = "hoursBeforeStartTime" to ChronoUnit.HOURS.between(
     startTime,
@@ -69,13 +107,32 @@ data class OfficialVisitMetricTelemetry(
   fun VisitMetricInfo.numberOfVisitors(): Pair<String, Double> = "number_of_visitors" to numberOfVisitors.toDouble()
 }
 
+sealed class MetricInfo(
+  open val source: Source = Source.DPS,
+  open val username: String,
+  open val prisonCode: String,
+)
+
 data class VisitMetricInfo(
-  val source: Source = Source.DPS,
-  val username: String,
+  override val source: Source = Source.DPS,
+  override val username: String,
+  override val prisonCode: String,
   val officialVisitId: Long,
-  val prisonCode: String,
   val prisonerNumber: String,
   val numberOfVisitors: Long = 0,
   val locationType: String? = null,
   val startTime: LocalTime? = null,
-)
+) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
+
+data class SearchInfo(
+  override val source: Source = Source.DPS,
+  override val username: String,
+  override val prisonCode: String,
+  val startDate: LocalDate? = null,
+  val searchTerm: String? = null,
+  val endDate: LocalDate? = null,
+  val visitTypes: List<VisitType>?,
+  val locationIds: List<UUID>?,
+  val visitStatuses: List<VisitStatusType>?,
+  val numberOfResults: Int = 0,
+) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
