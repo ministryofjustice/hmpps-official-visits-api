@@ -266,17 +266,40 @@ class OfficialVisitUpdateService(
     officialVisitors.map { findMatchingPerson(contacts, it) }
   }
 
-  private fun visitorChanged(old: OfficialVisitorEntity, new: OfficialVisitor, person: PrisonerContact?): Boolean = old.firstName != person?.firstName ||
-    old.lastName != person?.lastName ||
-    old.leadVisitor != new.leadVisitor ||
-    old.assistedVisit != new.assistedVisit ||
-    old.relationshipCode != new.relationshipCode ||
-    old.visitorNotes != new.assistedNotes ||
-    old.visitorEquipment?.description != new.visitorEquipment?.description
+  private fun visitorChanged(old: OfficialVisitorEntity, new: OfficialVisitor, person: PrisonerContact?): Boolean {
+    if (old.firstName != person?.firstName) {
+      return true
+    }
+    if (old.lastName != person?.lastName) {
+      return true
+    }
+    if (old.leadVisitor != new.leadVisitor) {
+      return true
+    }
+    if (old.assistedVisit != new.assistedVisit) {
+      return true
+    }
+    if (old.relationshipCode != new.relationshipCode) {
+      return true
+    }
+    if (old.visitorNotes != new.assistedNotes) {
+      return true
+    }
+    if (old.visitorEquipment?.description != new.visitorEquipment?.description) {
+      return true
+    }
+    return false
+  }
 }
 
 private fun findMatchingPerson(
   matchingContacts: List<PrisonerContact>,
   visitor: OfficialVisitor,
-): PrisonerContact = matchingContacts.singleOrNull { it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId }
-  ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
+): PrisonerContact = matchingContacts.singleOrNull {
+  if (visitor.prisonerContactId != null) {
+    it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
+  } else {
+    // fallback to relationship code if prisonerContactId is not provided in the request, as this because it is nullable and existing visitors may not have it populated
+    it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
+  }
+} ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")

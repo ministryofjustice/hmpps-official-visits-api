@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEnt
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.contains
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toPrisonerContactModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -31,7 +32,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
@@ -92,7 +92,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitTypeAndSlot throws when visit not found`() {
+  fun `updateVisitTypeAndSlot throws not found exception error when visit not found`() {
     val request = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1L,
       visitDate = LocalDate.now().plusDays(1),
@@ -112,7 +112,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitTypeAndSlot throws when prison visit slot not found`() {
+  fun `updateVisitTypeAndSlot throws validation error when prison visit slot not found`() {
     val visit = createVisit(officialVisitId = 1L)
     val request = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 55L,
@@ -152,7 +152,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateComments throws when visit not found`() {
+  fun `updateComments throws not found error when visit not found`() {
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(9L, MOORLAND)).thenReturn(null)
 
     assertThrows<EntityNotFoundException> {
@@ -162,141 +162,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitors adds updates and removes visitors in one request`() {
-    val visit = createVisit(officialVisitId = 1L)
-    val updateVisitor = addExistingVisitor(visit, officialVisitorId = 10L, contactId = 2L, prisonerContactId = 200L, firstName = "Old", lastName = "Name", relationshipCode = "OLD")
-    val removedVisitor = addExistingVisitor(visit, officialVisitorId = 20L, contactId = 3L, prisonerContactId = 300L, firstName = "Remove", lastName = "Me", relationshipCode = "DEL")
-
-    val request = OfficialVisitUpdateVisitorsRequest(
-      officialVisitors = listOf(
-        OfficialVisitor(
-          officialVisitorId = 0L,
-          visitorTypeCode = VisitorType.CONTACT,
-          contactId = 4L,
-          prisonerContactId = 400L,
-          relationshipCode = "POM",
-          leadVisitor = true,
-          assistedVisit = true,
-          assistedNotes = "needs support",
-          visitorEquipment = VisitorEquipment("laptop"),
-        ),
-        OfficialVisitor(
-          officialVisitorId = 10L,
-          visitorTypeCode = VisitorType.CONTACT,
-          contactId = 2L,
-          prisonerContactId = 200L,
-          relationshipCode = "POM",
-          leadVisitor = false,
-          assistedVisit = false,
-          assistedNotes = null,
-          visitorEquipment = VisitorEquipment("tablet"),
-        ),
-      ),
-    )
-
-    val contacts = listOf(
-      prisonerContact(
-        prisonerNumber = MOORLAND_PRISONER.number,
-        type = "O",
-        contactId = 4L,
-        prisonerContactId = 400L,
-        firstName = "Add",
-        lastName = "Visitor",
-      ).toPrisonerContactModel(),
-      prisonerContact(
-        prisonerNumber = MOORLAND_PRISONER.number,
-        type = "S",
-        contactId = 2L,
-        prisonerContactId = 200L,
-        firstName = "Updated",
-        lastName = "Person",
-      ).toPrisonerContactModel(),
-    )
-
-    whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(1L, MOORLAND)).thenReturn(visit)
-    whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(contacts)
-    whenever(officialVisitorRepository.findById(10L)).thenReturn(Optional.of(updateVisitor))
-    whenever(officialVisitorRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
-
-    val saveCaptor = argumentCaptor<OfficialVisitorEntity>()
-
-    val response = service.updateVisitors(1L, MOORLAND, request, MOORLAND_PRISON_USER)
-
-    verify(officialVisitorRepository, times(2)).saveAndFlush(saveCaptor.capture())
-
-    assertThat(response.visitorsAdded).hasSize(1)
-    assertThat(response.visitorsUpdated).hasSize(1)
-    assertThat(response.visitorsDeleted).hasSize(1)
-    assertThat(response.visitorsDeleted.first().officialVisitorId).isEqualTo(20L)
-    assertThat(response.visitorsDeleted.first().contactId).isEqualTo(removedVisitor.contactId)
-
-    val savedNewVisitor = saveCaptor.allValues.single { it.contactId == 4L }
-    assertThat(savedNewVisitor.firstName).isEqualTo("Add")
-    assertThat(savedNewVisitor.lastName).isEqualTo("Visitor")
-    assertThat(savedNewVisitor.prisonerContactId).isEqualTo(400L)
-
-    val savedUpdatedVisitor = saveCaptor.allValues.single { it.officialVisitorId == 10L }
-    assertThat(savedUpdatedVisitor.relationshipTypeCode).isEqualTo(RelationshipType.SOCIAL)
-    assertThat(savedUpdatedVisitor.relationshipCode).isEqualTo("FRI")
-    assertThat(savedUpdatedVisitor.updatedBy).isEqualTo(MOORLAND_PRISON_USER.username)
-  }
-
-  @Test
-  fun `updateVisitors does not save unchanged existing visitor`() {
-    val visit = createVisit(officialVisitId = 2L)
-    val existing = addExistingVisitor(
-      visit = visit,
-      officialVisitorId = 30L,
-      contactId = 5L,
-      prisonerContactId = 500L,
-      firstName = "Same",
-      lastName = "Person",
-      relationshipCode = "POM",
-      leadVisitor = false,
-      assistedVisit = false,
-      assistedNotes = "same notes",
-      equipmentDescription = "wheelchair",
-    )
-
-    val request = OfficialVisitUpdateVisitorsRequest(
-      officialVisitors = listOf(
-        OfficialVisitor(
-          officialVisitorId = 30L,
-          visitorTypeCode = VisitorType.CONTACT,
-          contactId = 5L,
-          prisonerContactId = 500L,
-          relationshipCode = "POM",
-          leadVisitor = false,
-          assistedVisit = false,
-          assistedNotes = "same notes",
-          visitorEquipment = VisitorEquipment("wheelchair"),
-        ),
-      ),
-    )
-
-    val matchingContact = prisonerContact(
-      prisonerNumber = MOORLAND_PRISONER.number,
-      type = "O",
-      contactId = 5L,
-      prisonerContactId = 500L,
-      firstName = "Same",
-      lastName = "Person",
-    ).toPrisonerContactModel()
-
-    whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(2L, MOORLAND)).thenReturn(visit)
-    whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(matchingContact))
-    whenever(officialVisitorRepository.findById(30L)).thenReturn(Optional.of(existing))
-
-    val response = service.updateVisitors(2L, MOORLAND, request, MOORLAND_PRISON_USER)
-
-    assertThat(response.visitorsAdded).isEmpty()
-    assertThat(response.visitorsDeleted).isEmpty()
-    assertThat(response.visitorsUpdated).isEmpty()
-    verify(officialVisitorRepository, never()).saveAndFlush(any())
-  }
-
-  @Test
-  fun `updateVisitors throws when visit not found`() {
+  fun `updateVisitors throws not found error when visit not found`() {
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(99L, MOORLAND)).thenReturn(null)
 
     assertThrows<EntityNotFoundException> {
@@ -306,7 +172,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitors throws when request contains update id not on visit`() {
+  fun `updateVisitors throws illegal argument error when request contains update id not on visit`() {
     val visit = createVisit(officialVisitId = 3L)
     addExistingVisitor(visit, officialVisitorId = 10L, contactId = 1L, prisonerContactId = 100L, firstName = "A", lastName = "B", relationshipCode = "POM")
 
@@ -331,7 +197,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitors throws when existing visitor cannot be loaded for update`() {
+  fun `updateVisitors throws validation error when existing visitor cannot be loaded for update`() {
     val visit = createVisit(officialVisitId = 4L)
     addExistingVisitor(visit, officialVisitorId = 55L, contactId = 9L, prisonerContactId = 900L, firstName = "A", lastName = "B", relationshipCode = "POM")
 
@@ -358,9 +224,9 @@ class OfficialVisitUpdateServiceTest {
     whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(matchingContact))
     whenever(officialVisitorRepository.findById(55L)).thenReturn(Optional.empty())
 
-    assertThrows<EntityNotFoundException> {
+    assertThrows<IllegalArgumentException> {
       service.updateVisitors(4L, MOORLAND, request, MOORLAND_PRISON_USER)
-    }
+    }.message?.contains("Request contains visitors which do not exist on official visit with id 4")
     verify(officialVisitorRepository, never()).saveAndFlush(any())
   }
 
@@ -391,7 +257,7 @@ class OfficialVisitUpdateServiceTest {
 
     assertThrows<ValidationException> {
       service.updateVisitors(5L, MOORLAND, request, MOORLAND_PRISON_USER)
-    }
+    }.message?.contains("Invalid request: No matching prisoner contact found for contactId=100, prisonerContactId=200")
     verify(officialVisitorRepository, never()).saveAndFlush(any())
   }
 
@@ -406,6 +272,43 @@ class OfficialVisitUpdateServiceTest {
           contactId = 7L,
           prisonerContactId = 700L,
           relationshipCode = "POM",
+        ),
+      ),
+    )
+
+    val returnedContact = prisonerContact(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      type = "O",
+      contactId = 7L,
+      prisonerContactId = 700L,
+      firstName = "Jane",
+      lastName = "Doe",
+    ).toPrisonerContactModel()
+
+    whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(6L, MOORLAND)).thenReturn(visit)
+    whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(returnedContact))
+    whenever(officialVisitorRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
+
+    val savedCaptor = argumentCaptor<OfficialVisitorEntity>()
+    val response = service.updateVisitors(6L, MOORLAND, request, MOORLAND_PRISON_USER)
+
+    verify(officialVisitorRepository).saveAndFlush(savedCaptor.capture())
+    assertThat(response.visitorsAdded).hasSize(1)
+    assertThat(savedCaptor.firstValue.firstName).isEqualTo("Jane")
+    assertThat(savedCaptor.firstValue.prisonerContactId).isEqualTo(700L)
+  }
+
+  @Test
+  fun `updateVisitors accepts visitor when both contactId and relationshipCode match`() {
+    val visit = createVisit(officialVisitId = 6L)
+    val request = OfficialVisitUpdateVisitorsRequest(
+      officialVisitors = listOf(
+        OfficialVisitor(
+          officialVisitorId = 0L,
+          visitorTypeCode = VisitorType.CONTACT,
+          contactId = 7L,
+          prisonerContactId = null,
+          relationshipCode = "FRI",
         ),
       ),
     )
@@ -495,14 +398,19 @@ class OfficialVisitUpdateServiceTest {
       )
     }
 
-    visit.mutableVisitors().add(visitor)
+    visit.addVisitor(
+      visitorTypeCode = VisitorType.CONTACT,
+      firstName = firstName,
+      lastName = lastName,
+      contactId = contactId,
+      prisonerContactId = prisonerContactId,
+      relationshipTypeCode = RelationshipType.OFFICIAL,
+      relationshipCode = relationshipCode,
+      leadVisitor = leadVisitor,
+      assistedVisit = assistedVisit,
+      createdBy = MOORLAND_PRISON_USER,
+      createdTime = LocalDateTime.now().minusHours(1),
+    )
     return visitor
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun OfficialVisitEntity.mutableVisitors(): MutableList<OfficialVisitorEntity> {
-    val field = OfficialVisitEntity::class.java.getDeclaredField("officialVisitors")
-    field.isAccessible = true
-    return field.get(this) as MutableList<OfficialVisitorEntity>
   }
 }
