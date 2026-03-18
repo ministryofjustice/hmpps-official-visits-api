@@ -60,34 +60,18 @@ data class OfficialVisitMetricTelemetry(
     )
     return when (additionalInformation) {
       is VisitMetricInfo -> {
-        baseMap + mapOf(
-          "prisoner_number" to additionalInformation.prisonerNumber,
-          "username" to additionalInformation.username,
-        )
+        baseMap + additionalInformation.visitAdditionalInfo()
       }
 
       is SearchInfo -> {
-        baseMap + mapOf(
-          "start_date" to "$additionalInformation.startDate",
-          "end_date" to "$additionalInformation.endDate",
-          "search_term" to additionalInformation.searchTerm.orEmpty(),
-          "visit_types" to "$additionalInformation.visitTypes",
-          "visit_statuses" to "$additionalInformation.visitStatuses",
-          "location_Ids" to "$additionalInformation.locationIds",
-        )
+        baseMap + additionalInformation.searchAdditionalInfo()
       }
     }
   }
 
   override fun metrics(): Map<String, Double> = when (additionalInformation) {
     is VisitMetricInfo -> {
-      listOfNotNull(
-        additionalInformation.hoursBeforeStartTimeMetric()
-          .takeIf { eventType == MetricsEvents.CREATE.eventType || eventType == MetricsEvents.AMEND.eventType || eventType == MetricsEvents.CANCEL.eventType },
-        additionalInformation.numberOfVisitors().takeIf { eventType == MetricsEvents.CREATE.eventType },
-        additionalInformation.hoursAfterStartTimeTimeMetrics()
-          .takeIf { eventType == MetricsEvents.CREATE.eventType },
-      ).toMap()
+      visitMetrics(additionalInformation)
     }
 
     is SearchInfo -> {
@@ -106,6 +90,30 @@ data class OfficialVisitMetricTelemetry(
 
   fun VisitMetricInfo.numberOfVisitors(): Pair<String, Double> = "number_of_visitors" to numberOfVisitors.toDouble()
 }
+
+private fun VisitMetricInfo.visitAdditionalInfo(): Map<String, String> = mapOf(
+  "prisoner_number" to prisonerNumber,
+  "username" to username,
+)
+
+private fun OfficialVisitMetricTelemetry.visitMetrics(
+  additionalInformation: VisitMetricInfo,
+): Map<String, Double> = listOfNotNull(
+  additionalInformation.hoursBeforeStartTimeMetric()
+    .takeIf { eventType == MetricsEvents.CREATE.eventType || eventType == MetricsEvents.AMEND.eventType || eventType == MetricsEvents.CANCEL.eventType },
+  additionalInformation.numberOfVisitors().takeIf { eventType == MetricsEvents.CREATE.eventType },
+  additionalInformation.hoursAfterStartTimeTimeMetrics()
+    .takeIf { eventType == MetricsEvents.CREATE.eventType },
+).toMap()
+
+private fun SearchInfo.searchAdditionalInfo(): Map<String, String> = mapOf(
+  "start_date" to "$startDate",
+  "end_date" to "$endDate",
+  "search_term" to searchTerm.orEmpty(),
+  "visit_types" to "$visitTypes",
+  "visit_statuses" to "visitStatuses",
+  "location_Ids" to "$locationIds",
+)
 
 sealed class MetricInfo(
   open val source: Source = Source.DPS,
