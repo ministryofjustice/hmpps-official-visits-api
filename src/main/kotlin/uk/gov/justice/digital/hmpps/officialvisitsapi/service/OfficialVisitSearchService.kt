@@ -30,7 +30,7 @@ class OfficialVisitSearchService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
     require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
@@ -61,14 +61,13 @@ class OfficialVisitSearchService(
       eventType = MetricsEvents.SEARCH,
       info = SearchInfo(
         source = Source.DPS,
-        username = "",
         prisonCode = prisonCode,
         startDate = request.startDate,
         searchTerm = mayBeSearchTerm.orEmpty(),
         endDate = request.endDate,
-        visitTypes = request.visitTypes.takeIf { !it.isNullOrEmpty() }?.toList(),
-        locationIds = request.locationIds?.takeIf { it.isNotEmpty() }?.toList(),
-        visitStatuses = request.visitStatuses?.takeIf { it.isNotEmpty() }?.toList(),
+        visitTypes = request.visitTypes.takeUnless { !it.isNullOrEmpty() },
+        locationIds = request.locationIds.takeUnless { it.isNullOrEmpty() },
+        visitStatuses = request.visitStatuses.takeUnless { it.isNullOrEmpty() },
         numberOfResults = results.content.size,
       ),
     )
