@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditCreateEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
@@ -38,7 +38,7 @@ class OfficialVisitCreateService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val contactsService: ContactsService,
   private val auditingService: AuditingService,
-  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -94,7 +94,7 @@ class OfficialVisitCreateService(
         )
       }.also {
         auditingService.recordAuditEvent(
-          auditCreateEvent {
+          auditVisitCreateEvent {
             officialVisitId(it.officialVisitId)
             summaryText("Official visit created")
             eventSource("DPS")

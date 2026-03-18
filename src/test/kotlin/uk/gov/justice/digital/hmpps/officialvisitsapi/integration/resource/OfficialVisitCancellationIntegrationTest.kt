@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
@@ -77,6 +78,8 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should cancel an official scheduled visit`() {
+    auditedEventRepository.findAll() hasSize 0
+
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
       .let { response -> testAPIClient.getOfficialVisitBy(response.officialVisitId, MOORLAND_PRISON_USER) }
 
@@ -163,6 +166,17 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
         nomsNumber = cancelledVisit.prisonerVisited.prisonerNumber,
       ),
     )
+
+    with(auditedEventRepository.findAll().single { it.summaryText == "Official visit cancelled" }) {
+      officialVisitId isEqualTo cancelledVisit.officialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      detailText isEqualTo "Visit cancelled by user ${MOORLAND_PRISON_USER.name}"
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+    }
   }
 
   private fun WebTestClient.cancel(officialVisitId: Long, request: OfficialVisitCancellationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this

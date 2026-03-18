@@ -26,9 +26,13 @@ class AuditingService(private val auditedEventRepository: AuditedEventRepository
   }
 }
 
-fun auditCreateEvent(initializer: CreateDsl.() -> Unit): AuditEventDto = CreateDsl().apply(initializer).toAuditEvent()
+fun auditVisitCreateEvent(initializer: CreateVisitDsl.() -> Unit): AuditEventDto = CreateVisitDsl().apply(initializer).toAuditEvent()
 
-fun auditChangeEvent(initializer: ChangeDsl.() -> Unit): AuditEventDto = ChangeDsl().apply(initializer).toAuditEvent()
+fun auditVisitChangeEvent(initializer: ChangeVisitDsl.() -> Unit): AuditEventDto = ChangeVisitDsl().apply(initializer).toAuditEvent()
+
+fun auditVisitCancellationEvent(initializer: CancelVisitDsl.() -> Unit): AuditEventDto = CancelVisitDsl().apply(initializer).toAuditEvent()
+
+fun auditVisitCompletionEvent(initializer: CompleteVisitDsl.() -> Unit): AuditEventDto = CompleteVisitDsl().apply(initializer).toAuditEvent()
 
 @DslMarker
 annotation class AuditEventDslMarker
@@ -40,7 +44,7 @@ abstract class AuditEventDsl {
   private lateinit var eventSource: String
   private lateinit var prisonCode: String
   private lateinit var prisonerNumber: String
-  private lateinit var user: User
+  protected lateinit var user: User
 
   fun officialVisitId(ovId: Long) {
     officialVisitId = ovId
@@ -83,7 +87,7 @@ abstract class AuditEventDsl {
 }
 
 @AuditEventDslMarker
-class CreateDsl : AuditEventDsl() {
+class CreateVisitDsl : AuditEventDsl() {
   private lateinit var detailsText: String
 
   fun detailsText(detailsText: String) {
@@ -93,7 +97,7 @@ class CreateDsl : AuditEventDsl() {
   override fun detailsText(): String = detailsText
 }
 
-class ChangeDsl : AuditEventDsl() {
+class ChangeVisitDsl : AuditEventDsl() {
   private lateinit var changes: Changes
 
   fun changes(initializer: Changes.() -> Unit) {
@@ -120,6 +124,14 @@ class ChangeDsl : AuditEventDsl() {
 
     data class Change<T : Any>(val descriptiveText: String, val old: () -> T?, val new: () -> T?)
   }
+}
+
+class CancelVisitDsl : AuditEventDsl() {
+  override fun detailsText(): String = "Visit cancelled by user ${user.name}"
+}
+
+class CompleteVisitDsl : AuditEventDsl() {
+  override fun detailsText(): String = "Visit completed by user ${user.name}"
 }
 
 data class AuditEventDto(
