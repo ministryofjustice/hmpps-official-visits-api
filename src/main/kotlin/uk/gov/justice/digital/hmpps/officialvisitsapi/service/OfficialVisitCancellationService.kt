@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCancellationEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
@@ -18,7 +20,8 @@ import java.time.LocalDateTime
 class OfficialVisitCancellationService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
+  private val auditingService: AuditingService,
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -54,6 +57,18 @@ class OfficialVisitCancellationService(
         startTime = officialVisit.startTime,
       ),
     )
+
+    auditingService.recordAuditEvent(
+      auditVisitCancellationEvent {
+        officialVisitId(officialVisit.officialVisitId)
+        summaryText("Official visit cancelled")
+        eventSource("DPS")
+        user(user)
+        prisonCode(prisonCode)
+        prisonerNumber(prisonerVisited.prisonerNumber)
+      },
+    )
+
     return OfficialVisitCancelledDto(
       prisonCode = prisonCode,
       officialVisitId = officialVisitId,
