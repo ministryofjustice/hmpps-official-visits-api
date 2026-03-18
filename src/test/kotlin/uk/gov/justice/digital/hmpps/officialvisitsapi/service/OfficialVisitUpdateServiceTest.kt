@@ -91,7 +91,7 @@ class OfficialVisitUpdateServiceTest {
     assertThat(visit.visitTypeCode).isEqualTo(VisitType.VIDEO)
     assertThat(visit.updatedBy).isEqualTo(MOORLAND_PRISON_USER.username)
     assertThat(visit.updatedTime).isNotNull
-    verify(officialVisitRepository, times(1)).saveAndFlush(visit)
+    verify(officialVisitRepository).saveAndFlush(visit)
   }
 
   @Test
