@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -46,12 +47,14 @@ class OfficialVisitUpdateServiceTest {
   private val officialVisitorRepository: OfficialVisitorRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val contactsService: ContactsService = mock()
+  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService = mock()
 
   private val service = OfficialVisitUpdateService(
     officialVisitRepository,
     officialVisitorRepository,
     prisonVisitSlotRepository,
     contactsService,
+    officialVisitMetricTelemetryService,
   )
 
   @AfterEach
