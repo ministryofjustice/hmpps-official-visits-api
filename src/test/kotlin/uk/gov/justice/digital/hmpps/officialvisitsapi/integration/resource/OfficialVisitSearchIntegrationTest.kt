@@ -39,14 +39,14 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.util.UUID
 
 class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
   @MockitoBean
-  private lateinit var officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService
+  private lateinit var metricsService: MetricsService
 
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
@@ -108,7 +108,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
 
       val visit1 = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-      verify(officialVisitMetricTelemetryService).send(
+      verify(metricsService).send(
         eventType = eq(
           MetricsEvents.CREATE,
         ),
@@ -127,7 +127,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       )
       val visit2 = testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
-      verify(officialVisitMetricTelemetryService).send(
+      verify(metricsService).send(
         eventType = eq(
           MetricsEvents.CREATE,
         ),
@@ -166,7 +166,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val pageTwo = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 1, 1)
 
-      verify(officialVisitMetricTelemetryService, times(2)).send(
+      verify(metricsService, times(2)).send(
         eventType = eq(
           MetricsEvents.SEARCH,
         ),
@@ -199,7 +199,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val visit1 = testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
 
-      verify(officialVisitMetricTelemetryService).send(
+      verify(metricsService).send(
         eventType = eq(
           MetricsEvents.CREATE,
         ),
@@ -219,7 +219,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val visit2 = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-      verify(officialVisitMetricTelemetryService).send(
+      verify(metricsService).send(
         eventType = eq(
           MetricsEvents.CREATE,
         ),
@@ -248,7 +248,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val onePageOnly = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 0, 2)
 
-      verify(officialVisitMetricTelemetryService).send(
+      verify(metricsService).send(
         eventType = eq(
           MetricsEvents.SEARCH,
         ),

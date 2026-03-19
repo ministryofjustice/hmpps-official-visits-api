@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
 
 @Service
-class OfficialVisitMetricTelemetryService(private val telemetryService: TelemetryService) {
+class MetricsService(private val telemetryService: TelemetryService) {
   fun send(
     eventType: MetricsEvents,
     info: MetricInfo,

@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitSummaryRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
 import java.util.UUID
 
@@ -29,7 +29,7 @@ class OfficialVisitSearchService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
+  private val metricsService: MetricsService,
 ) {
   fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
     require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
@@ -56,7 +56,7 @@ class OfficialVisitSearchService(
       pageable = PageRequest.of(page, size, Sort.by("visitDate", "startTime").ascending()),
     )
 
-    officialVisitMetricTelemetryService.send(
+    metricsService.send(
       eventType = MetricsEvents.SEARCH,
       info = SearchInfo(
         prisonCode = prisonCode,

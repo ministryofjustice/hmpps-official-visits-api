@@ -35,7 +35,7 @@ enum class MetricsEvents(val eventType: String) {
       additionalInformation = additionalInformation,
     )
   },
-  SEARCH("OfficialVisitSearched") {
+  SEARCH("OfficialVisitSearch") {
     override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
