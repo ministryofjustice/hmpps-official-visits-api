@@ -181,6 +181,21 @@ class OfficialVisitUpdateServiceTest {
     assertThat(visit.updatedBy).isEqualTo(MOORLAND_PRISON_USER.username)
     assertThat(visit.updatedTime).isNotNull
     verify(officialVisitRepository, times(1)).saveAndFlush(visit)
+
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      officialVisitId isEqualTo 7
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      prisonCode isEqualTo MOORLAND
+      eventSource isEqualTo "DPS"
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      summaryText isEqualTo "Update visit comments"
+      detailText isEqualTo "Prisoner notes changed from '' to prisoner updated; Staff notes changed from '' to staff updated."
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test
