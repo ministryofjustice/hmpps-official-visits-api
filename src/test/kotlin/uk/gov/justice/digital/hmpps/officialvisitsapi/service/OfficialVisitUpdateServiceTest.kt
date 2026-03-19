@@ -15,6 +15,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
@@ -23,6 +24,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.contains
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toPrisonerContactModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -35,6 +39,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -48,6 +54,7 @@ class OfficialVisitUpdateServiceTest {
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val contactsService: ContactsService = mock()
   private val metricsService: MetricsService = mock()
+  private val auditingService: AuditingService = mock()
 
   private val service = OfficialVisitUpdateService(
     officialVisitRepository,
@@ -55,6 +62,7 @@ class OfficialVisitUpdateServiceTest {
     prisonVisitSlotRepository,
     contactsService,
     metricsService,
+    auditingService,
   )
 
   @AfterEach
@@ -79,6 +87,12 @@ class OfficialVisitUpdateServiceTest {
     whenever(prisonVisitSlotRepository.findById(99L)).thenReturn(Optional.of(newSlot))
     whenever(officialVisitRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitEntity }
 
+    val oldDpsLocationId = visit.dpsLocationId
+    val oldVisitTypeCode = visit.visitTypeCode
+    val oldVisitDate = visit.visitDate
+    val oldStartTime = visit.startTime
+    val oldEndTime = visit.endTime
+
     val response = service.updateVisitTypeAndSlot(11L, MOORLAND, request, MOORLAND_PRISON_USER)
 
     assertThat(response.officialVisitId).isEqualTo(11L)
@@ -92,6 +106,21 @@ class OfficialVisitUpdateServiceTest {
     assertThat(visit.updatedBy).isEqualTo(MOORLAND_PRISON_USER.username)
     assertThat(visit.updatedTime).isNotNull
     verify(officialVisitRepository).saveAndFlush(visit)
+
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      officialVisitId isEqualTo 11
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      prisonCode isEqualTo MOORLAND
+      eventSource isEqualTo "DPS"
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      summaryText isEqualTo "Update visit visit type and visit slot"
+      detailText isEqualTo "Visit date changed from ${oldVisitDate.toMediumFormatStyle()} to ${request.visitDate?.toMediumFormatStyle()}; Start time changed from $oldStartTime to ${request.startTime}; End time changed from $oldEndTime to ${request.endTime}; Location changed from $oldDpsLocationId to ${request.dpsLocationId}; Visit type changed from $oldVisitTypeCode to VIDEO; Visit slot changed from 1 to 99."
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test

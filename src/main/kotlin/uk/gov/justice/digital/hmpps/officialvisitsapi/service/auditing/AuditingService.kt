@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AuditedEventEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.properties.Delegates
 
@@ -109,20 +111,24 @@ class ChangeVisitDsl : AuditEventDsl() {
     changes.changes().joinToString(
       separator = "; ",
       postfix = ".",
-    ) { "${it.descriptiveText} changed from ${it.old()} to ${it.new()}" }
+    ) { "${it.descriptiveText} changed from ${it.old} to ${it.new}" }
   }
 
   @AuditEventDslMarker
   class Changes {
     private val changes = mutableListOf<Change<*>>()
 
-    fun change(descriptiveText: String, old: () -> Any?, new: () -> Any?) {
+    fun change(descriptiveText: String, old: Any?, new: Any?) {
       changes.add(Change(descriptiveText, old, new))
     }
 
-    fun changes() = changes.filter { it.old() != it.new() }
+    fun change(descriptiveText: String, old: LocalDate?, new: LocalDate?) {
+      changes.add(Change(descriptiveText, old?.toMediumFormatStyle(), new?.toMediumFormatStyle()))
+    }
 
-    data class Change<T : Any>(val descriptiveText: String, val old: () -> T?, val new: () -> T?)
+    fun changes() = changes.filter { it.old != it.new }
+
+    data class Change<T : Any>(val descriptiveText: String, val old: T?, val new: T?)
   }
 }
 
