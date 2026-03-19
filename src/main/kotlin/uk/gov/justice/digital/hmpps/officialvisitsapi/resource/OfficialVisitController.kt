@@ -141,7 +141,8 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       schema = Schema(type = "integer", defaultValue = "10"),
     )
     size: Int = 20,
-  ): PagedModel<OfficialVisitSummarySearchResponse> = facade.searchForOfficialVisitSummaries(prisonCode, request, page, size)
+    httpRequest: HttpServletRequest,
+  ): PagedModel<OfficialVisitSummarySearchResponse> = facade.searchForOfficialVisitSummaries(prisonCode, request, httpRequest.getLocalRequestContext().user, page, size)
 
   @Operation(summary = "Completes an official visit.")
   @ApiResponses(

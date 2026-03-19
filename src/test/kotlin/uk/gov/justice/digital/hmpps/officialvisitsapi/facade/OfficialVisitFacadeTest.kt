@@ -120,9 +120,9 @@ class OfficialVisitFacadeTest {
   fun `should delegate to correct service on search`() {
     val request: OfficialVisitSummarySearchRequest = mock()
 
-    facade.searchForOfficialVisitSummaries(MOORLAND, request, 0, 10)
+    facade.searchForOfficialVisitSummaries(MOORLAND, request, MOORLAND_PRISON_USER, 0, 10)
 
-    verify(officialVisitSearchService).searchForOfficialVisitSummaries(MOORLAND, request, 0, 10)
+    verify(officialVisitSearchService).searchForOfficialVisitSummaries(MOORLAND, request, MOORLAND_PRISON_USER, 0, 10)
   }
 
   @Test

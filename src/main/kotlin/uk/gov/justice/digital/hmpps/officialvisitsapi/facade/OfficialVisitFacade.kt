@@ -71,9 +71,10 @@ class OfficialVisitFacade(
   fun searchForOfficialVisitSummaries(
     prisonCode: String,
     request: OfficialVisitSummarySearchRequest,
+    user: User,
     page: Int,
     size: Int,
-  ) = officialVisitSearchService.searchForOfficialVisitSummaries(prisonCode, request, page, size)
+  ) = officialVisitSearchService.searchForOfficialVisitSummaries(prisonCode, request, user, page, size)
 
   fun completeOfficialVisit(
     prisonCode: String,

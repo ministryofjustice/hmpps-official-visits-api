@@ -31,7 +31,7 @@ class OfficialVisitSearchService(
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val metricsService: MetricsService,
 ) {
-  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
+  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, user: User, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
     require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
@@ -60,6 +60,7 @@ class OfficialVisitSearchService(
       eventType = MetricsEvents.SEARCH,
       info = SearchInfo(
         prisonCode = prisonCode,
+        username = user.username,
         startDate = request.startDate,
         searchTerm = mayBeSearchTerm.orEmpty(),
         endDate = request.endDate,

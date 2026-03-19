@@ -132,6 +132,7 @@ data class VisitMetricInfo(
 
 data class SearchInfo(
   override val prisonCode: String,
+  override val username: String,
   val startDate: LocalDate,
   val searchTerm: String? = null,
   val endDate: LocalDate,
@@ -139,4 +140,4 @@ data class SearchInfo(
   val locationIds: List<UUID>?,
   val visitStatuses: List<VisitStatusType>?,
   val numberOfResults: Int = 0,
-) : MetricInfo(username = "", prisonCode = prisonCode)
+) : MetricInfo(username = username, prisonCode = prisonCode)
