@@ -131,7 +131,6 @@ data class VisitMetricInfo(
 ) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
 
 data class SearchInfo(
-  override val source: Source = Source.DPS,
   override val prisonCode: String,
   val startDate: LocalDate,
   val searchTerm: String? = null,
@@ -140,4 +139,4 @@ data class SearchInfo(
   val locationIds: List<UUID>?,
   val visitStatuses: List<VisitStatusType>?,
   val numberOfResults: Int = 0,
-) : MetricInfo(source = source, username = "", prisonCode = prisonCode)
+) : MetricInfo(username = "", prisonCode = prisonCode)
