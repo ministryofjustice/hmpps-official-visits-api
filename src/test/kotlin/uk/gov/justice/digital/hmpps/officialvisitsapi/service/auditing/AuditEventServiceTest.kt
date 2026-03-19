@@ -60,6 +60,54 @@ class AuditEventServiceTest {
   }
 
   @Test
+  fun `should be audit change event with no recorded changes`() {
+    val auditEvent = auditVisitChangeEvent {
+      officialVisitId(1)
+      summaryText("Test summary change text")
+      eventSource("DPS")
+      user(MOORLAND_PRISON_USER)
+      prisonCode(MOORLAND)
+      prisonerNumber("A1234AA")
+      changes { change("FIELD_1", 1, 1) }
+    }
+
+    with(auditEvent) {
+      officialVisitId isEqualTo 1
+      summaryText isEqualTo "Test summary change text"
+      eventSource isEqualTo "DPS"
+      eventDateTime isCloseTo now()
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      prisonerNumber isEqualTo "A1234AA"
+      detailText isEqualTo "No recorded changes."
+    }
+  }
+
+  @Test
+  fun `should be audit change event with truncated details`() {
+    val auditEvent = auditVisitChangeEvent {
+      officialVisitId(1)
+      summaryText("Test summary change text")
+      eventSource("DPS")
+      user(MOORLAND_PRISON_USER)
+      prisonCode(MOORLAND)
+      prisonerNumber("A1234AA")
+      changes { change("FIELD_1", "a".repeat(1), "b".repeat(1001)) }
+    }
+
+    with(auditEvent) {
+      officialVisitId isEqualTo 1
+      summaryText isEqualTo "Test summary change text"
+      eventSource isEqualTo "DPS"
+      eventDateTime isCloseTo now()
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      prisonerNumber isEqualTo "A1234AA"
+      detailText isEqualTo "FIELD_1 changed from a to ".plus("b".repeat(1001)).take(1000)
+    }
+  }
+
+  @Test
   fun `should be audit cancellation event when recorded changes`() {
     val auditEvent = auditVisitCancellationEvent {
       officialVisitId(1)

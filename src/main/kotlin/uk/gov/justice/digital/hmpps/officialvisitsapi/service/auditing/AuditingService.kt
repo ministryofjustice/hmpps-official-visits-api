@@ -83,7 +83,7 @@ abstract class AuditEventDsl {
       username = user.username,
       userFullName = user.name,
       summaryText = summaryText,
-      detailText = detailsText(),
+      detailText = detailsText().take(1000),
     )
   }
 }
@@ -108,10 +108,12 @@ class ChangeVisitDsl : AuditEventDsl() {
   }
 
   override fun detailsText(): String = run {
+    if (changes.changes().isEmpty()) return@run "No recorded changes."
+
     changes.changes().joinToString(
       separator = "; ",
       postfix = ".",
-    ) { "${it.descriptiveText} changed from ${it.old} to ${it.new}" }
+    ) { "${it.descriptiveText} changed from ${it.old ?: "''"} to ${it.new ?: "''"}" }
   }
 
   @AuditEventDslMarker
@@ -126,9 +128,11 @@ class ChangeVisitDsl : AuditEventDsl() {
       changes.add(Change(descriptiveText, old?.toMediumFormatStyle(), new?.toMediumFormatStyle()))
     }
 
-    fun changes() = changes.filter { it.old != it.new }
+    fun changes() = changes.filter { it.hasChanged }
 
-    data class Change<T : Any>(val descriptiveText: String, val old: T?, val new: T?)
+    data class Change<T : Any>(val descriptiveText: String, val old: T?, val new: T?) {
+      val hasChanged: Boolean = old != new
+    }
   }
 }
 
