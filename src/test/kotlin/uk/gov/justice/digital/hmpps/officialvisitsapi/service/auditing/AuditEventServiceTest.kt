@@ -42,8 +42,8 @@ class AuditEventServiceTest {
       prisonCode(MOORLAND)
       prisonerNumber("A1234AA")
       changes {
-        change("FIELD_1", { 1 }, { 2 })
-        change("FIELD_2", { "a" }, { "b" })
+        change("FIELD_1", 1, 2)
+        change("FIELD_2", "a", "b")
       }
     }
 

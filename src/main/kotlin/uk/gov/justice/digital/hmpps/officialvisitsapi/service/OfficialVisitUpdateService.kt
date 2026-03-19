@@ -21,6 +21,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
@@ -33,6 +35,7 @@ class OfficialVisitUpdateService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
   val metricsService: MetricsService,
+  private val auditingService: AuditingService,
 ) {
   /**
    * Update the visit type and its date, time and location
@@ -49,6 +52,23 @@ class OfficialVisitUpdateService(
 
     val newPrisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
+
+    val auditChangeEvent = auditVisitChangeEvent {
+      officialVisitId(ove.officialVisitId)
+      summaryText("Update visit visit type and visit slot")
+      eventSource("DPS")
+      user(user)
+      prisonCode(ove.prisonCode)
+      prisonerNumber(ove.prisonerNumber)
+      changes {
+        change("Visit date", ove.visitDate, request.visitDate)
+        change("Start time", ove.startTime, request.startTime)
+        change("End time", ove.endTime, request.endTime)
+        change("Location", ove.dpsLocationId, request.dpsLocationId)
+        change("Visit type", ove.visitTypeCode, request.visitTypeCode)
+        change("Visit slot", ove.prisonVisitSlot.prisonVisitSlotId, newPrisonVisitSlot.prisonVisitSlotId)
+      }
+    }
 
     val changedOVEntity = ove.apply {
       prisonVisitSlot = newPrisonVisitSlot
@@ -73,6 +93,8 @@ class OfficialVisitUpdateService(
           startTime = it.startTime,
         ),
       )
+    }.also {
+      auditingService.recordAuditEvent(auditChangeEvent)
     }
 
     return OfficialVisitUpdateSlotResponse(
