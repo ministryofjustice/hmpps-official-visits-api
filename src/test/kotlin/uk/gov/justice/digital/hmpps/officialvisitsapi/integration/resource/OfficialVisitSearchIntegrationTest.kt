@@ -200,7 +200,6 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         ),
         info = eq(
           SearchInfo(
-            source = Source.DPS,
             prisonCode = MOORLAND_PRISON_USER.activeCaseLoadId!!,
             startDate = searchRequest.startDate!!,
             searchTerm = searchRequest.searchTerm?.trim(),

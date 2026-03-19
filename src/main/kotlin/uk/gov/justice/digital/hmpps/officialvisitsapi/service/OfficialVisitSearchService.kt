@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVisitedDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitSummaryRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
@@ -60,7 +59,6 @@ class OfficialVisitSearchService(
     officialVisitMetricTelemetryService.send(
       eventType = MetricsEvents.SEARCH,
       info = SearchInfo(
-        source = Source.DPS,
         prisonCode = prisonCode,
         startDate = request.startDate,
         searchTerm = mayBeSearchTerm.orEmpty(),
