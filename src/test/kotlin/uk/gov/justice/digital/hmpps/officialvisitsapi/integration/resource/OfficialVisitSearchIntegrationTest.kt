@@ -5,8 +5,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -33,9 +37,16 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.util.UUID
 
 class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
+  @MockitoBean
+  private lateinit var metricsService: MetricsService
 
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
@@ -50,7 +61,8 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
   private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
-  private val nextWednesdayAt9 = createOfficialVisitRequest(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
+  private val nextWednesdayAt9 =
+    createOfficialVisitRequest(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
   @BeforeEach
   @Transactional
@@ -73,7 +85,12 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(
       prisonCode = MOORLAND,
       locations = listOf(
-        location(prisonCode = MOORLAND, locationKeySuffix = "1-1", localName = "Visit place", id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")),
+        location(
+          prisonCode = MOORLAND,
+          locationKeySuffix = "1-1",
+          localName = "Visit place",
+          id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        ),
       ),
     )
   }
@@ -90,8 +107,43 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     fun `should find official visits by search term name and dates over multiple pages`() {
       prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.firstName, MOORLAND_PRISONER)
 
-      testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-      testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
+      val visit1 = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+      verify(metricsService).send(
+        eventType = eq(
+          MetricsEvents.CREATE,
+        ),
+        info = eq(
+          VisitMetricInfo(
+            officialVisitId = visit1.officialVisitId,
+            source = Source.DPS,
+            username = MOORLAND_PRISON_USER.username,
+            prisonCode = MOORLAND,
+            prisonerNumber = MOORLAND_PRISONER.number,
+            numberOfVisitors = nextWednesdayAt9.officialVisitors.size.toLong(),
+            locationType = null,
+            startTime = nextWednesdayAt9.startTime,
+          ),
+        ),
+      )
+      val visit2 = testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
+
+      verify(metricsService).send(
+        eventType = eq(
+          MetricsEvents.CREATE,
+        ),
+        info = eq(
+          VisitMetricInfo(
+            officialVisitId = visit2.officialVisitId,
+            source = Source.DPS,
+            username = MOORLAND_PRISON_USER.username,
+            prisonCode = MOORLAND,
+            prisonerNumber = MOORLAND_PRISONER.number,
+            numberOfVisitors = nextMondayAt9.officialVisitors.size.toLong(),
+            locationType = null,
+            startTime = nextMondayAt9.startTime,
+          ),
+        ),
+      )
 
       val searchRequest = OfficialVisitSummarySearchRequest(
         searchTerm = "    ${MOORLAND_PRISONER.firstName}    ",
@@ -114,6 +166,25 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
 
       val pageTwo = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 1, 1)
 
+      verify(metricsService, times(2)).send(
+        eventType = eq(
+          MetricsEvents.SEARCH,
+        ),
+        info = eq(
+          SearchInfo(
+            username = MOORLAND_PRISON_USER.username,
+            prisonCode = MOORLAND_PRISON_USER.activeCaseLoadId!!,
+            startDate = searchRequest.startDate!!,
+            searchTerm = searchRequest.searchTerm?.trim(),
+            endDate = searchRequest.endDate!!,
+            visitTypes = null,
+            locationIds = null,
+            visitStatuses = null,
+            numberOfResults = pageTwo.content.size,
+          ),
+        ),
+      )
+
       with(pageTwo) {
         content.single().visitSlotId isEqualTo 4
         page.size isEqualTo 1
@@ -127,8 +198,45 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     fun `should find ordered official all visits by search term prisoner number and dates on one page`() {
       prisonerSearchApi().stubFindPrisonersBySearchTerm(MOORLAND, MOORLAND_PRISONER.number, MOORLAND_PRISONER)
 
-      testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
-      testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+      val visit1 = testAPIClient.createOfficialVisit(nextWednesdayAt9, MOORLAND_PRISON_USER)
+
+      verify(metricsService).send(
+        eventType = eq(
+          MetricsEvents.CREATE,
+        ),
+        info = eq(
+          VisitMetricInfo(
+            officialVisitId = visit1.officialVisitId,
+            source = Source.DPS,
+            username = MOORLAND_PRISON_USER.username,
+            prisonCode = MOORLAND,
+            prisonerNumber = MOORLAND_PRISONER.number,
+            numberOfVisitors = nextWednesdayAt9.officialVisitors.size.toLong(),
+            locationType = null,
+            startTime = nextWednesdayAt9.startTime,
+          ),
+        ),
+      )
+
+      val visit2 = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+      verify(metricsService).send(
+        eventType = eq(
+          MetricsEvents.CREATE,
+        ),
+        info = eq(
+          VisitMetricInfo(
+            officialVisitId = visit2.officialVisitId,
+            source = Source.DPS,
+            username = MOORLAND_PRISON_USER.username,
+            prisonCode = MOORLAND,
+            prisonerNumber = MOORLAND_PRISONER.number,
+            numberOfVisitors = nextMondayAt9.officialVisitors.size.toLong(),
+            locationType = null,
+            startTime = nextMondayAt9.startTime,
+          ),
+        ),
+      )
 
       val searchRequest = OfficialVisitSummarySearchRequest(
         searchTerm = "    ${MOORLAND_PRISONER.number}    ",
@@ -140,6 +248,25 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
       )
 
       val onePageOnly = webTestClient.search(searchRequest, MOORLAND_PRISON_USER, 0, 2)
+
+      verify(metricsService).send(
+        eventType = eq(
+          MetricsEvents.SEARCH,
+        ),
+        info = eq(
+          SearchInfo(
+            username = MOORLAND_PRISON_USER.username,
+            prisonCode = MOORLAND_PRISON_USER.activeCaseLoadId!!,
+            startDate = searchRequest.startDate!!,
+            searchTerm = searchRequest.searchTerm?.trim(),
+            endDate = searchRequest.endDate!!,
+            visitTypes = null,
+            locationIds = null,
+            visitStatuses = null,
+            numberOfResults = onePageOnly.content.size,
+          ),
+        ),
+      )
 
       with(onePageOnly) {
         assertThat(content).extracting("visitSlotId").containsExactly(1L, 4L)
@@ -367,8 +494,16 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         locationIds = emptyList(),
       )
 
-      webTestClient.badSearch(searchRequest.copy(searchTerm = ""), MOORLAND_PRISON_USER, "Search term must be a minimum of 2 characters if provided")
-      webTestClient.badSearch(searchRequest.copy(searchTerm = "x"), MOORLAND_PRISON_USER, "Search term must be a minimum of 2 characters if provided")
+      webTestClient.badSearch(
+        searchRequest.copy(searchTerm = ""),
+        MOORLAND_PRISON_USER,
+        "Search term must be a minimum of 2 characters if provided",
+      )
+      webTestClient.badSearch(
+        searchRequest.copy(searchTerm = "x"),
+        MOORLAND_PRISON_USER,
+        "Search term must be a minimum of 2 characters if provided",
+      )
     }
 
     @Test
@@ -381,7 +516,12 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         locationIds = emptyList(),
       )
 
-      webTestClient.badSearch(searchRequest, MOORLAND_PRISON_USER, "Page number must be greater than or equal to zero", page = -1)
+      webTestClient.badSearch(
+        searchRequest,
+        MOORLAND_PRISON_USER,
+        "Page number must be greater than or equal to zero",
+        page = -1,
+      )
       webTestClient.badSearch(searchRequest, MOORLAND_PRISON_USER, "Page size must be greater than zero", size = 0)
     }
 
@@ -399,7 +539,12 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     }
   }
 
-  fun WebTestClient.search(request: OfficialVisitSummarySearchRequest, prisonUser: PrisonUser, page: Int = 0, size: Int = 1) = webTestClient
+  fun WebTestClient.search(
+    request: OfficialVisitSummarySearchRequest,
+    prisonUser: PrisonUser,
+    page: Int = 0,
+    size: Int = 1,
+  ) = webTestClient
     .post()
     .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
     .bodyValue(request)
@@ -411,7 +556,13 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     .expectBody(SearchResponse::class.java)
     .returnResult().responseBody!!
 
-  fun WebTestClient.badSearch(request: OfficialVisitSummarySearchRequest, prisonUser: PrisonUser, errorMessage: String, page: Int = 0, size: Int = 1) = webTestClient
+  fun WebTestClient.badSearch(
+    request: OfficialVisitSummarySearchRequest,
+    prisonUser: PrisonUser,
+    errorMessage: String,
+    page: Int = 0,
+    size: Int = 1,
+  ) = webTestClient
     .post()
     .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
     .bodyValue(request)

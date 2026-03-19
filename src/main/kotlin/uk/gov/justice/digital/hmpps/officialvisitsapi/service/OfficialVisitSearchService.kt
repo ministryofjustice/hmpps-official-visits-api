@@ -16,6 +16,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVisitedDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitSummaryRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
 import java.util.UUID
 
 @Service
@@ -26,8 +29,9 @@ class OfficialVisitSearchService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  private val metricsService: MetricsService,
 ) {
-  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
+  fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, user: User, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
     require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
@@ -52,6 +56,20 @@ class OfficialVisitSearchService(
       pageable = PageRequest.of(page, size, Sort.by("visitDate", "startTime").ascending()),
     )
 
+    metricsService.send(
+      eventType = MetricsEvents.SEARCH,
+      info = SearchInfo(
+        prisonCode = prisonCode,
+        username = user.username,
+        startDate = request.startDate,
+        searchTerm = mayBeSearchTerm.orEmpty(),
+        endDate = request.endDate,
+        visitTypes = request.visitTypes.takeUnless { it.isNullOrEmpty() },
+        locationIds = request.locationIds.takeUnless { it.isNullOrEmpty() },
+        visitStatuses = request.visitStatuses.takeUnless { it.isNullOrEmpty() },
+        numberOfResults = results.content.size,
+      ),
+    )
     if (results.isEmpty) {
       return PagedModel(Page.empty())
     }

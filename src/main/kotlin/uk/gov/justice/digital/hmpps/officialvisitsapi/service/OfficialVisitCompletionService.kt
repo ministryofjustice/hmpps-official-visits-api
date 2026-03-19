@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisited
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCompletionEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 
@@ -20,7 +20,7 @@ class OfficialVisitCompletionService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val auditingService: AuditingService,
-  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
+  private val metricsService: MetricsService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -50,7 +50,7 @@ class OfficialVisitCompletionService(
         completedBy = user,
       ),
     ).also {
-      officialVisitMetricTelemetryService.send(
+      metricsService.send(
         MetricsEvents.COMPLETE,
         VisitMetricInfo(
           username = user.username,

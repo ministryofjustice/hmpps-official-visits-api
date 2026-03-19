@@ -32,7 +32,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -44,7 +44,7 @@ class SyncOfficialVisitServiceTest {
   private val officialVisitorRepository: OfficialVisitorRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
-  private val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService = mock()
+  private val metricsService: MetricsService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
 
@@ -53,7 +53,7 @@ class SyncOfficialVisitServiceTest {
     officialVisitorRepository,
     prisonerVisitedRepository,
     prisonVisitSlotRepository,
-    officialVisitMetricTelemetryService,
+    metricsService,
   )
 
   @AfterEach
@@ -134,7 +134,7 @@ class SyncOfficialVisitServiceTest {
     verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
     verify(prisonerVisitedRepository).saveAndFlush(prisonerVisitedEntity)
-    verify(officialVisitMetricTelemetryService, atLeastOnce()).send(
+    verify(metricsService, atLeastOnce()).send(
       eventType = MetricsEvents.CREATE,
       info = VisitMetricInfo(
         prisonerNumber = officialVisitEntity.prisonerNumber,
@@ -160,7 +160,7 @@ class SyncOfficialVisitServiceTest {
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
-    verifyNoInteractions(officialVisitRepository, prisonerVisitedRepository, officialVisitMetricTelemetryService)
+    verifyNoInteractions(officialVisitRepository, prisonerVisitedRepository, metricsService)
   }
 
   @Test
@@ -209,7 +209,7 @@ class SyncOfficialVisitServiceTest {
 
     verify(prisonVisitSlotRepository).findById(1L)
     verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
-    verifyNoMoreInteractions(officialVisitRepository, prisonerVisitedRepository, officialVisitMetricTelemetryService)
+    verifyNoMoreInteractions(officialVisitRepository, prisonerVisitedRepository, metricsService)
   }
 
   @Test
@@ -237,7 +237,7 @@ class SyncOfficialVisitServiceTest {
     verify(officialVisitRepository).findById(officialVisitId)
     verify(prisonerVisitedRepository).findByOfficialVisit(officialVisitEntity)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
-    verify(officialVisitMetricTelemetryService, atLeastOnce()).send(
+    verify(metricsService, atLeastOnce()).send(
       eventType = MetricsEvents.AMEND,
       info = VisitMetricInfo(
         prisonerNumber = officialVisitEntity.prisonerNumber,
@@ -266,7 +266,7 @@ class SyncOfficialVisitServiceTest {
     assertThat(exception.message).isEqualTo("Official visit with ID $officialVisitId not found")
 
     verify(officialVisitRepository).findById(officialVisitId)
-    verifyNoInteractions(prisonerVisitedRepository, prisonVisitSlotRepository, officialVisitMetricTelemetryService)
+    verifyNoInteractions(prisonerVisitedRepository, prisonVisitSlotRepository, metricsService)
   }
 
   @Test

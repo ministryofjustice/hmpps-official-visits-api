@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.OfficialVisitMetricTelemetryService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import java.time.LocalDateTime
 
@@ -32,7 +32,7 @@ class OfficialVisitUpdateService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
-  val officialVisitMetricTelemetryService: OfficialVisitMetricTelemetryService,
+  val metricsService: MetricsService,
 ) {
   /**
    * Update the visit type and its date, time and location
@@ -62,7 +62,7 @@ class OfficialVisitUpdateService(
     }
 
     val updatedVisit = officialVisitRepository.saveAndFlush(changedOVEntity).also {
-      officialVisitMetricTelemetryService.send(
+      metricsService.send(
         MetricsEvents.AMEND,
         VisitMetricInfo(
           username = user.username,
@@ -102,7 +102,7 @@ class OfficialVisitUpdateService(
         updatedTime = LocalDateTime.now()
       },
     ).also {
-      officialVisitMetricTelemetryService.send(
+      metricsService.send(
         MetricsEvents.AMEND,
         VisitMetricInfo(
           username = user.username,
