@@ -24,6 +24,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMet
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
@@ -34,6 +39,7 @@ class SyncOfficialVisitorService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val contactsService: ContactsService,
   private val visitorEquipmentRepository: VisitorEquipmentRepository,
+  private val metricsService: MetricsService,
   private val auditingService: AuditingService,
   private val metricsService: MetricsService,
 ) {

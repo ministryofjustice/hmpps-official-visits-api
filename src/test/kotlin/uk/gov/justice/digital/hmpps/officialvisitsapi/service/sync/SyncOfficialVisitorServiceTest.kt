@@ -115,6 +115,17 @@ class SyncOfficialVisitorServiceTest {
     verify(officialVisitRepository).findById(visitId)
     verify(contactsService).getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)
     verify(officialVisitorRepository).saveAndFlush(any())
+    verify(metricsService).send(
+      MetricsEvents.ADD_VISITOR,
+      VisitorMetricInfo(
+        source = Source.NOMIS,
+        username = "Test",
+        prisonCode = MOORLAND,
+        officialVisitId = result.officialVisitId,
+        contactId = result.visitor.contactId!!,
+        officialVisitorId = result.visitor.officialVisitorId,
+      ),
+    )
     val auditEventCaptor = argumentCaptor<AuditEventDto>()
     verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
 
@@ -157,7 +168,7 @@ class SyncOfficialVisitorServiceTest {
     }
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(contactsService, officialVisitorRepository)
+    verifyNoInteractions(contactsService, officialVisitorRepository, metricsService)
   }
 
   @Test
@@ -368,7 +379,7 @@ class SyncOfficialVisitorServiceTest {
     exception.message isEqualTo "The official visit with id $visitId was not found"
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(officialVisitorRepository)
+    verifyNoInteractions(officialVisitorRepository, metricsService)
   }
 
   @Test
