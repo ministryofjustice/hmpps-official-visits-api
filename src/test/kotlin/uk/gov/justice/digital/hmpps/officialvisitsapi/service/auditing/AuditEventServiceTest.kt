@@ -84,6 +84,30 @@ class AuditEventServiceTest {
   }
 
   @Test
+  fun `should be audit change event with alternative text`() {
+    val auditEvent = auditVisitChangeEvent {
+      officialVisitId(1)
+      summaryText("Test summary change text")
+      eventSource("DPS")
+      user(MOORLAND_PRISON_USER)
+      prisonCode(MOORLAND)
+      prisonerNumber("A1234AA")
+      changes { change("FIELD_1", 1, 2, { old, new -> "Field 1 was $old now $new" }) }
+    }
+
+    with(auditEvent) {
+      officialVisitId isEqualTo 1
+      summaryText isEqualTo "Test summary change text"
+      eventSource isEqualTo "DPS"
+      eventDateTime isCloseTo now()
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      prisonerNumber isEqualTo "A1234AA"
+      detailText isEqualTo "Field 1 was 1 now 2."
+    }
+  }
+
+  @Test
   fun `should be audit change event with truncated details`() {
     val auditEvent = auditVisitChangeEvent {
       officialVisitId(1)
