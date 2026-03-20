@@ -15,6 +15,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -27,7 +30,8 @@ class SyncOfficialVisitService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
-  val metricsService: MetricsService,
+  private val metricsService: MetricsService,
+  private val auditingService: AuditingService,
 ) {
   @Transactional(readOnly = true)
   fun getVisitById(officialVisitId: Long): SyncOfficialVisit {
@@ -81,7 +85,19 @@ class SyncOfficialVisitService(
       ),
     )
 
-    return visit.toSyncModel(prisonerVisited)
+    return visit.toSyncModel(prisonerVisited).also {
+      auditingService.recordAuditEvent(
+        auditVisitCreateEvent {
+          officialVisitId(visit.officialVisitId)
+          summaryText("Official visit created")
+          eventSource("NOMIS")
+          user(UserService.getServiceAsUser())
+          prisonCode(visit.prisonCode)
+          prisonerNumber(visit.prisonerNumber)
+          detailsText("Official visit created for prisoner number ${it.prisonerNumber}")
+        },
+      )
+    }
   }
 
   fun updateVisit(officialVisitId: Long, request: SyncUpdateOfficialVisitRequest): SyncOfficialVisit {
