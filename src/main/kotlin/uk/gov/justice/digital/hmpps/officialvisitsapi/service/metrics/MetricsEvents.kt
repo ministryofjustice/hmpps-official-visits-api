@@ -125,7 +125,7 @@ private fun VisitMetricInfo.visitAdditionalInfo(): Map<String, String> = mapOf(
 
 private fun VisitorMetricInfo.visitorAdditionalInfo(): Map<String, String> = mapOf(
   "official_visit_id" to "$officialVisitId",
-  "official_visitor_is" to "$officialVisitorId",
+  "official_visitor_id" to "$officialVisitorId",
   "contact_id" to "$contactId",
 )
 

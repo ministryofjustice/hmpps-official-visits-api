@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 
 import jakarta.persistence.EntityNotFoundException
+import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
@@ -17,14 +17,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -41,7 +35,6 @@ class SyncOfficialVisitorService(
   private val visitorEquipmentRepository: VisitorEquipmentRepository,
   private val metricsService: MetricsService,
   private val auditingService: AuditingService,
-  private val metricsService: MetricsService,
 ) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

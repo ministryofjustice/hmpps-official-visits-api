@@ -38,12 +38,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
@@ -64,13 +64,13 @@ class SyncOfficialVisitorServiceTest {
     officialVisitorRepository,
     contactsService,
     visitorEquipmentRepository,
-    auditingService,
     metricsService,
+    auditingService,
   )
 
   @AfterEach
   fun afterEach() {
-    reset(officialVisitRepository, officialVisitorRepository, contactsService, visitorEquipmentRepository, metricsService)
+    reset(officialVisitRepository, officialVisitorRepository, contactsService, visitorEquipmentRepository, metricsService, auditingService)
   }
 
   @Test
