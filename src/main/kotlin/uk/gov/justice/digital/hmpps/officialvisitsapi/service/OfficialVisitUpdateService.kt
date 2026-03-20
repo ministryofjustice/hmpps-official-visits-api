@@ -23,9 +23,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.LocalDateTime
 
 @Service
@@ -34,7 +36,7 @@ class OfficialVisitUpdateService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
-  val metricsService: MetricsService,
+  private val metricsService: MetricsService,
   private val auditingService: AuditingService,
 ) {
   /**
@@ -210,6 +212,34 @@ class OfficialVisitUpdateService(
           }
         },
       )
+    }.also {
+      it.visitorsAdded.forEach { value ->
+        metricsService.send(
+          MetricsEvents.ADD_VISITOR,
+          VisitorMetricInfo(
+            source = Source.DPS,
+            username = user.username,
+            prisonCode = prisonCode,
+            officialVisitId = officialVisitId,
+            contactId = value.contactId,
+            officialVisitorId = value.officialVisitorId,
+          ),
+        )
+      }
+    }.also {
+      it.visitorsDeleted.forEach { value ->
+        metricsService.send(
+          MetricsEvents.REMOVE_VISITOR,
+          VisitorMetricInfo(
+            source = Source.DPS,
+            username = user.username,
+            prisonCode = prisonCode,
+            officialVisitId = officialVisitId,
+            contactId = value.contactId,
+            officialVisitorId = value.officialVisitorId,
+          ),
+        )
+      }
     }
   }
 

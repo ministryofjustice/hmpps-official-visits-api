@@ -2,7 +2,10 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
@@ -35,9 +38,15 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Pe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.LocalTime
 
 class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
+  @MockitoBean
+  private lateinit var metricsService: MetricsService
   private val location = moorlandLocation
 
   private val prisonerVisitors = listOf(
@@ -192,9 +201,58 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should add, update and delete visitors as requested`() {
     stubEvents.assertNoEvents()
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.CREATE,
+      ),
+      info = eq(
+        VisitMetricInfo(
+          officialVisitId = scheduledVisit?.officialVisitId!!,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          prisonerNumber = MOORLAND_PRISONER.number,
+          numberOfVisitors = 2,
+          locationType = null,
+          startTime = nextMondayAt9.startTime,
+        ),
+      ),
+    )
+
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.ADD_VISITOR,
+      ),
+      info = eq(
+        VisitorMetricInfo(
+          officialVisitId = scheduledVisit?.officialVisitId!!,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          contactId = scheduledVisit?.visitorAndContactIds?.first()?.second!!,
+          officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first!!,
+        ),
+      ),
+    )
+
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.ADD_VISITOR,
+      ),
+      info = eq(
+        VisitorMetricInfo(
+          officialVisitId = scheduledVisit?.officialVisitId!!,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          contactId = scheduledVisit?.visitorAndContactIds?.last()?.second!!,
+          officialVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.first!!,
+        ),
+      ),
+    )
 
     // Update the visitors - add one, delete one, update one
-    webTestClient.updateVisitors(
+    val res = webTestClient.updateVisitors(
       MOORLAND_PRISONER.prison,
       officialVisitId = scheduledVisit?.officialVisitId!!,
       request = OfficialVisitUpdateVisitorsRequest(
@@ -229,6 +287,22 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
     val existingVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first
     val deletedVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.first
+
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.REMOVE_VISITOR,
+      ),
+      info = eq(
+        VisitorMetricInfo(
+          officialVisitId = scheduledVisit?.officialVisitId!!,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          contactId = scheduledVisit?.visitorAndContactIds?.last()?.second!!,
+          officialVisitorId = deletedVisitorId!!,
+        ),
+      ),
+    )
 
     // Get the visit to check the changes have been applied
     val result = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND, scheduledVisit?.officialVisitId!!)
@@ -268,7 +342,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
-        officialVisitorId = deletedVisitorId!!,
+        officialVisitorId = deletedVisitorId,
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(
@@ -279,13 +353,28 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     // The created visitor must be the one which does not match the updated visitor ID
     val createdVisitor = result.officialVisitors?.filter { visitor -> visitor.officialVisitorId != existingVisitorId }
 
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.ADD_VISITOR,
+      ),
+      info = eq(
+        VisitorMetricInfo(
+          officialVisitId = result.officialVisitId,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          contactId = createdVisitor!!.last().contactId!!,
+          officialVisitorId = createdVisitor.last().officialVisitorId,
+        ),
+      ),
+    )
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_CREATED,
       additionalInfo = VisitorInfo(
         source = Source.DPS,
         username = MOORLAND_PRISON_USER.username,
         prisonId = MOORLAND,
-        officialVisitorId = createdVisitor!!.last().officialVisitorId,
+        officialVisitorId = createdVisitor.last().officialVisitorId,
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(

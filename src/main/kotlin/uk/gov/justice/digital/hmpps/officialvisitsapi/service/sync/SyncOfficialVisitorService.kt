@@ -16,6 +16,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
@@ -26,6 +31,7 @@ class SyncOfficialVisitorService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val contactsService: ContactsService,
   private val visitorEquipmentRepository: VisitorEquipmentRepository,
+  private val metricsService: MetricsService,
 ) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -70,7 +76,19 @@ class SyncOfficialVisitorService(
         createdBy = request.createUsername ?: "SYNC",
         createdTime = request.createDateTime ?: LocalDateTime.now(),
       ),
-    )
+    ).also {
+      metricsService.send(
+        MetricsEvents.ADD_VISITOR,
+        info = VisitorMetricInfo(
+          source = Source.NOMIS,
+          username = it.createdBy,
+          prisonCode = visit.prisonCode,
+          officialVisitId = visit.officialVisitId,
+          contactId = it.contactId!!,
+          officialVisitorId = it.officialVisitorId,
+        ),
+      )
+    }
 
     return SyncAddVisitorResponse(
       officialVisitId = visit.officialVisitId,
@@ -89,7 +107,19 @@ class SyncOfficialVisitorService(
           visitorEquipmentRepository.deleteAllByOfficialVisitor(visitor)
         }
 
-        visit.removeVisitor(visitor)
+        visit.removeVisitor(visitor).also {
+          metricsService.send(
+            MetricsEvents.REMOVE_VISITOR,
+            info = VisitorMetricInfo(
+              source = Source.NOMIS,
+              username = UserService.getClientAsUser("NOMIS").username,
+              prisonCode = visit.prisonCode,
+              officialVisitId = visit.officialVisitId,
+              contactId = visitor.contactId!!,
+              officialVisitorId = visitor.officialVisitorId,
+            ),
+          )
+        }
 
         return SyncRemoveVisitorResponse(
           officialVisitId = visit.officialVisitId,

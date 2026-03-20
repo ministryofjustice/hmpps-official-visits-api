@@ -21,6 +21,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotR
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.TimeSlotInfo
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -31,6 +35,7 @@ class PrisonTimeSlotService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val locationService: LocationsService,
   private val officialVisitRepository: OfficialVisitRepository,
+  private val metricsService: MetricsService,
 ) {
   @Transactional(readOnly = true)
   fun getPrisonTimeSlotById(prisonTimeSlotId: Long): TimeSlot {
@@ -42,7 +47,17 @@ class PrisonTimeSlotService(
   @Transactional
   fun create(request: CreateTimeSlotRequest, user: User): TimeSlot {
     request.validate()
-    return prisonTimeSlotRepository.saveAndFlush(request.toEntity(user.username)).toModel()
+    return prisonTimeSlotRepository.saveAndFlush(request.toEntity(user.username)).toModel().also {
+      metricsService.send(
+        eventType = MetricsEvents.TIMESLOT_ADDED,
+        info = TimeSlotInfo(
+          source = Source.DPS,
+          username = user.username,
+          prisonCode = request.prisonCode,
+          dayCode = request.dayCode.toString(),
+        ),
+      )
+    }
   }
 
   @Transactional

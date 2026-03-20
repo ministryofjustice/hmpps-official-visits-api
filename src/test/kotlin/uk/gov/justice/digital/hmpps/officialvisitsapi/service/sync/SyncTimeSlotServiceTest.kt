@@ -8,7 +8,9 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.reset
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
@@ -21,6 +23,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.TimeSlotInfo
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -29,14 +35,15 @@ import java.util.Optional
 class SyncTimeSlotServiceTest {
   private val prisonTimeSlotRepository: PrisonTimeSlotRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
-  private val syncTimeSlotService = SyncTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository)
+  private val metricsService: MetricsService = mock()
+  private val syncTimeSlotService = SyncTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, metricsService)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
 
   @AfterEach
   fun afterEach() {
-    reset(prisonTimeSlotRepository, prisonVisitSlotRepository)
+    reset(prisonTimeSlotRepository, prisonVisitSlotRepository, metricsService)
   }
 
   @Test
@@ -72,8 +79,19 @@ class SyncTimeSlotServiceTest {
     verify(prisonTimeSlotRepository).saveAndFlush(timeSlotCaptor.capture())
     timeSlotCaptor.firstValue.assertWithResponse(created)
     created.assertWithCreateRequest(request)
+    verify(prisonTimeSlotRepository).saveAndFlush(request.toEntity())
 
-    verify(prisonTimeSlotRepository).saveAndFlush(any())
+    verify(metricsService).send(
+      eq(MetricsEvents.TIMESLOT_ADDED),
+      eq(
+        TimeSlotInfo(
+          source = Source.NOMIS,
+          username = request.createdBy,
+          prisonCode = request.prisonCode,
+          dayCode = request.dayCode.toString(),
+        ),
+      ),
+    )
   }
 
   @Test

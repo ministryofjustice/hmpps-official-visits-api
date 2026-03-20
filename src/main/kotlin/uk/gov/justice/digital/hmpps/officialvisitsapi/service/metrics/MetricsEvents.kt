@@ -41,6 +41,24 @@ enum class MetricsEvents(val eventType: String) {
       additionalInformation = additionalInformation,
     )
   },
+  ADD_VISITOR("OfficialVisitorAdded") {
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+    )
+  },
+  REMOVE_VISITOR("OfficialVisitorRemoved") {
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+    )
+  },
+  TIMESLOT_ADDED("TimeSlotAdded") {
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+    )
+  },
   ;
 
   abstract fun event(
@@ -57,6 +75,7 @@ data class OfficialVisitMetricTelemetry(
     val baseMap = mapOf(
       "prison_code" to additionalInformation.prisonCode,
       "source" to additionalInformation.source.toString(),
+      "username" to additionalInformation.username,
     )
     return when (additionalInformation) {
       is VisitMetricInfo -> {
@@ -64,6 +83,14 @@ data class OfficialVisitMetricTelemetry(
       }
       is SearchInfo -> {
         baseMap + additionalInformation.searchAdditionalInfo()
+      }
+
+      is VisitorMetricInfo -> {
+        baseMap + additionalInformation.visitorAdditionalInfo()
+      }
+
+      is TimeSlotInfo -> {
+        baseMap + additionalInformation.timeSLotInfo()
       }
     }
   }
@@ -76,6 +103,9 @@ data class OfficialVisitMetricTelemetry(
       mapOf(
         "number_of_results" to additionalInformation.numberOfResults.toDouble(),
       )
+    }
+    else -> {
+      emptyMap<String, Double>()
     }
   }
 
@@ -91,9 +121,17 @@ data class OfficialVisitMetricTelemetry(
 
 private fun VisitMetricInfo.visitAdditionalInfo(): Map<String, String> = mapOf(
   "prisoner_number" to prisonerNumber,
-  "username" to username,
 )
 
+private fun VisitorMetricInfo.visitorAdditionalInfo(): Map<String, String> = mapOf(
+  "official_visit_id" to "$officialVisitId",
+  "official_visitor_is" to "$officialVisitorId",
+  "contact_id" to "$contactId",
+)
+
+private fun TimeSlotInfo.timeSLotInfo(): Map<String, String> = mapOf(
+  "day_code" to dayCode,
+)
 private fun OfficialVisitMetricTelemetry.visitMetrics(
   additionalInformation: VisitMetricInfo,
 ): Map<String, Double> = listOfNotNull(
@@ -141,3 +179,19 @@ data class SearchInfo(
   val visitStatuses: List<VisitStatusType>?,
   val numberOfResults: Int = 0,
 ) : MetricInfo(username = username, prisonCode = prisonCode)
+
+data class VisitorMetricInfo(
+  override val source: Source = Source.DPS,
+  override val username: String,
+  override val prisonCode: String,
+  val officialVisitId: Long,
+  val contactId: Long,
+  val officialVisitorId: Long,
+) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
+
+data class TimeSlotInfo(
+  override val source: Source = Source.DPS,
+  override val username: String,
+  override val prisonCode: String,
+  val dayCode: String,
+) : MetricInfo(source = source, username = username, prisonCode = prisonCode)

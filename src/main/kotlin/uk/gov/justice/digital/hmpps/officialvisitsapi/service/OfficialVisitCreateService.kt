@@ -21,9 +21,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotSpecificationFactory
@@ -106,6 +108,20 @@ class OfficialVisitCreateService(
             )
           },
         )
+      }.also {
+        it.visitorAndContactIds.forEach { value ->
+          metricsService.send(
+            MetricsEvents.ADD_VISITOR,
+            VisitorMetricInfo(
+              source = Source.DPS,
+              username = user.username,
+              prisonCode = prisonCode,
+              officialVisitId = it.officialVisitId,
+              contactId = value.second!!,
+              officialVisitorId = value.first,
+            ),
+          )
+        }
       }
   }
 
