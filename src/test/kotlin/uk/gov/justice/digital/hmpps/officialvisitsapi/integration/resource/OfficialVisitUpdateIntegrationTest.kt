@@ -13,8 +13,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
@@ -307,6 +310,24 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       assistedVisit isEqualTo true
       visitorNotes isEqualTo "visitor notes updated"
       visitorEquipment isEqualTo null
+    }
+
+    val auditEvents = auditedEventRepository.findAll()
+
+    auditEvents hasSize 2
+
+    auditEvents.single { it.summaryText == "Official visit created" }
+
+    with(auditEvents.single { it.summaryText == "Update visit visitors" }) {
+      officialVisitId isEqualTo result.officialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      summaryText isEqualTo "Update visit visitors"
+      detailText isEqualTo "Visitors added 1; Visitors updated 1; Visitors removed 1."
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
     }
   }
 

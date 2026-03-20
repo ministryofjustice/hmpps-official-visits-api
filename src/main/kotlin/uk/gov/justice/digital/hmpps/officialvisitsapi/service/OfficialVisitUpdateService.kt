@@ -194,7 +194,23 @@ class OfficialVisitUpdateService(
       visitorsAdded = addNewVisitors(ove, newVisitors.values, matchingContacts, user),
       visitorsDeleted = deleteExistingVisitors(ove, removedVisitors),
       visitorsUpdated = updateExistingVisitors(updatedVisitors, matchingContacts, user),
-    )
+    ).also {
+      auditingService.recordAuditEvent(
+        auditVisitChangeEvent {
+          officialVisitId(ove.officialVisitId)
+          summaryText("Update visit visitors")
+          eventSource("DPS")
+          user(user)
+          prisonCode(ove.prisonCode)
+          prisonerNumber(ove.prisonerNumber)
+          changes {
+            change("_", 0, newVisitors.size, { _, new -> "Visitors added $new" })
+            change("_", 0, updatedVisitors.size, { _, new -> "Visitors updated $new" })
+            change("_", 0, removedVisitors.size, { _, new -> "Visitors removed $new" })
+          }
+        },
+      )
+    }
   }
 
   private fun OfficialVisitor.isNewVisitor() = officialVisitorId == 0L

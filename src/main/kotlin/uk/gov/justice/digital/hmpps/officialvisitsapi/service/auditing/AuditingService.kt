@@ -113,24 +113,24 @@ class ChangeVisitDsl : AuditEventDsl() {
     changes.changes().joinToString(
       separator = "; ",
       postfix = ".",
-    ) { "${it.descriptiveText} changed from ${it.old ?: "''"} to ${it.new ?: "''"}" }
+    ) { it.alternativeText(it.old, it.new) ?: "${it.descriptiveText} changed from ${it.old ?: "''"} to ${it.new ?: "''"}" }
   }
 
   @AuditEventDslMarker
   class Changes {
     private val changes = mutableListOf<Change<*>>()
 
-    fun change(descriptiveText: String, old: Any?, new: Any?) {
-      changes.add(Change(descriptiveText, old, new))
+    fun change(descriptiveText: String, old: Any?, new: Any?, alternativeText: (old: Any?, new: Any?) -> String? = { _, _ -> null }) {
+      changes.add(Change(descriptiveText, old, new, alternativeText))
     }
 
-    fun change(descriptiveText: String, old: LocalDate?, new: LocalDate?) {
-      changes.add(Change(descriptiveText, old?.toMediumFormatStyle(), new?.toMediumFormatStyle()))
+    fun change(descriptiveText: String, old: LocalDate?, new: LocalDate?, alternativeText: (old: Any?, new: Any?) -> String? = { _, _ -> null }) {
+      changes.add(Change(descriptiveText, old?.toMediumFormatStyle(), new?.toMediumFormatStyle(), alternativeText))
     }
 
     fun changes() = changes.filter { it.hasChanged }
 
-    data class Change<T : Any>(val descriptiveText: String, val old: T?, val new: T?) {
+    data class Change<T : Any>(val descriptiveText: String, val old: T?, val new: T?, val alternativeText: (old: Any?, new: Any?) -> String? = { _, _ -> null }) {
       val hasChanged: Boolean = old != new
     }
   }
