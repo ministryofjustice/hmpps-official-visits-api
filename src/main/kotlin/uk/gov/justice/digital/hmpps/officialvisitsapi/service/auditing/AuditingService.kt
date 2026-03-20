@@ -53,7 +53,7 @@ abstract class AuditEventDsl {
   }
 
   fun summaryText(st: String) {
-    summaryText = st
+    summaryText = st.trim()
   }
 
   fun eventSource(es: String) {

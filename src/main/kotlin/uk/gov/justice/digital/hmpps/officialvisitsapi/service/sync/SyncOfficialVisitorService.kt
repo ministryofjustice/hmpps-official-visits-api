@@ -21,6 +21,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.So
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
 import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
@@ -31,6 +34,7 @@ class SyncOfficialVisitorService(
   private val officialVisitorRepository: OfficialVisitorRepository,
   private val contactsService: ContactsService,
   private val visitorEquipmentRepository: VisitorEquipmentRepository,
+  private val auditingService: AuditingService,
   private val metricsService: MetricsService,
 ) {
   companion object {
@@ -96,8 +100,24 @@ class SyncOfficialVisitorService(
       prisonCode = visit.prisonCode,
       prisonerNumber = visit.prisonerNumber,
       visitor = visitorSaved.toSyncModel(),
-    )
+    ).also {
+      auditingService.recordAuditEvent(
+        auditVisitCreateEvent {
+          officialVisitId(visit.officialVisitId)
+          summaryText("${visitorSaved.relationshipType()} visitor added")
+          eventSource("NOMIS")
+          user(UserService.getServiceAsUser())
+          prisonCode(visit.prisonCode)
+          prisonerNumber(visit.prisonerNumber)
+          detailsText("${visitorSaved.relationshipType()} visitor ${visitorSaved.name()} added to visit for prisoner number ${it.prisonerNumber}")
+        },
+      )
+    }
   }
+
+  private fun OfficialVisitorEntity.name() = "${firstName?.replaceFirstChar { it.uppercase() }} ${lastName?.replaceFirstChar { it.uppercase() }}"
+
+  private fun OfficialVisitorEntity.relationshipType() = relationshipTypeCode?.name?.lowercase()?.replaceFirstChar { it.uppercase() }
 
   fun deleteVisitor(officialVisitId: Long, officialVisitorId: Long): SyncRemoveVisitorResponse? {
     val visit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return null

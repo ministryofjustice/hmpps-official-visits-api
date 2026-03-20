@@ -23,7 +23,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseExcep
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.SERVICE_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -39,6 +42,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.So
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
@@ -50,6 +55,7 @@ class SyncOfficialVisitorServiceTest {
   private val contactsService: ContactsService = mock()
   private val visitorEquipmentRepository: VisitorEquipmentRepository = mock()
   private val metricsService: MetricsService = mock()
+  private val auditingService: AuditingService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
 
@@ -58,6 +64,7 @@ class SyncOfficialVisitorServiceTest {
     officialVisitorRepository,
     contactsService,
     visitorEquipmentRepository,
+    auditingService,
     metricsService,
   )
 
@@ -108,6 +115,20 @@ class SyncOfficialVisitorServiceTest {
     verify(officialVisitRepository).findById(visitId)
     verify(contactsService).getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)
     verify(officialVisitorRepository).saveAndFlush(any())
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      officialVisitId isEqualTo 0
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      prisonCode isEqualTo MOORLAND
+      eventSource isEqualTo "NOMIS"
+      username isEqualTo SERVICE_USER.username
+      userFullName isEqualTo SERVICE_USER.name
+      summaryText isEqualTo "Official visitor added"
+      detailText isEqualTo "Official visitor First Last added to visit for prisoner number ${MOORLAND_PRISONER.number}"
+      eventDateTime isCloseTo now()
+    }
     verify(metricsService).send(
       MetricsEvents.ADD_VISITOR,
       VisitorMetricInfo(
@@ -136,7 +157,7 @@ class SyncOfficialVisitorServiceTest {
     }
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(contactsService, officialVisitorRepository, metricsService)
+    verifyNoInteractions(contactsService, officialVisitorRepository)
   }
 
   @Test
@@ -347,7 +368,7 @@ class SyncOfficialVisitorServiceTest {
     exception.message isEqualTo "The official visit with id $visitId was not found"
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(officialVisitorRepository, metricsService)
+    verifyNoInteractions(officialVisitorRepository)
   }
 
   @Test
@@ -387,7 +408,6 @@ class SyncOfficialVisitorServiceTest {
     verify(officialVisitRepository).findById(visitId)
     verify(officialVisitorRepository).findById(visitorId)
     verify(officialVisitorRepository, never()).saveAndFlush(any())
-    verifyNoInteractions(metricsService)
   }
 
   private fun createOfficialVisitRequest(visitSlotId: Long) = SyncCreateOfficialVisitRequest(
