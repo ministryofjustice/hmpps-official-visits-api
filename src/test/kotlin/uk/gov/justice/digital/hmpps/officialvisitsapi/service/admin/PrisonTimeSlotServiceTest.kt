@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
@@ -34,6 +35,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.TimeSlotInfo
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -46,18 +51,19 @@ class PrisonTimeSlotServiceTest {
   private val prisonerSearchClient: PrisonerSearchClient = mock()
   private val locationService: LocationsService = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val timeSlotService = PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository)
+  private val metricsService: MetricsService = mock()
+  private val timeSlotService = PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository, metricsService)
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
 
   private val dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")
   private val prisonTimeSlotService =
-    PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository)
+    PrisonTimeSlotService(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository, metricsService)
 
   @AfterEach
   fun afterEach() {
-    reset(prisonTimeSlotRepository, prisonVisitSlotRepository)
+    reset(prisonTimeSlotRepository, prisonVisitSlotRepository, prisonerSearchClient, locationService, officialVisitRepository, metricsService)
   }
 
   @Test
@@ -95,6 +101,17 @@ class PrisonTimeSlotServiceTest {
     created.assertWithCreateRequest(request)
 
     verify(prisonTimeSlotRepository).saveAndFlush(any())
+    verify(metricsService).send(
+      eq(MetricsEvents.TIMESLOT_ADDED),
+      eq(
+        TimeSlotInfo(
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = request.prisonCode,
+          dayCode = request.dayCode.toString(),
+        ),
+      ),
+    )
   }
 
   @Test

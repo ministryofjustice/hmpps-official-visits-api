@@ -12,10 +12,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.TimeSlotInfo
 
 @Service
 @Transactional
-class SyncTimeSlotService(val prisonTimeSlotRepository: PrisonTimeSlotRepository, val prisonVisitSlotRepository: PrisonVisitSlotRepository) {
+class SyncTimeSlotService(
+  val prisonTimeSlotRepository: PrisonTimeSlotRepository,
+  val prisonVisitSlotRepository: PrisonVisitSlotRepository,
+  val metricsService: MetricsService,
+) {
   @Transactional(readOnly = true)
   fun getPrisonTimeSlotById(prisonTimeSlotId: Long): SyncTimeSlot {
     val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
@@ -23,7 +31,17 @@ class SyncTimeSlotService(val prisonTimeSlotRepository: PrisonTimeSlotRepository
     return prisonTimeSlotEntity.toSyncModel()
   }
 
-  fun createPrisonTimeSlot(request: SyncCreateTimeSlotRequest) = prisonTimeSlotRepository.saveAndFlush(request.toEntity()).toSyncModel()
+  fun createPrisonTimeSlot(request: SyncCreateTimeSlotRequest) = prisonTimeSlotRepository.saveAndFlush(request.toEntity()).toSyncModel().also {
+    metricsService.send(
+      eventType = MetricsEvents.TIMESLOT_ADDED,
+      info = TimeSlotInfo(
+        source = Source.NOMIS,
+        username = request.createdBy,
+        prisonCode = request.prisonCode,
+        dayCode = request.dayCode.toString(),
+      ),
+    )
+  }
 
   fun updatePrisonTimeSlot(prisonTimeSlotId: Long, request: SyncUpdateTimeSlotRequest): SyncTimeSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)

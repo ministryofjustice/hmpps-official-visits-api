@@ -40,6 +40,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmen
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.Optional
@@ -50,6 +54,7 @@ class SyncOfficialVisitorServiceTest {
   private val officialVisitorRepository: OfficialVisitorRepository = mock()
   private val contactsService: ContactsService = mock()
   private val visitorEquipmentRepository: VisitorEquipmentRepository = mock()
+  private val metricsService: MetricsService = mock()
   private val auditingService: AuditingService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
@@ -59,12 +64,13 @@ class SyncOfficialVisitorServiceTest {
     officialVisitorRepository,
     contactsService,
     visitorEquipmentRepository,
+    metricsService,
     auditingService,
   )
 
   @AfterEach
   fun afterEach() {
-    reset(officialVisitRepository, officialVisitorRepository, contactsService, visitorEquipmentRepository)
+    reset(officialVisitRepository, officialVisitorRepository, contactsService, visitorEquipmentRepository, metricsService, auditingService)
   }
 
   @Test
@@ -109,6 +115,17 @@ class SyncOfficialVisitorServiceTest {
     verify(officialVisitRepository).findById(visitId)
     verify(contactsService).getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)
     verify(officialVisitorRepository).saveAndFlush(any())
+    verify(metricsService).send(
+      MetricsEvents.ADD_VISITOR,
+      VisitorMetricInfo(
+        source = Source.NOMIS,
+        username = "Test",
+        prisonCode = MOORLAND,
+        officialVisitId = result.officialVisitId,
+        contactId = result.visitor.contactId!!,
+        officialVisitorId = result.visitor.officialVisitorId,
+      ),
+    )
     val auditEventCaptor = argumentCaptor<AuditEventDto>()
     verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
 
@@ -123,6 +140,17 @@ class SyncOfficialVisitorServiceTest {
       detailText isEqualTo "Official visitor First Last added to visit for prisoner number ${MOORLAND_PRISONER.number}"
       eventDateTime isCloseTo now()
     }
+    verify(metricsService).send(
+      MetricsEvents.ADD_VISITOR,
+      VisitorMetricInfo(
+        source = Source.NOMIS,
+        username = "Test",
+        prisonCode = MOORLAND,
+        officialVisitId = result.officialVisitId,
+        contactId = result.visitor.contactId!!,
+        officialVisitorId = result.visitor.officialVisitorId,
+      ),
+    )
   }
 
   @Test
@@ -140,7 +168,7 @@ class SyncOfficialVisitorServiceTest {
     }
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(contactsService, officialVisitorRepository)
+    verifyNoInteractions(contactsService, officialVisitorRepository, metricsService)
   }
 
   @Test
@@ -179,7 +207,7 @@ class SyncOfficialVisitorServiceTest {
     }
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(contactsService, officialVisitorRepository)
+    verifyNoInteractions(contactsService, officialVisitorRepository, metricsService)
   }
 
   @Test
@@ -228,6 +256,17 @@ class SyncOfficialVisitorServiceTest {
 
     verify(officialVisitRepository).findById(officialVisitId)
     verify(visitorEquipmentRepository).deleteAllByOfficialVisitor(officialVisitorEntity)
+    verify(metricsService).send(
+      MetricsEvents.REMOVE_VISITOR,
+      VisitorMetricInfo(
+        source = Source.NOMIS,
+        username = "NOMIS",
+        prisonCode = MOORLAND,
+        officialVisitId = response?.officialVisitId!!,
+        contactId = response.contactId!!,
+        officialVisitorId = response.officialVisitorId,
+      ),
+    )
   }
 
   @Test
@@ -256,7 +295,6 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
 
     val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
-
     assertThat(response).isNull()
   }
 
@@ -341,7 +379,7 @@ class SyncOfficialVisitorServiceTest {
     exception.message isEqualTo "The official visit with id $visitId was not found"
 
     verify(officialVisitRepository).findById(visitId)
-    verifyNoInteractions(officialVisitorRepository)
+    verifyNoInteractions(officialVisitorRepository, metricsService)
   }
 
   @Test

@@ -3,7 +3,10 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
@@ -36,11 +39,17 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Pe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitorInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.util.UUID
 
 class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
+  @MockitoBean
+  private lateinit var metricsService: MetricsService
 
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
@@ -110,6 +119,38 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     auditedEventRepository.findAll() hasSize 0
 
     val officialVisitResponse = webTestClient.create(nextMondayAt9)
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.CREATE,
+      ),
+      info = eq(
+        VisitMetricInfo(
+          officialVisitId = officialVisitResponse.officialVisitId,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          prisonerNumber = MOORLAND_PRISONER.number,
+          numberOfVisitors = nextMondayAt9.officialVisitors.size.toLong(),
+          locationType = null,
+          startTime = nextMondayAt9.startTime,
+        ),
+      ),
+    )
+    verify(metricsService).send(
+      eventType = eq(
+        MetricsEvents.ADD_VISITOR,
+      ),
+      info = eq(
+        VisitorMetricInfo(
+          officialVisitId = officialVisitResponse.officialVisitId,
+          source = Source.DPS,
+          username = MOORLAND_PRISON_USER.username,
+          prisonCode = MOORLAND,
+          contactId = officialVisitResponse.visitorAndContactIds.first().second!!,
+          officialVisitorId = officialVisitResponse.visitorAndContactIds.first().first,
+        ),
+      ),
+    )
 
     val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
 
