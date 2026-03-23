@@ -156,7 +156,7 @@ class SyncOfficialVisitorServiceTest {
         username = "Test",
         prisonCode = MOORLAND,
         officialVisitId = result.officialVisitId,
-        contactId = result.visitor.contactId!!,
+        contactId = result.visitor.contactId,
         officialVisitorId = result.visitor.officialVisitorId,
       ),
     )
