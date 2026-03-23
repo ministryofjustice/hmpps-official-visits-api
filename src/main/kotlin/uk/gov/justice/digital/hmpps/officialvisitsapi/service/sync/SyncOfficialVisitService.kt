@@ -32,6 +32,7 @@ class SyncOfficialVisitService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val metricsService: MetricsService,
   private val auditingService: AuditingService,
+  private val userService: UserService,
 ) {
   @Transactional(readOnly = true)
   fun getVisitById(officialVisitId: Long): SyncOfficialVisit {
@@ -46,6 +47,8 @@ class SyncOfficialVisitService(
   }
 
   fun createVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
+    val createdBy = userService.getUser(request.createUsername!!) ?: throw EntityNotFoundException("User ${request.createUsername} not found")
+
     val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
     }
@@ -91,7 +94,7 @@ class SyncOfficialVisitService(
           officialVisitId(visit.officialVisitId)
           summaryText("Official visit created")
           eventSource("NOMIS")
-          user(UserService.getServiceAsUser())
+          user(createdBy)
           prisonCode(visit.prisonCode)
           prisonerNumber(visit.prisonerNumber)
           detailsText("Official visit created for prisoner number ${it.prisonerNumber}")

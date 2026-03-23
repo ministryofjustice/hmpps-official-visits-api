@@ -35,12 +35,15 @@ class SyncOfficialVisitorService(
   private val visitorEquipmentRepository: VisitorEquipmentRepository,
   private val metricsService: MetricsService,
   private val auditingService: AuditingService,
+  private val userService: UserService,
 ) {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
   fun createVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
+    val createdBy = userService.getUser(request.createUsername!!) ?: throw EntityNotFoundException("User ${request.createUsername} not found")
+
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
     }
@@ -105,7 +108,7 @@ class SyncOfficialVisitorService(
           officialVisitId(visit.officialVisitId)
           summaryText("${visitorSaved.relationshipType()} visitor added")
           eventSource("NOMIS")
-          user(UserService.getServiceAsUser())
+          user(createdBy)
           prisonCode(visit.prisonCode)
           prisonerNumber(visit.prisonerNumber)
           detailsText("${visitorSaved.relationshipType()} visitor ${visitorSaved.name()} added to visit for prisoner number ${it.prisonerNumber}")

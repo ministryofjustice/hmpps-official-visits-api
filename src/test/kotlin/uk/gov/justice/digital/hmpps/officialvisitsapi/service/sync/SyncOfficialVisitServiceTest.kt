@@ -3,11 +3,14 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync
 import jakarta.persistence.EntityNotFoundException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.atLeastOnce
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
@@ -20,7 +23,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffende
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.SERVICE_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
@@ -35,6 +37,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -53,6 +56,7 @@ class SyncOfficialVisitServiceTest {
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val metricsService: MetricsService = mock()
   private val auditingService: AuditingService = mock()
+  private val userService: UserService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
 
@@ -63,7 +67,13 @@ class SyncOfficialVisitServiceTest {
     prisonVisitSlotRepository,
     metricsService,
     auditingService,
+    userService,
   )
+
+  @BeforeEach
+  fun beforeEach() {
+    whenever(userService.getUser(any())) doReturn MOORLAND_PRISON_USER
+  }
 
   @AfterEach
   fun afterEach() {
@@ -165,8 +175,8 @@ class SyncOfficialVisitServiceTest {
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
       prisonCode isEqualTo MOORLAND
       eventSource isEqualTo "NOMIS"
-      username isEqualTo SERVICE_USER.username
-      userFullName isEqualTo SERVICE_USER.name
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
       summaryText isEqualTo "Official visit created"
       detailText isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number}"
       eventDateTime isCloseTo now()
