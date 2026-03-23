@@ -92,9 +92,9 @@ class MigrateVisitServiceTest {
 
       val visitSlotEntities = visitSlotEntities(request)
 
-      whenever(prisonTimeSlotRepository.saveAndFlush(any())).thenReturn(timeSlotEntity)
+      whenever(prisonTimeSlotRepository.saveAndFlush(any<PrisonTimeSlotEntity>())).thenReturn(timeSlotEntity)
 
-      whenever(prisonVisitSlotRepository.saveAndFlush(any()))
+      whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>()))
         .thenReturn(visitSlotEntities[0])
         .thenReturn(visitSlotEntities[1])
 
@@ -158,7 +158,7 @@ class MigrateVisitServiceTest {
 
       val visitSlotEntities = visitSlotEntities(request)
 
-      whenever(prisonVisitSlotRepository.saveAndFlush(any()))
+      whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>()))
         .thenReturn(visitSlotEntities[0])
         .thenReturn(visitSlotEntities[1])
 
@@ -280,9 +280,9 @@ class MigrateVisitServiceTest {
 
       // Stub the values returned
       whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
-      whenever(officialVisitRepository.saveAndFlush(any())).thenReturn(visitEntity)
-      whenever(prisonerVisitedRepository.saveAndFlush(any())).thenReturn(prisonerVisitedEntity)
-      whenever(officialVisitorRepository.saveAndFlush(any()))
+      whenever(officialVisitRepository.saveAndFlush(any<OfficialVisitEntity>())).thenReturn(visitEntity)
+      whenever(prisonerVisitedRepository.saveAndFlush(any<PrisonerVisitedEntity>())).thenReturn(prisonerVisitedEntity)
+      whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>()))
         .thenReturn(visitorEntities[0])
         .thenReturn(visitorEntities[1])
 
