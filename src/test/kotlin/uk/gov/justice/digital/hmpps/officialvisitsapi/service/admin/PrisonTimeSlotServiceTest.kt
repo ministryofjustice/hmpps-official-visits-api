@@ -89,6 +89,76 @@ class PrisonTimeSlotServiceTest {
   }
 
   @Test
+  fun `should get a time slot summary by ID with associated visit slots`() {
+    val timeSlotEntity = prisonTimeSlotEntity()
+    val visitSlotEntity = PrisonVisitSlotEntity(
+      prisonVisitSlotId = 1L,
+      prisonTimeSlotId = 1L,
+      dpsLocationId = dpsLocationId,
+      maxAdults = 10,
+      createdBy = "Test",
+      createdTime = LocalDateTime.now(),
+    )
+
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
+    whenever(prisonVisitSlotRepository.findByPrisonTimeSlotId(1L)).thenReturn(listOf(visitSlotEntity))
+    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND)).thenReturn(officialVisitLocations(dpsLocationId))
+
+    val result = prisonTimeSlotService.getPrisonTimeSlotSummaryById(1L)
+
+    assertThat(result).isEqualTo(
+      TimeSlotSummaryItem(
+        timeSlot = timeSlotEntity.toTimeSlotModel(),
+        visitSlots = listOf(
+          visitSlotEntity.toVisitSlotModel(MOORLAND).copy(
+            locationDescription = location(dpsLocationId).localName,
+            locationMaxCapacity = 10,
+            locationType = location(dpsLocationId).locationType.value,
+          ),
+        ),
+      ),
+    )
+
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).findByPrisonTimeSlotId(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should fail to get a time slot summary by ID when time slot does not exist`() {
+    whenever(prisonTimeSlotRepository.findById(99L)).thenReturn(Optional.empty())
+
+    assertThrows<EntityNotFoundException> {
+      prisonTimeSlotService.getPrisonTimeSlotSummaryById(99L)
+    }
+
+    verify(prisonTimeSlotRepository).findById(99L)
+    verifyNoMoreInteractions(prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should get a time slot summary by ID with no associated visit slots`() {
+    val timeSlotEntity = prisonTimeSlotEntity()
+
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(timeSlotEntity))
+    whenever(prisonVisitSlotRepository.findByPrisonTimeSlotId(1L)).thenReturn(emptyList())
+    whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND)).thenReturn(officialVisitLocations(dpsLocationId))
+
+    val result = prisonTimeSlotService.getPrisonTimeSlotSummaryById(1L)
+
+    assertThat(result).isEqualTo(
+      TimeSlotSummaryItem(
+        timeSlot = timeSlotEntity.toTimeSlotModel(),
+        visitSlots = emptyList(),
+      ),
+    )
+
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).findByPrisonTimeSlotId(1L)
+    verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
+  }
+
+  @Test
   fun `should create a time slot and return it`() {
     val request = createTimeSlotRequest()
     whenever(prisonTimeSlotRepository.saveAndFlush(any<PrisonTimeSlotEntity>())).thenReturn(request.toEntity(MOORLAND_PRISON_USER.username))
