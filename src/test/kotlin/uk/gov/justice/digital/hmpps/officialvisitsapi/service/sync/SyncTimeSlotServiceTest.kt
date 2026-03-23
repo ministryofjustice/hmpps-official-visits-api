@@ -111,7 +111,7 @@ class SyncTimeSlotServiceTest {
     val request = updateTimeSlotRequest()
 
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(request.toEntity()))
-    whenever(prisonTimeSlotRepository.saveAndFlush(any())).thenReturn(request.toEntity())
+    whenever(prisonTimeSlotRepository.saveAndFlush(any<PrisonTimeSlotEntity>())).thenReturn(request.toEntity())
 
     val updated = syncTimeSlotService.updatePrisonTimeSlot(1L, request)
 
