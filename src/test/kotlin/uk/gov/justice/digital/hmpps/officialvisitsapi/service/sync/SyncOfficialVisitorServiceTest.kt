@@ -105,7 +105,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(contactsService.getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)).thenReturn(
       listOf(prisonerContactSummary(prisonerContactId, MOORLAND_PRISONER.number, contactId)),
     )
-    whenever(officialVisitorRepository.saveAndFlush(any())).thenReturn(officialVisitorEntity)
+    whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenReturn(officialVisitorEntity)
 
     val result = syncOfficialVisitService.createVisitor(visitId, visitorRequest)
 
@@ -338,7 +338,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
     whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.of(officialVisitorEntity))
-    whenever(officialVisitorRepository.saveAndFlush(any())).thenReturn(officialVisitorEntity)
+    whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenReturn(officialVisitorEntity)
 
     syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
 

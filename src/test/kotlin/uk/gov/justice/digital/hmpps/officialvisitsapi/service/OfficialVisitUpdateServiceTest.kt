@@ -85,7 +85,7 @@ class OfficialVisitUpdateServiceTest {
 
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(11L, MOORLAND)).thenReturn(visit)
     whenever(prisonVisitSlotRepository.findById(99L)).thenReturn(Optional.of(newSlot))
-    whenever(officialVisitRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitEntity }
+    whenever(officialVisitRepository.saveAndFlush(any<OfficialVisitEntity>())).thenAnswer { it.arguments[0] as OfficialVisitEntity }
 
     val oldDpsLocationId = visit.dpsLocationId
     val oldVisitTypeCode = visit.visitTypeCode
@@ -170,7 +170,7 @@ class OfficialVisitUpdateServiceTest {
     val request = OfficialVisitUpdateCommentRequest(staffNotes = "staff updated", prisonerNotes = "prisoner updated")
 
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(7L, MOORLAND)).thenReturn(visit)
-    whenever(officialVisitRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitEntity }
+    whenever(officialVisitRepository.saveAndFlush(any<OfficialVisitEntity>())).thenAnswer { it.arguments[0] as OfficialVisitEntity }
 
     val response = service.updateComments(7L, MOORLAND, request, MOORLAND_PRISON_USER)
 
@@ -334,7 +334,7 @@ class OfficialVisitUpdateServiceTest {
 
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(6L, MOORLAND)).thenReturn(visit)
     whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(returnedContact))
-    whenever(officialVisitorRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
+    whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
 
     val savedCaptor = argumentCaptor<OfficialVisitorEntity>()
     val response = service.updateVisitors(6L, MOORLAND, request, MOORLAND_PRISON_USER)
@@ -371,7 +371,7 @@ class OfficialVisitUpdateServiceTest {
 
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(6L, MOORLAND)).thenReturn(visit)
     whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(returnedContact))
-    whenever(officialVisitorRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
+    whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
 
     val savedCaptor = argumentCaptor<OfficialVisitorEntity>()
     val response = service.updateVisitors(6L, MOORLAND, request, MOORLAND_PRISON_USER)

@@ -91,7 +91,7 @@ class PrisonTimeSlotServiceTest {
   @Test
   fun `should create a time slot and return it`() {
     val request = createTimeSlotRequest()
-    whenever(prisonTimeSlotRepository.saveAndFlush(any())).thenReturn(request.toEntity(MOORLAND_PRISON_USER.username))
+    whenever(prisonTimeSlotRepository.saveAndFlush(any<PrisonTimeSlotEntity>())).thenReturn(request.toEntity(MOORLAND_PRISON_USER.username))
 
     val created = timeSlotService.create(request, MOORLAND_PRISON_USER)
 
@@ -131,7 +131,7 @@ class PrisonTimeSlotServiceTest {
     val request = updateTimeSlotRequest()
 
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
-    whenever(prisonTimeSlotRepository.saveAndFlush(any())).thenReturn(prisonTimeSlotEntity())
+    whenever(prisonTimeSlotRepository.saveAndFlush(any<PrisonTimeSlotEntity>())).thenReturn(prisonTimeSlotEntity())
 
     val updated = timeSlotService.update(prisonTimeSlotId = 1L, request = request, user = MOORLAND_PRISON_USER)
 
