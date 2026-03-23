@@ -283,6 +283,21 @@ class SyncOfficialVisitServiceTest {
         locationType = null,
       ),
     )
+
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      this.officialVisitId isEqualTo 0
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      prisonCode isEqualTo MOORLAND
+      eventSource isEqualTo "NOMIS"
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      summaryText isEqualTo "Official visit updated"
+      detailText isEqualTo "Start time changed from 09:00 to 10:00; End time changed from 10:00 to 11:00; Prisoner notes changed from '' to updated comment; Visitor concern notes changed from '' to updated concern; Offender visit ID changed from 1 to 2; Visit order number changed from '' to 5678; Visit status code changed from SCHEDULED to EXPIRED."
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test
