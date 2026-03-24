@@ -44,6 +44,21 @@ class PrisonTimeSlotService(
     return prisonTimeSlotEntity.toModel()
   }
 
+  @Transactional(readOnly = true)
+  fun getPrisonTimeSlotSummaryById(prisonTimeSlotId: Long): TimeSlotSummaryItem {
+    val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
+      .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
+    val prisonCode = prisonTimeSlotEntity.prisonCode
+    val timeSlot = prisonTimeSlotEntity.toModel()
+    val visitSlots = prisonVisitSlotRepository.findByPrisonTimeSlotId(prisonTimeSlotId)
+      .toVisitSlotListModel(prisonCode)
+    val decoratedVisitSlots = decorateWithLocationDescription(prisonCode = prisonCode, slots = visitSlots)
+    return TimeSlotSummaryItem(
+      timeSlot = timeSlot,
+      visitSlots = decoratedVisitSlots,
+    )
+  }
+
   @Transactional
   fun create(request: CreateTimeSlotRequest, user: User): TimeSlot {
     request.validate()

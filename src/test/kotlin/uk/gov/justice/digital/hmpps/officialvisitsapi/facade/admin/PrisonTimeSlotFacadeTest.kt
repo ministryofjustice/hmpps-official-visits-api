@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummaryItem
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.admin.PrisonTimeSlotService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
@@ -32,6 +33,21 @@ class PrisonTimeSlotFacadeTest {
 
   private val createdTime = LocalDateTime.now().minusDays(2)
   private val updatedTime = LocalDateTime.now().minusDays(1)
+
+  @Test
+  fun `should get a time slot summary by ID`() {
+    val response = TimeSlotSummaryItem(
+      timeSlot = timeSlotResponse(prisonTimeSlotId = 1L),
+      visitSlots = emptyList(),
+    )
+
+    whenever(timeSlotService.getPrisonTimeSlotSummaryById(1L)).thenReturn(response)
+
+    val result = facade.getPrisonTimeSlotSummaryById(1L)
+
+    assertThat(result).isEqualTo(response)
+    verify(timeSlotService).getPrisonTimeSlotSummaryById(1L)
+  }
 
   @Test
   fun `should send a domain event when a time slot is created`() {

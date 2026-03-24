@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.Create
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.UpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummaryItem
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -95,6 +96,36 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
     @Parameter(description = "The internal ID for a prison time slot", required = true)
     @PathVariable prisonTimeSlotId: Long,
   ): TimeSlot = facade.getPrisonTimeSlotById(prisonTimeSlotId)
+
+  @GetMapping(path = ["/time-slot/{prisonTimeSlotId}/summary"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseBody
+  @Operation(
+    summary = "Returns the data for a prison time slot and its associated visit slots by ID",
+    description = """
+      Requires role: ROLE_OFFICIAL_VISITS_ADMIN.
+      Used to get the details for one prison time slot and its associated visit slots.
+      """,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "The prison time slot and associated visit slots matching the ID provided in the request",
+        content = [
+          Content(mediaType = "application/json", schema = Schema(implementation = TimeSlotSummaryItem::class)),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No prison time slot with this ID was found",
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
+  fun getPrisonTimeSlotSummaryById(
+    @Parameter(description = "The internal ID for a prison time slot", required = true)
+    @PathVariable prisonTimeSlotId: Long,
+  ): TimeSlotSummaryItem = facade.getPrisonTimeSlotSummaryById(prisonTimeSlotId)
 
   @PostMapping(path = ["/time-slot"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
