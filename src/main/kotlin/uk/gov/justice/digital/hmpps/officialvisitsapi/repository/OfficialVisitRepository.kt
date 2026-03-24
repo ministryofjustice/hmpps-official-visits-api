@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Repository
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
@@ -81,4 +82,20 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     """,
   )
   fun countOVByPrisonerNumberAndBookingId(prisonerNumber: String, bookingId: Long, startDateTime: LocalDateTime): Long
+
+  fun findByPrisonCodeAndPrisonerNumberAndVisitDate(prisonCode: String, prisonerNumber: String, visitDate: LocalDate): List<OfficialVisitEntity>
+
+  @Query(
+    value = """
+      SELECT ov
+      FROM OfficialVisitEntity ov
+      WHERE ov.prisonCode = :prisonCode
+        AND ov.prisonerNumber = :prisonerNumber
+        AND ov.visitDate = :visitDate
+        AND :startTime < ov.endTime
+        AND :endTime > ov.startTime
+        AND ov.visitStatusCode = 'SCHEDULED'
+    """,
+  )
+  fun findScheduledOverlappingVisitsBy(prisonCode: String, prisonerNumber: String, visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime): List<OfficialVisitEntity>
 }
