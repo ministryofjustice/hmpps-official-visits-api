@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OverlappingVisitsCriteriaRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitUpdateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OverlappingVisitsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
@@ -30,6 +32,7 @@ class OfficialVisitFacade(
   private val officialVisitCancellationService: OfficialVisitCancellationService,
   private val officialVisitUpdateService: OfficialVisitUpdateService,
   private val outboundEventsService: OutboundEventsService,
+  private val overlappingVisitsService: OverlappingVisitsService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
@@ -226,6 +229,8 @@ class OfficialVisitFacade(
       )
     }
   }
+
+  fun findOverlappingScheduledVisits(prisonCode: String, request: OverlappingVisitsCriteriaRequest) = overlappingVisitsService.findOverlappingScheduledVisits(prisonCode, request)
 
   private fun checkPrisonUsersActiveCaseload(prisonCode: String, user: PrisonUser, message: String) {
     if (prisonCode.trim().uppercase() != user.activeCaseLoadId?.trim()?.uppercase()) {

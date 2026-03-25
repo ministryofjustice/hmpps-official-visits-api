@@ -31,9 +31,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OverlappingVisitsCriteriaRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OverlappingVisitsResponse
 
 @Tag(name = "Official visits")
 @RestController
@@ -353,4 +355,33 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   ) {
     facade.updateVisitors(officialVisitId, prisonCode, request, httpRequest.getLocalRequestContext().user)
   }
+
+  @Operation(summary = "Check for overlapping scheduled visits that fall within the given criteria.")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Details of the prisoner and contacts that have overlapping scheduled visits if there are any.",
+        content = [Content(schema = Schema(implementation = OverlappingVisitsResponse::class))],
+      ),
+    ],
+  )
+  @PostMapping(
+    path = ["/prison/{prisonCode}/overlapping"],
+    consumes = [MediaType.APPLICATION_JSON_VALUE],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun cancel(
+    @PathVariable @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request with the overlapping criteria to check against", required = true)
+    request: OverlappingVisitsCriteriaRequest,
+  ) = facade.findOverlappingScheduledVisits(prisonCode, request)
 }

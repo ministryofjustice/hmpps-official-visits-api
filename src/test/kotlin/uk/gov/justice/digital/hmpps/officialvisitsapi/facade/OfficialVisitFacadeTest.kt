@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitSearchService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitUpdateService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OverlappingVisitsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
@@ -47,6 +48,7 @@ class OfficialVisitFacadeTest {
   private val officialVisitCompletionService: OfficialVisitCompletionService = mock()
   private val officialVisitCancellationService: OfficialVisitCancellationService = mock()
   private val officialVisitUpdateService: OfficialVisitUpdateService = mock()
+  private val overlappingVisitsService: OverlappingVisitsService = mock()
   private val user = MOORLAND_PRISON_USER
 
   private val facade = OfficialVisitFacade(
@@ -57,6 +59,7 @@ class OfficialVisitFacadeTest {
     officialVisitCancellationService,
     officialVisitUpdateService,
     outboundEventsService,
+    overlappingVisitsService,
   )
 
   @Test
