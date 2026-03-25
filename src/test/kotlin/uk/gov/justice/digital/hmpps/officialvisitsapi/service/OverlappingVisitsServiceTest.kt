@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.verify
@@ -36,7 +37,7 @@ class OverlappingVisitsServiceTest {
   private val overlappingVisitsService = OverlappingVisitsService(officialVisitRepository, officialVisitorRepository)
 
   @Test
-  fun `should be no clashes for visit in the past`() {
+  fun `should fail if request for visits in the past`() {
     val request = OverlappingVisitsCriteriaRequest(
       prisonerNumber = MOORLAND_PRISONER.number,
       visitDate = today().minusDays(1),
@@ -45,14 +46,11 @@ class OverlappingVisitsServiceTest {
       contactIds = listOf(1, 2),
     )
 
-    val response = overlappingVisitsService.findOverlappingScheduledVisits(MOORLAND, request)
+    val exception = assertThrows<IllegalArgumentException> {
+      overlappingVisitsService.findOverlappingScheduledVisits(MOORLAND, request)
+    }
 
-    response.prisonerNumber isEqualTo MOORLAND_PRISONER.number
-    response.overlappingPrisonerVisits hasSize 0
-    response.contacts containsExactlyInAnyOrder listOf(
-      OverlappingContact(1, emptyList()),
-      OverlappingContact(2, emptyList()),
-    )
+    exception.message isEqualTo "Cannot overlap visits in the past. Visit date: ${request.visitDate} and start time: ${request.startTime} must be in the future."
 
     verifyNoInteractions(officialVisitRepository, officialVisitorRepository)
   }
