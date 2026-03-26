@@ -39,6 +39,7 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
   )
 
   private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
+  private val nextWednesdayAt9 = createOfficialVisitRequest(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
   private val nextFridayAt11 = createOfficialVisitRequest(Moorland.FRIDAY_11_TO_12_VISIT_SLOT, listOf(officialVisitor))
   private var nextMondayAt9VisitId by Delegates.notNull<Long>()
 
@@ -72,7 +73,9 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
       ),
     )
 
+    // We need more that one visit for the contact under test to ensure queries are stable.
     nextMondayAt9VisitId = testAPIClient.createOfficialVisit(nextMondayAt9).officialVisitId
+    testAPIClient.createOfficialVisit(nextWednesdayAt9)
   }
 
   @Test
