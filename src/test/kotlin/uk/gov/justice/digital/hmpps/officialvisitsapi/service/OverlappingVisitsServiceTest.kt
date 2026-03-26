@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import java.time.LocalTime
 import java.util.UUID
+import kotlin.collections.listOf
 
 class OverlappingVisitsServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
@@ -123,11 +124,9 @@ class OverlappingVisitsServiceTest {
       contactIds = listOf(visitor.contactId!!),
     )
 
-    whenever { officialVisitorRepository.findByContactId(visitor.contactId!!) } doReturn visitor
-
     whenever {
       officialVisitorRepository.findScheduledOverlappingVisitsBy(
-        visitor = visitor,
+        contactId = visitor.contactId!!,
         visitDate = tomorrow(),
         startTime = LocalTime.of(10, 0),
         endTime = LocalTime.of(11, 0),
@@ -166,11 +165,9 @@ class OverlappingVisitsServiceTest {
       )
     } doReturn listOf(visit)
 
-    whenever { officialVisitorRepository.findByContactId(visitor.contactId!!) } doReturn visitor
-
     whenever {
       officialVisitorRepository.findScheduledOverlappingVisitsBy(
-        visitor = visitor,
+        contactId = visitor.contactId!!,
         visitDate = tomorrow(),
         startTime = LocalTime.of(10, 0),
         endTime = LocalTime.of(11, 0),
@@ -210,11 +207,9 @@ class OverlappingVisitsServiceTest {
       )
     } doReturn listOf(visit)
 
-    whenever { officialVisitorRepository.findByContactId(visitor.contactId!!) } doReturn visitor
-
     whenever {
       officialVisitorRepository.findScheduledOverlappingVisitsBy(
-        visitor = visitor,
+        contactId = visitor.contactId!!,
         visitDate = tomorrow(),
         startTime = LocalTime.of(10, 0),
         endTime = LocalTime.of(11, 0),
