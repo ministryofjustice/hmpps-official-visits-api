@@ -34,6 +34,9 @@ class MetricsServiceTest {
       metrics().get("hoursBeforeStartTime") isEqualTo 2.0
       properties().get("official_visit_id") isEqualTo "1"
       metrics().get("number_of_visitors") isEqualTo 1.0
+      properties().get("source") isEqualTo Source.DPS.toString()
+      properties().get("prison_code") isEqualTo MOORLAND
+      properties().get("prisoner_number") isEqualTo MOORLAND_PRISONER.number
     }
     verify(telemetryService).track(info)
   }
@@ -56,6 +59,9 @@ class MetricsServiceTest {
     with(info) {
       metrics().get("hoursBeforeStartTime") isEqualTo 2.0
       properties().get("official_visit_id") isEqualTo "1"
+      properties().get("source") isEqualTo Source.DPS.toString()
+      properties().get("prison_code") isEqualTo MOORLAND
+      properties().get("prisoner_number") isEqualTo MOORLAND_PRISONER.number
     }
     verify(telemetryService).track(info)
   }
@@ -78,6 +84,9 @@ class MetricsServiceTest {
     with(info) {
       metrics().get("hoursBeforeStartTime") isEqualTo 2.0
       properties().get("official_visit_id") isEqualTo "1"
+      properties().get("source") isEqualTo Source.DPS.toString()
+      properties().get("prison_code") isEqualTo MOORLAND
+      properties().get("prisoner_number") isEqualTo MOORLAND_PRISONER.number
     }
     verify(telemetryService).track(info)
   }
@@ -100,6 +109,9 @@ class MetricsServiceTest {
     with(info) {
       metrics().get("hoursAfterStartTime") isEqualTo -2.0
       properties().get("official_visit_id") isEqualTo "1"
+      properties().get("source") isEqualTo Source.DPS.toString()
+      properties().get("prison_code") isEqualTo MOORLAND
+      properties().get("prisoner_number") isEqualTo MOORLAND_PRISONER.number
     }
     verify(telemetryService).track(info)
   }
@@ -120,6 +132,8 @@ class MetricsServiceTest {
       properties().get("official_visitor_id") isEqualTo "1"
       properties().get("contact_id") isEqualTo "1"
       properties().get("official_visit_id") isEqualTo "1"
+      properties().get("source") isEqualTo Source.DPS.toString()
+      properties().get("prison_code") isEqualTo MOORLAND
     }
     verify(telemetryService).track(info)
   }
