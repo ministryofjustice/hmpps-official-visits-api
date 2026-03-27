@@ -110,11 +110,12 @@ data class OfficialVisitMetricTelemetry(
   }
 
   fun VisitMetricInfo.hoursBeforeStartTimeMetric(): Pair<String, Double> = "hoursBeforeStartTime" to ChronoUnit.HOURS.between(
-    LocalTime.now(),
-    startTime,
+    LocalTime.now().withSecond(0).withNano(0),
+    startTime?.withSecond(0)?.withNano(0),
   ).toDouble()
 
-  fun VisitMetricInfo.hoursAfterStartTimeTimeMetrics(): Pair<String, Double> = "hoursAfterStartTime" to ChronoUnit.HOURS.between(LocalTime.now(), startTime).toDouble()
+  fun VisitMetricInfo.hoursAfterStartTimeTimeMetrics(): Pair<String, Double> = "hoursAfterStartTime" to
+    ChronoUnit.HOURS.between(LocalTime.now().withSecond(0).withNano(0), startTime?.withSecond(0)?.withNano(0)).toDouble()
 
   fun VisitMetricInfo.numberOfVisitors(): Pair<String, Double> = "number_of_visitors" to numberOfVisitors.toDouble()
 }
