@@ -110,8 +110,8 @@ data class OfficialVisitMetricTelemetry(
   }
 
   fun VisitMetricInfo.hoursBeforeStartTimeMetric(): Pair<String, Double> = "hoursBeforeStartTime" to ChronoUnit.HOURS.between(
-    startTime,
     LocalTime.now(),
+    startTime,
   ).toDouble()
 
   fun VisitMetricInfo.hoursAfterStartTimeTimeMetrics(): Pair<String, Double> = "hoursAfterStartTime" to ChronoUnit.HOURS.between(LocalTime.now(), startTime).toDouble()
@@ -121,12 +121,13 @@ data class OfficialVisitMetricTelemetry(
 
 private fun VisitMetricInfo.visitAdditionalInfo(): Map<String, String> = mapOf(
   "prisoner_number" to prisonerNumber,
+  "official_visit_id" to "$officialVisitId",
 )
 
 private fun VisitorMetricInfo.visitorAdditionalInfo(): Map<String, String> = mapOf(
-  "official_visit_id" to "$officialVisitId",
   "official_visitor_id" to "$officialVisitorId",
   "contact_id" to "$contactId",
+  "official_visit_id" to "$officialVisitId",
 )
 
 private fun TimeSlotInfo.timeSLotInfo(): Map<String, String> = mapOf(
@@ -139,7 +140,7 @@ private fun OfficialVisitMetricTelemetry.visitMetrics(
     .takeIf { eventType == MetricsEvents.CREATE.eventType || eventType == MetricsEvents.AMEND.eventType || eventType == MetricsEvents.CANCEL.eventType },
   additionalInformation.numberOfVisitors().takeIf { eventType == MetricsEvents.CREATE.eventType },
   additionalInformation.hoursAfterStartTimeTimeMetrics()
-    .takeIf { eventType == MetricsEvents.CREATE.eventType },
+    .takeIf { eventType == MetricsEvents.COMPLETE.eventType },
 ).toMap()
 
 private fun SearchInfo.searchAdditionalInfo(): Map<String, String> = mapOf(
@@ -147,7 +148,7 @@ private fun SearchInfo.searchAdditionalInfo(): Map<String, String> = mapOf(
   "end_date" to "$endDate",
   "search_term" to searchTerm.orEmpty(),
   "visit_types" to "$visitTypes",
-  "visit_statuses" to "visitStatuses",
+  "visit_statuses" to "$visitStatuses",
   "location_Ids" to "$locationIds",
 )
 
