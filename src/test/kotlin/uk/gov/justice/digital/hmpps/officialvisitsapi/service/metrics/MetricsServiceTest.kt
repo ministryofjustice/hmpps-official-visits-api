@@ -102,7 +102,7 @@ class MetricsServiceTest {
       prisonerNumber = MOORLAND_PRISONER.number,
       numberOfVisitors = 1,
       locationType = null,
-      startTime = LocalTime.now().minusHours(2),
+      startTime = LocalTime.now().plusHours(2),
     )
     metricsService.send(MetricsEvents.COMPLETE, visitInfo)
     val info = MetricsEvents.COMPLETE.event(visitInfo)
