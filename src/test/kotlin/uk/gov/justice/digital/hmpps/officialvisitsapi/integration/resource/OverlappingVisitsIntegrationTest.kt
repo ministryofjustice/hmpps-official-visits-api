@@ -169,6 +169,23 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `should accept empty contactIds for prisoner-only overlap check`() {
+    val request = OverlappingVisitsCriteriaRequest(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitDate = nextFridayAt11.visitDate,
+      startTime = nextFridayAt11.startTime,
+      endTime = nextFridayAt11.endTime,
+      contactIds = emptyList(),
+    )
+
+    with(webTestClient.check(request)) {
+      prisonerNumber isEqualTo request.prisonerNumber
+      overlappingPrisonerVisits hasSize 0
+      contacts hasSize 0
+    }
+  }
+
   private fun WebTestClient.check(request: OverlappingVisitsCriteriaRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
     .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/overlapping")

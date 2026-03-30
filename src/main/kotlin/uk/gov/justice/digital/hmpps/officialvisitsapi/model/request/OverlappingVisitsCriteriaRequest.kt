@@ -31,7 +31,6 @@ data class OverlappingVisitsCriteriaRequest(
   val endTime: LocalTime?,
 
   @Schema(description = "One or more unique identifier for the prisoner contacts")
-  @field:NotEmpty(message = "At least one contact ID is required")
   val contactIds: List<Long>,
 
   @Schema(description = "The unique identifier of the official visit to exclude from the check. Would be provided for an amend check, otherwise null")
