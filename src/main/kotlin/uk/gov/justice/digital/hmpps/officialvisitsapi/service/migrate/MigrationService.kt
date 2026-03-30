@@ -1,9 +1,10 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.migrate
 
 import jakarta.persistence.EntityNotFoundException
-import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
@@ -96,7 +97,7 @@ class MigrationService(
     )
   }
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRED)
   fun migrateVisit(request: MigrateVisitRequest): MigrateVisitResponse {
     logger.info(
       "Migrate official visit ID {} at {} for {} (bookId {}) on {} with {} visitors",
