@@ -372,7 +372,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
   )
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS_RW')")
-  fun cancel(
+  fun checkOverlappingVisits(
     @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",

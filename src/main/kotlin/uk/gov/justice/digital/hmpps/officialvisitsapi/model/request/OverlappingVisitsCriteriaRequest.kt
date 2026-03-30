@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
@@ -30,9 +29,8 @@ data class OverlappingVisitsCriteriaRequest(
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   val endTime: LocalTime?,
 
-  @Schema(description = "One or more unique identifier for the prisoner contacts")
-  @field:NotEmpty(message = "At least one contact ID is required")
-  val contactIds: List<Long>,
+  @Schema(description = "One or more unique identifier for the prisoner contacts, can be null")
+  val contactIds: List<Long>?,
 
   @Schema(description = "The unique identifier of the official visit to exclude from the check. Would be provided for an amend check, otherwise null")
   val existingOfficialVisitId: Long? = null,

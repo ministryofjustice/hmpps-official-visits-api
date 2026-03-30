@@ -225,6 +225,37 @@ class OverlappingVisitsServiceTest {
     }
   }
 
+  @Test
+  fun `should be clashes for contact for prisoner only`() {
+    val visit = visit(1)
+    val visitor = visit.officialVisitors().single()
+
+    val request = OverlappingVisitsCriteriaRequest(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      visitDate = tomorrow(),
+      startTime = LocalTime.of(10, 0),
+      endTime = LocalTime.of(11, 0),
+      contactIds = null,
+    )
+
+    whenever {
+      officialVisitorRepository.findScheduledOverlappingVisitsBy(
+        contactId = visitor.contactId!!,
+        visitDate = tomorrow(),
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+      )
+    } doReturn listOf(visitor)
+
+    with(overlappingVisitsService.findOverlappingScheduledVisits(MOORLAND, request)) {
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      overlappingPrisonerVisits hasSize 0
+      contacts hasSize 0
+    }
+
+    verifyNoInteractions(officialVisitorRepository)
+  }
+
   private fun visit(officialVisitId: Long = 1L) = run {
     val prisonVisitSlot = PrisonVisitSlotEntity(
       prisonVisitSlotId = 1,
