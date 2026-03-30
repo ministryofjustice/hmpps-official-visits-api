@@ -37,6 +37,7 @@ class OverlappingVisitsService(
 
     val overlappingContactVisits = buildMap {
       request.contactIds
+        .orEmpty()
         .distinct()
         .forEach { contactId ->
           officialVisitorRepository.findScheduledOverlappingVisitsBy(
@@ -54,7 +55,7 @@ class OverlappingVisitsService(
     OverlappingVisitsResponse(
       prisonerNumber = request.prisonerNumber,
       overlappingPrisonerVisits = overlappingPrisonerVisits.map(OfficialVisitEntity::officialVisitId),
-      contacts = request.contactIds.map { OverlappingContact(it, overlappingContactVisits[it].orEmpty()) },
+      contacts = request.contactIds.orEmpty().map { OverlappingContact(it, overlappingContactVisits[it].orEmpty()) },
     ).also { logger.info("Overlapping visits $it") }
   }
 
