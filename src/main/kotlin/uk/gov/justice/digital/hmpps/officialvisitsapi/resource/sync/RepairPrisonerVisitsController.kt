@@ -1,7 +1,6 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.resource.migrate
+package uk.gov.justice.digital.hmpps.officialvisitsapi.resource.sync
 
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -16,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.ErrorResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.migrate.MigrateVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.RepairPrisonerVisitsRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.RepairPrisonerVisitsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.AuthApiResponses
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.migrate.RepairPrisonerVisitsService
 
@@ -40,7 +39,7 @@ class RepairPrisonerVisitsController(val repairPrisonerVisitsService: RepairPris
         content = [
           Content(
             mediaType = "application/json",
-            array = ArraySchema(schema = Schema(implementation = MigrateVisitResponse::class)),
+            schema = Schema(implementation = RepairPrisonerVisitsResponse::class),
           ),
         ],
       ),
@@ -55,14 +54,5 @@ class RepairPrisonerVisitsController(val repairPrisonerVisitsService: RepairPris
   fun repairPrisonerVisits(
     @PathVariable(required = true) prisonerNumber: String,
     @Valid @RequestBody request: RepairPrisonerVisitsRequest,
-  ) = repairPrisonerVisitsService.repairPrisonerVisits(prisonerNumber, request)
+  ): RepairPrisonerVisitsResponse = repairPrisonerVisitsService.repairPrisonerVisits(prisonerNumber, request)
 }
-
-data class RepairPrisonerVisitsRequest(
-  val visits: List<MigrateVisitRequest>,
-)
-
-data class RepairPrisonerVisitsResponse(
-  val prisonerNumber: String,
-  val visits: List<MigrateVisitResponse>,
-)

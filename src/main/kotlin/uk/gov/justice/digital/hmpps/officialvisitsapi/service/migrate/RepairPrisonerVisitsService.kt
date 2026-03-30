@@ -3,13 +3,13 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.migrate
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.RepairPrisonerVisitsRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.RepairPrisonerVisitsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.migrate.RepairPrisonerVisitsRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.resource.migrate.RepairPrisonerVisitsResponse
 
 @Service
 class RepairPrisonerVisitsService(
@@ -32,8 +32,8 @@ class RepairPrisonerVisitsService(
    * prior data and state, including the audit trail, from DPS.
    *
    * It calls the same service method as migration for each visit, but with an overriding transaction state which
-   * applies to all visits in the request.This function implements an emergency repair, only to be used if the state
-   * of visits for one prisoner is out of sync with NOMIS.
+   * applies to all visits in the request.This function implements an emergency repair to be used if the state
+   * of visits for one prisoner gets out of sync with NOMIS.
    *
    * It does not emit sync events for the changes.
    */

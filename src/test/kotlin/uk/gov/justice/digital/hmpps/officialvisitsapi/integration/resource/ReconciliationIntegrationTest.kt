@@ -104,7 +104,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Get all official visits between the visit dates and  currentTermOnly set to true`() {
+  fun `Get all official visits between the visit dates and currentTermOnly set to true`() {
     webTestClient.create(nextMondayAt9)
     webTestClient.create(nextFridayAt11)
 
