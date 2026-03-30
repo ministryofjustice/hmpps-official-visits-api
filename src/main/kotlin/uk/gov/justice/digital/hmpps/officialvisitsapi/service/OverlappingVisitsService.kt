@@ -37,31 +37,31 @@ class OverlappingVisitsService(
 
     val overlappingContactVisits = buildMap {
       request.contactIds
+        .orEmpty()
         .distinct()
-        .mapNotNull(officialVisitorRepository::findByContactId)
-        .forEach { contact ->
+        .forEach { contactId ->
           officialVisitorRepository.findScheduledOverlappingVisitsBy(
-            visitor = contact,
+            contactId = contactId,
             visitDate = request.visitDate,
             startTime = request.startTime,
             endTime = request.endTime,
           )
             .map(OfficialVisitorEntity::officialVisit)
             .ignoring(request.existingOfficialVisitId)
-            .let { overlappingVisits -> add(contact, overlappingVisits) }
+            .let { overlappingVisits -> add(contactId, overlappingVisits) }
         }
     }
 
     OverlappingVisitsResponse(
       prisonerNumber = request.prisonerNumber,
       overlappingPrisonerVisits = overlappingPrisonerVisits.map(OfficialVisitEntity::officialVisitId),
-      contacts = request.contactIds.map { OverlappingContact(it, overlappingContactVisits[it].orEmpty()) },
+      contacts = request.contactIds.orEmpty().map { OverlappingContact(it, overlappingContactVisits[it].orEmpty()) },
     ).also { logger.info("Overlapping visits $it") }
   }
 
   private fun Collection<OfficialVisitEntity>.ignoring(visitId: Long?) = filterNot { it.officialVisitId == visitId }
 
-  private fun MutableMap<Long, List<Long>>.add(visitor: OfficialVisitorEntity, overlapping: Collection<OfficialVisitEntity>) {
-    put(visitor.contactId!!, overlapping.map(OfficialVisitEntity::officialVisitId))
+  private fun MutableMap<Long, List<Long>>.add(contactId: Long, overlapping: Collection<OfficialVisitEntity>) {
+    put(contactId, overlapping.map(OfficialVisitEntity::officialVisitId))
   }
 }

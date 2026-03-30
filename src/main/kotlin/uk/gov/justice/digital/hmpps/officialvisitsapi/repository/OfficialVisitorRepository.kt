@@ -19,14 +19,14 @@ interface OfficialVisitorRepository : JpaRepository<OfficialVisitorEntity, Long>
     value = """
       SELECT ov
       FROM OfficialVisitorEntity ov
-      WHERE :visitor = ov
+      WHERE :contactId = ov.contactId
         AND :visitDate = ov.officialVisit.visitDate
         AND :startTime < ov.officialVisit.endTime
         AND :endTime > ov.officialVisit.startTime
         AND ov.officialVisit.visitStatusCode = 'SCHEDULED'
     """,
   )
-  fun findScheduledOverlappingVisitsBy(visitor: OfficialVisitorEntity, visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime): List<OfficialVisitorEntity>
+  fun findScheduledOverlappingVisitsBy(contactId: Long, visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime): List<OfficialVisitorEntity>
 
   @Query(
     value = """
