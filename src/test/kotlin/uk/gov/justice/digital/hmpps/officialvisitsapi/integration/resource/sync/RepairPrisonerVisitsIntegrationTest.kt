@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PR
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
@@ -26,7 +28,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
@@ -57,18 +58,7 @@ class RepairPrisonerVisitsIntegrationTest : IntegrationTestBase() {
     visitorEquipment = VisitorEquipment("Bringing secure laptop"),
   )
 
-  private val officialVisitRequest = CreateOfficialVisitRequest(
-    prisonerNumber = MOORLAND_PRISONER.number,
-    prisonVisitSlotId = 1, // Loaded in base data within the test context
-    visitDate = visitDateInTheFuture,
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(10, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    visitTypeCode = VisitType.IN_PERSON,
-    staffNotes = "private notes",
-    prisonerNotes = "public notes",
-    officialVisitors = listOf(officialVisitor),
-  )
+  private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
   @BeforeEach
   @Transactional
@@ -107,7 +97,7 @@ class RepairPrisonerVisitsIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should replace the visits for a prisoner with freshly migrated versions`() {
     // Create a visit
-    val savedOfficialVisitId = (testAPIClient.createOfficialVisit(officialVisitRequest, MOORLAND_PRISON_USER)).officialVisitId
+    val savedOfficialVisitId = (testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)).officialVisitId
     stubEvents.reset()
 
     // Build a list of visits to replace the original one - the visit slots are loaded in the test context

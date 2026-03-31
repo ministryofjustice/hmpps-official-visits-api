@@ -29,7 +29,7 @@ class RepairPrisonerVisitsController(val repairPrisonerVisitsService: RepairPris
   @PostMapping("prisoner-visits/{prisonerNumber}", consumes = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Replace all official visits for a single prisoner with the data from NOMIS",
-    description = "This replaces all official visits for one prisoner with their visits as they sexist in NOMIS",
+    description = "This replaces all official visits for one prisoner with their visits as they exist in NOMIS",
   )
   @ApiResponses(
     value = [
