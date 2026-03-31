@@ -10,7 +10,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEnti
 @Repository
 interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long> {
 
-  @Query("SELECT pv from PrisonerVisitedEntity pv WHERE pv.officialVisit.officialVisitId = :officialVisitId ")
+  @Query(
+    value = """
+    SELECT pv 
+    FROM PrisonerVisitedEntity pv 
+    WHERE pv.officialVisit.officialVisitId = :officialVisitId
+    """,
+  )
   fun findByOfficialVisitId(officialVisitId: Long): PrisonerVisitedEntity?
 
   fun findByOfficialVisit(officialVisitEntity: OfficialVisitEntity): PrisonerVisitedEntity?
@@ -19,7 +25,24 @@ interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long>
 
   fun deleteByOfficialVisit(officialVisitEntity: OfficialVisitEntity)
 
-  @Query(value = "UPDATE PrisonerVisitedEntity pv SET pv.prisonerNumber = :replacementNumber WHERE pv.prisonerNumber = :removedNumber")
+  @Query(
+    value = """
+    UPDATE PrisonerVisitedEntity pv 
+    SET pv.prisonerNumber = :replacementNumber 
+    WHERE pv.prisonerNumber = :removedNumber
+    """,
+  )
   @Modifying
   fun replacePrisonerNumber(removedNumber: String, replacementNumber: String)
+
+  @Query(
+    value = """
+    DELETE FROM PrisonerVisitedEntity pv
+    WHERE pv.prisonerNumber = :prisonerNumber
+    """,
+  )
+  @Modifying(clearAutomatically = true)
+  fun deleteAllByPrisonerNumber(prisonerNumber: String)
+
+  fun countByPrisonerNumber(prisonerNumber: String): Long
 }

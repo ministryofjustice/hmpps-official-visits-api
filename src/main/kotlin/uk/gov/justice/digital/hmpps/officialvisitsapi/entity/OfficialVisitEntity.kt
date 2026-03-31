@@ -32,7 +32,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "official_visit")
-class OfficialVisitEntity(
+open class OfficialVisitEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val officialVisitId: Long = 0,
@@ -225,7 +225,7 @@ class OfficialVisitEntity(
         overrideBanTime = null, // Never supplied
         overrideBanBy = request.overrideBanStaffUsername,
         createdBy = request.createUsername ?: "MIGRATION",
-        createdTime = request.createDateTime ?: LocalDateTime.now(),
+        createdTime = request.createDateTime ?: now(),
         offenderBookId = request.offenderBookId,
         offenderVisitId = request.offenderVisitId!!,
         visitOrderNumber = request.visitOrderNumber,

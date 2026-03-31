@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -26,4 +27,13 @@ interface OfficialVisitorRepository : JpaRepository<OfficialVisitorEntity, Long>
     """,
   )
   fun findScheduledOverlappingVisitsBy(contactId: Long, visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime): List<OfficialVisitorEntity>
+
+  @Query(
+    value = """
+    DELETE FROM OfficialVisitorEntity ove
+    WHERE ove.officialVisit.prisonerNumber = :prisonerNumber
+    """,
+  )
+  @Modifying(clearAutomatically = true)
+  fun deleteAllByPrisonerNumber(prisonerNumber: String)
 }

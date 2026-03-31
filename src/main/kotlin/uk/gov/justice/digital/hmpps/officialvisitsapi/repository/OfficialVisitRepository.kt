@@ -98,4 +98,13 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     """,
   )
   fun findScheduledOverlappingVisitsBy(prisonCode: String, prisonerNumber: String, visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime): List<OfficialVisitEntity>
+
+  @Query(
+    value = """
+      DELETE FROM OfficialVisitEntity ov
+      WHERE ov.prisonerNumber = :prisonerNumber
+    """,
+  )
+  @Modifying(clearAutomatically = true)
+  fun deleteAllByPrisonerNumber(prisonerNumber: String)
 }
