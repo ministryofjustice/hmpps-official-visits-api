@@ -22,14 +22,14 @@ class AvailableSlotService(
   private val locationService: LocationsService,
 ) {
   @Transactional(readOnly = true)
-  fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
+  fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean, existingOfficialVisitId: Long? = null) = run {
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
     val availableSlots = getAvailableSlots(prisonCode, fromDate, videoOnly)
     val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
 
-    val sortedSlots = AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
+    val sortedSlots = AvailableSlotBuilder.builder(timeSource, fromDate, toDate, existingOfficialVisitId) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
       .sortedWith(compareBy({ it.visitDate }, { it.startTime }))
 
     decorateWithLocationDescription(prisonCode, sortedSlots)
@@ -59,15 +59,20 @@ class AvailableSlotService(
   }
 }
 
-private class AvailableSlotBuilder private constructor(private val timeSource: TimeSource, private val fromDate: LocalDate, private val toDate: LocalDate) {
+private class AvailableSlotBuilder private constructor(private val timeSource: TimeSource, private val fromDate: LocalDate, private val toDate: LocalDate, private val existingOfficialVisitId: Long?) {
   companion object {
-    fun builder(timeSource: TimeSource, from: LocalDate, to: LocalDate, init: AvailableSlotBuilder.() -> Unit) = AvailableSlotBuilder(timeSource, from, to).also { it.init() }
+    fun builder(timeSource: TimeSource, from: LocalDate, to: LocalDate, existingOfficialVisitId: Long? = null, init: AvailableSlotBuilder.() -> Unit) = AvailableSlotBuilder(timeSource, from, to, existingOfficialVisitId).also { it.init() }
   }
 
   private val datedInPersonVisits = mutableMapOf<DatedVisit, Int>()
   private val datedVideoVisits = mutableMapOf<DatedVisit, Int>()
 
   fun add(bookedSlot: VisitBookedEntity) {
+    // Skip the excluded visit
+    if (bookedSlot.officialVisitId == existingOfficialVisitId) {
+      return
+    }
+
     val key = DatedVisit(bookedSlot)
 
     when {
