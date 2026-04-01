@@ -450,6 +450,32 @@ class AvailableSlotServiceTest {
 
       freeSlots.size isEqualTo 0
     }
+
+    @Test
+    fun `should exclude specified video visit from the availability calculations`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 2, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          true,
+          2,
+        )
+
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(15, 0))
+        .availableAdultsIsEqualTo(5)
+        .availableGroupsIsEqualTo(4)
+        .availableVideosIsEqualTo(2) // 2 instead of 1 due to exclusion
+    }
   }
 
   @Nested
@@ -614,45 +640,6 @@ class AvailableSlotServiceTest {
         )
 
       freeSlots.size isEqualTo 3
-    }
-
-    @Test
-    fun `should exclude specified visit from availability calculations`() {
-      val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
-      val service = service(mondayAtMidday)
-
-      availableSlots.add(availableSlot(Day.MON, 10, maxAdults = 5, maxGroups = 3, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
-
-      // Create 3 separate VisitBookedEntity rows for the same visit (representing 3 people)
-      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
-      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
-      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
-
-      // Create another visit with 2 people
-      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 456L))
-      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 456L))
-
-      // Test without exclusion - should show capacity minus all 5 people
-      val slotsWithoutExclusion = service.getAvailableSlotsForPrison(
-        MOORLAND,
-        mondayAtMidday.toLocalDate(),
-        mondayAtMidday.toLocalDate(),
-        false,
-      )
-
-      // Test with exclusion of visit 123 - should show capacity minus only the 2 people from visit 456
-      val slotsWithExclusion = service.getAvailableSlotsForPrison(
-        MOORLAND,
-        mondayAtMidday.toLocalDate(),
-        mondayAtMidday.toLocalDate(),
-        false,
-        123L,
-      )
-
-      slotsWithoutExclusion.first().availableAdults isEqualTo 0
-      slotsWithoutExclusion.first().availableGroups isEqualTo 1
-      slotsWithExclusion.first().availableAdults isEqualTo 3
-      slotsWithExclusion.first().availableGroups isEqualTo 2
     }
   }
 
