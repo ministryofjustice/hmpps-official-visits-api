@@ -53,5 +53,8 @@ class AvailableSlotController(private val availableSlotService: AvailableSlotSer
     @Parameter(description = "Boolean flag. A value of 'true' will only return video reservable slots.")
     @RequestParam(name = "videoOnly", required = false)
     videoOnly: Boolean = false,
-  ): List<AvailableSlot> = availableSlotService.getAvailableSlotsForPrison(prisonCode, fromDate, toDate, videoOnly)
+    @Parameter(description = "The unique identifier of the official visit to exclude from availability calculations. Would be provided for an amend check, otherwise null")
+    @RequestParam(name = "existingOfficialVisitId", required = false)
+    existingOfficialVisitId: Long? = null,
+  ): List<AvailableSlot> = availableSlotService.getAvailableSlotsForPrison(prisonCode, fromDate, toDate, videoOnly, existingOfficialVisitId)
 }

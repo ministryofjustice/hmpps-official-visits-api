@@ -22,12 +22,12 @@ class AvailableSlotService(
   private val locationService: LocationsService,
 ) {
   @Transactional(readOnly = true)
-  fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean) = run {
+  fun getAvailableSlotsForPrison(prisonCode: String, fromDate: LocalDate, toDate: LocalDate, videoOnly: Boolean, existingOfficialVisitId: Long? = null) = run {
     require(fromDate >= timeSource.today()) { "The from date must be on or after today's date" }
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
     val availableSlots = getAvailableSlots(prisonCode, fromDate, videoOnly)
-    val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate)
+    val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate).filterNot { it.officialVisitId == existingOfficialVisitId }
 
     val sortedSlots = AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
       .sortedWith(compareBy({ it.visitDate }, { it.startTime }))

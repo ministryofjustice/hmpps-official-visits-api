@@ -450,6 +450,32 @@ class AvailableSlotServiceTest {
 
       freeSlots.size isEqualTo 0
     }
+
+    @Test
+    fun `should exclude specified video visit from the availability calculations`() {
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 2, videoOnly = true))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          true,
+          2,
+        )
+
+      freeSlots
+        .single()
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(15, 0))
+        .availableAdultsIsEqualTo(5)
+        .availableGroupsIsEqualTo(4)
+        .availableVideosIsEqualTo(2) // 2 instead of 1 due to exclusion
+    }
   }
 
   @Nested
