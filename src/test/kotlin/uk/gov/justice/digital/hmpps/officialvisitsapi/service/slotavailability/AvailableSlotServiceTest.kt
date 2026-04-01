@@ -615,6 +615,45 @@ class AvailableSlotServiceTest {
 
       freeSlots.size isEqualTo 3
     }
+
+    @Test
+    fun `should exclude specified visit from availability calculations`() {
+      val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
+      val service = service(mondayAtMidday)
+
+      availableSlots.add(availableSlot(Day.MON, 10, maxAdults = 5, maxGroups = 3, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
+
+      // Create 3 separate VisitBookedEntity rows for the same visit (representing 3 people)
+      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
+      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
+      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
+
+      // Create another visit with 2 people
+      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 456L))
+      bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 456L))
+
+      // Test without exclusion - should show capacity minus all 5 people
+      val slotsWithoutExclusion = service.getAvailableSlotsForPrison(
+        MOORLAND,
+        mondayAtMidday.toLocalDate(),
+        mondayAtMidday.toLocalDate(),
+        false,
+      )
+
+      // Test with exclusion of visit 123 - should show capacity minus only the 2 people from visit 456
+      val slotsWithExclusion = service.getAvailableSlotsForPrison(
+        MOORLAND,
+        mondayAtMidday.toLocalDate(),
+        mondayAtMidday.toLocalDate(),
+        false,
+        123L,
+      )
+
+      slotsWithoutExclusion.first().availableAdults isEqualTo 0
+      slotsWithoutExclusion.first().availableGroups isEqualTo 1
+      slotsWithExclusion.first().availableAdults isEqualTo 3
+      slotsWithExclusion.first().availableGroups isEqualTo 2
+    }
   }
 
   private fun service(dateTime: LocalDateTime) = AvailableSlotService(
@@ -695,47 +734,6 @@ class AvailableSlotServiceTest {
       lastModifiedDate = LocalDateTime.now().minusDays(1),
     ),
   )
-
-  @Test
-  fun `should exclude specified visit from availability calculations`() {
-    val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
-    val service = service(mondayAtMidday)
-    private val availableSlots: MutableList<AvailableSlotEntity> = mutableListOf()
-    private val bookedSlots: MutableList<VisitBookedEntity> = mutableListOf()
-
-    availableSlots.add(availableSlot(Day.MON, 10, maxAdults = 5, maxGroups = 3, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
-
-    // Create 3 separate VisitBookedEntity rows for the same visit (representing 3 people)
-    bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
-    bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
-    bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 123L))
-
-    // Create another visit with 2 people
-    bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 456L))
-    bookedSlots.add(bookedSlot(mondayAtMidday.withHour(10), officialVisitId = 456L))
-
-    // Test without exclusion - should show capacity minus all 5 people
-    val slotsWithoutExclusion = service.getAvailableSlotsForPrison(
-      MOORLAND,
-      mondayAtMidday.toLocalDate(),
-      mondayAtMidday.toLocalDate(),
-      false,
-    )
-
-    // Test with exclusion of visit 123 - should show capacity minus only the 2 people from visit 456
-    val slotsWithExclusion = service.getAvailableSlotsForPrison(
-      MOORLAND,
-      mondayAtMidday.toLocalDate(),
-      mondayAtMidday.toLocalDate(),
-      false,
-      123L,
-    )
-
-    slotsWithoutExclusion.first().availableAdults isEqualTo 0
-    slotsWithoutExclusion.first().availableGroups isEqualTo 1
-    slotsWithExclusion.first().availableAdults isEqualTo 3
-    slotsWithExclusion.first().availableGroups isEqualTo 2
-  }
 
   private fun AvailableSlot.dateIsEqualTo(expected: LocalDate) = also { visitDate isEqualTo expected }
   private fun AvailableSlot.dayIsEqualTo(expected: Day) = also { dayCode isEqualTo expected.toString() }
