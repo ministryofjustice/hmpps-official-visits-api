@@ -700,6 +700,8 @@ class AvailableSlotServiceTest {
   fun `should exclude specified visit from availability calculations`() {
     val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
     val service = service(mondayAtMidday)
+    private val availableSlots: MutableList<AvailableSlotEntity> = mutableListOf()
+    private val bookedSlots: MutableList<VisitBookedEntity> = mutableListOf()
 
     availableSlots.add(availableSlot(Day.MON, 10, maxAdults = 5, maxGroups = 3, effectiveDate = mondayAtMidday.toLocalDate().minusDays(1)))
 
@@ -730,7 +732,7 @@ class AvailableSlotServiceTest {
     )
 
     slotsWithoutExclusion.first().availableAdults isEqualTo 0
-    slotsWithoutExclusion.first().availableGroups isEqualTo 1    
+    slotsWithoutExclusion.first().availableGroups isEqualTo 1
     slotsWithExclusion.first().availableAdults isEqualTo 3
     slotsWithExclusion.first().availableGroups isEqualTo 2
   }
