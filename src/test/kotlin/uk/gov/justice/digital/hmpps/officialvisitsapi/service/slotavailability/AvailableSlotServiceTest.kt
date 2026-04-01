@@ -730,8 +730,7 @@ class AvailableSlotServiceTest {
     )
 
     slotsWithoutExclusion.first().availableAdults isEqualTo 0
-    slotsWithoutExclusion.first().availableGroups isEqualTo 1
-    
+    slotsWithoutExclusion.first().availableGroups isEqualTo 1    
     slotsWithExclusion.first().availableAdults isEqualTo 3
     slotsWithExclusion.first().availableGroups isEqualTo 2
   }
