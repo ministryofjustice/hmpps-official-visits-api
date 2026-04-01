@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound
 
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -74,7 +75,9 @@ class PrisonerReleasedEventHandlerTest {
   }
 
   @Test
+  @Disabled
   fun `should cancel visits for a permanent release event when enabled for DPS official visits`() {
+    // This test is temporarily disabled - but please leave in place - it is replaced by the test below
     handler.handle(permanentReleaseEvent)
 
     verify(officialVisitRepository).findAllPrisonerVisitsForReleaseCancel(
@@ -108,7 +111,14 @@ class PrisonerReleasedEventHandlerTest {
   }
 
   @Test
-  fun `should not attempt to cancel visits is the prison is not enabled for DPS visits`() {
+  fun `should not cancel visits for any release event - temporary test`() {
+    // Temporary replacement test for the above - until we decide what to do with the release event
+    handler.handle(permanentReleaseEvent)
+    verifyNoInteractions(officialVisitFacade)
+  }
+
+  @Test
+  fun `should not attempt to cancel visits if the prison is not enabled for DPS visits`() {
     whenever(featureSwitches.getValue(StringFeature.FEATURE_DPS_ENABLED_PRISONS)).thenReturn("")
     handler.handle(permanentReleaseEvent)
     verifyNoInteractions(officialVisitFacade)

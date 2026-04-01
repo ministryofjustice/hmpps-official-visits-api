@@ -16,6 +16,15 @@ import java.time.LocalDate
 
 const val DAYS_TO_LOOK_AHEAD = 365L
 
+/**
+ * This is a temporary flag which prevents visits being canceled on prisoner release, put in place
+ * until further research has been done to confirm it is the right thing to do.
+ *
+ * There is a concern that automatic cancellation will confuse staff, and they may not be able to identify
+ * the visits that need manual action, to inform the visitors that the prisoner is no longer at this establishment.
+ */
+const val CANCEL_ON_RELEASE = false
+
 @Component
 class PrisonerReleasedEventHandler(
   private val featureSwitches: FeatureSwitches,
@@ -39,7 +48,8 @@ class PrisonerReleasedEventHandler(
   }
 
   private fun permanentRelease(prison: String, prisonerNumber: String) {
-    if (enabledPrisons()?.contains(prison) ?: false) {
+    // This will always be false at present - but please leave the code in place
+    if (enabledPrisons()?.contains(prison) ?: false && CANCEL_ON_RELEASE == true) {
       log.info("RELEASE EVENT HANDLER: Handling permanent release event for - $prisonerNumber from $prison")
 
       val visitsToCancel = officialVisitRepository.findAllPrisonerVisitsForReleaseCancel(
