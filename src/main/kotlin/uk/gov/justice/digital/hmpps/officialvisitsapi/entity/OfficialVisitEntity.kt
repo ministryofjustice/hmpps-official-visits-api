@@ -34,10 +34,10 @@ import java.time.LocalTime
 import java.util.UUID
 
 @Entity
+@EntityListeners(OfficialVisitAuditEntityListener::class)
 @Table(name = "official_visit")
 open class OfficialVisitEntity(
-@EntityListeners(OfficialVisitAuditEntityListener::class)
-class OfficialVisitEntity(
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val officialVisitId: Long = 0,
