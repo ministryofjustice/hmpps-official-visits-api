@@ -152,56 +152,6 @@ class MigrateVisitServiceTest {
       }
     }
 
-    @Test
-    fun `should extract and save two visit slots from the request`() {
-      val request = migrateVisitConfigRequest(prisonCode = "LEI", dayCode = "MON", timeSlotSeq = 2)
-
-      val visitSlotEntities = visitSlotEntities(request)
-
-      whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>()))
-        .thenReturn(visitSlotEntities[0])
-        .thenReturn(visitSlotEntities[1])
-
-      val visitSlotCaptor = argumentCaptor<PrisonVisitSlotEntity>()
-
-      val result = migrationService.extractAndSaveVisitSlots(1L, request)
-
-      assertThat(result.size).isEqualTo(2)
-
-      for (i in 0..1) {
-        assertThat(result[i].first).isEqualTo(request.visitSlots[i].agencyVisitSlotId)
-        assertThat(result[i].second)
-          .extracting("prisonTimeSlotId", "dpsLocationId", "maxAdults", "maxGroups", "maxVideoSessions", "createdBy", "createdTime")
-          .contains(
-            visitSlotEntities[i].prisonTimeSlotId,
-            visitSlotEntities[i].dpsLocationId,
-            visitSlotEntities[i].maxAdults,
-            visitSlotEntities[i].maxGroups,
-            visitSlotEntities[i].maxVideoSessions,
-            visitSlotEntities[i].createdBy,
-            visitSlotEntities[i].createdTime,
-          )
-      }
-
-      verify(prisonVisitSlotRepository, times(2)).saveAndFlush(visitSlotCaptor.capture())
-
-      for (i in 0..1) {
-        with(visitSlotCaptor.allValues[i]) {
-          assertThat(this)
-            .extracting("prisonTimeSlotId", "dpsLocationId", "maxAdults", "maxGroups", "maxVideoSessions", "createdBy", "createdTime")
-            .contains(
-              visitSlotEntities[i].prisonTimeSlotId,
-              visitSlotEntities[i].dpsLocationId,
-              visitSlotEntities[i].maxAdults,
-              visitSlotEntities[i].maxGroups,
-              visitSlotEntities[i].maxVideoSessions,
-              visitSlotEntities[i].createdBy,
-              visitSlotEntities[i].createdTime,
-            )
-        }
-      }
-    }
-
     private fun migrateVisitConfigRequest(prisonCode: String, dayCode: String, timeSlotSeq: Int) = MigrateVisitConfigRequest(
       prisonCode = prisonCode,
       dayCode = dayCode,

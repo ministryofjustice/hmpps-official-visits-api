@@ -162,6 +162,24 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       dpsLocationId isEqualTo location.id
       visitTypeCode isEqualTo VisitType.VIDEO
     }
+
+    // Assert entity-listener audit events: one for create (from @BeforeEach) and one for this update
+    val auditEvents = auditedEventRepository.findAll()
+    auditEvents hasSize 2
+    auditEvents.single { it.summaryText == "Official visit created" }
+    with(auditEvents.single { it.summaryText == "Official visit updated" }) {
+      officialVisitId isEqualTo scheduledVisit?.officialVisitId!!
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+      // Detail text should describe the specific field changes
+      detailText.contains("Start time changed from 09:00 to 10:00") isEqualTo true
+      detailText.contains("End time changed from 10:00 to 11:00") isEqualTo true
+      detailText.contains("Visit type changed from IN_PERSON to VIDEO") isEqualTo true
+    }
   }
 
   @Test
@@ -195,6 +213,23 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     with(result) {
       staffNotes isEqualTo "New staff notes"
       prisonerNotes isEqualTo "New prisoner notes"
+    }
+
+    // Assert entity-listener audit events: one for create (from @BeforeEach) and one for this update
+    val auditEvents = auditedEventRepository.findAll()
+    auditEvents hasSize 2
+    auditEvents.single { it.summaryText == "Official visit created" }
+    with(auditEvents.single { it.summaryText == "Official visit updated" }) {
+      officialVisitId isEqualTo scheduledVisit?.officialVisitId!!
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+      // Detail text should describe the specific field changes
+      detailText.contains("Prisoner notes changed from public notes to New prisoner notes") isEqualTo true
+      detailText.contains("Staff notes changed from private notes to New staff notes") isEqualTo true
     }
   }
 

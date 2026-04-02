@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.reset
@@ -25,9 +24,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAPrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
@@ -38,8 +34,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -55,7 +49,6 @@ class SyncOfficialVisitServiceTest {
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val metricsService: MetricsService = mock()
-  private val auditingService: AuditingService = mock()
   private val userService: UserService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
@@ -66,7 +59,6 @@ class SyncOfficialVisitServiceTest {
     prisonerVisitedRepository,
     prisonVisitSlotRepository,
     metricsService,
-    auditingService,
     userService,
   )
 
@@ -166,21 +158,6 @@ class SyncOfficialVisitServiceTest {
         locationType = null,
       ),
     )
-
-    val auditEventCaptor = argumentCaptor<AuditEventDto>()
-    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
-
-    with(auditEventCaptor.firstValue) {
-      officialVisitId isEqualTo 0
-      prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      prisonCode isEqualTo MOORLAND
-      eventSource isEqualTo "NOMIS"
-      username isEqualTo MOORLAND_PRISON_USER.username
-      userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visit created"
-      detailText isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number}"
-      eventDateTime isCloseTo now()
-    }
   }
 
   @Test
@@ -283,21 +260,6 @@ class SyncOfficialVisitServiceTest {
         locationType = null,
       ),
     )
-
-    val auditEventCaptor = argumentCaptor<AuditEventDto>()
-    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
-
-    with(auditEventCaptor.firstValue) {
-      this.officialVisitId isEqualTo 0
-      prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      prisonCode isEqualTo MOORLAND
-      eventSource isEqualTo "NOMIS"
-      username isEqualTo MOORLAND_PRISON_USER.username
-      userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visit updated"
-      detailText isEqualTo "Start time changed from 09:00 to 10:00; End time changed from 10:00 to 11:00; Prisoner notes changed from '' to updated comment; Visitor concern notes changed from '' to updated concern; Offender visit ID changed from 1 to 2; Visit order number changed from '' to 5678; Visit status code changed from SCHEDULED to EXPIRED."
-      eventDateTime isCloseTo now()
-    }
   }
 
   @Test
@@ -338,7 +300,7 @@ class SyncOfficialVisitServiceTest {
     verify(officialVisitRepository).findById(1L)
     verify(prisonerVisitedRepository).deleteByOfficialVisit(visitEntity)
     verify(officialVisitorRepository).deleteByOfficialVisit(visitEntity)
-    verify(officialVisitRepository).deleteById(1L)
+    verify(officialVisitRepository).delete(visitEntity)
   }
 
   @Test

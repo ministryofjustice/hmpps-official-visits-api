@@ -25,9 +25,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseExcep
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -40,8 +38,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventDto
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -57,7 +53,6 @@ class SyncOfficialVisitorServiceTest {
   private val contactsService: ContactsService = mock()
   private val visitorEquipmentRepository: VisitorEquipmentRepository = mock()
   private val metricsService: MetricsService = mock()
-  private val auditingService: AuditingService = mock()
   private val userService: UserService = mock()
 
   private val createdTime = LocalDateTime.now().minusDays(2)
@@ -68,7 +63,6 @@ class SyncOfficialVisitorServiceTest {
     contactsService,
     visitorEquipmentRepository,
     metricsService,
-    auditingService,
     userService,
   )
 
@@ -79,7 +73,7 @@ class SyncOfficialVisitorServiceTest {
 
   @AfterEach
   fun afterEach() {
-    reset(officialVisitRepository, officialVisitorRepository, contactsService, visitorEquipmentRepository, metricsService, auditingService)
+    reset(officialVisitRepository, officialVisitorRepository, contactsService, visitorEquipmentRepository, metricsService, userService)
   }
 
   @Test
@@ -135,20 +129,6 @@ class SyncOfficialVisitorServiceTest {
         officialVisitorId = result.visitor.officialVisitorId,
       ),
     )
-    val auditEventCaptor = argumentCaptor<AuditEventDto>()
-    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
-
-    with(auditEventCaptor.firstValue) {
-      officialVisitId isEqualTo 0
-      prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      prisonCode isEqualTo MOORLAND
-      eventSource isEqualTo "NOMIS"
-      username isEqualTo MOORLAND_PRISON_USER.username
-      userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visitor added"
-      detailText isEqualTo "Official visitor First Last added to visit for prisoner number ${MOORLAND_PRISONER.number}"
-      eventDateTime isCloseTo now()
-    }
     verify(metricsService).send(
       MetricsEvents.ADD_VISITOR,
       VisitorMetricInfo(

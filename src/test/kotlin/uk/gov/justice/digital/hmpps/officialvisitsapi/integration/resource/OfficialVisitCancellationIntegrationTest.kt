@@ -177,6 +177,22 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
       eventSource isEqualTo Source.DPS.name
       eventDateTime isCloseTo now()
     }
+
+    // Assert the entity listener @PostUpdate generated an "Official visit updated" audit event
+    with(auditedEventRepository.findAll().single { it.summaryText == "Official visit updated" }) {
+      officialVisitId isEqualTo cancelledVisit.officialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+      // Detail text should describe the status and completion code changes recorded on cancel
+      detailText.contains("Visit status code changed from SCHEDULED to CANCELLED") isEqualTo true
+    }
+
+    // Total: "Official visit created" + "Official visit updated" (entity listener) + "Official visit cancelled"
+    auditedEventRepository.findAll() hasSize 3
   }
 
   private fun WebTestClient.cancel(officialVisitId: Long, request: OfficialVisitCancellationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this

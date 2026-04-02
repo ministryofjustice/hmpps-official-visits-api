@@ -97,10 +97,11 @@ abstract class IntegrationTestBase {
   }
 
   protected fun clearAllVisitData() {
-    auditedEventRepository.deleteAll()
+    // IMPORTANT: audit events must be deleted LAST.
     prisonerVisitedRepository.deleteAll()
     officialVisitorRepository.deleteAll()
     officialVisitRepository.deleteAll()
+    auditedEventRepository.deleteAll()
   }
 
   protected fun prisonerSearchApi() = PrisonerSearchApiExtension.server

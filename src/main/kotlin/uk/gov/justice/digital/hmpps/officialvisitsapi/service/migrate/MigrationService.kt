@@ -78,25 +78,6 @@ class MigrationService(
     )
   }
 
-  fun extractAndSaveVisitSlots(timeSlotId: Long, request: MigrateVisitConfigRequest) = request.visitSlots.map { slot ->
-    Pair(
-      slot.agencyVisitSlotId!!,
-      prisonVisitSlotRepository.saveAndFlush(
-        PrisonVisitSlotEntity(
-          prisonTimeSlotId = timeSlotId,
-          dpsLocationId = slot.dpsLocationId!!,
-          maxAdults = slot.maxAdults,
-          maxGroups = slot.maxGroups,
-          maxVideoSessions = slot.maxVideoSessions,
-          createdTime = slot.createDateTime ?: LocalDateTime.now(),
-          createdBy = slot.createUsername ?: "MIGRATION",
-          updatedTime = slot.modifyDateTime,
-          updatedBy = slot.modifyUsername,
-        ),
-      ),
-    )
-  }
-
   @Transactional(propagation = Propagation.REQUIRED)
   fun migrateVisit(request: MigrateVisitRequest): MigrateVisitResponse {
     logger.info(
@@ -127,7 +108,26 @@ class MigrationService(
     )
   }
 
-  fun extractAndSaveVisitors(dpsVisit: OfficialVisitEntity, request: MigrateVisitRequest) = request.visitors.map { visitor ->
+  private fun extractAndSaveVisitSlots(timeSlotId: Long, request: MigrateVisitConfigRequest) = request.visitSlots.map { slot ->
+    Pair(
+      slot.agencyVisitSlotId!!,
+      prisonVisitSlotRepository.saveAndFlush(
+        PrisonVisitSlotEntity(
+          prisonTimeSlotId = timeSlotId,
+          dpsLocationId = slot.dpsLocationId!!,
+          maxAdults = slot.maxAdults,
+          maxGroups = slot.maxGroups,
+          maxVideoSessions = slot.maxVideoSessions,
+          createdTime = slot.createDateTime ?: LocalDateTime.now(),
+          createdBy = slot.createUsername ?: "MIGRATION",
+          updatedTime = slot.modifyDateTime,
+          updatedBy = slot.modifyUsername,
+        ),
+      ),
+    )
+  }
+
+  private fun extractAndSaveVisitors(dpsVisit: OfficialVisitEntity, request: MigrateVisitRequest) = request.visitors.map { visitor ->
     Pair(
       visitor.offenderVisitVisitorId!!,
       officialVisitorRepository.saveAndFlush(
@@ -155,7 +155,7 @@ class MigrationService(
     )
   }
 
-  fun extractAndSavePrisonerVisited(
+  private fun extractAndSavePrisonerVisited(
     dpsVisit: OfficialVisitEntity,
     request: MigrateVisitRequest,
   ): PrisonerVisitedEntity = prisonerVisitedRepository.saveAndFlush(

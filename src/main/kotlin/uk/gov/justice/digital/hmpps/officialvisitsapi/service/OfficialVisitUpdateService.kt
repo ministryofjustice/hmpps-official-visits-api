@@ -55,23 +55,6 @@ class OfficialVisitUpdateService(
     val newPrisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
 
-    val auditChangeEvent = auditVisitChangeEvent {
-      officialVisitId(ove.officialVisitId)
-      summaryText("Update visit visit type and visit slot")
-      eventSource("DPS")
-      user(user)
-      prisonCode(ove.prisonCode)
-      prisonerNumber(ove.prisonerNumber)
-      changes {
-        change("Visit date", ove.visitDate, request.visitDate)
-        change("Start time", ove.startTime, request.startTime)
-        change("End time", ove.endTime, request.endTime)
-        change("Location", ove.dpsLocationId, request.dpsLocationId)
-        change("Visit type", ove.visitTypeCode, request.visitTypeCode)
-        change("Visit slot", ove.prisonVisitSlot.prisonVisitSlotId, newPrisonVisitSlot.prisonVisitSlotId)
-      }
-    }
-
     val changedOVEntity = ove.apply {
       prisonVisitSlot = newPrisonVisitSlot
       visitDate = request.visitDate!!
@@ -97,8 +80,6 @@ class OfficialVisitUpdateService(
       )
     }
 
-    auditingService.recordAuditEvent(auditChangeEvent)
-
     return OfficialVisitUpdateSlotResponse(
       officialVisitId = updatedVisit.officialVisitId,
       prisonerNumber = updatedVisit.prisonerNumber,
@@ -117,19 +98,6 @@ class OfficialVisitUpdateService(
   ): OfficialVisitUpdateCommentsResponse {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
-
-    val auditChangeEvent = auditVisitChangeEvent {
-      officialVisitId(ove.officialVisitId)
-      summaryText("Update visit comments")
-      eventSource("DPS")
-      user(user)
-      prisonCode(ove.prisonCode)
-      prisonerNumber(ove.prisonerNumber)
-      changes {
-        change("Prisoner notes", ove.prisonerNotes, request.prisonerNotes)
-        change("Staff notes", ove.staffNotes, request.staffNotes)
-      }
-    }
 
     val updatedVisit = officialVisitRepository.saveAndFlush(
       ove.apply {
@@ -151,8 +119,6 @@ class OfficialVisitUpdateService(
         ),
       )
     }
-
-    auditingService.recordAuditEvent(auditChangeEvent)
 
     return OfficialVisitUpdateCommentsResponse(
       officialVisitId = updatedVisit.officialVisitId,

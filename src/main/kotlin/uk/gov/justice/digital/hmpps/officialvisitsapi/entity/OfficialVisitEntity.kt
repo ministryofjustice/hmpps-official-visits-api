@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.entity
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
@@ -12,6 +13,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import org.hibernate.Hibernate
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.requireNot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
@@ -24,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.migrate.MigrateVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.OfficialVisitAuditEntityListener
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
@@ -33,6 +36,8 @@ import java.util.UUID
 @Entity
 @Table(name = "official_visit")
 open class OfficialVisitEntity(
+@EntityListeners(OfficialVisitAuditEntityListener::class)
+class OfficialVisitEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val officialVisitId: Long = 0,
@@ -78,6 +83,9 @@ open class OfficialVisitEntity(
 
   var visitOrderNumber: Long? = null,
 ) {
+  @Transient
+  var auditSnapshot: OfficialVisitAuditSnapshot? = null
+
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
 

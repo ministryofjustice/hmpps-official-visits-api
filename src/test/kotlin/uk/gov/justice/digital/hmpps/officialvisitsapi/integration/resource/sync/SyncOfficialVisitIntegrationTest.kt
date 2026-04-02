@@ -174,6 +174,13 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       ),
       personReference = PersonReference(nomsNumber = response.prisonerNumber),
     )
+
+    assertThat(auditedEventRepository.findAll())
+      .anySatisfy {
+        assertThat(it.officialVisitId).isEqualTo(response.officialVisitId)
+        assertThat(it.summaryText).isEqualTo("Official visit created")
+        assertThat(it.eventSource).isEqualTo(Source.NOMIS.name)
+      }
   }
 
   @Test
@@ -277,6 +284,13 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       ),
       personReference = PersonReference(nomsNumber = updateResponse.prisonerNumber),
     )
+
+    assertThat(auditedEventRepository.findAll())
+      .anySatisfy {
+        assertThat(it.officialVisitId).isEqualTo(updateResponse.officialVisitId)
+        assertThat(it.summaryText).isEqualTo("Official visit updated")
+        assertThat(it.eventSource).isEqualTo(Source.NOMIS.name)
+      }
   }
 
   @Test
@@ -377,6 +391,13 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
         nomsNumber = officialVisit.prisonerNumber,
       ),
     )
+
+    assertThat(auditedEventRepository.findAll())
+      .anySatisfy {
+        assertThat(it.officialVisitId).isEqualTo(officialVisit.officialVisitId)
+        assertThat(it.summaryText).isEqualTo("Official visit deleted")
+        assertThat(it.eventSource).isEqualTo(Source.NOMIS.name)
+      }
   }
 
   private fun SyncOfficialVisit.assertWithCreateRequest(request: CreateOfficialVisitRequest) {

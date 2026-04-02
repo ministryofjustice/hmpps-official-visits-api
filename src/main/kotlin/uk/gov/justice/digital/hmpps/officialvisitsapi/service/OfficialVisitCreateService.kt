@@ -19,8 +19,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -39,7 +37,6 @@ class OfficialVisitCreateService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val contactsService: ContactsService,
-  private val auditingService: AuditingService,
   private val metricsService: MetricsService,
 ) {
   companion object {
@@ -93,20 +90,6 @@ class OfficialVisitCreateService(
             numberOfVisitors = it.visitorAndContactIds.size.toLong(),
             startTime = request.startTime,
           ),
-        )
-      }.also {
-        auditingService.recordAuditEvent(
-          auditVisitCreateEvent {
-            officialVisitId(it.officialVisitId)
-            summaryText("Official visit created")
-            eventSource("DPS")
-            user(user)
-            prisonCode(prisonCode)
-            prisonerNumber(it.prisonerNumber)
-            detailsText(
-              "Official visit created for prisoner number ${it.prisonerNumber} with ${it.visitorAndContactIds.size} visitor(s)",
-            )
-          },
         )
       }.also {
         it.visitorAndContactIds.forEach { value ->

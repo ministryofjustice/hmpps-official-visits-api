@@ -17,8 +17,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -34,7 +32,6 @@ class SyncOfficialVisitorService(
   private val contactsService: ContactsService,
   private val visitorEquipmentRepository: VisitorEquipmentRepository,
   private val metricsService: MetricsService,
-  private val auditingService: AuditingService,
   private val userService: UserService,
 ) {
   companion object {
@@ -102,19 +99,7 @@ class SyncOfficialVisitorService(
       prisonCode = visit.prisonCode,
       prisonerNumber = visit.prisonerNumber,
       visitor = visitorSaved.toSyncModel(),
-    ).also {
-      auditingService.recordAuditEvent(
-        auditVisitCreateEvent {
-          officialVisitId(visit.officialVisitId)
-          summaryText("${visitorSaved.relationshipType()} visitor added")
-          eventSource("NOMIS")
-          user(createdBy)
-          prisonCode(visit.prisonCode)
-          prisonerNumber(visit.prisonerNumber)
-          detailsText("${visitorSaved.relationshipType()} visitor ${visitorSaved.name()} added to visit for prisoner number ${it.prisonerNumber}")
-        },
-      )
-    }
+    )
   }
 
   private fun OfficialVisitorEntity.name() = "${firstName?.replaceFirstChar { it.uppercase() }} ${lastName?.replaceFirstChar { it.uppercase() }}"

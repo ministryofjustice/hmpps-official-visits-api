@@ -187,6 +187,22 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
       eventSource isEqualTo Source.DPS.name
       eventDateTime isCloseTo now()
     }
+
+    // Assert the entity listener @PostUpdate generated an "Official visit updated" audit event
+    with(auditedEventRepository.findAll().single { it.summaryText == "Official visit updated" }) {
+      officialVisitId isEqualTo completedVisit.officialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+      // Detail text should describe the status and completion code changes recorded on complete
+      detailText.contains("Visit status code changed from SCHEDULED to COMPLETED") isEqualTo true
+    }
+
+    // Total: "Official visit created" + "Official visit updated" (entity listener) + "Official visit completed"
+    auditedEventRepository.findAll() hasSize 3
   }
 
   private fun WebTestClient.complete(officialVisitId: Long, request: OfficialVisitCompletionRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this

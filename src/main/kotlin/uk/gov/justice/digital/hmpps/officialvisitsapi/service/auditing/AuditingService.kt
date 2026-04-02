@@ -12,7 +12,8 @@ import kotlin.properties.Delegates
 @Service
 class AuditingService(private val auditedEventRepository: AuditedEventRepository) {
   fun recordAuditEvent(auditEvent: AuditEventDto) {
-    auditedEventRepository.saveAndFlush(
+    // Use save() rather than saveAndFlush() so that we do not trigger a recursive Hibernate flush.
+    auditedEventRepository.save(
       AuditedEventEntity(
         officialVisitId = auditEvent.officialVisitId,
         prisonCode = auditEvent.prisonCode,
