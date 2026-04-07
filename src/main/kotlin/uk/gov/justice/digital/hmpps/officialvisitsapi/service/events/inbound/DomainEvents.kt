@@ -26,6 +26,10 @@ interface AdditionalInformation
 class PrisonerReceivedEvent(additionalInformation: ReceivedInformation) : DomainEvent<ReceivedInformation>(DomainEventType.PRISONER_RECEIVED, additionalInformation) {
   fun prisonerNumber() = additionalInformation.nomsNumber
   fun prisonCode() = additionalInformation.prisonId
+  fun reason() = additionalInformation.reason
+
+  @JsonIgnore
+  fun indicatesANewBooking() = listOf("NEW_ADMISSION", "READMISSION_SWITCH_BOOKING").contains(additionalInformation.reason)
 }
 
 data class ReceivedInformation(val nomsNumber: String, val reason: String, val prisonId: String) : AdditionalInformation
