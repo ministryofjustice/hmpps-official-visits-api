@@ -47,7 +47,7 @@ class ReconciliationController(private val reconciliationService: Reconciliation
   )
   fun getAllOfficialVisitIds(
     @Parameter(hidden = true)
-    @PageableDefault(size = 200, page = 0, direction = Sort.Direction.ASC)
+    @PageableDefault(size = 200, page = 0, direction = Sort.Direction.ASC, sort = ["officialVisitId"])
     pageable: Pageable,
     @RequestParam(name = "currentTermOnly", defaultValue = "true")
     currentTermOnly: Boolean = true,
