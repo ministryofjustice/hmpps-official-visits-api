@@ -133,6 +133,11 @@ class PrisonerReceivedEventHandlerTest {
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
       assertThat(summaryText).isEqualTo("The visit is no longer related to the current term in prison")
     }
+    with(auditEventCaptor.secondValue) {
+      assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
+      assertThat(prisonCode).isEqualTo(PENTONVILLE)
+      assertThat(summaryText).isEqualTo("The visit is no longer related to the current term in prison")
+    }
   }
 
   @Test
