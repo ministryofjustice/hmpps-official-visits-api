@@ -28,7 +28,7 @@ class PrisonerMergedEventHandler(
     val prisoner = prisonerSearchClient.getPrisoner(newPrisonerNumber)
       ?: throw EntityNotFoundException("Prisoner not found $newPrisonerNumber")
 
-    log.info("Booking Id for prisoner $newPrisonerNumber is  $prisoner.bookingId?.toLong()")
+    log.info("Booking Id for prisoner $newPrisonerNumber is $prisoner.bookingId?.toLong()")
 
     // get count of visits by old /removed prisoner number
     officialVisitRepository.countOVByPrisonerNumber(removedPrisonerNumber).takeIf { it > 0 }?.let {

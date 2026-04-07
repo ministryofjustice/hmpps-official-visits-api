@@ -36,6 +36,8 @@ fun auditVisitCancellationEvent(initializer: CancelVisitDsl.() -> Unit): AuditEv
 
 fun auditVisitCompletionEvent(initializer: CompleteVisitDsl.() -> Unit): AuditEventDto = CompleteVisitDsl().apply(initializer).toAuditEvent()
 
+fun auditVisitSetToPreviousTermEvent(initializer: NewBookingVisitDsl.() -> Unit): AuditEventDto = NewBookingVisitDsl().apply(initializer).toAuditEvent()
+
 @DslMarker
 annotation class AuditEventDslMarker
 
@@ -142,6 +144,10 @@ class CancelVisitDsl : AuditEventDsl() {
 
 class CompleteVisitDsl : AuditEventDsl() {
   override fun detailsText(): String = "Visit completed by user ${user.name}"
+}
+
+class NewBookingVisitDsl : AuditEventDsl() {
+  override fun detailsText(): String = "A new booking for the prisoner has changed this visit so it relates to a previous term in prison"
 }
 
 data class AuditEventDto(
