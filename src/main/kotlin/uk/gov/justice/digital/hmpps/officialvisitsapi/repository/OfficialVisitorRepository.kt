@@ -13,8 +13,6 @@ import java.time.LocalTime
 interface OfficialVisitorRepository : JpaRepository<OfficialVisitorEntity, Long> {
   fun deleteByOfficialVisit(officialVisitEntity: OfficialVisitEntity)
 
-  fun findByContactId(contactId: Long): OfficialVisitorEntity?
-
   @Query(
     value = """
       SELECT ov

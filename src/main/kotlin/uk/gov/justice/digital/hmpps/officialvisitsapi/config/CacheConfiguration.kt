@@ -21,17 +21,25 @@ class CacheConfiguration {
   companion object {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     const val OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE = "official-visit-locations-by-prison"
+    const val REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE = "reference-data-by-group-and-code"
     const val FIFTEEN = 15L
   }
 
   @Bean
   fun cacheManager(): CacheManager = ConcurrentMapCacheManager(
     OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE,
+    REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE,
   )
 
   @CacheEvict(value = [OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE], allEntries = true)
   @Scheduled(fixedDelay = FIFTEEN, timeUnit = TimeUnit.MINUTES)
   fun cacheEvictOfficialVisitLocationsByPrison() {
     log.info("Evicting cache: $OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE after $FIFTEEN mins")
+  }
+
+  @CacheEvict(value = [REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE], allEntries = true)
+  @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.HOURS)
+  fun cacheEvictReferenceDataByGroupAndCode() {
+    log.info("Evicting cache: $REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE after 2 hours")
   }
 }

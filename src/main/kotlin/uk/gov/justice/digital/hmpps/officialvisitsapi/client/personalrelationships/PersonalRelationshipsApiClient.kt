@@ -10,6 +10,9 @@ import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.maybeQueryParam
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerAndContactId
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCode
 
@@ -134,4 +137,20 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       }
     } ?: emptyList()
   }
+
+  fun getPrisonerContactRelationships(prisonerContacts: Set<PrisonerContactDto>): Collection<PrisonerContactRelationship> = run {
+    if (prisonerContacts.isEmpty()) {
+      return emptyList()
+    }
+
+    personalRelationshipsApiWebClient.post()
+      .uri("/prisoner-contact/relationships/summary")
+      .bodyValue(PrisonerContactRelationshipsRequest(prisonerContacts.map { PrisonerAndContactId(it.prisonerNumber, it.contactId) }))
+      .retrieve()
+      .bodyToMono<Collection<PrisonerContactRelationship>>()
+      .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
+      .block() ?: emptyList()
+  }
 }
+
+data class PrisonerContactDto(val prisonerNumber: String, val contactId: Long)

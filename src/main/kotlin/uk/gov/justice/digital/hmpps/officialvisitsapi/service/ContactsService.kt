@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PrisonerContactDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toPrisonerContactModel
@@ -27,5 +29,9 @@ class ContactsService(private val personalRelationshipsApiClient: PersonalRelati
 
   fun getAllPrisonerContacts(prisonerNumber: String, approved: Boolean?, currentTerm: Boolean?): List<PrisonerContact> = run {
     personalRelationshipsApiClient.getAllPrisonerContacts(prisonerNumber, approved, currentTerm).toPrisonerContactModel()
+  }
+
+  fun getPrisonerContactRelationships(prisonerContacts: Set<PrisonerContactDto>): Map<String, Collection<PrisonerContactRelationship>> = run {
+    personalRelationshipsApiClient.getPrisonerContactRelationships(prisonerContacts).groupBy { it.prisonerNumber }
   }
 }
