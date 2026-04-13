@@ -160,6 +160,8 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(response.visitDate).isEqualTo(request.visitDate)
     assertThat(response.startTime).isEqualTo(request.startTime)
     assertThat(response.endTime).isEqualTo(request.endTime)
+    assertThat(response.currentTerm).isEqualTo(request.currentTerm)
+
     assertThat(response.visitors).isEmpty()
 
     stubEvents.assertHasEvent(
@@ -263,6 +265,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(updateResponse.prisonCode).isEqualTo(createResponse.prisonCode)
     assertThat(updateResponse.prisonerNumber).isEqualTo(createResponse.prisonerNumber)
     assertThat(updateResponse.visitDate).isEqualTo(createResponse.visitDate)
+    assertThat(updateResponse.currentTerm).isEqualTo(request.currentTerm)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_UPDATED,
@@ -386,6 +389,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(dpsLocationId).isEqualTo(request.dpsLocationId)
     assertThat(visitType).isEqualTo(request.visitTypeCode)
     assertThat(visitComments).isEqualTo(request.prisonerNotes)
+    assertThat(currentTerm).isEqualTo(true)
     assertThat(visitors.size).isEqualTo(request.officialVisitors.size)
 
     // Visitor attributes

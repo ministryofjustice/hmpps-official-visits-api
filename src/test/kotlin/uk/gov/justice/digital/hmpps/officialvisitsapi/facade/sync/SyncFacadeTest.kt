@@ -557,6 +557,7 @@ class SyncFacadeTest {
       createdTime = createdTime,
       updatedBy = MOORLAND_PRISON_USER.username,
       updatedTime = updatedTime,
+      currentTerm = true,
       visitors = listOf(
         SyncOfficialVisitor(
           officialVisitorId = 1L,

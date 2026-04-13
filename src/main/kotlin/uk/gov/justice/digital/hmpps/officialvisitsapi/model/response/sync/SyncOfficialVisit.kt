@@ -87,4 +87,7 @@ data class SyncOfficialVisit(
 
   @Schema(description = "The staff username who authorised an override for a ban for this visit")
   val overrideBanStaffUsername: String? = null,
+
+  @Schema(description = "The current term marker. True if the visit is associated with the prisoner's latest term in prison, otherwise false")
+  val currentTerm: Boolean? = null,
 )
