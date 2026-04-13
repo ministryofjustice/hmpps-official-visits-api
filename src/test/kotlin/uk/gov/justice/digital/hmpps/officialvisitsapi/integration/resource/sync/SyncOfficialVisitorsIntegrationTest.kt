@@ -13,8 +13,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PR
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
@@ -164,6 +168,20 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
         contactId = contactId,
       ),
     )
+
+    val auditEvents = auditedEventRepository.findAll()
+    auditEvents hasSize 2
+
+    with(auditEvents.single { it.summaryText == "Official visitor added" }) {
+      officialVisitId isEqualTo savedOfficialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      detailText isEqualTo "Official visitor First Last added to visit for prisoner number ${MOORLAND_PRISONER.number}"
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.NOMIS.name
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test

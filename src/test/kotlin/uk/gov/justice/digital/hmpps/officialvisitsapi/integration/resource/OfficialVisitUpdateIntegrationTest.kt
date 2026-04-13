@@ -438,9 +438,20 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
     val auditEvents = auditedEventRepository.findAll()
 
-    auditEvents hasSize 2
+    auditEvents hasSize 3
 
     auditEvents.single { it.summaryText == "Official visit created" }
+
+    with(auditEvents.single { it.summaryText == "Official visitor added" }) {
+      officialVisitId isEqualTo result.officialVisitId
+      prisonCode isEqualTo MOORLAND
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      detailText isEqualTo "Official visitor John Doe added to visit for prisoner number ${MOORLAND_PRISONER.number}"
+      userName isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventSource isEqualTo Source.DPS.name
+      eventDateTime isCloseTo now()
+    }
 
     with(auditEvents.single { it.summaryText == "Update visit visitors" }) {
       officialVisitId isEqualTo result.officialVisitId

@@ -11,6 +11,7 @@ import org.springframework.web.context.request.ServletRequestAttributes
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.LocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitAuditSnapshot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ServiceUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
@@ -19,6 +20,7 @@ class OfficialVisitAuditEntityListener {
   @PostLoad
   fun onLoad(visit: OfficialVisitEntity) {
     visit.auditSnapshot = OfficialVisitAuditSnapshot.from(visit)
+    visit.auditChildChanges = true
   }
 
   @PostPersist
@@ -39,8 +41,21 @@ class OfficialVisitAuditEntityListener {
   }
 }
 
+class OfficialVisitorAuditEntityListener {
+  @PostPersist
+  fun onCreate(visitor: OfficialVisitorEntity) {
+    if (!visitor.officialVisit.auditChildChanges) return
+
+    OfficialVisitorAuditDelegateHolder.delegate.recordCreated(visitor)
+  }
+}
+
 private object OfficialVisitAuditDelegateHolder {
   lateinit var delegate: OfficialVisitAuditDelegate
+}
+
+private object OfficialVisitorAuditDelegateHolder {
+  lateinit var delegate: OfficialVisitorAuditDelegate
 }
 
 @Component
@@ -52,10 +67,38 @@ class OfficialVisitAuditDelegateRegistrar(private val delegate: OfficialVisitAud
 }
 
 @Component
+class OfficialVisitorAuditDelegateRegistrar(private val delegate: OfficialVisitorAuditDelegate) {
+  @PostConstruct
+  fun register() {
+    OfficialVisitorAuditDelegateHolder.delegate = delegate
+  }
+}
+
+abstract class OfficialVisitAuditSupport(private val userService: UserService) {
+  protected fun eventSource(): String = currentRequestAttributes()
+    ?.request
+    ?.requestURI
+    ?.let { if (it.startsWith("/sync/")) "NOMIS" else "DPS" }
+    ?: "DPS"
+
+  protected fun actorFor(username: String?): User = requestUser()
+    ?: username?.let { userService.getUser(it) ?: ServiceUser(it, it) }
+    ?: ServiceUser("SYSTEM", "SYSTEM")
+
+  private fun requestUser(): User? = (
+    currentRequestAttributes()
+      ?.request
+      ?.getAttribute(LocalRequestContext::class.simpleName) as? LocalRequestContext
+    )?.user
+
+  private fun currentRequestAttributes(): ServletRequestAttributes? = RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes
+}
+
+@Component
 class OfficialVisitAuditDelegate(
   private val auditingService: AuditingService,
-  private val userService: UserService,
-) {
+  userService: UserService,
+) : OfficialVisitAuditSupport(userService) {
   fun recordCreated(visit: OfficialVisitEntity) {
     val actor = actorFor(visit.createdBy)
     auditingService.recordAuditEvent(
@@ -126,22 +169,39 @@ class OfficialVisitAuditDelegate(
       },
     )
   }
+}
 
-  private fun eventSource(): String = currentRequestAttributes()
-    ?.request
-    ?.requestURI
-    ?.let { if (it.startsWith("/sync/")) "NOMIS" else "DPS" }
-    ?: "DPS"
+@Component
+class OfficialVisitorAuditDelegate(
+  private val auditingService: AuditingService,
+  userService: UserService,
+) : OfficialVisitAuditSupport(userService) {
+  fun recordCreated(visitor: OfficialVisitorEntity) {
+    val visit = visitor.officialVisit
+    val relationshipType = visitor.relationshipType()
 
-  private fun actorFor(username: String?): User = requestUser()
-    ?: username?.let { userService.getUser(it) ?: ServiceUser(it, it) }
-    ?: ServiceUser("SYSTEM", "SYSTEM")
+    auditingService.recordAuditEvent(
+      auditVisitCreateEvent {
+        officialVisitId(visit.officialVisitId)
+        summaryText("$relationshipType visitor added")
+        eventSource(eventSource())
+        user(actorFor(visitor.createdBy))
+        prisonCode(visit.prisonCode)
+        prisonerNumber(visit.prisonerNumber)
+        detailsText("$relationshipType visitor ${visitor.name()} added to visit for prisoner number ${visit.prisonerNumber}")
+      },
+    )
+  }
 
-  private fun requestUser(): User? = (
-    currentRequestAttributes()
-      ?.request
-      ?.getAttribute(LocalRequestContext::class.simpleName) as? LocalRequestContext
-    )?.user
+  private fun OfficialVisitorEntity.relationshipType(): String = relationshipTypeCode
+    ?.name
+    ?.lowercase()
+    ?.replaceFirstChar { it.uppercase() }
+    ?: "Unknown"
 
-  private fun currentRequestAttributes(): ServletRequestAttributes? = RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes
+  private fun OfficialVisitorEntity.name(): String = listOfNotNull(firstName?.formatNamePart(), lastName?.formatNamePart())
+    .joinToString(" ")
+    .ifBlank { "Unknown visitor" }
+
+  private fun String.formatNamePart(): String = lowercase().replaceFirstChar { it.uppercase() }
 }

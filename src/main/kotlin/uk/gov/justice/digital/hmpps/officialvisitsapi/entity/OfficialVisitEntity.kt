@@ -86,6 +86,9 @@ open class OfficialVisitEntity(
   @Transient
   var auditSnapshot: OfficialVisitAuditSnapshot? = null
 
+  @Transient
+  var auditChildChanges: Boolean = false
+
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
 

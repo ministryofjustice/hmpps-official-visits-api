@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.entity
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
@@ -15,9 +16,11 @@ import org.hibernate.Hibernate
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.OfficialVisitorAuditEntityListener
 import java.time.LocalDateTime
 
 @Entity
+@EntityListeners(OfficialVisitorAuditEntityListener::class)
 @Table(name = "official_visitor")
 class OfficialVisitorEntity(
   @Id
