@@ -86,4 +86,7 @@ data class OfficialVisitSummarySearchResponse(
 
   @Schema(description = "The details of the prisoner being visited")
   val prisoner: PrisonerVisitedDetails,
+
+  @Schema(description = "Indicates potential visitor issues with the visit, if there are issues then true, otherwise false.", example = "false")
+  val visitorIssues: Boolean,
 )

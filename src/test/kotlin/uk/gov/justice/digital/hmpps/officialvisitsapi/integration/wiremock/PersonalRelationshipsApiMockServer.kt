@@ -2,7 +2,9 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
+import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -12,9 +14,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactEmailDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactPhoneDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerAndContactId
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.SummaryRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.pagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
@@ -217,6 +223,27 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(mapper.writeValueAsString(pagedModelPrisonerContactSummary(*prisonerContacts.toTypedArray())))
+            .withStatus(200),
+        ),
+    )
+  }
+
+  fun stubPrisonContactRelationships(prisonerNumber: String, contactId: Long, relationships: Collection<SummaryRelationship>) {
+    stubFor(
+      post("/prisoner-contact/relationships/summary")
+        .withRequestBody(
+          equalToJson(
+            mapper.writeValueAsString(
+              PrisonerContactRelationshipsRequest(listOf(PrisonerAndContactId(prisonerNumber, contactId))),
+            ),
+            true,
+            true,
+          ),
+        )
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(mapper.writeValueAsString(setOf(PrisonerContactRelationship(prisonerNumber, contactId, relationships.toList()))))
             .withStatus(200),
         ),
     )

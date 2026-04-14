@@ -4,7 +4,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.SummaryRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
@@ -82,6 +84,51 @@ class PersonalRelationshipsApiClientTest {
       server.stubAllContacts(prisonerNumber = "A1234BC", prisonerContacts = emptyList())
 
       client.getAllPrisonerContacts(prisonerNumber = "A1234BC", currentTerm = false) hasSize 0
+    }
+  }
+
+  @Nested
+  inner class PrisonerContactRelationships {
+    @Test
+    fun `should be prisoner contact relationships`() {
+      server.stubPrisonContactRelationships(
+        prisonerNumber = "A",
+        contactId = 1,
+        relationships = listOf(
+          SummaryRelationship(
+            prisonerContactId = 1,
+            relationshipTypeCode = "S",
+            relationshipToPrisonerCode = "FRI",
+            isApprovedVisitor = true,
+            isRelationshipActive = true,
+            currentTerm = true,
+          ),
+        ),
+      )
+
+      client.getPrisonerContactRelationships(
+        setOf(
+          PrisonerContactDto(
+            prisonerNumber = "A",
+            contactId = 1,
+          ),
+        ),
+      ) isEqualTo listOf(
+        PrisonerContactRelationship(
+          prisonerNumber = "A",
+          contactId = 1,
+          relationships = listOf(
+            SummaryRelationship(
+              prisonerContactId = 1,
+              relationshipTypeCode = "S",
+              relationshipToPrisonerCode = "FRI",
+              isApprovedVisitor = true,
+              isRelationshipActive = true,
+              currentTerm = true,
+            ),
+          ),
+        ),
+      )
     }
   }
 

@@ -35,4 +35,5 @@ enum class Feature(val label: String) {
 
 enum class StringFeature(val label: String) {
   FEATURE_DPS_ENABLED_PRISONS("feature.dps.enabled.prisons"),
+  FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS("feature.allow.social.visitors.prisons"),
 }
