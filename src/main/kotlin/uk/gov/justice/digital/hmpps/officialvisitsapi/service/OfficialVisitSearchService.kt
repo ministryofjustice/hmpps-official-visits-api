@@ -97,7 +97,9 @@ class OfficialVisitSearchService(
     // Get the locations for visits for this prison (it's a cacheable endpoint)
     val locations = locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode)
     val locationMap = locations.map { LocationDescription(it.id, it.localName, it.locationType, it.key) }.associateBy { it.id }
-    val visitIdsWithIssues = visitsWithApprovalIssues.identify(prisonCode, results.content.visitsScheduleAfter(LocalDateTime.now()).map { it.officialVisitId })
+    // TODO temporary disable until we can re-enable this
+//    val visitIdsWithIssues = visitsWithApprovalIssues.identify(prisonCode, results.content.visitsScheduleAfter(LocalDateTime.now()).map { it.officialVisitId })
+    val visitIdsWithIssues = emptySet<Long>()
 
     // Enrich the page of results
     val response = results.map { ov ->
