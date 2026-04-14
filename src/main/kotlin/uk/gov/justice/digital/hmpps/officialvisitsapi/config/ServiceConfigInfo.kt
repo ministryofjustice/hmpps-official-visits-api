@@ -7,14 +7,14 @@ import org.springframework.stereotype.Component
 
 @Component
 class ServiceConfigInfo(
-    private val serviceConfig: ServiceConfig,
+  private val serviceConfig: ServiceConfig,
 ) : InfoContributor {
-    override fun contribute(builder: Info.Builder) {
-        builder.withDetail("activeAgencies", serviceConfig.activePrisons)
-    }
+  override fun contribute(builder: Info.Builder) {
+    builder.withDetail("activeAgencies", serviceConfig.activePrisons)
+  }
 }
 
 @ConfigurationProperties(prefix = "service")
 data class ServiceConfig(
-    val activePrisons: Set<String> = emptySet(),
+  val activePrisons: Set<String> = emptySet(),
 )
