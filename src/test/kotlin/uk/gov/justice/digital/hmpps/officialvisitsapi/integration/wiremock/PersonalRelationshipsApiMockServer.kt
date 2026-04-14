@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
@@ -243,7 +244,7 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(setOf(PrisonerContactRelationship(prisonerNumber, contactId, relationships.toList()))))
+            .withBody(mapper.writeValueAsString(PrisonerContactRelationshipsResponse(setOf(PrisonerContactRelationship(prisonerNumber, contactId, relationships.toList())).toList())))
             .withStatus(200),
         ),
     )
