@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCode
 
@@ -147,9 +148,9 @@ class PersonalRelationshipsApiClient(private val personalRelationshipsApiWebClie
       .uri("/prisoner-contact/relationships/summary")
       .bodyValue(PrisonerContactRelationshipsRequest(prisonerContacts.map { PrisonerAndContactId(it.prisonerNumber, it.contactId) }))
       .retrieve()
-      .bodyToMono<Collection<PrisonerContactRelationship>>()
+      .bodyToMono<PrisonerContactRelationshipsResponse>()
       .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
-      .block() ?: emptyList()
+      .block()?.responses ?: emptyList()
   }
 }
 
