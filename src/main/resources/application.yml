@@ -122,6 +122,9 @@ management:
       cache:
         time-to-live: 2000ms
 
+service:
+  active-prisons: ${FEATURE_DPS_ENABLED_PRISONS:}
+
 hmpps:
   sqs:
     queueAdminRole: OFFICIAL_VISITS_ADMIN
