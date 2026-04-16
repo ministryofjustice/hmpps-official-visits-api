@@ -20,15 +20,14 @@ class PrisonerBookingMovedEventHandler(
   override fun handle(event: PrisonerBookingMovedEvent) {
     val movedToNomsNumber = event.movedToNomsNumber()
     val movedFromNomsNumber = event.movedFromNomsNumber()
-    val bookingId = event.bookingId()
-    val startDateTime = event.startDateTime()
+    val bookingId = event.bookingId().toLong()
+    val startDateTime = event.bookingStartDateTime()
 
-    log.info("handling booking moved from $movedFromNomsNumber to $movedToNomsNumber")
-    // update prisoner booking if exists
+    log.info("Handling booking move from [$movedFromNomsNumber] to [$movedToNomsNumber] for booking [$bookingId]")
+
     officialVisitRepository.countOVByPrisonerNumberAndBookingId(movedFromNomsNumber, bookingId, startDateTime).takeIf { it > 0 }?.let {
       officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
-      prisonerVisitedRepository.replacePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
+      prisonerVisitedRepository.replacePrisonerNumberForBooking(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
     }
-    log.info("PRISONER BOOKING MOVED EVENT:  Prisoner booking moved from $movedFromNomsNumber to $movedToNomsNumber ")
   }
 }
