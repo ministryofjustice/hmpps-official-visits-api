@@ -77,7 +77,7 @@ class PrisonerReleasedEventHandler(
         log.info("RELEASE EVENT HANDLER: Cancelled visit ${candidate.officialVisitId} for $prisonerNumber on ${candidate.visitDate} status ${candidate.visitStatusCode} at $prison")
       }
     } else {
-      log.info("RELEASE EVENT HANDLER: Ignore permanent release event as $prison is not enabled for DPS visits")
+      log.info("RELEASE EVENT HANDLER: Ignore permanent release event as $prison is not enabled for DPS visits or CANCEL_ON_RELEASE is false")
     }
   }
 

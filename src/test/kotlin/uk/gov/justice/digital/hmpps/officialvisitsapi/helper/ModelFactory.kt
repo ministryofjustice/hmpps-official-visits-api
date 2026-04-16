@@ -61,7 +61,6 @@ fun prisonerSearchPrisoner(
   lastPrisonId = lastPrisonCode,
   cellLocation = cellLocation,
   middleNames = "middle Name",
-  offenderBookId = "1234",
   prisonName = prisonName,
 )
 

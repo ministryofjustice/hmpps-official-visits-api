@@ -69,7 +69,7 @@ class PrisonerReceivedEventHandlerTest {
     whenever(
       officialVisitRepository.findAllCurrentTermVisitsForPrisoner(
         prisonerNumber = PENTONVILLE_PRISONER.number,
-        currentBookingId = 1234L, // TODO: Check use of bookingId and offenderBookId
+        currentBookingId = 1L,
       ),
     ).thenReturn(
       listOf(
@@ -87,7 +87,7 @@ class PrisonerReceivedEventHandlerTest {
 
     verify(officialVisitRepository).findAllCurrentTermVisitsForPrisoner(
       prisonerNumber = PENTONVILLE_PRISONER.number,
-      currentBookingId = 1234L,
+      currentBookingId = 1L,
     )
 
     val visitCaptor = argumentCaptor<OfficialVisitEntity>()
@@ -115,7 +115,7 @@ class PrisonerReceivedEventHandlerTest {
 
     verify(officialVisitRepository).findAllCurrentTermVisitsForPrisoner(
       prisonerNumber = PENTONVILLE_PRISONER.number,
-      currentBookingId = 1234L,
+      currentBookingId = 1L,
     )
 
     val visitCaptor = argumentCaptor<OfficialVisitEntity>()
