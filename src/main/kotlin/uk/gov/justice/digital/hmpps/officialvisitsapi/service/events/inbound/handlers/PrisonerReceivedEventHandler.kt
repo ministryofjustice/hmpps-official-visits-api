@@ -30,15 +30,15 @@ class PrisonerReceivedEventHandler(
     val prisonCode = event.prisonCode()
     val reason = event.reason()
 
-    // Get new prisoner details to obtain the most recent offenderBookId - the one notified by this event
+    // Get new prisoner details to obtain the most recent bookingId - the one notified by this event
     val prisoner = prisonerSearchClient.getPrisoner(prisonerNumber)
       ?: throw EntityNotFoundException("Prisoner not found $prisonerNumber")
 
     if (event.indicatesANewBooking()) {
-      log.info("PRISONER RECEIVED EVENT: Processing event for [$prisonCode] [$prisonerNumber], reason [$reason] as it indicates a new booking")
-      processNewBooking(prisonerNumber, prisoner.offenderBookId!!)
+      log.info("PRISONER RECEIVED EVENT: Processing event for [$prisonCode] [$prisonerNumber] [${prisoner.bookingId}, reason [$reason] as it indicates a new booking")
+      processNewBooking(prisonerNumber, prisoner.bookingId!!.toLong())
     } else {
-      log.info("PRISONER RECEIVED EVENT: Ignoring event for [$prisonCode] [$prisonerNumber], reason [${event.reason()}] as this does not indicate a new booking")
+      log.info("PRISONER RECEIVED EVENT: Ignoring event for [$prisonCode] [$prisonerNumber] [${prisoner.bookingId}], reason [${event.reason()}] as this does not indicate a new booking")
     }
   }
 
@@ -50,8 +50,8 @@ class PrisonerReceivedEventHandler(
    * term in prison. No sync events are required for this operation as it is only reacting to the creation of a
    * new booking, not to any changes in visits or visitors.
    */
-  private fun processNewBooking(prisonerNumber: String, offenderBookId: String) {
-    val visitsToUpdate = officialVisitRepository.findAllCurrentTermVisitsForPrisoner(prisonerNumber, offenderBookId.toLong())
+  private fun processNewBooking(prisonerNumber: String, bookingId: Long) {
+    val visitsToUpdate = officialVisitRepository.findAllCurrentTermVisitsForPrisoner(prisonerNumber, bookingId)
 
     log.info("PRISONER RECEIVED EVENT: Found [${visitsToUpdate.size} visits to update for [$prisonerNumber]")
 
