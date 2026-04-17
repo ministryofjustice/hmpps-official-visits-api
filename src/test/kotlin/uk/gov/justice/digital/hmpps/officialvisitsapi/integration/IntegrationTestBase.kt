@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRep
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
@@ -68,6 +69,9 @@ abstract class IntegrationTestBase {
   protected lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
 
   @Autowired
+  protected lateinit var visitorEquipmentRepository: VisitorEquipmentRepository
+
+  @Autowired
   protected lateinit var auditedEventRepository: AuditedEventRepository
 
   @BeforeEach
@@ -99,6 +103,7 @@ abstract class IntegrationTestBase {
   protected fun clearAllVisitData() {
     auditedEventRepository.deleteAll()
     prisonerVisitedRepository.deleteAll()
+    visitorEquipmentRepository.deleteAll()
     officialVisitorRepository.deleteAll()
     officialVisitRepository.deleteAll()
   }

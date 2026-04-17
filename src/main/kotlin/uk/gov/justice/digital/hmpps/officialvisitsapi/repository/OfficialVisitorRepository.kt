@@ -29,8 +29,8 @@ interface OfficialVisitorRepository : JpaRepository<OfficialVisitorEntity, Long>
   @Query(
     value = """
     DELETE FROM OfficialVisitorEntity ove
-    WHERE ove.officialVisitorId in (
-      SELECT ov.officialVisitId from OfficialVisitEntity ov where ov.prisonerNumber = :prisonerNumber
+    WHERE ove.officialVisit in (
+      SELECT ov from OfficialVisitEntity ov where ov.prisonerNumber = :prisonerNumber
     )
     """,
   )

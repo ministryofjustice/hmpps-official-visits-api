@@ -8,7 +8,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.test.web.reactive.server.expectBodyList
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -44,7 +43,6 @@ import java.time.LocalTime
 import java.util.UUID
 
 class RepairPrisonerVisitsIntegrationTest : IntegrationTestBase() {
-
   private final val visitDateInTheFuture = today().next(DayOfWeek.MONDAY)
 
   private val officialVisitor = OfficialVisitor(
@@ -88,7 +86,6 @@ class RepairPrisonerVisitsIntegrationTest : IntegrationTestBase() {
   }
 
   @AfterEach
-  @Transactional
   fun tearDown() {
     clearAllVisitData()
   }
