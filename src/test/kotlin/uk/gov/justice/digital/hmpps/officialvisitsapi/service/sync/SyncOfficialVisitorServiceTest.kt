@@ -276,6 +276,21 @@ class SyncOfficialVisitorServiceTest {
         officialVisitorId = response.officialVisitorId,
       ),
     )
+
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      this.officialVisitId isEqualTo officialVisitId
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      prisonCode isEqualTo MOORLAND
+      eventSource isEqualTo "NOMIS"
+      username isEqualTo "NOMIS"
+      userFullName isEqualTo "NOMIS"
+      summaryText isEqualTo "Official visitor removed"
+      detailText isEqualTo "Official visitor null null removed from visit for prisoner number ${MOORLAND_PRISONER.number}"
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test
@@ -288,6 +303,7 @@ class SyncOfficialVisitorServiceTest {
     val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
 
     assertThat(response).isNull()
+    verifyNoInteractions(auditingService)
   }
 
   @Test
@@ -305,6 +321,7 @@ class SyncOfficialVisitorServiceTest {
 
     val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
     assertThat(response).isNull()
+    verifyNoInteractions(auditingService)
   }
 
   @Test
@@ -358,6 +375,21 @@ class SyncOfficialVisitorServiceTest {
       assertThat(assistedVisit).isEqualTo(visitorUpdateRequest.assistedVisitFlag)
       assertThat(visitorNotes).isEqualTo(visitorUpdateRequest.commentText)
       assertThat(attendanceCode).isEqualTo(visitorUpdateRequest.attendanceCode)
+    }
+
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      this.officialVisitId isEqualTo officialVisitEntity.officialVisitId
+      prisonerNumber isEqualTo officialVisitEntity.prisonerNumber
+      prisonCode isEqualTo officialVisitEntity.prisonCode
+      eventSource isEqualTo "NOMIS"
+      username isEqualTo MOORLAND_PRISON_USER.username
+      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      summaryText isEqualTo "Official visitor updated"
+      detailText isEqualTo "Visitor first name changed from First to FirstX; Visitor last name changed from Last to LastX; Visitor relationship code changed from POL to POM; Visitor notes changed from Notes to Changed; Visitor attendance code changed from '' to ATTENDED."
+      eventDateTime isCloseTo now()
     }
   }
 

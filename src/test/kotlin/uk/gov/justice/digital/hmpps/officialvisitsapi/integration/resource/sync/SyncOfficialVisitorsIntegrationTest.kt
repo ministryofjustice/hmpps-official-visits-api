@@ -193,6 +193,14 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
       ),
     )
 
+    val deletedVisitorAudit = auditedEventRepository.findAll().single { it.summaryText == "Official visitor removed" }
+    assertThat(deletedVisitorAudit.officialVisitId).isEqualTo(savedVisit.officialVisitId)
+    assertThat(deletedVisitorAudit.prisonCode).isEqualTo(MOORLAND)
+    assertThat(deletedVisitorAudit.prisonerNumber).isEqualTo(savedVisit.prisonerNumber)
+    assertThat(deletedVisitorAudit.eventSource).isEqualTo("NOMIS")
+    assertThat(deletedVisitorAudit.userName).isEqualTo("NOMIS")
+    assertThat(deletedVisitorAudit.userFullName).isEqualTo("NOMIS")
+
     // Get it again and check there are no visitors left
     val changedVisit = webTestClient.syncGetVisit(savedVisit.officialVisitId)
     assertThat(changedVisit.visitors).hasSize(0)
@@ -317,6 +325,16 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
         contactId = contactId,
       ),
     )
+
+    val updatedVisitorAudit = auditedEventRepository.findAll().single { it.summaryText == "Official visitor updated" }
+    assertThat(updatedVisitorAudit.officialVisitId).isEqualTo(savedOfficialVisitId)
+    assertThat(updatedVisitorAudit.prisonCode).isEqualTo(MOORLAND)
+    assertThat(updatedVisitorAudit.prisonerNumber).isEqualTo(MOORLAND_PRISONER.number)
+    assertThat(updatedVisitorAudit.eventSource).isEqualTo("NOMIS")
+    assertThat(updatedVisitorAudit.userName).isEqualTo(MOORLAND_PRISON_USER.username)
+    assertThat(updatedVisitorAudit.userFullName).isEqualTo(MOORLAND_PRISON_USER.name)
+    assertThat(updatedVisitorAudit.detailText).contains("Visitor first name changed from First to Firstchanged")
+    assertThat(updatedVisitorAudit.detailText).contains("Visitor relationship code changed from POL to POM")
   }
 
   // ---- utility functions for tests ----

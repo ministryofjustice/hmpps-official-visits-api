@@ -51,14 +51,13 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
 
   fun findByOffenderVisitId(offenderVisitId: Long): OfficialVisitEntity?
 
-  @Query(
-    value = """
-      SELECT count(distinct ov)
-      FROM OfficialVisitEntity ov
-      WHERE ov.prisonerNumber = :prisonerNumber
-    """,
-  )
-  fun countOVByPrisonerNumber(prisonerNumber: String): Long
+  fun findAllByPrisonerNumber(prisonerNumber: String): List<OfficialVisitEntity>
+
+  fun findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual(
+    prisonerNumber: String,
+    offenderBookId: Long,
+    createdTime: LocalDateTime,
+  ): List<OfficialVisitEntity>
 
   @Query(value = "UPDATE OfficialVisitEntity ov SET ov.prisonerNumber = :replacementNumber, ov.offenderBookId = :bookingId WHERE ov.prisonerNumber = :removedNumber")
   @Modifying
@@ -73,17 +72,6 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   )
   @Modifying
   fun bookingMove(removedNumber: String, replacementNumber: String, bookingId: Long, startDateTime: LocalDateTime)
-
-  @Query(
-    value = """
-      SELECT count(distinct ov)
-      FROM OfficialVisitEntity ov
-      WHERE ov.prisonerNumber = :prisonerNumber and ov.offenderBookId = :bookingId and ov.createdTime >= :startDateTime
-    """,
-  )
-  fun countOVByPrisonerNumberAndBookingId(prisonerNumber: String, bookingId: Long, startDateTime: LocalDateTime): Long
-
-  fun findByPrisonCodeAndPrisonerNumberAndVisitDate(prisonCode: String, prisonerNumber: String, visitDate: LocalDate): List<OfficialVisitEntity>
 
   @Query(
     value = """

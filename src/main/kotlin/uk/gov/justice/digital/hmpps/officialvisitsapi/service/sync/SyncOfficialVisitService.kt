@@ -209,5 +209,17 @@ class SyncOfficialVisitService(
     officialVisitorRepository.deleteByOfficialVisit(officialVisit)
     prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
     officialVisitRepository.deleteById(officialVisit.officialVisitId)
+
+    auditingService.recordAuditEvent(
+      auditVisitCreateEvent {
+        officialVisitId(officialVisit.officialVisitId)
+        summaryText("Official visit deleted")
+        eventSource("NOMIS")
+        user(UserService.getClientAsUser("NOMIS"))
+        prisonCode(officialVisit.prisonCode)
+        prisonerNumber(officialVisit.prisonerNumber)
+        detailsText("Official visit deleted for prisoner number ${officialVisit.prisonerNumber}")
+      },
+    )
   }?.toSyncModel()
 }
