@@ -54,7 +54,7 @@ interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long>
     WHERE pv.prisonerNumber = :prisonerNumber
     """,
   )
-  @Modifying(clearAutomatically = true)
+  @Modifying
   fun deleteAllByPrisonerNumber(prisonerNumber: String)
 
   fun countByPrisonerNumber(prisonerNumber: String): Long

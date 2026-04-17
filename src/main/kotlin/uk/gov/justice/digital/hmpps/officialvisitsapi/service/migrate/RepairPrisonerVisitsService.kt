@@ -69,18 +69,23 @@ class RepairPrisonerVisitsService(
 
     // Delete the prisonerVisited entities (Child entity of a visit)
     prisonerVisitedRepository.deleteAllByPrisonerNumber(prisonerNumber)
+    prisonerVisitedRepository.flush()
 
     // Delete the visitor equipment (child entity of a visitor)
     visitorEquipmentRepository.deleteAllByPrisonerNumber(prisonerNumber)
+    visitorEquipmentRepository.flush()
 
     // Delete the visitors on these visits (child entity of a visit)
     officialVisitorRepository.deleteAllByPrisonerNumber(prisonerNumber)
+    officialVisitorRepository.flush()
 
     // Delete the visits for this prisoner (it's a bulk operation and JPA cascades are not honored here)
     officialVisitRepository.deleteAllByPrisonerNumber(prisonerNumber)
+    officialVisitRepository.flush()
 
-    // Delete the audited events for the visitss
+    // Delete the audited events for the visits
     auditedEventRepository.deleteAllByPrisonerNumber(prisonerNumber)
+    auditedEventRepository.flush()
 
     return countPrisonerVisited
   }
