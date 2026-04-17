@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import java.time.LocalDateTime
 
 @Repository
 interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long> {
@@ -34,6 +35,18 @@ interface PrisonerVisitedRepository : JpaRepository<PrisonerVisitedEntity, Long>
   )
   @Modifying
   fun replacePrisonerNumber(removedNumber: String, replacementNumber: String)
+
+  @Query(
+    value = """
+    UPDATE PrisonerVisitedEntity pv 
+    SET pv.prisonerNumber = :replacementNumber 
+    WHERE pv.prisonerNumber = :removedNumber
+    AND pv.officialVisit.offenderBookId = :bookingId
+    AND pv.officialVisit.createdTime > :startDateTime
+    """,
+  )
+  @Modifying
+  fun replacePrisonerNumberForBooking(removedNumber: String, replacementNumber: String, bookingId: Long, startDateTime: LocalDateTime)
 
   @Query(
     value = """

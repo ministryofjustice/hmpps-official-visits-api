@@ -35,7 +35,6 @@ class PrisonerReceivedEvent(additionalInformation: ReceivedInformation) : Domain
 data class ReceivedInformation(val nomsNumber: String, val reason: String, val prisonId: String) : AdditionalInformation
 
 class PrisonerReleasedEvent(additionalInformation: ReleaseInformation) : DomainEvent<ReleaseInformation>(DomainEventType.PRISONER_RELEASED, additionalInformation) {
-
   @JsonIgnore
   fun prisonerNumber() = additionalInformation.nomsNumber
 
@@ -62,13 +61,20 @@ class PrisonerMergedEvent(additionalInformation: MergeInformation) : DomainEvent
 data class MergeInformation(val nomsNumber: String, val removedNomsNumber: String) : AdditionalInformation
 
 class PrisonerBookingMovedEvent(additionalInformation: BookingMovedInformation) : DomainEvent<BookingMovedInformation>(DomainEventType.PRISONER_BOOKING_MOVED, additionalInformation) {
+  @JsonIgnore
   fun movedFromNomsNumber() = additionalInformation.movedFromNomsNumber
+
+  @JsonIgnore
   fun movedToNomsNumber() = additionalInformation.movedToNomsNumber
+
+  @JsonIgnore
   fun bookingId() = additionalInformation.bookingId
-  fun startDateTime() = additionalInformation.startDateTime
+
+  @JsonIgnore
+  fun bookingStartDateTime() = additionalInformation.bookingStartDateTime
 }
 
-data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String, val bookingId: Long, val startDateTime: LocalDateTime) : AdditionalInformation
+data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String, val bookingId: String, val bookingStartDateTime: LocalDateTime) : AdditionalInformation
 
 data class PersonReference(val identifiers: List<Identifier>)
 
