@@ -105,7 +105,7 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
       WHERE ov.prisonerNumber = :prisonerNumber
     """,
   )
-  @Modifying(clearAutomatically = true)
+  @Modifying()
   fun deleteAllByPrisonerNumber(prisonerNumber: String)
 
   @Query(

@@ -15,6 +15,6 @@ interface AuditedEventRepository : JpaRepository<AuditedEventEntity, Long> {
     WHERE ae.prisonerNumber = :prisonerNumber
     """,
   )
-  @Modifying(clearAutomatically = true)
+  @Modifying
   fun deleteAllByPrisonerNumber(prisonerNumber: String)
 }

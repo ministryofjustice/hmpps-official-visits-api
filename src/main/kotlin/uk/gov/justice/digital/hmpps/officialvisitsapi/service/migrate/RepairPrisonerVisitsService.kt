@@ -79,7 +79,7 @@ class RepairPrisonerVisitsService(
     // Delete the visits for this prisoner (it's a bulk operation and JPA cascades are not honored here)
     officialVisitRepository.deleteAllByPrisonerNumber(prisonerNumber)
 
-    // Delete the audited events for the visitss
+    // Delete the audited events for the visits
     auditedEventRepository.deleteAllByPrisonerNumber(prisonerNumber)
 
     return countPrisonerVisited

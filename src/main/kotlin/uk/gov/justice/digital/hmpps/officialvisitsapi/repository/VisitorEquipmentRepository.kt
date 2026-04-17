@@ -14,9 +14,17 @@ interface VisitorEquipmentRepository : JpaRepository<VisitorEquipmentEntity, Lon
   @Query(
     value = """
     DELETE FROM VisitorEquipmentEntity ve
-    WHERE ve.officialVisitor.officialVisit.prisonerNumber = :prisonerNumber
+    WHERE ve.officialVisitor IN (
+      SELECT ove
+      FROM OfficialVisitorEntity ove
+      WHERE ove.officialVisit IN (
+        SELECT ov
+        FROM OfficialVisitEntity ov
+        where ov.prisonerNumber = :prisonerNumber
+      )
+    )
     """,
   )
-  @Modifying(clearAutomatically = true)
+  @Modifying
   fun deleteAllByPrisonerNumber(prisonerNumber: String)
 }
