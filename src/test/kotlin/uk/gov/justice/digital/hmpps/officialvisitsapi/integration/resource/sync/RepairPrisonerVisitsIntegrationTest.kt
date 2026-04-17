@@ -61,7 +61,6 @@ class RepairPrisonerVisitsIntegrationTest : IntegrationTestBase() {
   private val nextMondayAt9 = createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor))
 
   @BeforeEach
-  @Transactional
   fun initialiseData() {
     clearAllVisitData()
 
