@@ -20,6 +20,7 @@ generic-service:
 
   # Prisons allowed here for UR
   allowlist:
+    kpmg: 195.68.59.74
     groups:
       - internal
       - prisons
