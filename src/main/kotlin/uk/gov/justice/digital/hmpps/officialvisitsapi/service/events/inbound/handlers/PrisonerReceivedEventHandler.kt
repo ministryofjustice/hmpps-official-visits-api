@@ -5,13 +5,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitSetToPreviousTermEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCurrentTermEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.PrisonerReceivedEvent
-import java.time.LocalDate
 import kotlin.String
 
 @Component
@@ -43,38 +42,43 @@ class PrisonerReceivedEventHandler(
   }
 
   /**
-   * This method finds all visits for a prisoner number where the currentTerm == true and the bookingId on the
-   * visit is different from the current bookingId. This avoids changing any visits for the currently active booking.
+   * This method:
+   *  - finds visits for the prisoner where the bookingId == the new booking, and sets currentTerm = true if it is false.
+   *  - finds visits for the prisoner where the bookingId != the new booking, and sets currentTerm = false if it is true.
    *
-   * It then updates these visits to set the currentTerm = false to indicate that they are now related to a previous
-   * term in prison. No sync events are required for this operation as it is only reacting to the creation of a
-   * new booking, not to any changes in visits or visitors.
+   * No sync events are required for this operation as these changes have already been applied in NOMIS.
    */
   private fun processNewBooking(prisonerNumber: String, bookingId: Long) {
-    val visitsToUpdate = officialVisitRepository.findAllCurrentTermVisitsForPrisoner(prisonerNumber, bookingId)
+    var currentTermCounter = 0
+    var previousTermCounter = 0
 
-    log.info("PRISONER RECEIVED EVENT: Found [${visitsToUpdate.size} visits to update for [$prisonerNumber]")
-
-    visitsToUpdate.forEach { visit ->
-      // Check whether this visit is in the future and SCHEDULED - if so log message.
-      if (visit.visitStatusCode == VisitStatusType.SCHEDULED && visit.visitDate > LocalDate.now()) {
-        log.info("PRISONER RECEIVED EVENT: OfficialVisitId [${visit.officialVisitId}] at [${visit.prisonCode}] for [$prisonerNumber] is still SCHEDULED [${visit.visitDate} but will be set to currentTerm = false")
+    officialVisitRepository.findAllByPrisonerNumberAndOffenderBookId(prisonerNumber, bookingId).forEach { visit ->
+      if (!visit.currentTerm) {
+        officialVisitRepository.saveAndFlush(visit.apply { currentTerm = true })
+        auditCurrentTermChange(visit)
+        currentTermCounter++
       }
-
-      // Update the currentTerm to false
-      officialVisitRepository.saveAndFlush(visit.apply { currentTerm = false })
-
-      // Create an audit event for the visit to record that it is no longer related to the current term in prison
-      auditingService.recordAuditEvent(
-        auditVisitSetToPreviousTermEvent {
-          officialVisitId(visit.officialVisitId)
-          summaryText("The visit is no longer related to the current term in prison")
-          eventSource("NOMIS")
-          user(UserService.getServiceAsUser())
-          prisonCode(visit.prisonCode)
-          prisonerNumber(prisonerNumber)
-        },
-      )
     }
+
+    officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdNot(prisonerNumber, bookingId).forEach { visit ->
+      if (visit.currentTerm) {
+        officialVisitRepository.saveAndFlush(visit.apply { currentTerm = false })
+        auditCurrentTermChange(visit)
+        previousTermCounter++
+      }
+    }
+
+    log.info("PRISONER RECEIVED EVENT: [$currentTermCounter] visits set to currentTerm = true, [$previousTermCounter] set to currentTerm = false")
   }
+
+  private fun auditCurrentTermChange(visit: OfficialVisitEntity) = auditingService.recordAuditEvent(
+    auditVisitCurrentTermEvent {
+      officialVisitId(visit.officialVisitId)
+      summaryText("The visit current term marker has been updated")
+      eventSource("NOMIS")
+      user(UserService.getServiceAsUser())
+      prisonCode(visit.prisonCode)
+      prisonerNumber(visit.prisonerNumber)
+    },
+  )
 }

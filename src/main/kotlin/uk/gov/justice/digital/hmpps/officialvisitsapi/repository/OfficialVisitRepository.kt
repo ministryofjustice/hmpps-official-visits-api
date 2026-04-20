@@ -108,14 +108,7 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   @Modifying()
   fun deleteAllByPrisonerNumber(prisonerNumber: String)
 
-  @Query(
-    value = """
-      SELECT ov
-      FROM OfficialVisitEntity ov
-      WHERE ov.prisonerNumber = :prisonerNumber 
-      AND ov.currentTerm = true
-      AND ov.offenderBookId != :currentBookingId
-    """,
-  )
-  fun findAllCurrentTermVisitsForPrisoner(prisonerNumber: String, currentBookingId: Long): List<OfficialVisitEntity>
+  fun findAllByPrisonerNumberAndOffenderBookId(prisonerNumber: String, bookingId: Long): List<OfficialVisitEntity>
+
+  fun findAllByPrisonerNumberAndOffenderBookIdNot(prisonerNumber: String, bookingId: Long): List<OfficialVisitEntity>
 }
