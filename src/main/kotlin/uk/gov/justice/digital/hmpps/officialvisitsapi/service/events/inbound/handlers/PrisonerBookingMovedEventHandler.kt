@@ -37,7 +37,7 @@ class PrisonerBookingMovedEventHandler(
     // update prisoner booking if exists
     affectedVisits.takeIf { it.isNotEmpty() }?.let {
       officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
-      prisonerVisitedRepository.replacePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
+      prisonerVisitedRepository.replacePrisonerNumberForBooking(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
 
       affectedVisits.forEach { visit ->
         auditingService.recordAuditEvent(
