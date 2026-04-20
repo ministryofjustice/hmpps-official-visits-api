@@ -37,7 +37,7 @@ class PrisonerBookingMovedEventHandlerTest {
     handler.handle(bookingMoveEvent)
 
     verify(officialVisitRepository).bookingMove("ABC222", "ABC111", 1L, bookingStartDateTime)
-    verify(prisonerVisitedRepository).replacePrisonerNumberForBooking("ABC222", "ABC111", 1L, bookingStartDateTime)
+    verify(prisonerVisitedRepository).replacePrisonerNumber("ABC222", "ABC111")
     verify(auditingService, times(2)).recordAuditEvent(any())
   }
 
@@ -49,7 +49,7 @@ class PrisonerBookingMovedEventHandlerTest {
       BookingMovedInformation("ABC222", "ABC111", "1", bookingStartDateTime),
     )
 
-    whenever(officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual("ABC222", 1L, bookingStartDateTime)).thenReturn(0)
+    whenever(officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual("ABC222", 1L, bookingStartDateTime)).thenReturn(emptyList())
 
     handler.handle(bookingMoveEvent)
 

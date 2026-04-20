@@ -25,9 +25,9 @@ class PrisonerBookingMovedEventHandler(
     val movedToNomsNumber = event.movedToNomsNumber()
     val movedFromNomsNumber = event.movedFromNomsNumber()
     val bookingId = event.bookingId().toLong()
-      val startDateTime = event.bookingStartDateTime()
+    val startDateTime = event.bookingStartDateTime()
 
-      log.info("Handling booking move from [$movedFromNomsNumber] to [$movedToNomsNumber] for booking [$bookingId]")
+    log.info("Handling booking move from [$movedFromNomsNumber] to [$movedToNomsNumber] for booking [$bookingId]")
     val affectedVisits = officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual(
       movedFromNomsNumber,
       bookingId,
@@ -36,8 +36,8 @@ class PrisonerBookingMovedEventHandler(
 
     // update prisoner booking if exists
     affectedVisits.takeIf { it.isNotEmpty() }?.let {
-        officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
-        prisonerVisitedRepository.replacePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
+      officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
+      prisonerVisitedRepository.replacePrisonerNumber(movedFromNomsNumber, movedToNomsNumber)
 
       affectedVisits.forEach { visit ->
         auditingService.recordAuditEvent(
