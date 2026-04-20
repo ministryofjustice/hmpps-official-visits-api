@@ -3,10 +3,10 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.1.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.2.1"
   id("org.openapi.generator") version "7.16.0"
-  kotlin("plugin.spring") version "2.3.10"
-  kotlin("plugin.jpa") version "2.3.10"
+  kotlin("plugin.spring") version "2.3.20"
+  kotlin("plugin.jpa") version "2.3.20"
 }
 
 allOpen {
@@ -19,8 +19,8 @@ allOpen {
 
 dependencies {
   // HMPPS dependencies
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.0.1")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.0.1")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.1.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.3.0")
 
   // Spring boot dependencies
   implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -30,13 +30,16 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
-  // ??
+  // Gson
   implementation("org.springframework.boot:spring-boot-gson:4.0.0")
 
   // OpenAPI dependencies
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.1")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
-  implementation("org.springdoc:springdoc-openapi-starter-common:3.0.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.2")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+  constraints {
+    implementation("org.webjars:swagger-ui:5.32.2")
+  }
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.0.2")
 
   // ?? Jackson databind
   implementation("org.openapitools:jackson-databind-nullable:0.2.7")
@@ -49,7 +52,7 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.21.0")
 
   // Test dependencies
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.0.1")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.1.0")
   testImplementation("org.springframework.security:spring-security-test:7.0.2")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
