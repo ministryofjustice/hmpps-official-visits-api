@@ -34,6 +34,12 @@ fun auditVisitChangeEvent(initializer: ChangeVisitDsl.() -> Unit): AuditEventDto
 
 fun auditVisitCancellationEvent(initializer: CancelVisitDsl.() -> Unit): AuditEventDto = CancelVisitDsl().apply(initializer).toAuditEvent()
 
+fun auditVisitDeletedEvent(initializer: DeleteVisitDsl.() -> Unit): AuditEventDto = DeleteVisitDsl().apply(initializer).toAuditEvent()
+
+fun auditVisitorAddedEvent(initializer: AddVisitorDsl.() -> Unit): AuditEventDto = AddVisitorDsl().apply(initializer).toAuditEvent()
+
+fun auditVisitorRemovedEvent(initializer: RemoveVisitorDsl.() -> Unit): AuditEventDto = RemoveVisitorDsl().apply(initializer).toAuditEvent()
+
 fun auditVisitCompletionEvent(initializer: CompleteVisitDsl.() -> Unit): AuditEventDto = CompleteVisitDsl().apply(initializer).toAuditEvent()
 
 fun auditVisitSetToPreviousTermEvent(initializer: NewBookingVisitDsl.() -> Unit): AuditEventDto = NewBookingVisitDsl().apply(initializer).toAuditEvent()
@@ -140,6 +146,18 @@ class ChangeVisitDsl : AuditEventDsl() {
 
 class CancelVisitDsl : AuditEventDsl() {
   override fun detailsText(): String = "Visit cancelled by user ${user.name}"
+}
+
+class DeleteVisitDsl : AuditEventDsl() {
+  override fun detailsText(): String = "Visit deleted by user ${user.name}."
+}
+
+class AddVisitorDsl : AuditEventDsl() {
+  override fun detailsText(): String = "Visitor added by user ${user.name}."
+}
+
+class RemoveVisitorDsl : AuditEventDsl() {
+  override fun detailsText(): String = "Visitor removed by user ${user.name}."
 }
 
 class CompleteVisitDsl : AuditEventDsl() {

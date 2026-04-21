@@ -385,7 +385,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(deleteAudit.eventSource).isEqualTo("NOMIS")
     assertThat(deleteAudit.userName).isEqualTo("NOMIS")
     assertThat(deleteAudit.userFullName).isEqualTo("NOMIS")
-    assertThat(deleteAudit.detailText).isEqualTo("Official visit deleted for prisoner number ${officialVisit.prisonerNumber}")
+    assertThat(deleteAudit.detailText).isEqualTo("Visit deleted by user NOMIS.")
   }
 
   private fun SyncOfficialVisit.assertWithCreateRequest(request: CreateOfficialVisitRequest) {

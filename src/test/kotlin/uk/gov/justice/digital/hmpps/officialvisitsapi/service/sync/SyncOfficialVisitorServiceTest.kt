@@ -146,7 +146,7 @@ class SyncOfficialVisitorServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       summaryText isEqualTo "Official visitor added"
-      detailText isEqualTo "Official visitor First Last added to visit for prisoner number ${MOORLAND_PRISONER.number}"
+      detailText isEqualTo "Visitor added by user Prison User."
       eventDateTime isCloseTo now()
     }
     verify(metricsService).send(
@@ -288,7 +288,7 @@ class SyncOfficialVisitorServiceTest {
       username isEqualTo "NOMIS"
       userFullName isEqualTo "NOMIS"
       summaryText isEqualTo "Official visitor removed"
-      detailText isEqualTo "Official visitor null null removed from visit for prisoner number ${MOORLAND_PRISONER.number}"
+      detailText isEqualTo "Visitor removed by user NOMIS."
       eventDateTime isCloseTo now()
     }
   }

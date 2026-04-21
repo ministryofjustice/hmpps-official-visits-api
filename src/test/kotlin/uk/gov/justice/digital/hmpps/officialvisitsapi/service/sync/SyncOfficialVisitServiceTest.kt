@@ -351,7 +351,7 @@ class SyncOfficialVisitServiceTest {
       username isEqualTo "NOMIS"
       userFullName isEqualTo "NOMIS"
       summaryText isEqualTo "Official visit deleted"
-      detailText isEqualTo "Official visit deleted for prisoner number ${visitEntity.prisonerNumber}"
+      detailText isEqualTo "Visit deleted by user NOMIS."
       eventDateTime isCloseTo now()
     }
   }
