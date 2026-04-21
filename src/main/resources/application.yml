@@ -132,9 +132,8 @@ hmpps:
 
 springdoc:
   swagger-ui:
+    version: 5.32.2
     tags-sorter: alpha
     enabled: false
   api-docs:
     enabled: false
-
-springdoc.swagger-ui.version: 5.32.1

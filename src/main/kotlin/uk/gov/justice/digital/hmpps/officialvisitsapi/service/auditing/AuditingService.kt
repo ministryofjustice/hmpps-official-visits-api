@@ -42,7 +42,7 @@ fun auditVisitorRemovedEvent(initializer: RemoveVisitorDsl.() -> Unit): AuditEve
 
 fun auditVisitCompletionEvent(initializer: CompleteVisitDsl.() -> Unit): AuditEventDto = CompleteVisitDsl().apply(initializer).toAuditEvent()
 
-fun auditVisitSetToPreviousTermEvent(initializer: NewBookingVisitDsl.() -> Unit): AuditEventDto = NewBookingVisitDsl().apply(initializer).toAuditEvent()
+fun auditVisitCurrentTermEvent(initializer: NewBookingVisitDsl.() -> Unit): AuditEventDto = NewBookingVisitDsl().apply(initializer).toAuditEvent()
 
 @DslMarker
 annotation class AuditEventDslMarker
@@ -165,7 +165,7 @@ class CompleteVisitDsl : AuditEventDsl() {
 }
 
 class NewBookingVisitDsl : AuditEventDsl() {
-  override fun detailsText(): String = "A new booking for the prisoner has changed this visit so it relates to a previous term in prison"
+  override fun detailsText(): String = "A new booking for the prisoner has changed the current term"
 }
 
 data class AuditEventDto(
