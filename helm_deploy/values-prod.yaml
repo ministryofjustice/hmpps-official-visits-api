@@ -12,13 +12,6 @@ generic-service:
     API_BASE_URL_PRISONER_SEARCH: "https://prisoner-search.prison.service.justice.gov.uk"
     API_BASE_URL_PERSONAL_RELATIONSHIPS: "https://personal-relationships-api.hmpps.service.justice.gov.uk"
 
-  allowlist:
-    groups:
-      - internal
-      - prisons
-      - moj_cloud_platform
-      - digital_staff_and_mojo
-
   postgresDatabaseRestore:
     enabled: true
     namespace_secrets:
