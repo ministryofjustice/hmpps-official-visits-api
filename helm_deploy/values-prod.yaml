@@ -31,7 +31,7 @@ generic-service:
 generic-prometheus-alerts:
   alertSeverity: move-and-improve-alerts
   rdsAlertsDatabases:
-    cloud-platform-4dbf3982763d5579: "Official Visits API"
+    cloud-platform-6b0a529239a0b6af: "Official Visits API"
   rdsAlertsConnectionThreshold: 100
   sqsOldestAlertQueueNames:
     - "hmpps-official-visits--prod-domain_events_queue"
