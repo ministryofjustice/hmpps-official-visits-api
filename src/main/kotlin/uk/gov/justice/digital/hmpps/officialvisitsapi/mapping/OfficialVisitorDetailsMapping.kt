@@ -21,7 +21,7 @@ fun OfficialVisitorEntity.toModel(referenceDataService: ReferenceDataService, pe
   relationshipTypeDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.RELATIONSHIP_TYPE, this.relationshipTypeCode.toString())?.description
     ?: this.relationshipTypeCode.toString(),
   relationshipCode = this.relationshipCode,
-  relationshipDescription = personalRelationshipsReferenceDataService.getReferenceDataByCode(getRelationShipCode(this.relationshipTypeCode.toString()), this.relationshipCode!!)?.description,
+  relationshipDescription = this.relationshipCode?.let { personalRelationshipsReferenceDataService.getReferenceDataByCode(getRelationShipCode(this.relationshipTypeCode.toString()), this.relationshipCode!!)?.description } ?: "No relationship",
   attendanceCode = this.attendanceCode,
   attendanceDescription = referenceDataService.getReferenceDataByGroupAndCode(ReferenceDataGroup.ATTENDANCE, this.attendanceCode.toString())?.description
     ?: this.attendanceCode.toString(),
