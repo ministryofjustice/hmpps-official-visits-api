@@ -18,7 +18,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmen
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorAddedEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorRemovedEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -103,17 +105,16 @@ class SyncOfficialVisitorService(
       prisonerNumber = visit.prisonerNumber,
       visitor = visitorSaved.toSyncModel(),
     ).also {
-      auditingService.recordAuditEvent(
-        auditVisitCreateEvent {
-          officialVisitId(visit.officialVisitId)
-          summaryText("${visitorSaved.relationshipType()} visitor added")
-          eventSource("NOMIS")
-          user(createdBy)
-          prisonCode(visit.prisonCode)
-          prisonerNumber(visit.prisonerNumber)
-          detailsText("${visitorSaved.relationshipType()} visitor ${visitorSaved.name()} added to visit for prisoner number ${it.prisonerNumber}")
-        },
-      )
+      val auditChangeEvent = auditVisitorAddedEvent {
+        officialVisitId(visit.officialVisitId)
+        summaryText("${visitorSaved.relationshipType()} visitor added")
+        eventSource("NOMIS")
+        user(createdBy)
+        prisonCode(visit.prisonCode)
+        prisonerNumber(visit.prisonerNumber)
+      }
+
+      auditingService.recordAuditEvent(auditChangeEvent)
     }
   }
 
@@ -143,6 +144,17 @@ class SyncOfficialVisitorService(
           )
         }
 
+        auditingService.recordAuditEvent(
+          auditVisitorRemovedEvent {
+            officialVisitId(visit.officialVisitId)
+            summaryText("${visitor.relationshipType()} visitor removed")
+            eventSource("NOMIS")
+            user(UserService.getClientAsUser("NOMIS"))
+            prisonCode(visit.prisonCode)
+            prisonerNumber(visit.prisonerNumber)
+          },
+        )
+
         return SyncRemoveVisitorResponse(
           officialVisitId = visit.officialVisitId,
           officialVisitorId = visitor.officialVisitorId,
@@ -163,6 +175,8 @@ class SyncOfficialVisitorService(
     val visitor = officialVisitorRepository.findById(officialVisitorId).getOrNull()
       ?: throw EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
 
+    val updatedByUser = request.updateUsername?.let { userService.getUser(it) } ?: UserService.getServiceAsUser()
+
     // Check if the request has changed the person visiting and if so, get their relationship to the prisoner
     val updatedPrisonerContactId = if (visitor.contactId != request.personId) {
       val contactSummary = contactsService.getPrisonerContactSummary(visit.prisonerNumber, request.personId!!)
@@ -182,6 +196,27 @@ class SyncOfficialVisitorService(
     val changes = describeVisitorChanges(old = visitor, new = request)
     log.info(changes)
 
+    val auditChangeEvent = auditVisitChangeEvent {
+      officialVisitId(visit.officialVisitId)
+      summaryText("${visitor.relationshipType()} visitor updated")
+      eventSource("NOMIS")
+      user(updatedByUser)
+      prisonCode(visit.prisonCode)
+      prisonerNumber(visit.prisonerNumber)
+      changes {
+        change("Visitor first name", visitor.firstName, request.firstName)
+        change("Visitor last name", visitor.lastName, request.lastName)
+        change("Visitor contact ID", visitor.contactId, request.personId)
+        change("Visitor relationship type", visitor.relationshipTypeCode, request.relationshipTypeCode)
+        change("Visitor relationship code", visitor.relationshipCode, request.relationshipToPrisoner)
+        change("Lead visitor", visitor.leadVisitor, request.groupLeaderFlag ?: false)
+        change("Assisted visitor", visitor.assistedVisit, request.assistedVisitFlag ?: false)
+        change("Visitor notes", visitor.visitorNotes, request.commentText)
+        change("Visitor attendance code", visitor.attendanceCode, request.attendanceCode)
+        change("NOMIS offender visit visitor ID", visitor.offenderVisitVisitorId, request.offenderVisitVisitorId)
+      }
+    }
+
     val savedVisitorEntity = officialVisitorRepository.saveAndFlush(
       visitor.apply {
         firstName = request.firstName
@@ -195,7 +230,7 @@ class SyncOfficialVisitorService(
         visitorNotes = request.commentText
         offenderVisitVisitorId = request.offenderVisitVisitorId
         attendanceCode = request.attendanceCode
-        updatedBy = request.updateUsername
+        updatedBy = updatedByUser.username
         updatedTime = request.updateDateTime
       },
     )
@@ -206,7 +241,9 @@ class SyncOfficialVisitorService(
       prisonCode = visit.prisonCode,
       prisonerNumber = visit.prisonerNumber,
       visitor = savedVisitorEntity.toSyncModel(),
-    )
+    ).also {
+      auditingService.recordAuditEvent(auditChangeEvent)
+    }
   }
 
   private fun describeVisitorChanges(old: OfficialVisitorEntity, new: SyncUpdateOfficialVisitorRequest): String {

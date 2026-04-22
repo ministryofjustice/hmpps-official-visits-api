@@ -377,6 +377,15 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
         nomsNumber = officialVisit.prisonerNumber,
       ),
     )
+
+    val deleteAudit = auditedEventRepository.findAll().single { it.summaryText == "Official visit deleted" }
+    assertThat(deleteAudit.officialVisitId).isEqualTo(officialVisit.officialVisitId)
+    assertThat(deleteAudit.prisonCode).isEqualTo(MOORLAND)
+    assertThat(deleteAudit.prisonerNumber).isEqualTo(officialVisit.prisonerNumber)
+    assertThat(deleteAudit.eventSource).isEqualTo("NOMIS")
+    assertThat(deleteAudit.userName).isEqualTo("NOMIS")
+    assertThat(deleteAudit.userFullName).isEqualTo("NOMIS")
+    assertThat(deleteAudit.detailText).isEqualTo("Visit deleted by user NOMIS.")
   }
 
   private fun SyncOfficialVisit.assertWithCreateRequest(request: CreateOfficialVisitRequest) {

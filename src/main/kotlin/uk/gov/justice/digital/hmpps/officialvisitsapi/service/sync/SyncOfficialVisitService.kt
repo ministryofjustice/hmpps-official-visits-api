@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitDeletedEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -209,5 +210,16 @@ class SyncOfficialVisitService(
     officialVisitorRepository.deleteByOfficialVisit(officialVisit)
     prisonerVisitedRepository.deleteByOfficialVisit(officialVisit)
     officialVisitRepository.deleteById(officialVisit.officialVisitId)
+
+    auditingService.recordAuditEvent(
+      auditVisitDeletedEvent {
+        officialVisitId(officialVisit.officialVisitId)
+        summaryText("Official visit deleted")
+        eventSource("NOMIS")
+        user(UserService.getClientAsUser("NOMIS"))
+        prisonCode(officialVisit.prisonCode)
+        prisonerNumber(officialVisit.prisonerNumber)
+      },
+    )
   }?.toSyncModel()
 }

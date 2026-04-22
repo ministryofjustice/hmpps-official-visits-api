@@ -339,6 +339,21 @@ class SyncOfficialVisitServiceTest {
     verify(prisonerVisitedRepository).deleteByOfficialVisit(visitEntity)
     verify(officialVisitorRepository).deleteByOfficialVisit(visitEntity)
     verify(officialVisitRepository).deleteById(1L)
+
+    val auditEventCaptor = argumentCaptor<AuditEventDto>()
+    verify(auditingService).recordAuditEvent(auditEventCaptor.capture())
+
+    with(auditEventCaptor.firstValue) {
+      this.officialVisitId isEqualTo 1L
+      prisonerNumber isEqualTo visitEntity.prisonerNumber
+      prisonCode isEqualTo visitEntity.prisonCode
+      eventSource isEqualTo "NOMIS"
+      username isEqualTo "NOMIS"
+      userFullName isEqualTo "NOMIS"
+      summaryText isEqualTo "Official visit deleted"
+      detailText isEqualTo "Visit deleted by user NOMIS."
+      eventDateTime isCloseTo now()
+    }
   }
 
   @Test
@@ -348,6 +363,7 @@ class SyncOfficialVisitServiceTest {
 
     verify(officialVisitRepository).findById(99L)
     verifyNoInteractions(prisonerVisitedRepository, officialVisitorRepository)
+    verifyNoInteractions(auditingService)
   }
 
   private fun createVisitRequest(visitSlotId: Long) = SyncCreateOfficialVisitRequest(
