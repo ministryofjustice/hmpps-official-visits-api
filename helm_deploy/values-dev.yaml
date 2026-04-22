@@ -29,3 +29,13 @@ generic-service:
 generic-prometheus-alerts:
   businessHoursOnly: true
   alertSeverity: move-and-improve-alerts-non-prod
+  rdsAlertsDatabases:
+    cloud-platform-6ae4379ec4fdf019: "Official Visits API"
+  rdsAlertsConnectionThreshold: 100
+  sqsOldestAlertQueueNames:
+    - "hmpps-official-visits--dev-domain_events_queue"
+  sqsAlertsOldestThreshold: 10
+  sqsNumberAlertQueueNames:
+    - "hmpps-official-visits--dev-domain_events_dlq"
+  sqsAlertsTotalMessagesThreshold: 1
+  applicationCronJobStatusFailedWindowMinutes: 15
