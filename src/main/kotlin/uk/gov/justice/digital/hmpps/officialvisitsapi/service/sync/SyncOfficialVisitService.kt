@@ -155,6 +155,7 @@ class SyncOfficialVisitService(
         change("Prison code", visit.prisonCode, request.prisonCode)
         change("Prisoner number", visit.prisonerNumber, request.prisonerNumber)
         change("Prisoner notes", visit.prisonerNotes, request.commentText)
+        change("Prisoner current term", visit.currentTerm, request.currentTerm)
         change("Visitor concern notes", visit.visitorConcernNotes, request.visitorConcernText)
         change("Override ban by", visit.overrideBanBy, request.overrideBanStaffUsername)
         change("Offender book ID", visit.offenderBookId, request.offenderBookId)
@@ -175,6 +176,7 @@ class SyncOfficialVisitService(
       prisonCode = request.prisonCode
       prisonerNumber = request.prisonerNumber
       prisonerNotes = request.commentText
+      currentTerm = request.currentTerm
       visitorConcernNotes = request.visitorConcernText
       overrideBanBy = request.overrideBanStaffUsername
       offenderBookId = request.offenderBookId

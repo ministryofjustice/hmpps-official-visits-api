@@ -47,6 +47,9 @@ data class SyncUpdateOfficialVisitRequest(
   @Schema(description = "The visit comment text", example = "This is a comment", nullable = true)
   val commentText: String? = null,
 
+  @Schema(description = "The current term flag from NOMIS. Default is true if not provided.", example = "true")
+  val currentTerm: Boolean = true,
+
   @Schema(description = "The prisoner search type code. Maps to the same reference code values in both NOMIS and DPS.", example = "RUB_A", nullable = true)
   val searchTypeCode: SearchLevelType? = null,
 
