@@ -244,7 +244,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       offenderVisitId = 1L,
       prisonVisitSlotId = 1L,
       dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    )
+    ).copy(currentTerm = false)
 
     val updateResponse = webTestClient.syncUpdateOfficialVisit(updateRequest, createResponse.officialVisitId)
       .expectStatus().isOk
@@ -258,6 +258,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(updateResponse.statusCode).isEqualTo(updateRequest.visitStatusCode)
     assertThat(updateResponse.startTime).isEqualTo(updateRequest.startTime)
     assertThat(updateResponse.endTime).isEqualTo(updateRequest.endTime)
+    assertThat(updateResponse.currentTerm).isEqualTo(updateRequest.currentTerm)
 
     // Check the other values remain unchanged
     assertThat(updateResponse.officialVisitId).isEqualTo(createResponse.officialVisitId)
@@ -265,7 +266,6 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     assertThat(updateResponse.prisonCode).isEqualTo(createResponse.prisonCode)
     assertThat(updateResponse.prisonerNumber).isEqualTo(createResponse.prisonerNumber)
     assertThat(updateResponse.visitDate).isEqualTo(createResponse.visitDate)
-    assertThat(updateResponse.currentTerm).isEqualTo(request.currentTerm)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_UPDATED,
@@ -446,6 +446,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     dpsLocationId = dpsLocationId,
     visitStatusCode = VisitStatusType.EXPIRED,
     commentText = "updated comment",
+    currentTerm = true,
     visitorConcernText = "updated concern",
     visitOrderNumber = 5678,
     updateUsername = MOORLAND_PRISON_USER.username,

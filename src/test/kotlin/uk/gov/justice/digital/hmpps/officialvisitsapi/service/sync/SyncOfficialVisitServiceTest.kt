@@ -392,6 +392,7 @@ class SyncOfficialVisitServiceTest {
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
     visitStatusCode = VisitStatusType.EXPIRED,
     commentText = "updated comment",
+    currentTerm = true,
     visitorConcernText = "updated concern",
     visitOrderNumber = 5678,
     updateUsername = MOORLAND_PRISON_USER.username,
