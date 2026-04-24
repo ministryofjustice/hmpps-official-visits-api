@@ -23,6 +23,7 @@ import java.util.UUID
 class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
 
   private val location = moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
+  private val createdTimeSlotIds = mutableListOf<Long>()
 
   @BeforeEach
   @Transactional
@@ -36,6 +37,10 @@ class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun tearDown() {
     clearAllVisitData()
+    if (createdTimeSlotIds.isNotEmpty()) {
+      timeSlotRepository.deleteAllById(createdTimeSlotIds)
+      createdTimeSlotIds.clear()
+    }
   }
 
   @Test
@@ -73,6 +78,7 @@ class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
         createdTime = now(),
       ),
     )
+    createdTimeSlotIds.add(timeslotOnTheCutOff.prisonTimeSlotId)
 
     val timeslotWithinCutOff = timeSlotRepository.saveAndFlush(
       PrisonTimeSlotEntity(
@@ -86,6 +92,7 @@ class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
         createdTime = now(),
       ),
     )
+    createdTimeSlotIds.add(timeslotWithinCutOff.prisonTimeSlotId)
 
     val summary = webTestClient.get()
       .uri("/admin/time-slots/prison/{prisonCode}?weekOldOrLatest=true", MOORLAND_PRISONER.prison)
@@ -102,8 +109,6 @@ class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
     assertThat(summary.timeSlots).extracting<Long> { it.timeSlot.prisonTimeSlotId }.doesNotContain(timeslotOnTheCutOff.prisonTimeSlotId)
     // summary.timeSlots should contain the timeslot created with expiry date 6 days in the past
     assertThat(summary.timeSlots).extracting<Long> { it.timeSlot.prisonTimeSlotId }.contains(timeslotWithinCutOff.prisonTimeSlotId)
-    timeSlotRepository.delete(timeslotOnTheCutOff)
-    timeSlotRepository.delete(timeslotWithinCutOff)
   }
 
   private fun assertTimeSlotWithResponse(model: TimeSlot) {
