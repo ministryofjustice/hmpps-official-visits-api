@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Priso
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
@@ -73,6 +74,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var auditedEventRepository: AuditedEventRepository
+
+  @Autowired
+  protected lateinit var timeSlotRepository: PrisonTimeSlotRepository
 
   @BeforeEach
   fun `stub default users and prisoners and reset stubbed events`() {

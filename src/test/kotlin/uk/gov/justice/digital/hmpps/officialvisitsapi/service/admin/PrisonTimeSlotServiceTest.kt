@@ -287,7 +287,7 @@ class PrisonTimeSlotServiceTest {
       createdTime = LocalDateTime.now(),
     )
 
-    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(
+    whenever(prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))).thenReturn(
       listOf(
         timeSlotEntity,
       ),
@@ -322,14 +322,14 @@ class PrisonTimeSlotServiceTest {
       ),
     )
 
-    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
+    verify(prisonTimeSlotRepository).findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
 
   @Test
   fun `should return summary with no time slots when there are none active for the prison code`() {
-    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
+    whenever(prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))).thenReturn(emptyList())
 
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
     whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
@@ -344,7 +344,7 @@ class PrisonTimeSlotServiceTest {
       ),
     )
 
-    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
+    verify(prisonTimeSlotRepository).findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
 
@@ -362,7 +362,7 @@ class PrisonTimeSlotServiceTest {
       createdTime = LocalDateTime.now(),
     )
 
-    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(
+    whenever(prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))).thenReturn(
       listOf(
         timeSlotEntity,
       ),
@@ -391,7 +391,7 @@ class PrisonTimeSlotServiceTest {
       ),
     )
 
-    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
+    verify(prisonTimeSlotRepository).findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
@@ -492,7 +492,7 @@ class PrisonTimeSlotServiceTest {
       createdTime = LocalDateTime.now(),
     )
 
-    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))).thenReturn(listOf(timeSlotEntity))
     whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(visitSlotEntity))
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
 
@@ -503,7 +503,7 @@ class PrisonTimeSlotServiceTest {
 
     assertThat(summary.timeSlots.first().visitSlots.first().hasVisit).isTrue()
 
-    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
+    verify(prisonTimeSlotRepository).findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }
@@ -531,7 +531,7 @@ class PrisonTimeSlotServiceTest {
       createdTime = LocalDateTime.now(),
     )
 
-    whenever(prisonTimeSlotRepository.findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)).thenReturn(listOf(timeSlotEntity))
+    whenever(prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))).thenReturn(listOf(timeSlotEntity))
     whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(visitSlotEntity))
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
 
@@ -557,7 +557,7 @@ class PrisonTimeSlotServiceTest {
       ),
     )
 
-    verify(prisonTimeSlotRepository).findAllActiveByPrisonCode(MOORLAND_PRISONER.prison)
+    verify(prisonTimeSlotRepository).findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))
     verify(prisonVisitSlotRepository).findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))
     verifyNoMoreInteractions(prisonTimeSlotRepository, prisonVisitSlotRepository)
   }

@@ -2,8 +2,10 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
+import java.time.LocalDate
 
 @Repository
 interface PrisonTimeSlotRepository : JpaRepository<PrisonTimeSlotEntity, Long> {
@@ -19,4 +21,17 @@ interface PrisonTimeSlotRepository : JpaRepository<PrisonTimeSlotEntity, Long> {
       """,
   )
   fun findAllActiveByPrisonCode(prisonCode: String): List<PrisonTimeSlotEntity>
+
+  @Query(
+    value = """
+  SELECT ts
+  FROM PrisonTimeSlotEntity ts
+  WHERE ts.prisonCode = :prisonCode
+    AND (ts.expiryDate IS NULL OR ts.expiryDate > :cutoffDate)
+  """,
+  )
+  fun findAllByPrisonCodeWithExpiryDateAfterCutOffDate(
+    @Param("prisonCode") prisonCode: String,
+    @Param("cutoffDate") cutoffDate: LocalDate,
+  ): List<PrisonTimeSlotEntity>
 }

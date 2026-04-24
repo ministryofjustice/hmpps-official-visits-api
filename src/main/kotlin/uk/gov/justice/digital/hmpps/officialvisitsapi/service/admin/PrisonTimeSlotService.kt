@@ -116,9 +116,9 @@ class PrisonTimeSlotService(
   }
 
   @Transactional(readOnly = true)
-  fun getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode: String, activeOnly: Boolean): TimeSlotSummary {
-    val timeSlots = if (activeOnly) {
-      prisonTimeSlotRepository.findAllActiveByPrisonCode(prisonCode)
+  fun getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode: String, weekOldOrLatest: Boolean): TimeSlotSummary {
+    val timeSlots = if (weekOldOrLatest) {
+      prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(prisonCode, LocalDate.now().minusDays(7))
     } else {
       prisonTimeSlotRepository.findAllByPrisonCode(prisonCode)
     }.toTimeSlotListModel()

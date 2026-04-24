@@ -1,20 +1,23 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.admin
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonTimeSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlotSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot
+import java.time.LocalTime
 import java.util.UUID
 
 class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
@@ -38,7 +41,7 @@ class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should return all time slots summary for the prison for admin role`() {
     val summary = webTestClient.get()
-      .uri("/admin/time-slots/prison/{prisonCode}?activeOnly=false", MOORLAND_PRISONER.prison)
+      .uri("/admin/time-slots/prison/{prisonCode}?weekOldOrLatest=false", MOORLAND_PRISONER.prison)
       .accept(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_ADMIN")))
       .exchange()
@@ -48,40 +51,88 @@ class PrisonTimeSlotIntegrationTest : IntegrationTestBase() {
       .expectBody(TimeSlotSummary::class.java)
       .returnResult().responseBody!!
 
-    Assertions.assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
-    Assertions.assertThat(summary.prisonName).isEqualTo("A prison")
-    Assertions.assertThat(summary.timeSlots).isNotEmpty
+    assertThat(summary.prisonCode).isEqualTo(MOORLAND_PRISONER.prison)
+    assertThat(summary.prisonName).isEqualTo("A prison")
+    assertThat(summary.timeSlots).isNotEmpty
     assertTimeSlotWithResponse(summary.timeSlots[0].timeSlot)
     assertVisitSlotWithResponse(summary.timeSlots[0].visitSlots[0])
   }
 
+  @Test
+  fun `should return all active time slots summary after cutoff date 7 days in the past`() {
+    // API do not allow creating timeslots with expiry date in the past hence using repo method
+    val timeslotOnTheCutOff = timeSlotRepository.saveAndFlush(
+      PrisonTimeSlotEntity(
+        prisonCode = MOORLAND_PRISONER.prison,
+        dayCode = DayType.MON,
+        startTime = LocalTime.parse("09:00"),
+        endTime = LocalTime.parse("10:00"),
+        effectiveDate = now().minusDays(30).toLocalDate(),
+        expiryDate = now().minusDays(7).toLocalDate(),
+        createdBy = "TIM",
+        createdTime = now(),
+      ),
+    )
+
+    val timeslotWithinCutOff = timeSlotRepository.saveAndFlush(
+      PrisonTimeSlotEntity(
+        prisonCode = MOORLAND_PRISONER.prison,
+        dayCode = DayType.MON,
+        startTime = LocalTime.parse("09:00"),
+        endTime = LocalTime.parse("10:00"),
+        effectiveDate = now().minusDays(30).toLocalDate(),
+        expiryDate = now().minusDays(6).toLocalDate(),
+        createdBy = "TIM",
+        createdTime = now(),
+      ),
+    )
+
+    val summary = webTestClient.get()
+      .uri("/admin/time-slots/prison/{prisonCode}?weekOldOrLatest=true", MOORLAND_PRISONER.prison)
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_ADMIN")))
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(TimeSlotSummary::class.java)
+      .returnResult().responseBody!!
+
+    // summary.timeSlots should not contain the timeslot created with expiry date 7 days in the past
+    assertThat(summary.timeSlots).extracting<Long> { it.timeSlot.prisonTimeSlotId }.doesNotContain(timeslotOnTheCutOff.prisonTimeSlotId)
+    // summary.timeSlots should contain the timeslot created with expiry date 6 days in the past
+    assertThat(summary.timeSlots).extracting<Long> { it.timeSlot.prisonTimeSlotId }.contains(timeslotWithinCutOff.prisonTimeSlotId)
+    timeSlotRepository.delete(timeslotOnTheCutOff)
+    timeSlotRepository.delete(timeslotWithinCutOff)
+  }
+
   private fun assertTimeSlotWithResponse(model: TimeSlot) {
-    Assertions.assertThat(model.prisonTimeSlotId).isEqualTo(1)
-    Assertions.assertThat(model.prisonCode).isEqualTo("MDI")
-    Assertions.assertThat(model.dayCode).isEqualTo(DayType.MON)
-    Assertions.assertThat(model.startTime).isEqualTo("09:00")
-    Assertions.assertThat(model.endTime).isEqualTo("10:00")
-    Assertions.assertThat(model.effectiveDate).isEqualTo("2025-10-01")
-    Assertions.assertThat(model.expiryDate).isNull()
-    Assertions.assertThat(model.createdBy).isEqualTo("TIM")
-    Assertions.assertThat(model.createdTime).isInThePast
-    Assertions.assertThat(model.updatedTime).isNull()
-    Assertions.assertThat(model.updatedBy).isNull()
+    assertThat(model.prisonTimeSlotId).isEqualTo(1)
+    assertThat(model.prisonCode).isEqualTo("MDI")
+    assertThat(model.dayCode).isEqualTo(DayType.MON)
+    assertThat(model.startTime).isEqualTo("09:00")
+    assertThat(model.endTime).isEqualTo("10:00")
+    assertThat(model.effectiveDate).isEqualTo("2025-10-01")
+    assertThat(model.expiryDate).isNull()
+    assertThat(model.createdBy).isEqualTo("TIM")
+    assertThat(model.createdTime).isInThePast
+    assertThat(model.updatedTime).isNull()
+    assertThat(model.updatedBy).isNull()
   }
 
   private fun assertVisitSlotWithResponse(model: VisitSlot) {
-    Assertions.assertThat(model.prisonTimeSlotId).isEqualTo(1)
-    Assertions.assertThat(model.prisonCode).isEqualTo("MDI")
-    Assertions.assertThat(model.prisonTimeSlotId).isEqualTo(1)
-    Assertions.assertThat(model.dpsLocationId).isEqualTo(UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
-    Assertions.assertThat(model.locationDescription).isEqualTo("Moorland area 1")
-    Assertions.assertThat(model.locationType).isEqualTo("VIDEO_LINK")
-    Assertions.assertThat(model.locationMaxCapacity).isEqualTo(10)
-    Assertions.assertThat(model.maxAdults).isEqualTo(10)
-    Assertions.assertThat(model.maxGroups).isEqualTo(5)
-    Assertions.assertThat(model.createdBy).isEqualTo("TIM")
-    Assertions.assertThat(model.createdTime).isInThePast
-    Assertions.assertThat(model.updatedTime).isNull()
-    Assertions.assertThat(model.updatedBy).isNull()
+    assertThat(model.prisonTimeSlotId).isEqualTo(1)
+    assertThat(model.prisonCode).isEqualTo("MDI")
+    assertThat(model.prisonTimeSlotId).isEqualTo(1)
+    assertThat(model.dpsLocationId).isEqualTo(UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"))
+    assertThat(model.locationDescription).isEqualTo("Moorland area 1")
+    assertThat(model.locationType).isEqualTo("VIDEO_LINK")
+    assertThat(model.locationMaxCapacity).isEqualTo(10)
+    assertThat(model.maxAdults).isEqualTo(10)
+    assertThat(model.maxGroups).isEqualTo(5)
+    assertThat(model.createdBy).isEqualTo("TIM")
+    assertThat(model.createdTime).isInThePast
+    assertThat(model.updatedTime).isNull()
+    assertThat(model.updatedBy).isNull()
   }
 }
