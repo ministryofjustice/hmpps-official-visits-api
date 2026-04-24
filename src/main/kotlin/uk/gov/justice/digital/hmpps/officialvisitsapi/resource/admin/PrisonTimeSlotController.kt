@@ -62,10 +62,10 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
   fun getAllTimeSlotsAndVisitSlots(
     @Parameter(description = "The prison code", required = true)
     @PathVariable prisonCode: String,
-    @Parameter(description = "If true, only returns active time slots and visit slots")
-    @RequestParam(name = "activeOnly", required = false, defaultValue = "true")
-    activeOnly: Boolean = true,
-  ): TimeSlotSummary = facade.getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode, activeOnly)
+    @Parameter(description = "If true, only returns active time slots and visit slots with expiry date within last 7 days or in the future. If false, returns all time slots and visit slots regardless of their effective and expiry dates. Defaults to true.")
+    @RequestParam(name = "weekOldOrLatest", required = false, defaultValue = "true")
+    weekOldOrLatest: Boolean = true,
+  ): TimeSlotSummary = facade.getAllPrisonTimeSlotsAndAssociatedVisitSlots(prisonCode, weekOldOrLatest)
 
   @GetMapping(path = ["/time-slot/{prisonTimeSlotId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseBody
