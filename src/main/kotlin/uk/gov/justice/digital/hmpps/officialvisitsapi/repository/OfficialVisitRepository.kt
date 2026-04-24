@@ -59,9 +59,15 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     createdTime: LocalDateTime,
   ): List<OfficialVisitEntity>
 
-  @Query(value = "UPDATE OfficialVisitEntity ov SET ov.prisonerNumber = :replacementNumber, ov.offenderBookId = :bookingId WHERE ov.prisonerNumber = :removedNumber")
+  @Query(
+    value = """
+      UPDATE OfficialVisitEntity ov 
+      SET ov.prisonerNumber = :replacementNumber
+      WHERE ov.prisonerNumber = :removedNumber
+    """,
+  )
   @Modifying
-  fun mergePrisonerNumber(removedNumber: String, replacementNumber: String, bookingId: Long?)
+  fun mergePrisonerNumber(removedNumber: String, replacementNumber: String)
 
   @Query(
     value = """
