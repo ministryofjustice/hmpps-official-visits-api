@@ -145,14 +145,14 @@ class PrisonerReceivedEventHandlerTest {
       assertThat(officialVisitId).isEqualTo(1L)
       assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
-      assertThat(summaryText).isEqualTo("The visit current term marker has been updated")
+      assertThat(summaryText).isEqualTo("The visit current term marker has been updated due to a new booking")
     }
 
     with(auditEventCaptor.secondValue) {
       assertThat(officialVisitId).isEqualTo(3L)
       assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
-      assertThat(summaryText).isEqualTo("The visit current term marker has been updated")
+      assertThat(summaryText).isEqualTo("The visit current term marker has been updated due to a new booking")
     }
   }
 
@@ -202,14 +202,14 @@ class PrisonerReceivedEventHandlerTest {
       assertThat(officialVisitId).isEqualTo(1L)
       assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
-      assertThat(summaryText).isEqualTo("The visit current term marker has been updated")
+      assertThat(summaryText).isEqualTo("The visit current term marker has been updated due to a new booking")
     }
 
     with(auditEventCaptor.secondValue) {
       assertThat(officialVisitId).isEqualTo(3L)
       assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
-      assertThat(summaryText).isEqualTo("The visit current term marker has been updated")
+      assertThat(summaryText).isEqualTo("The visit current term marker has been updated due to a new booking")
     }
   }
 

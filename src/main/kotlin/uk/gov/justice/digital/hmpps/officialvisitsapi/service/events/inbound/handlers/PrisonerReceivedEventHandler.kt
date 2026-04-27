@@ -74,7 +74,7 @@ class PrisonerReceivedEventHandler(
   private fun auditCurrentTermChange(visit: OfficialVisitEntity) = auditingService.recordAuditEvent(
     auditVisitCurrentTermEvent {
       officialVisitId(visit.officialVisitId)
-      summaryText("The visit current term marker has been updated")
+      summaryText("The visit current term marker has been updated due to a new booking")
       eventSource("NOMIS")
       user(UserService.getServiceAsUser())
       prisonCode(visit.prisonCode)
