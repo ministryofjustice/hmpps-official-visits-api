@@ -56,9 +56,10 @@ data class ReleaseInformation(val nomsNumber: String, val reason: String, val pr
 class PrisonerMergedEvent(additionalInformation: MergeInformation) : DomainEvent<MergeInformation>(DomainEventType.PRISONER_MERGED, additionalInformation) {
   fun replacementPrisonerNumber() = additionalInformation.nomsNumber
   fun removedPrisonerNumber() = additionalInformation.removedNomsNumber
+  fun bookingId() = additionalInformation.bookingId
 }
 
-data class MergeInformation(val nomsNumber: String, val removedNomsNumber: String) : AdditionalInformation
+data class MergeInformation(val nomsNumber: String, val removedNomsNumber: String, val bookingId: String) : AdditionalInformation
 
 class PrisonerBookingMovedEvent(additionalInformation: BookingMovedInformation) : DomainEvent<BookingMovedInformation>(DomainEventType.PRISONER_BOOKING_MOVED, additionalInformation) {
   @JsonIgnore

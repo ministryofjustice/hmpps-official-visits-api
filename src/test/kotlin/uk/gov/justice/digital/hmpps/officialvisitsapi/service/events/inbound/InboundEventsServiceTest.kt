@@ -35,7 +35,7 @@ class InboundEventsServiceTest {
 
   @Test
   fun `should call prisoner merged handler when for prisoner merged event`() {
-    val event = PrisonerMergedEvent(MergeInformation(nomsNumber = "A1111AA", removedNomsNumber = "B1111BB"))
+    val event = PrisonerMergedEvent(MergeInformation(nomsNumber = "A1111AA", removedNomsNumber = "B1111BB", bookingId = "1"))
     service.process(event)
     verify(prisonerMergedEventHandler).handle(event)
   }
