@@ -1,10 +1,8 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers
 
-import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
@@ -18,7 +16,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.Pri
 class PrisonerMergedEventHandler(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  private val prisonerSearchClient: PrisonerSearchClient,
   private val auditingService: AuditingService,
 ) : DomainEventHandler<PrisonerMergedEvent> {
   companion object {
@@ -29,11 +26,9 @@ class PrisonerMergedEventHandler(
   override fun handle(event: PrisonerMergedEvent) {
     val removedPrisonerNumber = event.removedPrisonerNumber()
     val newPrisonerNumber = event.replacementPrisonerNumber()
+    val bookingId = event.bookingId()
 
-    val prisoner = prisonerSearchClient.getPrisoner(newPrisonerNumber)
-      ?: throw EntityNotFoundException("Prisoner not found $newPrisonerNumber")
-
-    log.info("Prisoner merge from $removedPrisonerNumber to $newPrisonerNumber (on bookingId ${prisoner.bookingId?.toLong()})")
+    log.info("Prisoner merge from $removedPrisonerNumber to $newPrisonerNumber (current bookingId ${bookingId.toLong()})")
 
     val affectedVisits = officialVisitRepository.findAllByPrisonerNumber(removedPrisonerNumber)
 
@@ -58,7 +53,7 @@ class PrisonerMergedEventHandler(
       }
 
       // Check and correct the current term markers for this prisoner's bookings
-      processCurrentTermMarkers(newPrisonerNumber, prisoner.bookingId!!.toLong())
+      processCurrentTermMarkers(newPrisonerNumber, bookingId.toLong())
     }
   }
 

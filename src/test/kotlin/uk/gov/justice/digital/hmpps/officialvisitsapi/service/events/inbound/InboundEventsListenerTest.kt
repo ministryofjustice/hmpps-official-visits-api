@@ -59,7 +59,7 @@ class InboundEventsListenerTest {
   @Test
   fun `should delegate prisoner merged domain event to service`() {
     val event = PrisonerMergedEvent(
-      MergeInformation(nomsNumber = "A1111AA", removedNomsNumber = "B1111BB"),
+      MergeInformation(nomsNumber = "A1111AA", removedNomsNumber = "B1111BB", bookingId = "1"),
     )
     val message = message(event)
     val rawMessage = mapper.writeValueAsString(message)
@@ -71,6 +71,7 @@ class InboundEventsListenerTest {
         it isInstanceOf PrisonerMergedEvent::class.java
         (it as PrisonerMergedEvent).additionalInformation.nomsNumber isEqualTo "A1111AA"
         it.additionalInformation.removedNomsNumber isEqualTo "B1111BB"
+        it.additionalInformation.bookingId isEqualTo "1"
       },
     )
   }

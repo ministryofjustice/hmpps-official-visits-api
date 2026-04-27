@@ -1,20 +1,15 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound
 
-import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
-import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
@@ -24,23 +19,20 @@ class PrisonerMergedEventHandlerTest {
   private val removedPrisonerNumber = "A1234AA"
   private val retainedPrisonerNumber = "A1234BB"
   private val mergeEvent = PrisonerMergedEvent(
-    additionalInformation = MergeInformation(nomsNumber = retainedPrisonerNumber, removedPrisonerNumber),
+    additionalInformation = MergeInformation(
+      nomsNumber = retainedPrisonerNumber,
+      removedNomsNumber = removedPrisonerNumber,
+      bookingId = "1",
+    ),
   )
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
-  private val prisonerSearchClient: PrisonerSearchClient = mock()
   private val auditingService: AuditingService = mock()
 
-  private val handler = PrisonerMergedEventHandler(officialVisitRepository, prisonerVisitedRepository, prisonerSearchClient, auditingService)
+  private val handler = PrisonerMergedEventHandler(officialVisitRepository, prisonerVisitedRepository, auditingService)
 
   @Test
   fun `should merge old prisoner with new prisoner`() {
-    whenever(prisonerSearchClient.getPrisoner(retainedPrisonerNumber)) doReturn prisonerSearchPrisoner(
-      prisonerNumber = retainedPrisonerNumber,
-      prisonCode = MOORLAND_PRISONER.prison,
-      bookingId = MOORLAND_PRISONER.bookingId,
-    )
-
     whenever(officialVisitRepository.findAllByPrisonerNumber(removedPrisonerNumber)).thenReturn(
       listOf(
         createAVisitEntity(1L),
@@ -68,12 +60,6 @@ class PrisonerMergedEventHandlerTest {
 
   @Test
   fun `should merge and update current term marker on an existing visit`() {
-    whenever(prisonerSearchClient.getPrisoner(retainedPrisonerNumber)) doReturn prisonerSearchPrisoner(
-      prisonerNumber = retainedPrisonerNumber,
-      prisonCode = MOORLAND_PRISONER.prison,
-      bookingId = MOORLAND_PRISONER.bookingId,
-    )
-
     // One visit to update
     whenever(officialVisitRepository.findAllByPrisonerNumber(removedPrisonerNumber)).thenReturn(
       listOf(createAVisitEntity(1L)),
@@ -110,13 +96,7 @@ class PrisonerMergedEventHandlerTest {
   }
 
   @Test
-  fun `should not not call merge if no official visits exist for the removed prisoner number`() {
-    whenever(prisonerSearchClient.getPrisoner(retainedPrisonerNumber)) doReturn prisonerSearchPrisoner(
-      prisonerNumber = MOORLAND_PRISONER.number,
-      prisonCode = MOORLAND_PRISONER.prison,
-      bookingId = MOORLAND_PRISONER.bookingId,
-    )
-
+  fun `should not call merge when no official visits exist for the removed prisoner number`() {
     whenever(officialVisitRepository.findAllByPrisonerNumber(removedPrisonerNumber)).thenReturn(emptyList())
 
     handler.handle(mergeEvent)
@@ -124,14 +104,5 @@ class PrisonerMergedEventHandlerTest {
     verify(officialVisitRepository).findAllByPrisonerNumber(removedPrisonerNumber)
     verifyNoMoreInteractions(officialVisitRepository)
     verifyNoInteractions(prisonerVisitedRepository, auditingService)
-  }
-
-  @Test
-  fun `should throw exception if invalid prisoner passed`() {
-    whenever(prisonerSearchClient.getPrisoner(retainedPrisonerNumber)).thenThrow(EntityNotFoundException("Prisoner not found $retainedPrisonerNumber"))
-    assertThrows<EntityNotFoundException> {
-      handler.handle(mergeEvent)
-    }
-    verifyNoInteractions(prisonerVisitedRepository, officialVisitRepository, auditingService)
   }
 }
