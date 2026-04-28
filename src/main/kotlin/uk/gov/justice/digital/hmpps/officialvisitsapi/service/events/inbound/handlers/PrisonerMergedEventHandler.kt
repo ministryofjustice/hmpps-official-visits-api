@@ -33,10 +33,11 @@ class PrisonerMergedEventHandler(
     val affectedVisits = officialVisitRepository.findAllByPrisonerNumber(removedPrisonerNumber)
 
     affectedVisits.takeIf { it.isNotEmpty() }?.let {
-      officialVisitRepository.mergePrisonerNumber(removedPrisonerNumber, newPrisonerNumber)
       prisonerVisitedRepository.replacePrisonerNumber(removedPrisonerNumber, newPrisonerNumber)
 
       affectedVisits.forEach { visit ->
+        officialVisitRepository.saveAndFlush(visit.apply { prisonerNumber = newPrisonerNumber })
+
         auditingService.recordAuditEvent(
           auditVisitChangeEvent {
             officialVisitId(visit.officialVisitId)
