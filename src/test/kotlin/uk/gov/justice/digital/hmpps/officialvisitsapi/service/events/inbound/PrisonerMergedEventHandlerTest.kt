@@ -46,8 +46,10 @@ class PrisonerMergedEventHandlerTest {
 
     handler.handle(mergeEvent)
 
-    // Do the prisoner updates - once each
-    verify(officialVisitRepository).mergePrisonerNumber(removedPrisonerNumber, retainedPrisonerNumber)
+    // Should be 2 visit updates
+    verify(officialVisitRepository, times(2)).saveAndFlush(any())
+
+    // One replacement of prisoner visited
     verify(prisonerVisitedRepository).replacePrisonerNumber(removedPrisonerNumber, retainedPrisonerNumber)
 
     // Check the current term markers - once each
@@ -83,8 +85,10 @@ class PrisonerMergedEventHandlerTest {
 
     handler.handle(mergeEvent)
 
-    // Called once each
-    verify(officialVisitRepository).mergePrisonerNumber(removedPrisonerNumber, retainedPrisonerNumber)
+    // Should be 3 visits updated (one for the prisoner number, 2 for the current term markers)
+    verify(officialVisitRepository, times(3)).saveAndFlush(any())
+
+    // One call to prisoner visited
     verify(prisonerVisitedRepository).replacePrisonerNumber(removedPrisonerNumber, retainedPrisonerNumber)
 
     // Called once each
