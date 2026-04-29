@@ -6,7 +6,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
-import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
@@ -106,7 +105,9 @@ class PrisonerMergedEventHandlerTest {
     handler.handle(mergeEvent)
 
     verify(officialVisitRepository).findAllByPrisonerNumber(removedPrisonerNumber)
-    verifyNoMoreInteractions(officialVisitRepository)
+    verify(officialVisitRepository).findAllByPrisonerNumberAndOffenderBookId(retainedPrisonerNumber, MOORLAND_PRISONER.bookingId)
+    verify(officialVisitRepository).findAllByPrisonerNumberAndOffenderBookIdNot(retainedPrisonerNumber, MOORLAND_PRISONER.bookingId)
+
     verifyNoInteractions(prisonerVisitedRepository, auditingService)
   }
 }

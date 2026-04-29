@@ -52,10 +52,10 @@ class PrisonerMergedEventHandler(
           },
         )
       }
-
-      // Check and correct the current term markers for this prisoner's bookings
-      processCurrentTermMarkers(newPrisonerNumber, bookingId.toLong())
     }
+
+    // Check and correct the current term markers for this prisoner's bookings - needs to be outside the empty check
+    processCurrentTermMarkers(newPrisonerNumber, bookingId.toLong())
   }
 
   private fun processCurrentTermMarkers(prisonerNumber: String, bookingId: Long) {
