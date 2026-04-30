@@ -370,6 +370,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
       deactivatedByParent = false,
       lastModifiedBy = "XXX",
       lastModifiedDate = LocalDateTime.now().minusDays(1),
+      inactiveStatus = null,
     ),
     Location(
       id = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
@@ -390,6 +391,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
       deactivatedByParent = false,
       lastModifiedBy = "XXX",
       lastModifiedDate = LocalDateTime.now().minusDays(1),
+      inactiveStatus = null,
     ),
   )
 }

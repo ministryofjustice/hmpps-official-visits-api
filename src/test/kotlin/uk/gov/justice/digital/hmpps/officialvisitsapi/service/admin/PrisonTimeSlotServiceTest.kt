@@ -573,7 +573,13 @@ class PrisonTimeSlotServiceTest {
     code = "Code",
     pathHierarchy = "A-1-1-1",
     locationType = Location.LocationType.VISITS,
-    usage = listOf(NonResidentialUsageDto(usageType = NonResidentialUsageDto.UsageType.VISIT, sequence = 99, capacity = 10)),
+    usage = listOf(
+      NonResidentialUsageDto(
+        usageType = NonResidentialUsageDto.UsageType.VISIT,
+        sequence = 99,
+        capacity = 10,
+      ),
+    ),
     permanentlyInactive = false,
     status = Location.Status.ACTIVE,
     level = 3,
@@ -586,6 +592,7 @@ class PrisonTimeSlotServiceTest {
     deactivatedByParent = false,
     lastModifiedBy = "XXX",
     lastModifiedDate = LocalDateTime.now().minusDays(1),
+    inactiveStatus = null,
   )
 
   private fun PrisonTimeSlotEntity.assertWithResponse(model: TimeSlot) {

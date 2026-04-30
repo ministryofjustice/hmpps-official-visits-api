@@ -40,6 +40,7 @@ fun location(prisonCode: String, locationKeySuffix: String, active: Boolean = tr
   leafLevel = true,
   locked = false,
   status = Location.Status.ACTIVE,
+  inactiveStatus = null,
 )
 
 fun prisonerSearchPrisoner(
