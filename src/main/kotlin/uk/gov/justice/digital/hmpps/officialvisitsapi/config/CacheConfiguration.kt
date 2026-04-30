@@ -22,6 +22,7 @@ class CacheConfiguration {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     const val OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE = "official-visit-locations-by-prison"
     const val REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE = "reference-data-by-group-and-code"
+    const val USER_DETAILS_BY_USERNAME_CACHE = "user-details-by-username"
     const val FIFTEEN = 15L
   }
 
@@ -41,5 +42,11 @@ class CacheConfiguration {
   @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.HOURS)
   fun cacheEvictReferenceDataByGroupAndCode() {
     log.info("Evicting cache: $REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE after 2 hours")
+  }
+
+  @CacheEvict(value = [USER_DETAILS_BY_USERNAME_CACHE], allEntries = true)
+  @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.HOURS)
+  fun cacheEvictUserDetailsByUsername() {
+    log.info("Evicting cache: $USER_DETAILS_BY_USERNAME_CACHE after 2 hours")
   }
 }

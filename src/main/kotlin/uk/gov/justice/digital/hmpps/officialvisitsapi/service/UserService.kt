@@ -34,7 +34,6 @@ class UserService(private val manageUsersClient: ManageUsersClient) {
           activeCaseLoadId = userDetails.activeCaseLoadId,
         )
       }
-
       else -> throw AccessDeniedException("Users with auth source ${userDetails.authSource} are not supported by this service")
     }
   }
