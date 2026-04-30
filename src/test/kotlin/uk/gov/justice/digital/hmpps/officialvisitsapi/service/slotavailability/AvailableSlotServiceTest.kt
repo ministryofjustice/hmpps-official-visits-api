@@ -719,6 +719,7 @@ class AvailableSlotServiceTest {
       deactivatedByParent = false,
       lastModifiedBy = "XXX",
       lastModifiedDate = LocalDateTime.now().minusDays(1),
+      inactiveStatus = null,
     ),
   )
 
