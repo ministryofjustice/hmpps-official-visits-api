@@ -51,6 +51,9 @@ dependencies {
   // Open telemetry dependencies
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.21.0")
 
+  // Gov Notify client
+  implementation("uk.gov.service.notify:notifications-java-client:6.0.0-RELEASE")
+
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.1.0")
   testImplementation("org.springframework.security:spring-security-test:7.0.2")
