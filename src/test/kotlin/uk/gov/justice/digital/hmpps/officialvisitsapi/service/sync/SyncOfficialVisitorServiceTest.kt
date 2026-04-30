@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -62,7 +63,7 @@ class SyncOfficialVisitorServiceTest {
 
   private val createdTime = LocalDateTime.now().minusDays(2)
 
-  private val syncOfficialVisitService = SyncOfficialVisitorService(
+  private val syncOfficialVisitorService = SyncOfficialVisitorService(
     officialVisitRepository,
     officialVisitorRepository,
     contactsService,
@@ -107,7 +108,7 @@ class SyncOfficialVisitorServiceTest {
     )
     whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenReturn(officialVisitorEntity)
 
-    val result = syncOfficialVisitService.createVisitor(visitId, visitorRequest)
+    val result = syncOfficialVisitorService.createVisitor(visitId, visitorRequest)
 
     with(result) {
       assertThat(prisonCode).isEqualTo(officialVisitEntity.prisonCode)
@@ -173,11 +174,30 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.empty())
 
     assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.createVisitor(visitId, visitorRequest)
+      syncOfficialVisitorService.createVisitor(visitId, visitorRequest)
     }
 
     verify(officialVisitRepository).findById(visitId)
     verifyNoInteractions(contactsService, officialVisitorRepository, metricsService)
+  }
+
+  @Test
+  fun `add a visitor - should fail when manage-user-api does not respond`() {
+    val visitId = 2L
+    val contactId = 4L
+    val offenderVisitVisitorId = 6L
+
+    whenever(userService.getUser(any())) doReturn null
+
+    val visitorRequest = createVisitorRequest(offenderVisitVisitorId, contactId)
+
+    val exception = assertThrows<DownstreamServiceException> {
+      syncOfficialVisitorService.createVisitor(visitId, visitorRequest)
+    }
+
+    assertThat(exception.message).isEqualTo("Cannot retrieve user details for ${visitorRequest.createUsername}")
+
+    verifyNoInteractions(officialVisitRepository, contactsService, officialVisitorRepository, metricsService)
   }
 
   @Test
@@ -212,7 +232,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.of(officialVisitEntity))
 
     assertThrows<EntityInUseException> {
-      syncOfficialVisitService.createVisitor(visitId, visitorRequest)
+      syncOfficialVisitorService.createVisitor(visitId, visitorRequest)
     }
 
     verify(officialVisitRepository).findById(visitId)
@@ -253,7 +273,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
 
-    val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
+    val response = syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)
 
     with(response) {
       assertThat(officialVisitId).isEqualTo(officialVisitId)
@@ -300,7 +320,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.empty())
 
-    val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
+    val response = syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)
 
     assertThat(response).isNull()
     verifyNoInteractions(auditingService)
@@ -319,7 +339,7 @@ class SyncOfficialVisitorServiceTest {
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
 
-    val response = syncOfficialVisitService.deleteVisitor(officialVisitId, officialVisitorId)
+    val response = syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)
     assertThat(response).isNull()
     verifyNoInteractions(auditingService)
   }
@@ -357,7 +377,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.of(officialVisitorEntity))
     whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenReturn(officialVisitorEntity)
 
-    syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
+    syncOfficialVisitorService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
 
     verify(officialVisitRepository).findById(visitId)
     verify(officialVisitorRepository).findById(visitorId)
@@ -414,13 +434,42 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitRepository.findById(visitId)).thenReturn(Optional.empty())
 
     val exception = assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
+      syncOfficialVisitorService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
     }
 
     exception.message isEqualTo "The official visit with id $visitId was not found"
 
     verify(officialVisitRepository).findById(visitId)
     verifyNoInteractions(officialVisitorRepository, metricsService)
+  }
+
+  @Test
+  fun `update a visitor - should fail if manage-users-api does not respond`() {
+    val visitId = 2L
+    val visitorId = 3L
+    val contactId = 4L
+    val offenderVisitVisitorId = 6L
+
+    val visitorUpdateRequest = updateVisitorRequest(
+      offenderVisitVisitorId = offenderVisitVisitorId,
+      contactId = contactId,
+      firstName = "FirstX",
+      lastName = "LastX",
+      relationshipToPrisoner = "POL",
+      groupLeaderFlag = true,
+      assistedVisitFlag = true,
+      commentText = "Changed",
+    )
+
+    whenever(userService.getUser(any())) doReturn null
+
+    val exception = assertThrows<DownstreamServiceException> {
+      syncOfficialVisitorService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
+    }
+
+    assertThat(exception.message).isEqualTo("Cannot retrieve user details for ${visitorUpdateRequest.updateUsername}")
+
+    verifyNoInteractions(officialVisitRepository, officialVisitorRepository, metricsService)
   }
 
   @Test
@@ -452,7 +501,7 @@ class SyncOfficialVisitorServiceTest {
     whenever(officialVisitorRepository.findById(visitorId)).thenReturn(Optional.empty())
 
     val exception = assertThrows<EntityNotFoundException> {
-      syncOfficialVisitService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
+      syncOfficialVisitorService.updateVisitor(visitId, visitorId, visitorUpdateRequest)
     }
 
     exception.message isEqualTo "The official visitor with id $visitorId was not found"

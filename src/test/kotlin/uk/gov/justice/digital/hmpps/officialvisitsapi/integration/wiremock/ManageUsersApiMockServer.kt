@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock
 
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.http.Fault
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -12,7 +13,13 @@ import java.net.URLEncoder
 
 class ManageUsersApiMockServer : MockServer(8093) {
 
-  fun stubGetUserDetails(username: String, authSource: AuthSource = AuthSource.auth, name: String, activeCaseload: String? = null, userId: String = "TEST") {
+  fun stubGetUserDetails(
+    username: String,
+    authSource: AuthSource = AuthSource.auth,
+    name: String,
+    activeCaseload: String? = null,
+    userId: String = "TEST",
+  ) {
     stubFor(
       get("/users/${username.urlEncode()}")
         .willReturn(
@@ -25,6 +32,16 @@ class ManageUsersApiMockServer : MockServer(8093) {
   }
 
   private fun String.urlEncode() = URLEncoder.encode(this, "utf-8")
+
+  fun stubUserFault(username: String) {
+    stubFor(
+      get("/users/${username.urlEncode()}")
+        .willReturn(
+          aResponse()
+            .withFault(Fault.CONNECTION_RESET_BY_PEER),
+        ),
+    )
+  }
 }
 
 class ManageUsersApiExtension :

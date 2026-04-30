@@ -171,15 +171,15 @@ class SyncOfficialVisitorService(
   }
 
   fun updateVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncUpdateVisitorResponse {
+    val updatedByUser = request.updateUsername?.let { userService.getUser(it) }
+      ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.updateUsername}")
+
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
     }
 
     val visitor = officialVisitorRepository.findById(officialVisitorId).getOrNull()
       ?: throw EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
-
-    val updatedByUser = request.updateUsername?.let { userService.getUser(it) }
-      ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.updateUsername}")
 
     // Check if the request has changed the person visiting and if so, get their relationship to the prisoner
     val updatedPrisonerContactId = if (visitor.contactId != request.personId) {

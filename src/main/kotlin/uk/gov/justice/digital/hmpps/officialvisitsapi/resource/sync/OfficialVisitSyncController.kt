@@ -89,6 +89,11 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
+        responseCode = "408",
+        description = "Downstream service problem retrieving user details (temporary)",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
         responseCode = "409",
         description = "Another visit exists with the same offender visit ID",
         content = [Content(schema = Schema(implementation = DuplicateOffenderVisitIdErrorResponse::class))],
@@ -129,6 +134,11 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
       ApiResponse(
         responseCode = "400",
         description = "The request was invalid",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "408",
+        description = "Downstream service problem retrieving user details (temporary)",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

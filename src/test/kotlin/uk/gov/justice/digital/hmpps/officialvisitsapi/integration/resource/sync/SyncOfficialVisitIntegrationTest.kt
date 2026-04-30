@@ -90,7 +90,6 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    // TODO: Do we need this?
     personalRelationshipsApi().stubPrisonerContactRelationships(MOORLAND_PRISONER.number, 2L)
 
     // Stub locations for visits
@@ -191,6 +190,28 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     assertThat(response.userMessage).isEqualTo("Prison visit slot ID 9999 does not exist")
+
+    stubEvents.assertHasNoEvents(OutboundEvent.VISIT_CREATED)
+  }
+
+  @Test
+  fun `create a visit - should fail when a downstream service does not respond (manage users api)`() {
+    val request = syncCreateOfficialVisitRequest(
+      offenderVisitId = 2L,
+      prisonVisitSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    )
+
+    // Stub a fault response in manage users API call - CONNECTION_RESET_BY_PEER
+    manageUsersApi().stubUserFault(MOORLAND_PRISON_USER.username)
+
+    val response = webTestClient.syncCreateOfficialVisit(request)
+      .expectStatus().is4xxClientError
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<ErrorResponse>()
+      .returnResult().responseBody!!
+
+    assertThat(response.userMessage).isEqualTo("Cannot retrieve user details for ${request.createUsername}")
 
     stubEvents.assertHasNoEvents(OutboundEvent.VISIT_CREATED)
   }
@@ -332,6 +353,42 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     assertThat(response.userMessage).isEqualTo("Visit slot with ID $nonExistentVisitSlotId not found")
+
+    stubEvents.assertHasNoEvents(OutboundEvent.VISIT_UPDATED)
+  }
+
+  @Test
+  fun `update a visit - should fail when a downstream service does not respond (manage users api)`() {
+    val request = syncCreateOfficialVisitRequest(
+      offenderVisitId = 1L,
+      prisonVisitSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    )
+
+    val createResponse = webTestClient.syncCreateOfficialVisit(request)
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<SyncOfficialVisit>()
+      .returnResult().responseBody!!
+
+    stubEvents.reset()
+
+    // Stub a fault response in manage users API call - CONNECTION_RESET_BY_PEER
+    manageUsersApi().stubUserFault(MOORLAND_PRISON_USER.username)
+
+    val updateRequest = syncUpdateOfficialVisitRequest(
+      offenderVisitId = 1L,
+      prisonVisitSlotId = 1L,
+      dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    ).copy(currentTerm = false)
+
+    val updateResponse = webTestClient.syncUpdateOfficialVisit(updateRequest, createResponse.officialVisitId)
+      .expectStatus().is4xxClientError
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<ErrorResponse>()
+      .returnResult().responseBody!!
+
+    assertThat(updateResponse.userMessage).isEqualTo("Cannot retrieve user details for ${updateRequest.updateUsername}")
 
     stubEvents.assertHasNoEvents(OutboundEvent.VISIT_UPDATED)
   }
