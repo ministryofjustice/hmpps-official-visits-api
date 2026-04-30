@@ -17,6 +17,7 @@ class OutboundEventsService(
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
+  // Overloaded method for calls from the UI including a User object via the OfficialVisitsFacade
   fun send(
     outboundEvent: OutboundEvent,
     prisonCode: String,
@@ -26,6 +27,27 @@ class OutboundEventsService(
     contactId: Long? = null,
     source: Source = Source.DPS,
     user: User,
+  ) = send(
+    outboundEvent,
+    prisonCode,
+    identifier,
+    secondIdentifier,
+    noms,
+    contactId,
+    source,
+    user.username,
+  )
+
+  // Standard method - for direct calls via the SyncFacade with no User object
+  fun send(
+    outboundEvent: OutboundEvent,
+    prisonCode: String,
+    identifier: Long,
+    secondIdentifier: Long? = 0,
+    noms: String = "",
+    contactId: Long? = null,
+    source: Source = Source.DPS,
+    username: String,
   ) {
     if (featureSwitches.isEnabled(outboundEvent)) {
       log.info("Sending event $outboundEvent source $source identifier $identifier secondIdentifier ${secondIdentifier ?: "N/A"} noms $noms contactId ${contactId ?: "N/A"} ")
@@ -38,7 +60,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitInfo(identifier, source, user.username, prisonCode),
+            VisitInfo(identifier, source, username, prisonCode),
             PersonReference(noms),
           )
         }
@@ -49,7 +71,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitorInfo(identifier, secondIdentifier ?: 0, source, user.username, prisonCode),
+            VisitorInfo(identifier, secondIdentifier ?: 0, source, username, prisonCode),
             contactId?.let { PersonReference(contactId = it) },
           )
         }
@@ -58,7 +80,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            PrisonerInfo(identifier, secondIdentifier ?: 0, source, user.username, prisonCode),
+            PrisonerInfo(identifier, secondIdentifier ?: 0, source, username, prisonCode),
             PersonReference(noms),
           )
         }
@@ -69,7 +91,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            TimeSlotInfo(identifier, source, user.username, prisonCode),
+            TimeSlotInfo(identifier, source, username, prisonCode),
           )
         }
 
@@ -79,7 +101,7 @@ class OutboundEventsService(
         -> {
           sendSafely(
             outboundEvent,
-            VisitSlotInfo(identifier, source, user.username, prisonCode),
+            VisitSlotInfo(identifier, source, username, prisonCode),
           )
         }
       }

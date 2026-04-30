@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.VisitSlotInfo
@@ -88,7 +87,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitSlotInfo(
         visitSlotId = syncVisitSlot.visitSlotId,
         source = Source.NOMIS,
-        username = "OFFICIAL_VISITS_SERVICE",
+        username = "NOMIS-CREATE-USER",
         prisonId = MOORLAND,
       ),
     )
@@ -119,7 +118,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       additionalInfo = VisitSlotInfo(
         visitSlotId = syncVisitSlot.visitSlotId,
         source = Source.NOMIS,
-        username = "OFFICIAL_VISITS_SERVICE",
+        username = "NOMIS-UPDATE-USER",
         prisonId = MOORLAND,
       ),
     )
@@ -157,6 +156,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should delete visit slot if there are no associated official visits`() {
     val syncVisitSlot = webTestClient.createVisitSlot()
+    stubEvents.reset()
 
     webTestClient.delete()
       .uri("/sync/visit-slot/{prisonVisitSlotId}", syncVisitSlot.visitSlotId)
@@ -167,21 +167,11 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
       .is2xxSuccessful
 
     stubEvents.assertHasEvent(
-      event = OutboundEvent.VISIT_SLOT_CREATED,
-      additionalInfo = VisitSlotInfo(
-        visitSlotId = syncVisitSlot.visitSlotId,
-        source = Source.NOMIS,
-        username = "OFFICIAL_VISITS_SERVICE",
-        prisonId = MOORLAND,
-      ),
-    )
-
-    stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_SLOT_DELETED,
       additionalInfo = VisitSlotInfo(
         visitSlotId = syncVisitSlot.visitSlotId,
         source = Source.NOMIS,
-        username = UserService.getClientAsUser("NOMIS").username,
+        username = "NOMIS", // Does not specify a user in the request so defaults to NOMIS
         prisonId = MOORLAND,
       ),
     )
@@ -224,13 +214,13 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
     prisonTimeSlotId = 1L,
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
     maxAdults = 10,
-    createdBy = "Test",
+    createdBy = "NOMIS-CREATE-USER",
     createdTime = createdTime,
   )
 
   private fun updateVisitSlotRequest() = SyncUpdateVisitSlotRequest(
     dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
-    updatedBy = "Test",
+    updatedBy = "NOMIS-UPDATE-USER",
     maxAdults = 15,
     updatedTime = updatedTime,
   )

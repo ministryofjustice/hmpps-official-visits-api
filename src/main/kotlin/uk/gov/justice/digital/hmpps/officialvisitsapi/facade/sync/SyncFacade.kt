@@ -10,8 +10,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpd
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncUpdateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -45,7 +43,6 @@ class SyncFacade(
   val syncOfficialVisitService: SyncOfficialVisitService,
   val syncOfficialVisitorService: SyncOfficialVisitorService,
   val outboundEventsService: OutboundEventsService,
-  val userService: UserService,
 ) {
 
   // ---------------  Time slots ----------------------
@@ -59,7 +56,7 @@ class SyncFacade(
         prisonCode = it.prisonCode,
         identifier = it.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = userOrDefault(request.createdBy),
+        username = request.createdBy,
       )
     }
 
@@ -70,7 +67,7 @@ class SyncFacade(
         prisonCode = it.prisonCode,
         identifier = it.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = userOrDefault(request.updatedBy),
+        username = request.updatedBy,
       )
     }
 
@@ -81,7 +78,7 @@ class SyncFacade(
         prisonCode = it.prisonCode,
         identifier = it.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
     }
   }
@@ -97,7 +94,7 @@ class SyncFacade(
         prisonCode = it.prisonCode,
         identifier = it.visitSlotId,
         source = Source.NOMIS,
-        user = userOrDefault(request.createdBy),
+        username = request.createdBy,
       )
     }
 
@@ -108,7 +105,7 @@ class SyncFacade(
         prisonCode = it.prisonCode,
         identifier = it.visitSlotId,
         source = Source.NOMIS,
-        user = userOrDefault(request.updatedBy),
+        username = request.updatedBy ?: "NOMIS",
       )
     }
 
@@ -120,7 +117,7 @@ class SyncFacade(
           prisonCode = it.prisonCode,
           identifier = it.visitSlotId,
           source = Source.NOMIS,
-          user = UserService.getClientAsUser("NOMIS"),
+          username = "NOMIS",
         )
       }
   }
@@ -137,7 +134,7 @@ class SyncFacade(
         identifier = it.officialVisitId,
         noms = it.prisonerNumber,
         source = Source.NOMIS,
-        user = userOrDefault(it.createdBy),
+        username = it.createdBy,
       )
     }
 
@@ -149,7 +146,7 @@ class SyncFacade(
         identifier = it.officialVisitId,
         noms = it.prisonerNumber,
         source = Source.NOMIS,
-        user = userOrDefault(it.updatedBy),
+        username = it.updatedBy ?: "NOMIS",
       )
     }
 
@@ -162,8 +159,9 @@ class SyncFacade(
           identifier = deletedOfficialVisit.officialVisitId,
           source = Source.NOMIS,
           noms = deletedOfficialVisit.prisonerNumber,
-          user = UserService.getClientAsUser("NOMIS"),
+          username = "NOMIS",
         )
+
         deletedOfficialVisit.visitors.forEach { visitor ->
           outboundEventsService.send(
             outboundEvent = OutboundEvent.VISITOR_DELETED,
@@ -172,7 +170,7 @@ class SyncFacade(
             secondIdentifier = visitor.officialVisitorId,
             contactId = visitor.contactId,
             source = Source.NOMIS,
-            user = UserService.getClientAsUser("NOMIS"),
+            username = "NOMIS",
           )
         }
       }
@@ -189,7 +187,7 @@ class SyncFacade(
       secondIdentifier = response.officialVisitorId,
       contactId = response.visitor.contactId,
       source = Source.NOMIS,
-      user = userOrDefault(response.visitor.createdBy),
+      username = response.visitor.createdBy,
     )
     return response.visitor
   }
@@ -203,7 +201,7 @@ class SyncFacade(
       secondIdentifier = response.officialVisitorId,
       contactId = response.visitor.contactId,
       source = Source.NOMIS,
-      user = userOrDefault(response.visitor.updatedBy),
+      username = response.visitor.updatedBy ?: "NOMIS",
     )
     return response.visitor
   }
@@ -217,12 +215,8 @@ class SyncFacade(
         secondIdentifier = response.officialVisitorId,
         contactId = response.contactId,
         source = Source.NOMIS,
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
     }
   }
-
-  private fun userOrDefault(username: String? = null): User = username?.let { enrichIfPossible(username) } ?: UserService.getServiceAsUser()
-
-  private fun enrichIfPossible(username: String): User? = userService.getUser(username)
 }

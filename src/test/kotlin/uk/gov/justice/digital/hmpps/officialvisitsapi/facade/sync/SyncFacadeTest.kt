@@ -40,7 +40,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOfficialVisitorDeletionInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncTimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVisitSlot
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -61,7 +60,6 @@ class SyncFacadeTest {
   private val syncOfficialVisitService: SyncOfficialVisitService = mock()
   private val syncOfficialVisitorService: SyncOfficialVisitorService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
-  private val userService: UserService = mock()
 
   private val facade = SyncFacade(
     syncTimeSlotService,
@@ -69,7 +67,6 @@ class SyncFacadeTest {
     syncOfficialVisitService,
     syncOfficialVisitorService,
     outboundEventsService,
-    userService,
   )
 
   private val createdTime = LocalDateTime.now().minusDays(2)
@@ -77,7 +74,6 @@ class SyncFacadeTest {
 
   @BeforeEach
   fun beforeEach() {
-    whenever(userService.getUser(MOORLAND_PRISON_USER.username)).thenReturn(MOORLAND_PRISON_USER)
     whenever(
       outboundEventsService.send(
         outboundEvent = any(),
@@ -87,7 +83,7 @@ class SyncFacadeTest {
         noms = anyOrNull(),
         contactId = anyOrNull(),
         source = any(),
-        user = any(),
+        username = any(),
       ),
     ).then {}
   }
@@ -100,7 +96,6 @@ class SyncFacadeTest {
       syncOfficialVisitService,
       syncOfficialVisitorService,
       outboundEventsService,
-      userService,
     )
   }
 
@@ -123,7 +118,7 @@ class SyncFacadeTest {
         prisonCode = result.prisonCode,
         identifier = result.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -149,7 +144,7 @@ class SyncFacadeTest {
         noms = anyOrNull(),
         contactId = anyOrNull(),
         source = any(),
-        user = any(),
+        username = any(),
       )
     }
 
@@ -169,7 +164,7 @@ class SyncFacadeTest {
         prisonCode = result.prisonCode,
         identifier = result.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -204,7 +199,7 @@ class SyncFacadeTest {
         prisonCode = MOORLAND,
         identifier = response.prisonTimeSlotId,
         source = Source.NOMIS,
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
     }
 
@@ -264,7 +259,7 @@ class SyncFacadeTest {
         prisonCode = MOORLAND,
         identifier = result.visitSlotId,
         source = Source.NOMIS,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -306,7 +301,7 @@ class SyncFacadeTest {
         prisonCode = MOORLAND,
         identifier = result.visitSlotId,
         source = Source.NOMIS,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -339,7 +334,7 @@ class SyncFacadeTest {
         prisonCode = MOORLAND,
         identifier = response.visitSlotId,
         source = Source.NOMIS,
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
     }
 
@@ -391,7 +386,7 @@ class SyncFacadeTest {
         source = Source.NOMIS,
         identifier = officialVisitId,
         noms = MOORLAND_PRISONER.number,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -428,7 +423,7 @@ class SyncFacadeTest {
         source = Source.NOMIS,
         identifier = officialVisitId,
         noms = MOORLAND_PRISONER.number,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -486,7 +481,7 @@ class SyncFacadeTest {
         source = Source.NOMIS,
         identifier = 1L, // official visit ID
         noms = "A1234AA",
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
 
       verify(outboundEventsService, atLeastOnce()).send(
@@ -496,7 +491,7 @@ class SyncFacadeTest {
         identifier = 1L, // official visit ID
         secondIdentifier = 1L, // official visitor ID
         contactId = 2L,
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
     }
 
@@ -604,7 +599,7 @@ class SyncFacadeTest {
         identifier = officialVisitId,
         secondIdentifier = officialVisitorId,
         contactId = contactId,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
@@ -664,7 +659,7 @@ class SyncFacadeTest {
         identifier = officialVisitId,
         secondIdentifier = officialVisitorId,
         contactId = contactId,
-        user = UserService.getClientAsUser("NOMIS"),
+        username = "NOMIS",
       )
     }
 
@@ -699,7 +694,7 @@ class SyncFacadeTest {
         identifier = officialVisitId,
         secondIdentifier = officialVisitorId,
         contactId = contactId,
-        user = MOORLAND_PRISON_USER,
+        username = MOORLAND_PRISON_USER.username,
       )
     }
 
