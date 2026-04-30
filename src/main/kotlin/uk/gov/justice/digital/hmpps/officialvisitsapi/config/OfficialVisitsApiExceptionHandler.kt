@@ -9,10 +9,12 @@ import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import tools.jackson.databind.exc.InvalidFormatException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
@@ -122,6 +124,26 @@ class OfficialVisitsApiExceptionHandler {
         e.message,
       ),
     )
+
+  @ExceptionHandler(HttpMessageNotReadableException::class)
+  fun handleHttpMessageNotReadable(e: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
+    val cause = e.cause
+    val message = if (cause is InvalidFormatException && cause.targetType.isEnum) {
+      val field = cause.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }
+      val allowed = cause.targetType.enumConstants.joinToString(", ")
+      "Validation failed: `$field` must be one of: $allowed"
+    } else {
+      "Validation failure: Couldn't read request body"
+    }
+
+    return ResponseEntity.status(BAD_REQUEST).body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = message,
+        developerMessage = e.message,
+      ),
+    ).also { log.error(message, e) }
+  }
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
