@@ -2,18 +2,37 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
+import java.time.LocalDateTime
 
-// TODO calls to save notifications should be made here in the facade
 @Component
-class NotificationsFacade(private val emailService: EmailService) {
+class NotificationsFacade(
+  private val emailService: EmailService,
+  private val notificationRepository: NotificationRepository,
+) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun sendEmail(email: Email) {
+  @Transactional
+  fun sendOfficialVisitEmail(officialVisitId: Long, email: Email) {
     emailService.send(email)
-      // TODO save notification details when email is sent successfully
-      .onSuccess { logger.info("Sent email ${email.type}") }
-      .onFailure { exception -> logger.info("Failed to send email ${email.type}.", exception) }
+      .onSuccess { (notificationId, templateId) ->
+        notificationRepository.saveAndFlush(
+          NotificationEntity(
+            officialVisitId = officialVisitId,
+            templateId = templateId,
+            emailAddress = email.emailAddress,
+            reason = email.type().name,
+            govNotifyNotificationId = notificationId,
+            createdTime = LocalDateTime.now(),
+          ),
+        )
+      }
+      .onFailure { exception -> logger.info("Failed to send email ${email.type()}.", exception) }
   }
 }
