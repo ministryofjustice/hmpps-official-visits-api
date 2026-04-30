@@ -30,6 +30,8 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
+  implementation("uk.gov.service.notify:notifications-java-client:6.0.0-RELEASE")
+
   // Gson
   implementation("org.springframework.boot:spring-boot-gson:4.0.0")
 

@@ -31,6 +31,7 @@ class FeatureSwitches(private val environment: Environment) {
 
 enum class Feature(val label: String) {
   OUTBOUND_EVENTS_ENABLED("feature.events.sns.enabled"),
+  FEATURE_NOTIFICATIONS_ENABLE("feature.notifications.enable"),
 }
 
 enum class StringFeature(val label: String) {

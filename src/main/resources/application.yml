@@ -137,3 +137,6 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
+
+notify:
+  api-key: ${NOTIFY_API_KEY}
