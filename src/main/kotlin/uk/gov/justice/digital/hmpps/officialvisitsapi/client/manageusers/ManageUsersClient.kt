@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers
 
 import org.slf4j.LoggerFactory
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -9,7 +8,6 @@ import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.core.publisher.Mono
 import reactor.util.retry.Retry
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.CacheConfiguration
 import java.time.Duration
 
 @Component
@@ -19,7 +17,6 @@ class ManageUsersClient(private val manageUsersApiWebClient: WebClient) {
   }
 
   /**
-   * This call is cached - once retrieved the user details are cached for 2 hours.
    * This will attempt to find the user details for this username.
    * If it receives a 404 Not Found response it will return a null immediately without retrying.
    * It will wait a maximum of 5 seconds for a response on each call
@@ -27,7 +24,10 @@ class ManageUsersClient(private val manageUsersApiWebClient: WebClient) {
    * Each retry will double the previous back-off time, so after 250ms, 500ms and 1000ms
    * If it still fails it will return null and swallow any exceptions, not propagate them.
    */
-  @Cacheable(CacheConfiguration.USER_DETAILS_BY_USERNAME_CACHE)
+  // TODO: Look into different caching options - currently the user details are looking up per request
+  // TODO: but there are issues when a user switches their caseload (the cached copy keeps the old active caseload)
+  // TODO: And activeCaseload is deprecated in the response here....  rethink this area.
+  // @Cacheable(CacheConfiguration.USER_DETAILS_BY_USERNAME_CACHE)
   fun getUsersDetails(username: String): UserDetailsDto? = manageUsersApiWebClient
     .get()
     .uri("/users/{username}", username)
