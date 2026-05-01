@@ -5,8 +5,11 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.atLeastOnce
+import org.mockito.kotlin.isA
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationsFacade
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.OfficialVisitCreatedEmail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -49,6 +52,7 @@ class OfficialVisitFacadeTest {
   private val officialVisitCancellationService: OfficialVisitCancellationService = mock()
   private val officialVisitUpdateService: OfficialVisitUpdateService = mock()
   private val overlappingVisitsService: OverlappingVisitsService = mock()
+  private val notificationsFacade: NotificationsFacade = mock()
   private val user = MOORLAND_PRISON_USER
 
   private val facade = OfficialVisitFacade(
@@ -60,6 +64,7 @@ class OfficialVisitFacadeTest {
     officialVisitUpdateService,
     outboundEventsService,
     overlappingVisitsService,
+    notificationsFacade,
   )
 
   @Test
@@ -110,6 +115,8 @@ class OfficialVisitFacadeTest {
       source = Source.DPS,
       user = user,
     )
+
+    verify(notificationsFacade).sendEmail(isA<OfficialVisitCreatedEmail>())
   }
 
   @Test

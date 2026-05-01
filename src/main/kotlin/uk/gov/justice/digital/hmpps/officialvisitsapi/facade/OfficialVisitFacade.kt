@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationsFacade
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.OfficialVisitCreatedEmail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
@@ -33,7 +36,12 @@ class OfficialVisitFacade(
   private val officialVisitUpdateService: OfficialVisitUpdateService,
   private val outboundEventsService: OutboundEventsService,
   private val overlappingVisitsService: OverlappingVisitsService,
+  private val notificationsFacade: NotificationsFacade,
 ) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   fun createOfficialVisit(
     prisonCode: String,
     request: CreateOfficialVisitRequest,
@@ -65,6 +73,18 @@ class OfficialVisitFacade(
           contactId = pair.second,
           user = user,
         )
+      }
+
+      runCatching {
+        notificationsFacade.sendEmail(
+          OfficialVisitCreatedEmail(
+            emailAddress = user.username,
+            officialVisitId = creationResult.officialVisitId,
+            prisonerNumber = creationResult.prisonerNumber,
+          ),
+        )
+      }.onFailure { exception ->
+        logger.info("Failed to trigger official visit created email for visit ${creationResult.officialVisitId}", exception)
       }
     }
   }
