@@ -19,6 +19,7 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -198,6 +199,19 @@ class SyncOfficialVisitServiceTest {
   }
 
   @Test
+  fun `create a visit - should fail if manage users API call fails`() {
+    val request = createVisitRequest(1L)
+
+    whenever(userService.getUser(any())) doReturn null
+
+    assertThrows<DownstreamServiceException> {
+      syncOfficialVisitService.createVisit(request)
+    }
+
+    verifyNoInteractions(prisonVisitSlotRepository, officialVisitRepository, prisonerVisitedRepository, metricsService)
+  }
+
+  @Test
   fun `create a visit - should fail if there is an exception on insert`() {
     val visitSlotEntity = prisonVisitSlotEntity(1L)
     val request = createVisitRequest(1L)
@@ -316,6 +330,23 @@ class SyncOfficialVisitServiceTest {
 
     verify(officialVisitRepository).findById(officialVisitId)
     verifyNoInteractions(prisonerVisitedRepository, prisonVisitSlotRepository, metricsService)
+  }
+
+  @Test
+  fun `update a visit - should fail when manage-users-api fails downstream`() {
+    val officialVisitId = 99L
+    val visitSlotId = 1L
+    val request = updateVisitRequest(visitSlotId)
+
+    whenever(userService.getUser(any())) doReturn null
+
+    val exception = assertThrows<DownstreamServiceException> {
+      syncOfficialVisitService.updateVisit(officialVisitId, request)
+    }
+
+    assertThat(exception.message).isEqualTo("Cannot retrieve user details for ${request.updateUsername}")
+
+    verifyNoInteractions(officialVisitRepository, prisonerVisitedRepository, prisonVisitSlotRepository, metricsService)
   }
 
   @Test

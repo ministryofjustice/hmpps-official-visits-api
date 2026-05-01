@@ -16,7 +16,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 
 @Service
 @Transactional
-class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotRepository, val prisonTimeSlotRepository: PrisonTimeSlotRepository, val officialVisitRepository: OfficialVisitRepository) {
+class SyncVisitSlotService(
+  val prisonVisitSlotRepository: PrisonVisitSlotRepository,
+  val prisonTimeSlotRepository: PrisonTimeSlotRepository,
+  val officialVisitRepository: OfficialVisitRepository,
+) {
   fun createPrisonVisitSlot(request: SyncCreateVisitSlotRequest): SyncVisitSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(request.prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${request.prisonTimeSlotId} was not found for visit slot") }
@@ -27,6 +31,7 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
   fun updatePrisonVisitSlot(prisonVisitSlotId: Long, request: SyncUpdateVisitSlotRequest): SyncVisitSlot {
     val visitSlotEntity = prisonVisitSlotRepository.findById(prisonVisitSlotId)
       .orElseThrow { EntityNotFoundException("Prison visit slot with ID $prisonVisitSlotId was not found") }
+
     val changedVisitSlotEntity = visitSlotEntity.copy(
       dpsLocationId = request.dpsLocationId,
       maxAdults = request.maxAdults,
@@ -34,6 +39,7 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
       updatedBy = request.updatedBy,
       updatedTime = request.updatedTime,
     )
+
     val timeSlotEntity = prisonTimeSlotRepository.findById(changedVisitSlotEntity.prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${changedVisitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
 
@@ -47,6 +53,7 @@ class SyncVisitSlotService(val prisonVisitSlotRepository: PrisonVisitSlotReposit
 
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonVisitSlotEntity.prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID ${prisonVisitSlotEntity.prisonTimeSlotId} was not found for visit slot") }
+
     return prisonVisitSlotEntity.toSyncModel(timeSlotEntity.prisonCode)
   }
 

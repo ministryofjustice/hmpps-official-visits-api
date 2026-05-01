@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync.SyncCreateOfficialVisitRequest
@@ -49,7 +50,8 @@ class SyncOfficialVisitService(
   }
 
   fun createVisit(request: SyncCreateOfficialVisitRequest): SyncOfficialVisit {
-    val createdBy = userService.getUser(request.createUsername!!) ?: throw EntityNotFoundException("User ${request.createUsername} not found")
+    val createdBy = userService.getUser(request.createUsername!!)
+      ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.createUsername}")
 
     val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
@@ -106,7 +108,8 @@ class SyncOfficialVisitService(
   }
 
   fun updateVisit(officialVisitId: Long, request: SyncUpdateOfficialVisitRequest): SyncOfficialVisit {
-    val updatedBy = userService.getUser(request.updateUsername) ?: throw EntityNotFoundException("User ${request.updateUsername} not found")
+    val updatedBy = userService.getUser(request.updateUsername)
+      ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.updateUsername}")
 
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("Official visit with ID $officialVisitId not found")

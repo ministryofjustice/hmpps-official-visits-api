@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
+import org.springframework.http.HttpStatus.REQUEST_TIMEOUT
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import tools.jackson.databind.exc.InvalidFormatException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
@@ -89,17 +91,6 @@ class OfficialVisitsApiExceptionHandler {
       ),
     ).also { log.error("Entity in use exception", e) }
 
-  @ExceptionHandler(Exception::class)
-  fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(INTERNAL_SERVER_ERROR)
-    .body(
-      ErrorResponse(
-        status = INTERNAL_SERVER_ERROR,
-        userMessage = "${e.message}",
-        developerMessage = e.message,
-      ),
-    ).also { log.error("Unexpected exception", e) }
-
   @ExceptionHandler(CaseloadAccessException::class)
   fun handleCaseLoadAccessException(e: CaseloadAccessException): ResponseEntity<ErrorResponse> {
     log.info("Case load access exception: {}", e.message)
@@ -144,6 +135,28 @@ class OfficialVisitsApiExceptionHandler {
       ),
     ).also { log.error(message, e) }
   }
+
+  @ExceptionHandler(DownstreamServiceException::class)
+  fun handleDownstreamServiceException(e: DownstreamServiceException) = ResponseEntity
+    .status(REQUEST_TIMEOUT)
+    .body(
+      ErrorResponse(
+        status = REQUEST_TIMEOUT.value(),
+        userMessage = e.message,
+        developerMessage = e.message,
+      ),
+    )
+
+  @ExceptionHandler(Exception::class)
+  fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(INTERNAL_SERVER_ERROR)
+    .body(
+      ErrorResponse(
+        status = INTERNAL_SERVER_ERROR,
+        userMessage = "${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.error("Unexpected exception", e) }
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

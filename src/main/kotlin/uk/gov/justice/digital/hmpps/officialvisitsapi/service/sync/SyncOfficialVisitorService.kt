@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.sync.toSyncModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
@@ -44,7 +45,8 @@ class SyncOfficialVisitorService(
   }
 
   fun createVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
-    val createdBy = userService.getUser(request.createUsername!!) ?: throw EntityNotFoundException("User ${request.createUsername} not found")
+    val createdBy = userService.getUser(request.createUsername!!)
+      ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.createUsername}")
 
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
@@ -124,6 +126,7 @@ class SyncOfficialVisitorService(
 
   fun deleteVisitor(officialVisitId: Long, officialVisitorId: Long): SyncRemoveVisitorResponse? {
     val visit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return null
+
     visit.officialVisitors().forEach { visitor ->
       if (visitor.officialVisitorId == officialVisitorId) {
         if (visitor.visitorEquipment != null) {
@@ -168,14 +171,15 @@ class SyncOfficialVisitorService(
   }
 
   fun updateVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncUpdateVisitorResponse {
+    val updatedByUser = request.updateUsername?.let { userService.getUser(it) }
+      ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.updateUsername}")
+
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
       EntityNotFoundException("The official visit with id $officialVisitId was not found")
     }
 
     val visitor = officialVisitorRepository.findById(officialVisitorId).getOrNull()
       ?: throw EntityNotFoundException("The official visitor with id $officialVisitorId was not found")
-
-    val updatedByUser = request.updateUsername?.let { userService.getUser(it) } ?: UserService.getServiceAsUser()
 
     // Check if the request has changed the person visiting and if so, get their relationship to the prisoner
     val updatedPrisonerContactId = if (visitor.contactId != request.personId) {
