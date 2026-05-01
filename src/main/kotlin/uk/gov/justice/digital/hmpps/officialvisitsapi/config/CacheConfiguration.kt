@@ -30,6 +30,7 @@ class CacheConfiguration {
   fun cacheManager(): CacheManager = ConcurrentMapCacheManager(
     OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE,
     REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE,
+    USER_DETAILS_BY_USERNAME_CACHE,
   )
 
   @CacheEvict(value = [OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE], allEntries = true)
