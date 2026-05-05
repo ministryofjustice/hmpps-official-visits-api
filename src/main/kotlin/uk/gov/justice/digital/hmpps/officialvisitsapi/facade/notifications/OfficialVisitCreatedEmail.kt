@@ -1,15 +1,11 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
+
 class OfficialVisitCreatedEmail(
-  override val emailAddress: String,
-  private val officialVisitId: Long,
-  private val prisonerNumber: String,
-) : Email {
-  override val type: EmailType = EmailType.OFFICIAL_VISIT_CREATED
+  emailAddress: String,
+) : Email(emailAddress) {
 
-  override fun personalisation(): Map<String, String> = mapOf(
-    "officialVisitId" to officialVisitId.toString(),
-    "prisonerNumber" to prisonerNumber,
-  )
+  override fun type() = EmailType.OFFICIAL_VISIT_CREATED
 }
-

@@ -12,7 +12,7 @@ fun interface EmailService {
 abstract class Email(val emailAddress: String) {
   private val personalisation: MutableMap<String, String> = mutableMapOf()
 
-  protected fun addPersonalisation(key: String, value: String) {
+  fun addPersonalisation(key: String, value: String) {
     personalisation[key] = value
   }
 
@@ -29,4 +29,5 @@ data class EmailTemplate(val templateId: TemplateId, val emailType: EmailType)
 
 enum class EmailType {
   PLACEHOLDER_EMAIL_TYPE,
+  OFFICIAL_VISIT_CREATED,
 }

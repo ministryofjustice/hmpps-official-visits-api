@@ -81,7 +81,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should complete an official scheduled visit`() {
     auditedEventRepository.findAll() hasSize 0
-
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
       .let { response -> testAPIClient.getOfficialVisitBy(response.officialVisitId, MOORLAND_PRISON_USER) }
 

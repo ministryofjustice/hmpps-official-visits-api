@@ -91,7 +91,7 @@ class SyncOfficialVisitIntegrationTest : IntegrationTestBase() {
     )
 
     personalRelationshipsApi().stubPrisonerContactRelationships(MOORLAND_PRISONER.number, 2L)
-
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
     // Stub locations for visits
     locationsInsidePrisonApi().stubGetLocationById(moorlandLocation)
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation))

@@ -6,6 +6,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -72,7 +73,7 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
         ),
       ),
     )
-
+    personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
     // We need more that one visit for the contact under test to ensure queries are stable.
     nextMondayAt9VisitId = testAPIClient.createOfficialVisit(nextMondayAt9).officialVisitId
     testAPIClient.createOfficialVisit(nextWednesdayAt9)

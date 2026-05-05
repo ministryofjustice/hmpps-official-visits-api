@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetr
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OverlappingVisitsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.VisitorContactInformationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 
@@ -37,6 +38,7 @@ class OfficialVisitFacade(
   private val outboundEventsService: OutboundEventsService,
   private val overlappingVisitsService: OverlappingVisitsService,
   private val notificationsFacade: NotificationsFacade,
+  private val visitorContactInformationService: VisitorContactInformationService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -75,16 +77,23 @@ class OfficialVisitFacade(
         )
       }
 
-      runCatching {
-        notificationsFacade.sendEmail(
-          OfficialVisitCreatedEmail(
-            emailAddress = user.username,
-            officialVisitId = creationResult.officialVisitId,
-            prisonerNumber = creationResult.prisonerNumber,
-          ),
-        )
-      }.onFailure { exception ->
-        logger.info("Failed to trigger official visit created email for visit ${creationResult.officialVisitId}", exception)
+      // get visitor details from personal relationships api
+      visitorContactInformationService.getVisitorContactInformation(creationResult.visitorAndContactIds.map { it.second }).forEach { contactInfo ->
+        // better to check if all the required fields are populated for the email template
+        // to avoid any potential issues with the email personalisation service rejecting the email due to missing personalisation fields
+        if (creationResult.officialVisitId != null && contactInfo.emailAddress != null && contactInfo.fullName != null) {
+          notificationsFacade.sendOfficialVisitEmail(
+            creationResult.officialVisitId,
+            OfficialVisitCreatedEmail(contactInfo.emailAddress!!).apply {
+              addPersonalisation("appointment_date", request.visitDate.toString())
+              addPersonalisation("appointment_time", request.startTime.toString() + "/" + request.endTime.toString())
+              addPersonalisation("appointment_location", request.dpsLocationId.toString()) // todo location name
+              addPersonalisation("user_name", user.name)
+              addPersonalisation("prisoner_name", request.prisonerNumber.toString()) // todo prisoner name
+              addPersonalisation("visitor_name", contactInfo.fullName!!)
+            },
+          )
+        }
       }
     }
   }
