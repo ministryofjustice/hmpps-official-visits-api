@@ -88,6 +88,13 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     personalRelationshipsApi().stubReferenceGroup()
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER)
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER_ADDED)
+    val contact = prisonerContact(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      type = "O",
+      contactId = 130,
+      prisonerContactId = 460,
+    )
+    personalRelationshipsApi().stubForContactById(contact)
     personalRelationshipsApi().stubAllContacts(
       MOORLAND_PRISONER.number,
       listOf(
@@ -103,12 +110,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           contactId = 124,
           prisonerContactId = 457,
         ),
-        prisonerContact(
-          prisonerNumber = MOORLAND_PRISONER.number,
-          type = "O",
-          contactId = 130,
-          prisonerContactId = 460,
-        ),
+        contact,
         prisonerContact(
           prisonerNumber = MOORLAND_PRISONER.number,
           type = "O",
