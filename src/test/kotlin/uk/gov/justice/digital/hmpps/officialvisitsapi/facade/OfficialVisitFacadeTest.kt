@@ -74,6 +74,7 @@ class OfficialVisitFacadeTest {
       visitTypeCode = VisitType.IN_PERSON,
       staffNotes = "staff",
       prisonerNotes = "prisoner",
+      clientEmailAddresses = listOf("client.rep1@solicitors.example", "client.rep2@solicitors.example"),
       officialVisitors = listOf(
         OfficialVisitor(
           visitorTypeCode = VisitorType.CONTACT,
@@ -85,7 +86,12 @@ class OfficialVisitFacadeTest {
     )
 
     whenever(officialVisitCreateService.create(MOORLAND, request, user)).thenReturn(
-      CreateOfficialVisitResponse(officialVisitId = 1L, prisonerNumber = "A1234AA", visitorAndContactIds = listOf(Pair(1L, 1L))),
+      CreateOfficialVisitResponse(
+        officialVisitId = 1L,
+        prisonerNumber = "A1234AA",
+        visitorAndContactIds = listOf(Pair(1L, 1L)),
+        clientEmailAddresses = listOf("client.rep1@solicitors.example", "client.rep2@solicitors.example"),
+      ),
     )
 
     facade.createOfficialVisit(MOORLAND, request, MOORLAND_PRISON_USER)

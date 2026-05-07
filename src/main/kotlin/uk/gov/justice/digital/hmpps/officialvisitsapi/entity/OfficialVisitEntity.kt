@@ -81,6 +81,9 @@ open class OfficialVisitEntity(
   @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val officialVisitors: MutableList<OfficialVisitorEntity> = mutableListOf()
 
+  @OneToMany(mappedBy = "officialVisit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+  private val officialVisitClientEmails: MutableList<OfficialVisitClientEmailEntity> = mutableListOf()
+
   @Enumerated(EnumType.STRING)
   var visitStatusCode: VisitStatusType = VisitStatusType.SCHEDULED
 
@@ -132,6 +135,17 @@ open class OfficialVisitEntity(
   }
 
   fun officialVisitors(): List<OfficialVisitorEntity> = officialVisitors.toList()
+
+  fun addClientEmailAddress(emailAddress: String, createdBy: User, createdTime: LocalDateTime = now()) = apply {
+    OfficialVisitClientEmailEntity(
+      officialVisit = this,
+      emailAddress = emailAddress,
+      createdBy = createdBy.username,
+      createdTime = createdTime,
+    ).also(officialVisitClientEmails::add)
+  }
+
+  fun clientEmailAddresses(): List<String> = officialVisitClientEmails.map { it.emailAddress }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

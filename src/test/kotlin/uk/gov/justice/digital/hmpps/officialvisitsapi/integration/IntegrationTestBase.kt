@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Manag
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PersonalRelationshipsApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitClientEmailRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
@@ -65,6 +66,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var officialVisitorRepository: OfficialVisitorRepository
+
+  @Autowired
+  protected lateinit var officialVisitClientEmailRepository: OfficialVisitClientEmailRepository
 
   @Autowired
   protected lateinit var prisonerVisitedRepository: PrisonerVisitedRepository
@@ -109,6 +113,7 @@ abstract class IntegrationTestBase {
     prisonerVisitedRepository.deleteAll()
     visitorEquipmentRepository.deleteAll()
     officialVisitorRepository.deleteAll()
+    officialVisitClientEmailRepository.deleteAll()
     officialVisitRepository.deleteAll()
   }
 

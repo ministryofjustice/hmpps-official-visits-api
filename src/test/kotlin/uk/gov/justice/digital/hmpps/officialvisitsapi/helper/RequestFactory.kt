@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
-fun createOfficialVisitRequest(visitSlot: VisitSlot, visitors: List<OfficialVisitor>) = CreateOfficialVisitRequest(
+fun createOfficialVisitRequest(visitSlot: VisitSlot, visitors: List<OfficialVisitor>, clientEmailAddresses: List<String> = emptyList()) = CreateOfficialVisitRequest(
   prisonerNumber = MOORLAND_PRISONER.number,
   prisonVisitSlotId = visitSlot.slotId,
   visitDate = visitSlot.date,
@@ -20,6 +20,7 @@ fun createOfficialVisitRequest(visitSlot: VisitSlot, visitors: List<OfficialVisi
   prisonerNotes = "public notes",
   searchTypeCode = SearchLevelType.PAT,
   officialVisitors = visitors,
+  clientEmailAddresses = clientEmailAddresses,
 )
 
 data class VisitSlot(val slotId: Long, val date: LocalDate, val startTime: LocalTime, val endTime: LocalTime, val locationId: UUID)

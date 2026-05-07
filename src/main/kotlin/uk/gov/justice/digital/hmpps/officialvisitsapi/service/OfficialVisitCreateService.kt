@@ -72,13 +72,15 @@ class OfficialVisitCreateService(
         prisonerNotes = request.prisonerNotes,
         offenderBookId = prisonerDetails.bookingId?.toLong(),
         createdBy = user.username,
-      ).addVisitorsAndAnyEquipment(request.officialVisitors, matchingVisitors, user),
+      ).addVisitorsAndAnyEquipment(request.officialVisitors, matchingVisitors, user)
+        .addClientEmailAddresses(request.clientEmailAddresses, user),
     ).savePrisonerBeingVisited()
       .let { it ->
         CreateOfficialVisitResponse(
           officialVisitId = it.officialVisitId,
           prisonerNumber = it.prisonerNumber,
           visitorAndContactIds = it.officialVisitors().map { visitor -> visitor.officialVisitorId to visitor.contactId },
+          clientEmailAddresses = it.clientEmailAddresses(),
         )
       }.also {
         logger.info("Official visit created with ID ${it.officialVisitId}")
@@ -156,10 +158,26 @@ class OfficialVisitCreateService(
     }
   }
 
+  private fun OfficialVisitEntity.addClientEmailAddresses(clientEmailAddresses: List<String>, user: User) = apply {
+    clientEmailAddresses.rejectIfAnyDuplicateEmailAddresses()
+    clientEmailAddresses.forEach { addClientEmailAddress(it, user) }
+  }
+
   private fun List<OfficialVisitor>.rejectIfAnyDuplicateVisitors() = apply {
     val duplicateVisitors = groupBy { it.contactId }.filter { it.value.size > 1 }.keys
 
     require(duplicateVisitors.isEmpty()) { "Visitors with contact IDs $duplicateVisitors are duplicated" }
+  }
+
+  private fun List<String>.rejectIfAnyDuplicateEmailAddresses() = apply {
+    val duplicateEmailAddresses =
+      groupBy { it.trim().lowercase() }
+        .filter { it.key.isNotBlank() && it.value.size > 1 }
+        .keys
+
+    require(duplicateEmailAddresses.isEmpty()) {
+      "Client email addresses $duplicateEmailAddresses are duplicated"
+    }
   }
 
   private fun OfficialVisitEntity.savePrisonerBeingVisited() = also {

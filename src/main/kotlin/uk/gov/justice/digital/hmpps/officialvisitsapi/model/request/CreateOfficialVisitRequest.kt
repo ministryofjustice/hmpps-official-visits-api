@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
@@ -55,4 +56,12 @@ data class CreateOfficialVisitRequest(
   val searchTypeCode: SearchLevelType? = null,
 
   val officialVisitors: List<OfficialVisitor>,
+
+  @Schema(description = "Email addresses for client representatives linked to this booking", example = "[\"client.rep1@solicitors.example\", \"client.rep2@solicitors.example\"]")
+  val clientEmailAddresses: List<
+    @NotBlank(message = "Client email addresses must not be blank")
+    @Email(message = "Each client email address must be a valid email")
+    @Size(max = 100, message = "Each client email address must not exceed {max} characters")
+    String,
+    > = emptyList(),
 )

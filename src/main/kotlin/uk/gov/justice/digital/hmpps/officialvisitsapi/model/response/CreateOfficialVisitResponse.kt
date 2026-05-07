@@ -4,4 +4,5 @@ data class CreateOfficialVisitResponse(
   val officialVisitId: Long,
   val prisonerNumber: String,
   val visitorAndContactIds: List<Pair<Long, Long?>>,
+  val clientEmailAddresses: List<String> = emptyList(),
 )

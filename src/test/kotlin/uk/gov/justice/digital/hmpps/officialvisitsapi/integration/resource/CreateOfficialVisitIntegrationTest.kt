@@ -75,6 +75,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     staffNotes = "private notes",
     prisonerNotes = "public notes",
     searchTypeCode = SearchLevelType.PAT,
+    clientEmailAddresses = listOf("client.rep1@solicitors.example", "client.rep2@solicitors.example"),
     officialVisitors = listOf(officialVisitor),
   )
 
@@ -154,6 +155,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
     val persistedOfficialVisit = officialVisitRepository.findById(officialVisitResponse.officialVisitId).get()
 
+    officialVisitResponse.clientEmailAddresses isEqualTo nextMondayAt9.clientEmailAddresses
+
     with(persistedOfficialVisit) {
       prisonCode isEqualTo MOORLAND_PRISONER.prison
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
@@ -170,6 +173,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       visitorConcernNotes isEqualTo null
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
+      clientEmailAddresses() isEqualTo nextMondayAt9.clientEmailAddresses
     }
 
     with(persistedOfficialVisit.officialVisitors().single()) {
@@ -250,6 +254,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       visitorConcernNotes isEqualTo null
       createdBy isEqualTo MOORLAND_PRISON_USER.username
       createdTime isCloseTo now()
+      clientEmailAddresses() isEqualTo nextMondayAt9.clientEmailAddresses
     }
 
     with(persistedOfficialVisit.officialVisitors().single()) {
@@ -335,6 +340,15 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should fail when duplicate official visitors are provided`() {
     webTestClient.badRequest(nextMondayAt9.copy(officialVisitors = listOf(officialVisitor, officialVisitor)), "Visitors with contact IDs [123] are duplicated")
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
+  }
+
+  @Test
+  fun `should fail when duplicate client email addresses are provided`() {
+    webTestClient.badRequest(
+      nextMondayAt9.copy(clientEmailAddresses = listOf("client.rep1@solicitors.example", "CLIENT.REP1@solicitors.example")),
+      "Client email addresses [client.rep1@solicitors.example] are duplicated",
+    )
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
