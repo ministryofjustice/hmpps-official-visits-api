@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.PrisonCaseload
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -78,6 +79,13 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
       MOORLAND_PRISON_USER.name,
       MOORLAND,
       MOORLAND_PRISON_USER.username,
+    )
+
+    manageUsersApi().stubGetUserCaseloads(
+      username = MOORLAND_PRISON_USER.username,
+      active = true,
+      activeCaseload = PrisonCaseload(id = MOORLAND, name = "Moorland"),
+      caseloads = listOf(PrisonCaseload(id = MOORLAND, name = "Moorland")),
     )
 
     // Stub a known contact

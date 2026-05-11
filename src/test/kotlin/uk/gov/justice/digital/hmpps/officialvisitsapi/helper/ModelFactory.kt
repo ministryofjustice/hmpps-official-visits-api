@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialUsageDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.PrisonCaseload
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserCaseloadDetail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto.AuthSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
@@ -69,25 +71,39 @@ fun userDetails(
   username: String,
   name: String = "Test User",
   authSource: AuthSource = AuthSource.auth,
-  activeCaseLoadId: String? = null,
+  activeCaseLoadId: String? = null, // deprecated
   userId: String = "TEST",
+  active: Boolean = true,
 ) = UserDetailsDto(
   userId = userId,
   username = username,
-  active = true,
+  active = active,
   name = name,
   authSource = authSource,
   activeCaseLoadId = activeCaseLoadId,
 )
 
+fun userCaseloads(
+  username: String,
+  active: Boolean = true,
+  activeCaseload: PrisonCaseload = PrisonCaseload(id = BIRMINGHAM, name = "Birmingham"),
+  caseloads: List<PrisonCaseload> = listOf(PrisonCaseload(id = BIRMINGHAM, name = "Birmingham")),
+) = UserCaseloadDetail(
+  username = username,
+  active = active,
+  accountType = UserCaseloadDetail.AccountType.GENERAL,
+  activeCaseload = activeCaseload,
+  caseloads = caseloads,
+)
+
 fun prisonUser(
   username: String = "prison_user",
   name: String = "Prison User",
-  activeCaseLoadId: String = BIRMINGHAM,
+  caseloads: List<String> = listOf(BIRMINGHAM),
 ) = PrisonUser(
   username = username,
   name = name,
-  activeCaseLoadId = activeCaseLoadId,
+  caseloads = caseloads,
 )
 
 fun prisoner(

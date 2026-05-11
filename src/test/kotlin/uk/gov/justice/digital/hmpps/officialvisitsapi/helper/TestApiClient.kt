@@ -14,7 +14,7 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 class TestApiClient(private val webTestClient: WebTestClient, private val jwtAuthHelper: JwtAuthorisationHelper) {
   fun createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
@@ -26,7 +26,7 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
 
   fun getOfficialVisitBy(officialVisitId: Long, prisonUser: PrisonUser) = webTestClient
     .get()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/id/$officialVisitId")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/id/$officialVisitId")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
     .exchange()
@@ -37,7 +37,7 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
 
   fun cancel(officialVisitId: Long, request: OfficialVisitCancellationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/id/$officialVisitId/cancel")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/id/$officialVisitId/cancel")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
@@ -46,7 +46,7 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
 
   fun complete(officialVisitId: Long, request: OfficialVisitCompletionRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/id/$officialVisitId/complete")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/id/$officialVisitId/complete")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

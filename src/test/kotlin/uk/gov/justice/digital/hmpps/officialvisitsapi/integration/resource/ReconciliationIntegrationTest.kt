@@ -244,7 +244,7 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest) = this
     .post()
-    .uri("/official-visit/prison/${MOORLAND_PRISON_USER.activeCaseLoadId}")
+    .uri("/official-visit/prison/${MOORLAND_PRISON_USER.caseloads.first()}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

@@ -41,7 +41,7 @@ class LocalRequestContextInterceptor(private val userService: UserService) : Han
     if (username != null) {
       request.setAttribute(
         LocalRequestContext::class.simpleName,
-        LocalRequestContext(user = userService.getUser(username) ?: throw AccessDeniedException("User with username $username not found")),
+        LocalRequestContext(user = userService.getUser(username) ?: throw AccessDeniedException("User with username $username not found or not allowed")),
       )
     } else {
       // The clientId is non-nullable, otherwise the request would not be authenticated!

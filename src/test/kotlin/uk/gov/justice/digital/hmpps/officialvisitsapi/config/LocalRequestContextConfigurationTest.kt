@@ -63,7 +63,7 @@ class LocalRequestContextConfigurationTest {
 
     val exception = assertThrows<AccessDeniedException> { interceptor.preHandle(req, res, "null") }
 
-    exception.message isEqualTo "User with username USER_NAME not found"
+    exception.message isEqualTo "User with username USER_NAME not found or not allowed"
   }
 
   @Test

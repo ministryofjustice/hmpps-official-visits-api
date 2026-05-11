@@ -192,7 +192,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_CREATED,
-      additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
+      additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.caseloads.first()),
       personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
     )
 
@@ -272,7 +272,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_CREATED,
-      additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.activeCaseLoadId),
+      additionalInfo = VisitInfo(persistedOfficialVisit.officialVisitId, Source.DPS, MOORLAND_PRISON_USER.username, MOORLAND_PRISON_USER.caseloads.first()),
       personReference = PersonReference(nomsNumber = MOORLAND_PRISONER.number),
     )
 
@@ -373,7 +373,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       prisonCode = MOORLAND,
       prisonUser = PENTONVILLE_PRISON_USER,
       request = nextMondayAt9,
-      errorMessage = "This visit cannot be created in a prison which is not the active caseload for the user",
+      errorMessage = "This visit cannot be created in a prison outside the user's caseload list",
     )
 
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
@@ -381,7 +381,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.create(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
@@ -393,7 +393,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.badRequest(request: CreateOfficialVisitRequest, errorMessage: String, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
