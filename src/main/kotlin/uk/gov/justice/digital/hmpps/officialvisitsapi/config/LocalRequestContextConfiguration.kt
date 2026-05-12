@@ -27,6 +27,7 @@ class LocalRequestContextConfiguration(private val localRequestContextIntercepto
       .addPathPatterns(
         "/official-visit/**",
         "/admin/**",
+        "/notification/**",
       )
   }
 }
