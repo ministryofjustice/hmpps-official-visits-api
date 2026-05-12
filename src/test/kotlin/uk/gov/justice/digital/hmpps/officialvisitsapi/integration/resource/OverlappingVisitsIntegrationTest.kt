@@ -171,7 +171,7 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.check(request: OverlappingVisitsCriteriaRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/overlapping")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/overlapping")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

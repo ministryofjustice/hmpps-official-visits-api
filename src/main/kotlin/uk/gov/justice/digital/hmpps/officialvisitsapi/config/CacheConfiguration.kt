@@ -23,6 +23,7 @@ class CacheConfiguration {
     const val OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE = "official-visit-locations-by-prison"
     const val REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE = "reference-data-by-group-and-code"
     const val USER_DETAILS_BY_USERNAME_CACHE = "user-details-by-username"
+    const val USER_CASELOADS_BY_USERNAME_CACHE = "user-caseloads-by-username"
     const val FIFTEEN = 15L
   }
 
@@ -31,6 +32,7 @@ class CacheConfiguration {
     OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE,
     REFERENCE_DATA_BY_GROUP_AND_CODE_CACHE,
     USER_DETAILS_BY_USERNAME_CACHE,
+    USER_CASELOADS_BY_USERNAME_CACHE,
   )
 
   @CacheEvict(value = [OFFICIAL_VISIT_LOCATIONS_BY_PRISON_CACHE], allEntries = true)
@@ -49,5 +51,11 @@ class CacheConfiguration {
   @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.HOURS)
   fun cacheEvictUserDetailsByUsername() {
     log.info("Evicting cache: $USER_DETAILS_BY_USERNAME_CACHE after 2 hours")
+  }
+
+  @CacheEvict(value = [USER_CASELOADS_BY_USERNAME_CACHE], allEntries = true)
+  @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.HOURS)
+  fun cacheEvictUserCaseloadsByUsername() {
+    log.info("Evicting cache: $USER_CASELOADS_BY_USERNAME_CACHE after 2 hours")
   }
 }

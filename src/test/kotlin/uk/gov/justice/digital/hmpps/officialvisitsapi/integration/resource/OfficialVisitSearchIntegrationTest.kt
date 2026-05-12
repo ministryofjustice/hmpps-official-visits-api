@@ -173,7 +173,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         info = eq(
           SearchInfo(
             username = MOORLAND_PRISON_USER.username,
-            prisonCode = MOORLAND_PRISON_USER.activeCaseLoadId!!,
+            prisonCode = MOORLAND_PRISON_USER.caseloads.first(),
             startDate = searchRequest.startDate!!,
             searchTerm = searchRequest.searchTerm?.trim(),
             endDate = searchRequest.endDate!!,
@@ -256,7 +256,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         info = eq(
           SearchInfo(
             username = MOORLAND_PRISON_USER.username,
-            prisonCode = MOORLAND_PRISON_USER.activeCaseLoadId!!,
+            prisonCode = MOORLAND_PRISON_USER.caseloads.first(),
             startDate = searchRequest.startDate!!,
             searchTerm = searchRequest.searchTerm?.trim(),
             endDate = searchRequest.endDate!!,
@@ -546,7 +546,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     size: Int = 1,
   ) = webTestClient
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/find-by-criteria?page=$page&size=$size")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
@@ -564,7 +564,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     size: Int = 1,
   ) = webTestClient
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/find-by-criteria?page=$page&size=$size")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/find-by-criteria?page=$page&size=$size")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

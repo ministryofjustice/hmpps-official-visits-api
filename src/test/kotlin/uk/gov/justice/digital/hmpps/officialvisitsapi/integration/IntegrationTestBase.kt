@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.PrisonCaseload
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.UserDetailsDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.health.LocationsInsidePrisonApiHealthPingCheck
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -87,7 +88,18 @@ abstract class IntegrationTestBase {
   }
 
   protected fun stubUser(user: PrisonUser) {
-    manageUsersApi().stubGetUserDetails(username = user.username, authSource = UserDetailsDto.AuthSource.nomis, name = user.name, activeCaseload = user.activeCaseLoadId)
+    manageUsersApi().stubGetUserDetails(
+      username = user.username,
+      authSource = UserDetailsDto.AuthSource.nomis,
+      name = user.name,
+      activeCaseload = user.caseloads.first(),
+    )
+
+    manageUsersApi().stubGetUserCaseloads(
+      username = user.username,
+      activeCaseload = PrisonCaseload(user.caseloads.first(), name = ""),
+      caseloads = listOf(PrisonCaseload(user.caseloads.first(), name = "")),
+    )
   }
 
   internal fun setAuthorisation(

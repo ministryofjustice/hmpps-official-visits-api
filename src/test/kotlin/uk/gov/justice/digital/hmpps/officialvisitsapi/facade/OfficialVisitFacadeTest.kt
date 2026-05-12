@@ -135,7 +135,7 @@ class OfficialVisitFacadeTest {
     assertThrows<CaseloadAccessException> {
       facade.createOfficialVisit(MOORLAND, request, PENTONVILLE_PRISON_USER)
     }
-      .message isEqualTo "This visit cannot be created in a prison which is not the active caseload for the user"
+      .message isEqualTo "This visit cannot be created in a prison outside the user's caseload list"
   }
 
   @Test
@@ -267,6 +267,6 @@ class OfficialVisitFacadeTest {
     assertThrows<CaseloadAccessException> {
       facade.updateVisitors(1, MOORLAND, request, PENTONVILLE_PRISON_USER)
     }
-      .message isEqualTo "This visit cannot be updated in a prison which is not the active caseload for the user"
+      .message isEqualTo "This visit cannot be updated in a prison outside the user's caseload list"
   }
 }

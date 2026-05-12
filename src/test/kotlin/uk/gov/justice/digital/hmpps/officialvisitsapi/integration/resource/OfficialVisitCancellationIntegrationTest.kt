@@ -195,7 +195,7 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.cancel(officialVisitId: Long, request: OfficialVisitCancellationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/id/$officialVisitId/cancel")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/id/$officialVisitId/cancel")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
@@ -209,7 +209,7 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
     prisonUser: PrisonUser = MOORLAND_PRISON_USER,
   ) = this
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/id/$officialVisitId/cancel")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/id/$officialVisitId/cancel")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))

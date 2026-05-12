@@ -191,7 +191,7 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.complete(officialVisitId: Long, request: OfficialVisitCompletionRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
-    .uri("/official-visit/prison/${prisonUser.activeCaseLoadId}/id/$officialVisitId/complete")
+    .uri("/official-visit/prison/${prisonUser.caseloads.first()}/id/$officialVisitId/complete")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
