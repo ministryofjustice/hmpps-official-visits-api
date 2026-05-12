@@ -16,7 +16,7 @@ class GovNotifyEmailServiceTest {
   private val sendEmailResponse = mock<SendEmailResponse>()
   private val notificationId = UUID.randomUUID()
   private val notificationClient = mock<NotificationClient>()
-  private val service = GovNotifyEmailService(notificationClient, EmailTemplates(setOf(EmailTemplate("template_id", EmailType.PLACEHOLDER_EMAIL_TYPE))))
+  private val service = GovNotifyEmailService(notificationClient, EmailTemplates(setOf(EmailTemplate("template_id", EmailType.OFFICIAL_VISIT_CREATED))))
 
   @Test
   fun `should succeed to send of email`() {
@@ -34,6 +34,6 @@ class GovNotifyEmailServiceTest {
   }
 
   object FakeEmail : Email("email@address") {
-    override fun type() = EmailType.PLACEHOLDER_EMAIL_TYPE
+    override fun type() = EmailType.OFFICIAL_VISIT_CREATED
   }
 }
