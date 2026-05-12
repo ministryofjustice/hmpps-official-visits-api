@@ -1,5 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails
 
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toHourMinuteStyle
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 
 typealias NotificationId = UUID
@@ -28,5 +32,24 @@ class EmailTemplates(private val templates: Set<EmailTemplate>) {
 data class EmailTemplate(val templateId: TemplateId, val emailType: EmailType)
 
 enum class EmailType {
-  PLACEHOLDER_EMAIL_TYPE,
+  OFFICIAL_VISIT_CREATED,
+}
+
+class OfficialVisitCreatedEmail(
+  emailAddress: String,
+  prisonerName: String,
+  appointmentDate: LocalDate,
+  appointmentTime: LocalTime,
+  appointmentLocation: String,
+  userName: String,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_name", prisonerName)
+    addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
+    addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
+    addPersonalisation("appointment_location", appointmentLocation)
+    addPersonalisation("user_name", userName)
+  }
+
+  override fun type(): EmailType = EmailType.OFFICIAL_VISIT_CREATED
 }
