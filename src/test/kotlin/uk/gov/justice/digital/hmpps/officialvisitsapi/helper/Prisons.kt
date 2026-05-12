@@ -6,11 +6,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquip
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 const val BIRMINGHAM = "BMI"
 const val WANDSWORTH = "WWI"
 const val PENTONVILLE = "PVI"
 const val MOORLAND = "MDI"
+const val SWALESIDE = "SWI"
 
 private val nextMonday = LocalDate.now().next(DayOfWeek.MONDAY)
 
@@ -51,3 +53,45 @@ object Moorland {
     assistedNotes = "Wheelchair access needed",
   )
 }
+
+// Location UUID matches the prison_visit_slot row inserted in V2026.05.12__swaleside_test_data.sql
+val SWALESIDE_LEGAL_VIDLINK_LOCATION_ID: UUID = UUID.fromString("f47ac10b-58cc-4372-a567-0e02b2c3d479")
+
+object Swaleside {
+  // Visit slot 20 / time slot 20 – Wednesday 09:00–09:45 (maxGroups=2, maxAdults=10, maxVideoSessions=2)
+  val WEDNESDAY_9_TO_9_45_VISIT_SLOT = VisitSlot(
+    slotId = 20,
+    date = LocalDate.now().next(DayOfWeek.WEDNESDAY),
+    startTime = LocalTime.of(9, 0),
+    endTime = LocalTime.of(9, 45),
+    locationId = SWALESIDE_LEGAL_VIDLINK_LOCATION_ID,
+  )
+
+  val VISITOR_1 = OfficialVisitor(
+    visitorTypeCode = VisitorType.CONTACT,
+    relationshipCode = "POM",
+    contactId = 201,
+    prisonerContactId = 301,
+    leadVisitor = true,
+    assistedVisit = false,
+  )
+
+  val VISITOR_2 = OfficialVisitor(
+    visitorTypeCode = VisitorType.CONTACT,
+    relationshipCode = "POM",
+    contactId = 202,
+    prisonerContactId = 302,
+    leadVisitor = false,
+    assistedVisit = false,
+  )
+
+  val VISITOR_3 = OfficialVisitor(
+    visitorTypeCode = VisitorType.CONTACT,
+    relationshipCode = "POM",
+    contactId = 203,
+    prisonerContactId = 303,
+    leadVisitor = false,
+    assistedVisit = false,
+  )
+}
+

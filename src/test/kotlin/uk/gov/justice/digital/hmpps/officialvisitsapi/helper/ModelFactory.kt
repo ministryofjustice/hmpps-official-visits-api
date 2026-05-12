@@ -20,6 +20,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.Prisoner as ModelPri
 
 val moorlandLocation = location(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"), prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG", localName = "Moorland area 1")
 
+// Location that matches the dps_location_id inserted in V2026.05.12__swaleside_test_data.sql
+val swalesideLegalVidlinkLocation = location(id = UUID.fromString("f47ac10b-58cc-4372-a567-0e02b2c3d479"), prisonCode = SWALESIDE, locationKeySuffix = "LEGALVIDLINK", localName = "Legal Vidlink")
+
 fun location(prisonCode: String, locationKeySuffix: String, active: Boolean = true, localName: String? = null, id: UUID = UUID.randomUUID()) = Location(
   id = id,
   prisonId = prisonCode,
