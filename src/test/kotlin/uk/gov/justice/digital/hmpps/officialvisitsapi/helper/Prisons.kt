@@ -94,4 +94,3 @@ object Swaleside {
     assistedVisit = false,
   )
 }
-
