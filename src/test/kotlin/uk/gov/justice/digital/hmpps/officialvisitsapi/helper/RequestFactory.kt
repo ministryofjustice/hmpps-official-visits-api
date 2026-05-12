@@ -8,14 +8,19 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
-fun createOfficialVisitRequest(visitSlot: VisitSlot, visitors: List<OfficialVisitor>) = CreateOfficialVisitRequest(
-  prisonerNumber = MOORLAND_PRISONER.number,
+fun createOfficialVisitRequest(
+  visitSlot: VisitSlot,
+  visitors: List<OfficialVisitor>,
+  prisonerNumber: String = MOORLAND_PRISONER.number,
+  visitType: VisitType = VisitType.IN_PERSON,
+) = CreateOfficialVisitRequest(
+  prisonerNumber = prisonerNumber,
   prisonVisitSlotId = visitSlot.slotId,
   visitDate = visitSlot.date,
   startTime = visitSlot.startTime,
   endTime = visitSlot.endTime,
   dpsLocationId = visitSlot.locationId,
-  visitTypeCode = VisitType.IN_PERSON,
+  visitTypeCode = visitType,
   staffNotes = "private notes",
   prisonerNotes = "public notes",
   searchTypeCode = SearchLevelType.PAT,
