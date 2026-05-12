@@ -5,13 +5,18 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailTemplate
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailTemplates
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType.OFFICIAL_VISIT_CREATED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.GovNotifyEmailService
 import uk.gov.service.notify.NotificationClient
 import java.util.UUID
 
 @Configuration
-class GovNotifyConfiguration(@Value($$"${notify.api.key:}") private val apiKey: String) {
+class GovNotifyConfiguration(
+  @Value($$"${notify.api.key:}") private val apiKey: String,
+  @Value($$"${notify.templates.official-visit-created:}") private val officialVisitCreatedTemplateId: String,
+) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
   }
@@ -26,5 +31,9 @@ class GovNotifyConfiguration(@Value($$"${notify.api.key:}") private val apiKey: 
   }
 
   @Bean
-  fun emailTemplates() = EmailTemplates(emptySet())
+  fun emailTemplates() = EmailTemplates(
+    setOfNotNull(
+      officialVisitCreatedTemplateId.takeIf { it.isNotBlank() }?.let { EmailTemplate(it, OFFICIAL_VISIT_CREATED) },
+    ),
+  )
 }
