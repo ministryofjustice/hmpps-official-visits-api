@@ -130,7 +130,7 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
 
   private fun AvailableSlotEntity.availableGroupsOn(date: LocalDate) = (maxGroups ?: 0) - datedInPersonVisits.groupVisitCount(date, this) - datedVideoVisits.groupVisitCount(date, this)
 
-  private fun AvailableSlotEntity.availableVideoSessionsOn(date: LocalDate) = (maxVideoSessions ?: 0) - datedVideoVisits.individualVisitCount(date, this)
+  private fun AvailableSlotEntity.availableVideoSessionsOn(date: LocalDate) = (maxVideoSessions ?: 0) - datedVideoVisits.groupVisitCount(date, this)
 
   private fun Map<DatedVisit, Int>.groupVisitCount(date: LocalDate, slot: AvailableSlotEntity) = run {
     count { dsc -> dsc.key.date == date && dsc.key.prisonTimeSlotId == slot.prisonTimeSlotId && dsc.key.prisonVisitSlotId == slot.prisonVisitSlotId }

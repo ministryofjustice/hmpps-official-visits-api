@@ -47,4 +47,3 @@ val CONTACT_SWALESIDE_PRISONER_3 = prisonerContact(
   firstName = "Carol",
   lastName = "White",
 )
-
