@@ -176,7 +176,7 @@ class OfficialVisitFacade(
   fun updateVisitors(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateVisitorsRequest, user: User) {
     require(user is PrisonUser) { "Visits can only be updated by a digital prison user" }
 
-    checkPrisonUsersCaseloads(prisonCode, user, "This visit cannot be updated in a prison which is not the active caseload for the user")
+    checkPrisonUsersCaseloads(prisonCode, user, "This visit cannot be updated in a prison outside the user's caseload list")
 
     val ov = officialVisitUpdateService.updateVisitors(officialVisitId, prisonCode, request, user)
 
@@ -225,7 +225,7 @@ class OfficialVisitFacade(
   fun findOverlappingScheduledVisits(prisonCode: String, request: OverlappingVisitsCriteriaRequest) = overlappingVisitsService.findOverlappingScheduledVisits(prisonCode, request)
 
   private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String) {
-    if (prisonCode.trim().uppercase() !in user.caseloads) {
+    if (!user.hasCaseloadAccess(prisonCode)) {
       throw CaseloadAccessException(message)
     }
   }

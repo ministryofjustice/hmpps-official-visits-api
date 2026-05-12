@@ -41,7 +41,7 @@ annotation class ProtectedByIngress
   value = [
     ApiResponse(
       responseCode = "409",
-      description = "Conflict, requires users active caseload to match that of the prison",
+      description = "Conflict, requires caseload access to the prison",
       content = [Content(schema = Schema(implementation = ErrorResponse::class))],
     ),
   ],

@@ -68,6 +68,8 @@ abstract class User(val username: String, val name: String) {
  */
 class PrisonUser(username: String, name: String, val caseloads: List<String>) : User(username, name) {
 
+  fun hasCaseloadAccess(prisonCode: String) = prisonCode.trim().uppercase() in caseloads
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
