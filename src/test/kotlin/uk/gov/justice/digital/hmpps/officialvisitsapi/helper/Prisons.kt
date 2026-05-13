@@ -4,9 +4,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import java.time.DayOfWeek
+import java.time.DayOfWeek.FRIDAY
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.UUID
 
 const val BIRMINGHAM = "BMI"
 const val WANDSWORTH = "WWI"
@@ -34,6 +34,14 @@ object Moorland {
     moorlandLocation.id,
   )
 
+  val FRIDAY_10_TO_11_VISIT_SLOT = VisitSlot(
+    8,
+    today().next(FRIDAY),
+    LocalTime.of(10, 0),
+    LocalTime.of(11, 0),
+    moorlandLocation2.id,
+  )
+
   val FRIDAY_11_TO_12_VISIT_SLOT = VisitSlot(
     9,
     nextMonday.next(DayOfWeek.FRIDAY),
@@ -54,18 +62,7 @@ object Moorland {
   )
 }
 
-// Location UUID matches the prison_visit_slot row inserted in V2026.05.12__swaleside_test_data.sql
-val SWALESIDE_LEGAL_VIDLINK_LOCATION_ID: UUID = UUID.fromString("f47ac10b-58cc-4372-a567-0e02b2c3d479")
-
-object Swaleside {
-  // Visit slot 20 / time slot 20 – Wednesday 09:00–09:45 (maxGroups=2, maxAdults=10, maxVideoSessions=2)
-  val WEDNESDAY_9_TO_9_45_VISIT_SLOT = VisitSlot(
-    slotId = 20,
-    date = LocalDate.now().next(DayOfWeek.WEDNESDAY),
-    startTime = LocalTime.of(9, 0),
-    endTime = LocalTime.of(9, 45),
-    locationId = SWALESIDE_LEGAL_VIDLINK_LOCATION_ID,
-  )
+object Visitors {
 
   val VISITOR_1 = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
