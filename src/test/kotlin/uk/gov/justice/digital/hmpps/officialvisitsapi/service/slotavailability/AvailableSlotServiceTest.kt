@@ -643,6 +643,85 @@ class AvailableSlotServiceTest {
     }
   }
 
+  @Nested
+  @DisplayName("Available slots when NOMIS data synced with visit type of UNKNOWN")
+  inner class AvailableSlotsFromMondayAfternoonOnwardsWhenUnknownVisitTypeBooked {
+    private val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
+    private val availableSlots: MutableList<AvailableSlotEntity> = mutableListOf()
+    private val bookedSlots: MutableList<VisitBookedEntity> = mutableListOf()
+
+    @BeforeEach
+    fun beforeEach() {
+      availableSlotService = service(mondayAtMidday)
+      availableSlotRepository.stub {
+        on {
+          findAvailableSlotsForPrison(
+            MOORLAND,
+            mondayAtMidday.toLocalDate(),
+          )
+        } doReturn availableSlots
+      }
+      visitBookedRepository.stub {
+        on {
+          findCurrentVisitsBookedBy(
+            eq(MOORLAND),
+            eq(mondayAtMidday.toLocalDate()),
+            any(),
+          )
+        } doReturn bookedSlots
+      }
+    }
+
+    @Test
+    fun `should treat UNKNOWN visit type as IN_PERSON and reduce adult and group availability`() {
+      availableSlots.add(availableSlot(Day.MON, 14, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
+      availableSlots.add(availableSlot(Day.MON, 15, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), visitType = VisitType.UNKNOWN, officialVisitId = 1)) // UNKNOWN visit for 14:00 slot
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), visitType = VisitType.IN_PERSON, officialVisitId = 2)) // IN_PERSON visit for 15:00 slot
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          false,
+        )
+
+      freeSlots.size isEqualTo 2
+      freeSlots[0]
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(14, 0))
+        .availableAdultsIsEqualTo(4) // 5 - 1 UNKNOWN visit (treated as IN_PERSON)
+        .availableGroupsIsEqualTo(2) // 3 - 1 UNKNOWN visit
+      freeSlots[1]
+        .dateIsEqualTo(mondayAtMidday.toLocalDate())
+        .dayIsEqualTo(Day.MON)
+        .startTimeIsEqual(LocalTime.of(15, 0))
+        .availableAdultsIsEqualTo(4) // 5 - 1 IN_PERSON visit
+        .availableGroupsIsEqualTo(2) // 3 - 1 IN_PERSON visit
+    }
+
+    @Test
+    fun `should be no available slots when UNKNOWN visits consume all group capacity`() {
+      availableSlots.add(availableSlot(Day.MON, 14, 5, 2, effectiveDate = mondayAtMidday.toLocalDate()))
+
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), visitType = VisitType.UNKNOWN, officialVisitId = 1))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(2), visitType = VisitType.UNKNOWN, officialVisitId = 2))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          false,
+        )
+
+      freeSlots.size isEqualTo 0
+    }
+  }
+
   private fun service(dateTime: LocalDateTime) = AvailableSlotService(
     { dateTime },
     visitBookedRepository,
@@ -675,7 +754,12 @@ class AvailableSlotServiceTest {
     maxVideoSessions = maxVideo,
   )
 
-  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1, videoOnly: Boolean = false) = run {
+  private fun bookedSlot(dateTime: LocalDateTime, officialVisitId: Long = -1, videoOnly: Boolean = false, visitType: VisitType? = null) = run {
+    val type = when {
+      visitType != null -> visitType.toString()
+      videoOnly -> VisitType.VIDEO.toString()
+      else -> VisitType.IN_PERSON.toString()
+    }
     VisitBookedEntity(
       officialVisitId = officialVisitId,
       prisonCode = MOORLAND,
@@ -687,7 +771,7 @@ class AvailableSlotServiceTest {
       startTime = dateTime.toLocalTime(),
       endTime = dateTime.toLocalTime(),
       visitStatusCode = "--",
-      visitTypeCode = if (videoOnly) VisitType.VIDEO.toString() else VisitType.IN_PERSON.toString(),
+      visitTypeCode = type,
       prisonerNumber = "--",
       contactId = -1,
       visitorTypeCode = "--",

@@ -258,6 +258,105 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should treat UNKNOWN visit type as in-person capacity and remove full slot`() {
+    val nextFriday = today().next(FRIDAY)
+
+    val responseWithSlot9At11Fri =
+      webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
+
+    responseWithSlot9At11Fri containsExactlyInAnyOrder listOf(
+      AvailableSlot(
+        visitSlotId = 7,
+        timeSlotId = 7,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(9, 0),
+        endTime = LocalTime.of(10, 0),
+        dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description A",
+      ),
+      AvailableSlot(
+        visitSlotId = 8,
+        timeSlotId = 8,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+        dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description B",
+      ),
+      AvailableSlot(
+        visitSlotId = 9,
+        timeSlotId = 9,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(11, 0),
+        endTime = LocalTime.of(12, 0),
+        dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        availableVideoSessions = 1,
+        availableAdults = 1,
+        availableGroups = 1,
+        locationDescription = "Location description A",
+      ),
+    )
+
+    val persistedVisit = testAPIClient.createOfficialVisit(request = nextFridaySlot9At11, MOORLAND_PRISON_USER)
+
+    officialVisitRepository.findById(persistedVisit.officialVisitId).orElseThrow().apply {
+      visitTypeCode = VisitType.UNKNOWN
+      officialVisitRepository.saveAndFlush(this)
+    }
+
+    val responseWithoutSlot9At11Fri =
+      webTestClient.availableSlots(prisonCode = MOORLAND, fromDate = nextFriday, toDate = nextFriday)
+
+    responseWithoutSlot9At11Fri containsExactlyInAnyOrder listOf(
+      AvailableSlot(
+        visitSlotId = 7,
+        timeSlotId = 7,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(9, 0),
+        endTime = LocalTime.of(10, 0),
+        dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description A",
+      ),
+      AvailableSlot(
+        visitSlotId = 8,
+        timeSlotId = 8,
+        prisonCode = "MDI",
+        dayCode = "FRI",
+        dayDescription = "Friday",
+        visitDate = nextFriday,
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+        dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
+        availableVideoSessions = 4,
+        availableAdults = 10,
+        availableGroups = 5,
+        locationDescription = "Location description B",
+      ),
+    )
+  }
+
+  @Test
   fun `should perform GET with slot 9 on Friday at 11 available due to exclusion of existing visit`() {
     val nextFriday = today().next(FRIDAY)
 
