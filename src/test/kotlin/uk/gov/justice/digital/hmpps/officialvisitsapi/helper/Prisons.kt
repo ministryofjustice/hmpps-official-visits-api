@@ -7,7 +7,6 @@ import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.UUID
 
 const val BIRMINGHAM = "BMI"
 const val WANDSWORTH = "WWI"
