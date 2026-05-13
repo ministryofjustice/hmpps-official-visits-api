@@ -445,7 +445,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
       prisonCode = MOORLAND,
       fromDate = nextFriday,
       toDate = nextFriday,
-      //existingVisit = persistedVisit.officialVisitId, Here We don't need to pass existing visit id as we want to check the available capacity
+      // existingVisit = persistedVisit.officialVisitId, Here We don't need to pass existing visit id as we want to check the available capacity
     )
 
     responseWithoutSlot9At11Fri containsExactlyInAnyOrder listOf(
@@ -474,7 +474,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         startTime = LocalTime.of(10, 0),
         endTime = LocalTime.of(11, 0),
         dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
-        availableVideoSessions = 3,// video slot capacity has been reduced from 4 to 3
+        availableVideoSessions = 3, // video slot capacity has been reduced from 4 to 3
         availableAdults = 10,
         availableGroups = 4, // group slot capacity has been reduced from 5 to 4
         locationDescription = "Location description B",
@@ -493,10 +493,9 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         availableAdults = 1,
         availableGroups = 1,
         locationDescription = "Location description A",
-      )
+      ),
     )
   }
-
 
   @Test
   fun `should ignore current booking and not reduce available video session capacity and group capacity when a video visit with 3 visitors booked with slot 8 on Friday at 10 to 11`() {
@@ -597,7 +596,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         startTime = LocalTime.of(10, 0),
         endTime = LocalTime.of(11, 0),
         dpsLocationId = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"),
-        availableVideoSessions = 4,// Still same capacity as before as we passed existing visit id
+        availableVideoSessions = 4, // Still same capacity as before as we passed existing visit id
         availableAdults = 10,
         availableGroups = 5, // Still same capacity as before as we passed existing visit id
         locationDescription = "Location description B",
@@ -616,7 +615,7 @@ class AvailableSlotsIntegrationTest : IntegrationTestBase() {
         availableAdults = 1,
         availableGroups = 1,
         locationDescription = "Location description A",
-      )
+      ),
     )
   }
 
