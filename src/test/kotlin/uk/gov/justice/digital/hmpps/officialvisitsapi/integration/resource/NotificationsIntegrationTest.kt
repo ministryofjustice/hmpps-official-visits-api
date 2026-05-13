@@ -11,15 +11,20 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactly
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import java.util.UUID
@@ -75,9 +80,40 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
       ),
     )
 
+    val notification = notificationRepository.findAll().single()
+
+    with(notification) {
+      officialVisitId isEqualTo scheduledVisit.officialVisitId
+      emailAddress isEqualTo "email@address.com"
+      templateId isEqualTo "fake_template_id"
+      reason isEqualTo "OFFICIAL_VISIT_CREATED"
+      createdTime isCloseTo now()
+    }
+
     with(response) {
       officialVisitId isEqualTo scheduledVisit.officialVisitId
-      recipients.map { it.emailAddress }.single() isEqualTo "email@address.com"
+      recipients containsExactly listOf(NotificationRecipient("email@address.com", notification.notificationId))
+    }
+  }
+
+  @Test
+  fun `should send multiple create visit notifications`() {
+    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+    val response = webTestClient.send(
+      officialVisitId = scheduledVisit.officialVisitId,
+      request = NotificationRequest(
+        notificationType = NotificationType.CREATE,
+        emailAddresses = listOf("email1@address.com", "email2s@address.com"),
+      ),
+    )
+
+    val notificationRecipients = notificationRepository.findAll().map { NotificationRecipient(it.emailAddress, it.notificationId) }
+    notificationRecipients.map { it.emailAddress } containsExactlyInAnyOrder listOf("email1@address.com", "email2s@address.com")
+
+    with(response) {
+      officialVisitId isEqualTo scheduledVisit.officialVisitId
+      recipients containsExactlyInAnyOrder notificationRecipients
     }
   }
 

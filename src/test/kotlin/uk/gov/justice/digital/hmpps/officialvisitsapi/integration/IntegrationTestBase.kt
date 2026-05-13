@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Manag
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PersonalRelationshipsApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
@@ -79,6 +80,9 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var timeSlotRepository: PrisonTimeSlotRepository
 
+  @Autowired
+  protected lateinit var notificationRepository: NotificationRepository
+
   @BeforeEach
   fun `stub default users and prisoners and reset stubbed events`() {
     stubEvents.reset()
@@ -122,6 +126,7 @@ abstract class IntegrationTestBase {
     visitorEquipmentRepository.deleteAll()
     officialVisitorRepository.deleteAll()
     officialVisitRepository.deleteAll()
+    notificationRepository.deleteAll()
   }
 
   protected fun prisonerSearchApi() = PrisonerSearchApiExtension.server
