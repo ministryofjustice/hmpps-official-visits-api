@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
@@ -39,7 +40,14 @@ class NotificationsFacadeTest {
   private val emailService: EmailService = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val notificationRepository: NotificationRepository = mock()
+  private val notification: NotificationEntity = mock()
   private val facade = NotificationsFacade(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository)
+
+  @BeforeEach
+  fun beforeEach() {
+    whenever { notification.notificationId } doReturn 1
+    whenever { notificationRepository.saveAndFlush(any<NotificationEntity>()) } doReturn notification
+  }
 
   @Test
   fun `should delegate to email service and save notification`() {

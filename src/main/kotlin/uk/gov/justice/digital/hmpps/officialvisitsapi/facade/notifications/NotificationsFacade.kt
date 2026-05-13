@@ -69,8 +69,8 @@ class NotificationsFacade(
             reason = email.type().name,
             govNotifyNotificationId = govNotifyNotificationId,
             createdTime = LocalDateTime.now(),
-          ).also { notificationId = it.notificationId },
-        )
+          ),
+        ).also { notificationId = it.notificationId }
       }
       .onFailure { exception -> logger.info("Failed to send email ${email.type()}.", exception) }
 
