@@ -21,6 +21,7 @@ import java.util.UUID
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.Prisoner as ModelPrisoner
 
 val moorlandLocation = location(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"), prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG", localName = "Moorland area 1")
+val moorlandLocation2 = location(id = UUID.fromString("50b61cbe-e42b-4a77-a00e-709b0421b8ed"), prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG", localName = "Moorland area 2")
 
 fun location(prisonCode: String, locationKeySuffix: String, active: Boolean = true, localName: String? = null, id: UUID = UUID.randomUUID()) = Location(
   id = id,

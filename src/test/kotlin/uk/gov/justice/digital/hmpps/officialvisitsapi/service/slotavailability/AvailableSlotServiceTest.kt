@@ -408,7 +408,7 @@ class AvailableSlotServiceTest {
     }
 
     @Test
-    fun `should be 1 free slot with 1 available video, 4 groups and 5 adults on Monday afternoon`() {
+    fun `should be 1 free slot with 2 available video, 4 groups and 5 adults on Monday afternoon`() {
       availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
 
       bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
@@ -429,16 +429,16 @@ class AvailableSlotServiceTest {
         .startTimeIsEqual(LocalTime.of(15, 0))
         .availableAdultsIsEqualTo(5)
         .availableGroupsIsEqualTo(4)
-        .availableVideosIsEqualTo(1)
+        .availableVideosIsEqualTo(2) // reduce one video visit from the capacity
     }
 
     @Test
     fun `should be no available video slot on Monday afternoon when available video capacity met`() {
       availableSlots.add(availableSlot(Day.MON, 15, 5, 5, 3, effectiveDate = mondayAtMidday.toLocalDate()))
 
-      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
-      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
-      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true))
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 1, videoOnly = true)) // video visit 1
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 2, videoOnly = true)) // video visit 2
+      bookedSlots.add(bookedSlot(mondayAtMidday.plusHours(3), officialVisitId = 3, videoOnly = true)) // video visit 3
 
       val freeSlots =
         availableSlotService.getAvailableSlotsForPrison(
