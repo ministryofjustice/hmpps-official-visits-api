@@ -243,6 +243,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
     assertThat(updated.maxAdults).isEqualTo(8)
     assertThat(updated.maxGroups).isEqualTo(4)
     assertThat(updated.maxVideo).isEqualTo(1)
+    assertThat(updated.dpsLocationId).isEqualTo(created.dpsLocationId)
 
     webTestClient.delete()
       .uri("/admin/visit-slot/id/{visitSlotId}", created.visitSlotId)

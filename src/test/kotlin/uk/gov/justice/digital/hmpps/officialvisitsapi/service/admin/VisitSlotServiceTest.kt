@@ -143,13 +143,12 @@ class VisitSlotServiceTest {
 
   @Test
   fun `should update a visit slot capacities and return it`() {
-    val dpsLocationId = UUID.randomUUID()
-    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1, dpsLocationId = dpsLocationId)
+    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1)
     val existing = prisonVisitSlotEntity()
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(existing))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
     whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>())).thenAnswer { it.arguments[0] }
-    whenever(locationsService.getLocationById(dpsLocationId)).thenReturn(moorlandLocation)
+    whenever(locationsService.getLocationById(existing.dpsLocationId)).thenReturn(moorlandLocation)
 
     val updated = service.update(1L, request, MOORLAND_PRISON_USER)
 
@@ -157,6 +156,7 @@ class VisitSlotServiceTest {
     verify(prisonVisitSlotRepository).saveAndFlush(visitSlotCaptor.capture())
 
     visitSlotCaptor.firstValue.assertWithResponse(updated)
+    assertThat(updated.dpsLocationId).isEqualTo(existing.dpsLocationId)
     verify(prisonVisitSlotRepository).findById(1L)
   }
 
