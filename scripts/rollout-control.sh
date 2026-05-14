@@ -19,6 +19,8 @@ menu_function() {
   echo " 5 - Add a prison"
   echo " 6 - Remove a prison"
   echo ""
+  echo " 7 - Toggle two month calendar feature"
+  echo ""
   echo " 9 - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
@@ -33,12 +35,16 @@ show_current() {
 
   FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS}' | base64 -d)
   FEATURE_DPS_ENABLED_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_DPS_ENABLED_PRISONS}' | base64 -d)
+  FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
+  NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
 
   clear
   echo "-------------------------------------------------------------------------------------"
   echo "Environment                 : $ENV"
   echo "Social visitors allowed in  : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
   echo "DPS visits enabled in       : $FEATURE_DPS_ENABLED_PRISONS"
+  echo "Notify API key              : ${NOTIFY_API_KEY:-Missing}"
+  echo "Two month calendar enabled  : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
 }
 
 add_dps_enabled_prison() {
@@ -96,6 +102,23 @@ remove_prison_from_social_allowed_prisons() {
   kubectl -n "$2" patch secret feature-toggles -p $stringData
 }
 
+toggle_two_month_calendar() {
+  local env="$1"
+  local namespace="$2"
+  local current_value="$3"
+
+  if [[ "$current_value" == "true" ]]; then
+     new_value="false"
+  else
+     new_value="true"
+  fi 
+
+  echo "Toggling the two month calendar to $new_value in $env namespace $namespace"
+
+  stringData="{\"stringData\":{\"FEATURE_TWO_MONTH_CALENDAR_ENABLED\":\"$new_value\"}}"
+  kubectl -n "$namespace" patch secret feature-toggles -p $stringData
+}
+
 restart_services() {
    echo "Restarting UI service in $1 namespace $2"
    kubectl -n "$2" rollout restart deployments/hmpps-official-visits-ui
@@ -142,6 +165,11 @@ while true; do
           echo "Remove a prison from the list to allow social visitors"
           read -p "Enter a prison code to remove : " prison
           remove_prison_from_social_allowed_prisons "$ENV" "$NAMESPACE" "$prison"
+          ;;
+      
+      7)
+          echo "Toggle two month calendar - currently ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
+          toggle_two_month_calendar "$ENV" "$NAMESPACE" "${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           ;;
 
       9)  echo "Restarting services"
