@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 @Transactional
@@ -38,6 +39,10 @@ class VisitSlotService(
   fun create(prisonTimeSlotId: Long, request: CreateVisitSlotRequest, user: User): VisitSlot {
     val timeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found for visit slot") }
+
+    require(!visitSlotExistsFor(prisonTimeSlotId, request.dpsLocationId)) {
+      throw EntityInUseException("A visit slot for location ID ${request.dpsLocationId} already exists for this prison time slot.")
+    }
 
     val entity = PrisonVisitSlotEntity(
       prisonVisitSlotId = 0L,
@@ -102,4 +107,6 @@ class VisitSlotService(
   }
 
   private fun officialVisitsExistFor(prisonVisitSlotId: Long): Boolean = officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(prisonVisitSlotId)
+
+  private fun visitSlotExistsFor(prisonTimeSlotId: Long, dpsLocationId: UUID): Boolean = prisonVisitSlotRepository.existsByPrisonTimeSlotIdAndDpsLocationId(prisonTimeSlotId, dpsLocationId)
 }

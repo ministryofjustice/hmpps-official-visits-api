@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.never
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
@@ -122,6 +123,22 @@ class VisitSlotServiceTest {
 
     verify(prisonTimeSlotRepository).findById(1L)
     verifyNoMoreInteractions(prisonVisitSlotRepository)
+  }
+
+  @Test
+  fun `should fail to create a visit slot when location already exists for the time slot`() {
+    val request = CreateVisitSlotRequest(dpsLocationId = UUID.randomUUID(), maxAdults = 10, maxGroups = 5, maxVideo = 2)
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
+    whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotIdAndDpsLocationId(1L, request.dpsLocationId)).thenReturn(true)
+
+    val exception = assertThrows<EntityInUseException> {
+      service.create(1L, request, MOORLAND_PRISON_USER)
+    }
+
+    assertThat(exception.message).isEqualTo("A visit slot for location ID ${request.dpsLocationId} already exists for this prison time slot.")
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).existsByPrisonTimeSlotIdAndDpsLocationId(1L, request.dpsLocationId)
+    verify(prisonVisitSlotRepository, never()).saveAndFlush(any<PrisonVisitSlotEntity>())
   }
 
   @Test
