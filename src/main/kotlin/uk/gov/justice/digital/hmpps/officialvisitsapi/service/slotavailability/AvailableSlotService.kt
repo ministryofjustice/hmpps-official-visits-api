@@ -71,7 +71,7 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
     val key = DatedVisit(bookedSlot)
 
     when {
-      bookedSlot.isVisitType(VisitType.IN_PERSON) -> {
+      bookedSlot.isVisitType(VisitType.IN_PERSON) || bookedSlot.isVisitType(VisitType.UNKNOWN) -> {
         datedInPersonVisits.computeIfPresent(key) { _, count -> count + 1 }
         datedInPersonVisits.computeIfAbsent(key) { 1 }
       }
