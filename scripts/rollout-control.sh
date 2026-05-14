@@ -38,12 +38,14 @@ show_current() {
   FEATURE_DPS_ENABLED_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_DPS_ENABLED_PRISONS}' | base64 -d)
   FEATURE_NOTIFICATIONS_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOTIFICATIONS_ENABLED}' | base64 -d)
   FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
+  NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
 
   clear
   echo "-------------------------------------------------------------------------------------"
   echo "Environment                 : $ENV"
   echo "Social visitors allowed in  : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
   echo "DPS visits enabled in       : $FEATURE_DPS_ENABLED_PRISONS"
+  echo "Notify API key              : ${NOTIFY_API_KEY:-Missing}"
   echo "Notifications enabled       : ${FEATURE_NOTIFICATIONS_ENABLED:-false}"
   echo "Two month calendar enabled  : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
 }
