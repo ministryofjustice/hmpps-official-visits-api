@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.never
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
@@ -125,14 +126,29 @@ class VisitSlotServiceTest {
   }
 
   @Test
+  fun `should fail to create a visit slot when location already exists for the time slot`() {
+    val request = CreateVisitSlotRequest(dpsLocationId = UUID.randomUUID(), maxAdults = 10, maxGroups = 5, maxVideo = 2)
+    whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
+    whenever(prisonVisitSlotRepository.existsByPrisonTimeSlotIdAndDpsLocationId(1L, request.dpsLocationId)).thenReturn(true)
+
+    val exception = assertThrows<EntityInUseException> {
+      service.create(1L, request, MOORLAND_PRISON_USER)
+    }
+
+    assertThat(exception.message).isEqualTo("A visit slot for location ID ${request.dpsLocationId} already exists for this prison time slot.")
+    verify(prisonTimeSlotRepository).findById(1L)
+    verify(prisonVisitSlotRepository).existsByPrisonTimeSlotIdAndDpsLocationId(1L, request.dpsLocationId)
+    verify(prisonVisitSlotRepository, never()).saveAndFlush(any<PrisonVisitSlotEntity>())
+  }
+
+  @Test
   fun `should update a visit slot capacities and return it`() {
-    val dpsLocationId = UUID.randomUUID()
-    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1, dpsLocationId = dpsLocationId)
+    val request = UpdateVisitSlotRequest(maxAdults = 5, maxGroups = 3, maxVideo = 1)
     val existing = prisonVisitSlotEntity()
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(existing))
     whenever(prisonTimeSlotRepository.findById(1L)).thenReturn(Optional.of(prisonTimeSlotEntity()))
     whenever(prisonVisitSlotRepository.saveAndFlush(any<PrisonVisitSlotEntity>())).thenAnswer { it.arguments[0] }
-    whenever(locationsService.getLocationById(dpsLocationId)).thenReturn(moorlandLocation)
+    whenever(locationsService.getLocationById(existing.dpsLocationId)).thenReturn(moorlandLocation)
 
     val updated = service.update(1L, request, MOORLAND_PRISON_USER)
 
@@ -140,6 +156,7 @@ class VisitSlotServiceTest {
     verify(prisonVisitSlotRepository).saveAndFlush(visitSlotCaptor.capture())
 
     visitSlotCaptor.firstValue.assertWithResponse(updated)
+    assertThat(updated.dpsLocationId).isEqualTo(existing.dpsLocationId)
     verify(prisonVisitSlotRepository).findById(1L)
   }
 

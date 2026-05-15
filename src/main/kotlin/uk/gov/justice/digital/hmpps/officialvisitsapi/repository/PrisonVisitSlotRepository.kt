@@ -3,11 +3,13 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
+import java.util.UUID
 
 @Repository
 interface PrisonVisitSlotRepository : JpaRepository<PrisonVisitSlotEntity, Long> {
 
   fun existsByPrisonTimeSlotId(prisonTimeSlotId: Long): Boolean
+  fun existsByPrisonTimeSlotIdAndDpsLocationId(prisonTimeSlotId: Long, dpsLocationId: UUID): Boolean
   fun findByPrisonTimeSlotId(prisonTimeSlotId: Long): List<PrisonVisitSlotEntity>
   fun findByPrisonTimeSlotIdIn(prisonTimeSlotId: List<Long>): List<PrisonVisitSlotEntity>
 }

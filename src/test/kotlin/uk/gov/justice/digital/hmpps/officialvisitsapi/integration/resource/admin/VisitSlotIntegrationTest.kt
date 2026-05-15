@@ -164,7 +164,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should return valid response if get request has valid visit slot id`() {
-    val createRequest = createVisitSlotRequest()
+    val createRequest = createVisitSlotRequest(UUID.randomUUID())
 
     val created = webTestClient.post()
       .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
@@ -201,7 +201,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
 
   @Test
   fun `should create update and delete visit slot for admin role`() {
-    val createRequest = createVisitSlotRequest()
+    val createRequest = createVisitSlotRequest(UUID.randomUUID())
 
     val created = webTestClient.post()
       .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
@@ -220,7 +220,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     assertThat(created.prisonTimeSlotId).isEqualTo(1)
-    assertThat(created.dpsLocationId).isEqualTo(location.id)
+    assertThat(created.dpsLocationId).isEqualTo(createRequest.dpsLocationId)
 
     val updateRequest = updateVisitSlotRequest()
 
@@ -243,6 +243,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
     assertThat(updated.maxAdults).isEqualTo(8)
     assertThat(updated.maxGroups).isEqualTo(4)
     assertThat(updated.maxVideo).isEqualTo(1)
+    assertThat(updated.dpsLocationId).isEqualTo(created.dpsLocationId)
 
     webTestClient.delete()
       .uri("/admin/visit-slot/id/{visitSlotId}", created.visitSlotId)
@@ -258,9 +259,44 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should return conflict when creating duplicate location visit slot for same time slot`() {
+    val createRequest = createVisitSlotRequest(UUID.randomUUID())
+
+    webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
+        ),
+      )
+      .bodyValue(createRequest)
+      .exchange()
+      .expectStatus().isOk
+
+    webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(
+        setAuthorisation(
+          username = MOORLAND_PRISON_USER.username,
+          roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"),
+        ),
+      )
+      .bodyValue(createRequest)
+      .exchange()
+      .expectStatus().isEqualTo(org.springframework.http.HttpStatus.CONFLICT)
+      .expectBody().jsonPath("$.userMessage")
+      .isEqualTo("A visit slot for location ID ${createRequest.dpsLocationId} already exists for this prison time slot.")
+  }
+
+  @Test
   fun `should not delete visit slot when official visits exist`() {
     // create slot
-    val createRequest = createVisitSlotRequest()
+    val createRequest = createVisitSlotRequest(UUID.randomUUID())
 
     val created = webTestClient.post()
       .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", 1)
@@ -303,7 +339,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
           prisonCode = MOORLAND,
           locationKeySuffix = "1-1",
           localName = "Visit place",
-          id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+          id = created.dpsLocationId,
         ),
       ),
     )
@@ -353,5 +389,5 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
 
   private fun updateVisitSlotRequest(): UpdateVisitSlotRequest = UpdateVisitSlotRequest(maxAdults = 8, maxGroups = 4, maxVideo = 1)
 
-  private fun createVisitSlotRequest(): CreateVisitSlotRequest = CreateVisitSlotRequest(dpsLocationId = location.id, maxAdults = 10, maxGroups = 5, maxVideo = 2)
+  private fun createVisitSlotRequest(dpsLocationId: UUID = location.id): CreateVisitSlotRequest = CreateVisitSlotRequest(dpsLocationId = dpsLocationId, maxAdults = 10, maxGroups = 5, maxVideo = 2)
 }
