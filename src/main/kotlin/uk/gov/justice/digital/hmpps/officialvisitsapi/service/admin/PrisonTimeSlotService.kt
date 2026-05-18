@@ -48,11 +48,14 @@ class PrisonTimeSlotService(
   fun getPrisonTimeSlotSummaryById(prisonTimeSlotId: Long): TimeSlotSummaryItem {
     val prisonTimeSlotEntity = prisonTimeSlotRepository.findById(prisonTimeSlotId)
       .orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
+
     val prisonCode = prisonTimeSlotEntity.prisonCode
     val timeSlot = prisonTimeSlotEntity.toModel()
-    val visitSlots = prisonVisitSlotRepository.findByPrisonTimeSlotId(prisonTimeSlotId)
-      .toVisitSlotListModel(prisonCode)
+
+    val visitSlots = prisonVisitSlotRepository.findByPrisonTimeSlotId(prisonTimeSlotId).toVisitSlotListModel(prisonCode)
+
     val decoratedVisitSlots = decorateWithLocationDescription(prisonCode = prisonCode, slots = visitSlots)
+
     return TimeSlotSummaryItem(
       timeSlot = timeSlot,
       visitSlots = decoratedVisitSlots,
@@ -95,7 +98,6 @@ class PrisonTimeSlotService(
   @Transactional
   fun delete(prisonTimeSlotId: Long): TimeSlot {
     val deleted = prisonTimeSlotRepository.findById(prisonTimeSlotId).orElseThrow { EntityNotFoundException("Prison time slot with ID $prisonTimeSlotId was not found") }
-    // check association with visit slot
     require(noVisitSlotsExistFor(prisonTimeSlotId)) {
       throw EntityInUseException("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
     }
@@ -151,19 +153,28 @@ class PrisonTimeSlotService(
   }
 
   private fun decorateWithLocationDescription(prisonCode: String, slots: List<VisitSlot>): List<VisitSlot> {
+    // This gets the ACTIVE visit-enabled locations from the Locations In Prison API
     val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
+
+    // Create a map of the active visit-enabled locations by Location UUID
     val locationById = activeVisitLocations.associateBy { it.id }
-    val decoratedSlots = slots.map { slot ->
+
+    // There may be visit slots defined for locations which are not enabled for visits - filter these out
+    val decoratedSlots = slots.mapNotNull { slot ->
       val location = locationById[slot.dpsLocationId]
+
       if (location == null) {
-        slot.copy(locationDescription = "** unknown **")
+        // No matching location - filter from the results returned
+        null
       } else if (location.status == Location.Status.INACTIVE) {
+        // Matching location - but it is inactive - mark it as such in the description
         slot.copy(
           locationDescription = "${location.localName} (inactive)",
           locationMaxCapacity = getCapacityForVisitType(location),
           locationType = location.locationType.value,
         )
       } else {
+        // This location is active and enabled for visits
         slot.copy(
           locationDescription = location.localName,
           locationMaxCapacity = getCapacityForVisitType(location),
@@ -171,6 +182,7 @@ class PrisonTimeSlotService(
         )
       }
     }
+
     return decorateHasVisits(decoratedSlots)
   }
 

@@ -15,7 +15,9 @@ class PrisonTimeSlotFacade(
   private val outboundEventsService: OutboundEventsService,
 ) {
   fun getPrisonTimeSlotById(prisonTimeSlotId: Long) = prisonTimeSlotService.getPrisonTimeSlotById(prisonTimeSlotId)
+
   fun getPrisonTimeSlotSummaryById(prisonTimeSlotId: Long) = prisonTimeSlotService.getPrisonTimeSlotSummaryById(prisonTimeSlotId)
+
   fun createPrisonTimeSlot(request: CreateTimeSlotRequest, user: User) = prisonTimeSlotService.create(request, user).also {
     outboundEventsService.send(
       outboundEvent = OutboundEvent.TIME_SLOT_CREATED,

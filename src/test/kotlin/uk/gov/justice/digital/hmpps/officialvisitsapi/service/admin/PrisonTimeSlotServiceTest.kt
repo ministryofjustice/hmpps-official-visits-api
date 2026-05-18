@@ -509,7 +509,7 @@ class PrisonTimeSlotServiceTest {
   }
 
   @Test
-  fun `should mark visit slot location as unknown when location missing from official list`() {
+  fun `should ignore visit slots where they are missing from the location list`() {
     val timeSlotEntity = PrisonTimeSlotEntity(
       prisonTimeSlotId = 1L,
       prisonCode = MOORLAND_PRISONER.prison,
@@ -534,8 +534,6 @@ class PrisonTimeSlotServiceTest {
     whenever(prisonTimeSlotRepository.findAllByPrisonCodeWithExpiryDateAfterCutOffDate(MOORLAND_PRISONER.prison, LocalDate.now().minusDays(7))).thenReturn(listOf(timeSlotEntity))
     whenever(prisonVisitSlotRepository.findByPrisonTimeSlotIdIn(listOf(timeSlotEntity.prisonTimeSlotId))).thenReturn(listOf(visitSlotEntity))
     whenever(prisonerSearchClient.findPrisonName(MOORLAND_PRISONER.prison)).thenReturn("A prison")
-
-    // official locations do not include the dpsLocationId used by the visit slot
     whenever(locationService.getOfficialVisitLocationsAtPrison(MOORLAND_PRISONER.prison)).thenReturn(emptyList())
 
     val summary = prisonTimeSlotService.getAllPrisonTimeSlotsAndAssociatedVisitSlots(MOORLAND_PRISONER.prison, true)
@@ -546,12 +544,8 @@ class PrisonTimeSlotServiceTest {
         prisonName = "A prison",
         timeSlots = listOf(
           TimeSlotSummaryItem(
-            timeSlotEntity.toTimeSlotModel(),
-            listOf(
-              visitSlotEntity.toVisitSlotModel(MOORLAND_PRISONER.prison).copy(
-                locationDescription = "** unknown **",
-              ),
-            ),
+            timeSlot = timeSlotEntity.toTimeSlotModel(),
+            visitSlots = emptyList(),
           ),
         ),
       ),
