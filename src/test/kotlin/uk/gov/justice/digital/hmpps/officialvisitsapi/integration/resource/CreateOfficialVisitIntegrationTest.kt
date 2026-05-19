@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISON_
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isNotEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
@@ -45,7 +45,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetri
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
 import java.time.DayOfWeek
 import java.time.LocalTime
-import java.util.UUID
 
 class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
   @MockitoBean
@@ -70,7 +69,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     visitDate = visitDateInTheFuture,
     startTime = LocalTime.of(9, 0),
     endTime = LocalTime.of(10, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    dpsLocationId = moorlandLocation.id,
     visitTypeCode = VisitType.IN_PERSON,
     staffNotes = "private notes",
     prisonerNotes = "public notes",
@@ -83,7 +82,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     startTime = LocalTime.of(11, 0),
     endTime = LocalTime.of(12, 0),
     prisonVisitSlotId = 9,
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    dpsLocationId = moorlandLocation.id,
   )
 
   @BeforeEach
@@ -92,7 +91,10 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     clearAllVisitData()
     stubEvents.reset()
 
-    // Stub a known contact
+    // Stub location for visits at Moorland
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation))
+
+    // Stub contacts
     personalRelationshipsApi().stubAllContacts(
       prisonerNumber = MOORLAND_PRISONER.number,
       prisonerContacts = listOf(
@@ -159,10 +161,10 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
       offenderBookId isEqualTo MOORLAND_PRISONER.bookingId
       prisonVisitSlot.prisonVisitSlotId isEqualTo 1
+      dpsLocationId isEqualTo moorlandLocation.id
       visitDate isEqualTo visitDateInTheFuture
       startTime isEqualTo LocalTime.of(9, 0)
       endTime isEqualTo LocalTime.of(10, 0)
-      dpsLocationId isNotEqualTo null
       visitTypeCode isEqualTo VisitType.IN_PERSON
       visitStatusCode isEqualTo VisitStatusType.SCHEDULED
       staffNotes isEqualTo "private notes"
@@ -242,7 +244,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       visitDate isEqualTo visitDateInTheFuture
       startTime isEqualTo LocalTime.of(9, 0)
       endTime isEqualTo LocalTime.of(10, 0)
-      dpsLocationId isNotEqualTo null
+      dpsLocationId isEqualTo moorlandLocation.id
       visitTypeCode isEqualTo VisitType.IN_PERSON
       visitStatusCode isEqualTo VisitStatusType.SCHEDULED
       staffNotes isEqualTo "private notes"

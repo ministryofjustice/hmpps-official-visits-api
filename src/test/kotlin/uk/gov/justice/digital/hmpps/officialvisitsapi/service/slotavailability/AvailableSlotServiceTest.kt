@@ -33,13 +33,26 @@ class AvailableSlotServiceTest {
   private val locationsService: LocationsService = Mockito.mock()
   private lateinit var availableSlotService: AvailableSlotService
 
+  // Tests used a fixed location ID to match with mocked responses
+  private val locationId = UUID.randomUUID()
+
+  @BeforeEach
+  fun setup() {
+    locationsService.stub {
+      on {
+        getOfficialVisitLocationsAtPrison(eq(MOORLAND))
+      } doReturn officialVisitLocations()
+    }
+  }
+
   @Nested
   inner class BadDates {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(LocalDateTime.now())
 
-      // This is only used to decorate available slots with location descriptions
+      // This is used to decorate available slots with location descriptions
+      // AND to filter any inactive locations or those no longer configured for official visits
       locationsService.stub {
         on {
           getOfficialVisitLocationsAtPrison(eq(MOORLAND))
@@ -221,6 +234,7 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
+
       availableSlotRepository.stub {
         on {
           findAvailableSlotsForPrison(
@@ -229,6 +243,7 @@ class AvailableSlotServiceTest {
           )
         } doReturn availableSlots
       }
+
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -363,6 +378,7 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
+
       availableSlotRepository.stub {
         on {
           findAvailableVideoSlotsForPrison(
@@ -371,6 +387,7 @@ class AvailableSlotServiceTest {
           )
         } doReturn availableSlots
       }
+
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -488,6 +505,7 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtEightAm)
+
       availableSlotRepository.stub {
         on {
           findAvailableVideoSlotsForPrison(
@@ -496,6 +514,7 @@ class AvailableSlotServiceTest {
           )
         } doReturn availableSlots
       }
+
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -653,6 +672,7 @@ class AvailableSlotServiceTest {
     @BeforeEach
     fun beforeEach() {
       availableSlotService = service(mondayAtMidday)
+
       availableSlotRepository.stub {
         on {
           findAvailableSlotsForPrison(
@@ -661,6 +681,7 @@ class AvailableSlotServiceTest {
           )
         } doReturn availableSlots
       }
+
       visitBookedRepository.stub {
         on {
           findCurrentVisitsBookedBy(
@@ -722,6 +743,59 @@ class AvailableSlotServiceTest {
     }
   }
 
+  @Nested
+  @DisplayName("Available slots do not show for inactive or non-existent locations")
+  inner class AvailableSlotsNotActiveInLocations {
+    private val mondayAtMidday = LocalDate.of(2025, 11, 17).atTime(12, 0)
+    private val availableSlots: MutableList<AvailableSlotEntity> = mutableListOf()
+    private val bookedSlots: MutableList<VisitBookedEntity> = mutableListOf()
+
+    @BeforeEach
+    fun beforeEach() {
+      availableSlotService = service(mondayAtMidday)
+
+      locationsService.stub {
+        on {
+          getOfficialVisitLocationsAtPrison(eq(MOORLAND))
+        } doReturn emptyList()
+      }
+
+      availableSlotRepository.stub {
+        on {
+          findAvailableSlotsForPrison(
+            MOORLAND,
+            mondayAtMidday.toLocalDate(),
+          )
+        } doReturn availableSlots
+      }
+
+      visitBookedRepository.stub {
+        on {
+          findCurrentVisitsBookedBy(
+            eq(MOORLAND),
+            eq(mondayAtMidday.toLocalDate()),
+            any(),
+          )
+        } doReturn bookedSlots
+      }
+    }
+
+    @Test
+    fun `should not offer any available slots when the location ID is not found in the location API visit locations`() {
+      availableSlots.add(availableSlot(Day.MON, 14, 5, 2, effectiveDate = mondayAtMidday.toLocalDate()))
+
+      val freeSlots =
+        availableSlotService.getAvailableSlotsForPrison(
+          MOORLAND,
+          mondayAtMidday.toLocalDate(),
+          mondayAtMidday.toLocalDate().plusDays(1),
+          false,
+        )
+
+      freeSlots.size isEqualTo 0
+    }
+  }
+
   private fun service(dateTime: LocalDateTime) = AvailableSlotService(
     { dateTime },
     visitBookedRepository,
@@ -748,7 +822,7 @@ class AvailableSlotServiceTest {
     endTime = LocalTime.of(startHour, 59),
     effectiveDate = effectiveDate,
     expiryDate = expiryDate,
-    dpsLocationId = UUID.randomUUID(),
+    dpsLocationId = locationId,
     maxAdults = maxAdults,
     maxGroups = maxGroups,
     maxVideoSessions = maxVideo,
@@ -779,13 +853,13 @@ class AvailableSlotServiceTest {
       relationshipCode = "--",
       firstName = "first name",
       lastName = "last name",
-      dpsLocationId = UUID.randomUUID(),
+      dpsLocationId = locationId,
     )
   }
 
   private fun officialVisitLocations() = listOf(
     Location(
-      id = UUID.randomUUID(),
+      id = locationId,
       prisonId = MOORLAND,
       localName = "A name",
       code = "Code",
