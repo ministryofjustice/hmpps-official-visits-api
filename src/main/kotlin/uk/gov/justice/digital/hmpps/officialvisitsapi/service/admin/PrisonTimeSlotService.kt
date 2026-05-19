@@ -54,7 +54,7 @@ class PrisonTimeSlotService(
 
     val visitSlots = prisonVisitSlotRepository.findByPrisonTimeSlotId(prisonTimeSlotId).toVisitSlotListModel(prisonCode)
 
-    val decoratedVisitSlots = decorateWithLocationDescription(prisonCode = prisonCode, slots = visitSlots)
+    val decoratedVisitSlots = matchWithLocationDataAndFilterUnusableSlots(prisonCode = prisonCode, slots = visitSlots)
 
     return TimeSlotSummaryItem(
       timeSlot = timeSlot,
@@ -134,7 +134,7 @@ class PrisonTimeSlotService(
           .toVisitSlotListModel(prisonCode)
       }
 
-    val decoratedVisitSlots = decorateWithLocationDescription(prisonCode = prisonCode, slots = visitSlots)
+    val decoratedVisitSlots = matchWithLocationDataAndFilterUnusableSlots(prisonCode = prisonCode, slots = visitSlots)
 
     val visitSlotByTimeSlotIds: Map<Long, List<VisitSlot>> = decoratedVisitSlots.groupBy { it.prisonTimeSlotId }
 
@@ -152,7 +152,7 @@ class PrisonTimeSlotService(
     )
   }
 
-  private fun decorateWithLocationDescription(prisonCode: String, slots: List<VisitSlot>): List<VisitSlot> {
+  private fun matchWithLocationDataAndFilterUnusableSlots(prisonCode: String, slots: List<VisitSlot>): List<VisitSlot> {
     // This gets the ACTIVE visit-enabled locations from the Locations In Prison API
     val activeVisitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
 
@@ -170,25 +170,25 @@ class PrisonTimeSlotService(
         // Matching location - but it is inactive - mark it as such in the description
         slot.copy(
           locationDescription = "${location.localName} (inactive)",
-          locationMaxCapacity = getCapacityForVisitType(location),
+          locationMaxCapacity = getLocationCapacityForVisits(location),
           locationType = location.locationType.value,
         )
       } else {
         // This location is active and enabled for visits
         slot.copy(
           locationDescription = location.localName,
-          locationMaxCapacity = getCapacityForVisitType(location),
+          locationMaxCapacity = getLocationCapacityForVisits(location),
           locationType = location.locationType.value,
         )
       }
     }
 
-    return decorateHasVisits(decoratedSlots)
+    return checkIfThereAreVisitsAssociated(decoratedSlots)
   }
 
-  private fun decorateHasVisits(decoratedSlots: List<VisitSlot>): List<VisitSlot> = decoratedSlots.map { slot ->
+  private fun checkIfThereAreVisitsAssociated(decoratedSlots: List<VisitSlot>): List<VisitSlot> = decoratedSlots.map { slot ->
     slot.copy(hasVisit = officialVisitRepository.existsByPrisonVisitSlotPrisonVisitSlotId(slot.visitSlotId))
   }
 
-  private fun getCapacityForVisitType(location: Location): Int? = location.usage?.firstNotNullOfOrNull { dto -> if (dto.usageType.name == "VISIT") dto.capacity else null }
+  private fun getLocationCapacityForVisits(location: Location): Int? = location.usage?.firstNotNullOfOrNull { dto -> if (dto.usageType.name == "VISIT") dto.capacity else null }
 }

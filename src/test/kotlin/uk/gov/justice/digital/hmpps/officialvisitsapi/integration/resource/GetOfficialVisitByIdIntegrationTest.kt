@@ -8,6 +8,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
@@ -21,7 +22,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
-import java.util.UUID
 
 class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
 
@@ -43,7 +43,7 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
   fun setupTest() {
     clearAllVisitData()
 
-    // Stub a known contact
+    // Stub contacts
     personalRelationshipsApi().stubAllContacts(
       prisonerNumber = MOORLAND_PRISONER.number,
       prisonerContacts = listOf(
@@ -57,7 +57,10 @@ class GetOfficialVisitByIdIntegrationTest : IntegrationTestBase() {
     )
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER, "contact@email.address")
     personalRelationshipsApi().stubReferenceGroup()
-    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation.copy(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247")))
+
+    // Stub locations
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation))
+    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation)
   }
 
   @AfterEach

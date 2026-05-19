@@ -8,11 +8,14 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation2
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
@@ -34,6 +37,9 @@ class ReconciliationIntegrationTest : IntegrationTestBase() {
   @Transactional
   fun setupTest() {
     clearAllVisitData()
+
+    // Stub locations for visits at Moorland
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation, moorlandLocation2))
 
     // Stub a known contact
     personalRelationshipsApi().stubAllContacts(

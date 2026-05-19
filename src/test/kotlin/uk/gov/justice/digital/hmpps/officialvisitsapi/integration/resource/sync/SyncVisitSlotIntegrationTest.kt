@@ -11,6 +11,7 @@ import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.next
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
@@ -33,7 +34,6 @@ import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
 
 class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
   private var savedPrisonVisitSlotId = 0L
@@ -60,7 +60,7 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
     visitDate = visitDateInTheFuture,
     startTime = LocalTime.of(9, 0),
     endTime = LocalTime.of(10, 0),
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    dpsLocationId = moorlandLocation.id,
     visitTypeCode = VisitType.IN_PERSON,
     staffNotes = "private notes",
     prisonerNotes = "public notes",
@@ -70,7 +70,11 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
 
   @BeforeEach
   fun initialiseData() {
+    // Needed for the visit create used in testing
+    locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation))
+
     savedPrisonVisitSlotId = (webTestClient.createVisitSlot()).visitSlotId
+
     stubEvents.reset()
   }
 
@@ -212,14 +216,14 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
 
   private fun createVisitSlotRequest() = SyncCreateVisitSlotRequest(
     prisonTimeSlotId = 1L,
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    dpsLocationId = moorlandLocation.id,
     maxAdults = 10,
     createdBy = "NOMIS-CREATE-USER",
     createdTime = createdTime,
   )
 
   private fun updateVisitSlotRequest() = SyncUpdateVisitSlotRequest(
-    dpsLocationId = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"),
+    dpsLocationId = moorlandLocation.id,
     updatedBy = "NOMIS-UPDATE-USER",
     maxAdults = 15,
     updatedTime = updatedTime,
@@ -247,6 +251,6 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isCreated
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody(CreateOfficialVisitResponse::class.java)
+    .expectBody<CreateOfficialVisitResponse>()
     .returnResult().responseBody!!
 }

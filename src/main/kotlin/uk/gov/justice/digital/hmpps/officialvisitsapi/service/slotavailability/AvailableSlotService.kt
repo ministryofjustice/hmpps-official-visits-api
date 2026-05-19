@@ -27,30 +27,36 @@ class AvailableSlotService(
     require(toDate >= fromDate) { "The to date must be on or after the from date" }
 
     val availableSlots = getAvailableSlots(prisonCode, fromDate, videoOnly)
+
     val bookedSlots = visitBookedRepository.findCurrentVisitsBookedBy(prisonCode, fromDate, toDate).filterNot { it.officialVisitId == existingOfficialVisitId }
 
     val sortedSlots = AvailableSlotBuilder.builder(timeSource, fromDate, toDate) { bookedSlots.forEach(::add) }.build(availableSlots, videoOnly)
       .sortedWith(compareBy({ it.visitDate }, { it.startTime }))
 
-    decorateWithLocationDescription(prisonCode, sortedSlots)
+    matchWithLocationsDataAndFilterUnusableSlots(prisonCode, sortedSlots)
   }
 
+  // Some these slots may be marked as unusable in the Locations API data so these are filtered when matching locations
   private fun getAvailableSlots(prisonCode: String, fromDate: LocalDate, videoOnly: Boolean) = if (videoOnly) {
     availableSlotRepository.findAvailableVideoSlotsForPrison(prisonCode, fromDate)
   } else {
     availableSlotRepository.findAvailableSlotsForPrison(prisonCode, fromDate)
   }
 
-  private fun decorateWithLocationDescription(prisonCode: String, slots: List<AvailableSlot>): List<AvailableSlot> {
+  private fun matchWithLocationsDataAndFilterUnusableSlots(prisonCode: String, slots: List<AvailableSlot>): List<AvailableSlot> {
     val visitLocations = locationService.getOfficialVisitLocationsAtPrison(prisonCode)
 
-    val decoratedSlots = slots.map { slot ->
+    val decoratedSlots = slots.mapNotNull { slot ->
       val location = visitLocations.find { location -> location.id == slot.dpsLocationId }
+
       if (location == null) {
-        slot.copy(locationDescription = "** unknown **")
+        // Location is archived or no longer suitable for visits so filter it from the returned available slots
+        null
       } else if (location.status == Location.Status.INACTIVE) {
+        // Location is inactive - mark it as such
         slot.copy(locationDescription = "${location.localName} (inactive)")
       } else {
+        // Location is available for visits - in both OV visit slot and Location API data
         slot.copy(locationDescription = location.localName)
       }
     }
@@ -69,6 +75,9 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
 
   fun add(bookedSlot: VisitBookedEntity) {
     val key = DatedVisit(bookedSlot)
+
+    // TODO: Telephone visits should take 1 off the maxGroups capacity, but ignore the maxAdults limit
+    // TODO: Should we treat telephone visits like video visits and decrement the same capacities?
 
     when {
       bookedSlot.isVisitType(VisitType.IN_PERSON) || bookedSlot.isVisitType(VisitType.UNKNOWN) -> {
