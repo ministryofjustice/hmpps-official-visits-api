@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffende
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.EntityInUseException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.CaseloadAccessException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.CaseloadAccessHiddenException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
@@ -99,6 +100,20 @@ class OfficialVisitsApiExceptionHandler {
       .body(
         ErrorResponse(
           status = CONFLICT.value(),
+          userMessage = e.message,
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(CaseloadAccessHiddenException::class)
+  fun handleCaseLoadAccessHiddenException(e: CaseloadAccessHiddenException): ResponseEntity<ErrorResponse> {
+    log.info("Case load access hidden exception: {}", e.message)
+    return ResponseEntity
+      .status(NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = NOT_FOUND.value(),
           userMessage = e.message,
           developerMessage = e.message,
         ),

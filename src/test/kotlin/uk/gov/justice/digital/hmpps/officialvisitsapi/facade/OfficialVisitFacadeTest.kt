@@ -113,10 +113,29 @@ class OfficialVisitFacadeTest {
   }
 
   @Test
-  fun `should delegate to service to fetch official visits based on Id`() {
+  fun `should delegate to service to fetch official visit by prison code and Id`() {
     facade.getOfficialVisitByPrisonCodeAndId(MOORLAND, 1L)
 
     verify(officialVisitsRetrievalService).getOfficialVisitByPrisonCodeAndId(MOORLAND, 1L)
+  }
+
+  @Test
+  fun `should delegate to service to fetch official visit by Id`() {
+    whenever(officialVisitsRetrievalService.getPrisonCodeForOfficialVisitId(1L)).thenReturn("MDI")
+
+    facade.getOfficialVisitById(1L, MOORLAND_PRISON_USER)
+
+    verify(officialVisitsRetrievalService).getOfficialVisitById(1L)
+  }
+
+  @Test
+  fun `should fail to get by ID with if user is not in the correct caseload`() {
+    whenever(officialVisitsRetrievalService.getPrisonCodeForOfficialVisitId(1L)).thenReturn("MDI")
+
+    assertThrows<CaseloadAccessHiddenException> {
+      facade.getOfficialVisitById(1, PENTONVILLE_PRISON_USER)
+    }
+      .message isEqualTo "The visit was not found or is restricted by caseload"
   }
 
   @Test

@@ -65,7 +65,16 @@ class OfficialVisitFacade(
     }
   }
 
-  fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, officialVisitId: Long): OfficialVisitDetails = officialVisitsRetrievalService.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
+  fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, officialVisitId: Long) = officialVisitsRetrievalService.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
+
+  open fun getOfficialVisitById(officialVisitId: Long, user: User): OfficialVisitDetails {
+    val visitAtPrison = officialVisitsRetrievalService.getPrisonCodeForOfficialVisitId(officialVisitId)
+    if (user is PrisonUser) {
+      // With the hiddenException option this will respond with 404 NotFound if the user does not have caseload access to the visit
+      checkPrisonUsersCaseloads(visitAtPrison, user, "The visit was not found or is restricted by caseload", hiddenException = true)
+    }
+    return officialVisitsRetrievalService.getOfficialVisitById(officialVisitId)
+  }
 
   fun searchForOfficialVisitSummaries(
     prisonCode: String,
@@ -224,11 +233,16 @@ class OfficialVisitFacade(
 
   fun findOverlappingScheduledVisits(prisonCode: String, request: OverlappingVisitsCriteriaRequest) = overlappingVisitsService.findOverlappingScheduledVisits(prisonCode, request)
 
-  private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String) {
+  private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String, hiddenException: Boolean = false) {
     if (!user.hasCaseloadAccess(prisonCode)) {
-      throw CaseloadAccessException(message)
+      if (hiddenException) {
+        throw CaseloadAccessHiddenException(message)
+      } else {
+        throw CaseloadAccessException(message)
+      }
     }
   }
 }
 
 class CaseloadAccessException(message: String) : RuntimeException(message)
+class CaseloadAccessHiddenException(message: String) : RuntimeException(message)

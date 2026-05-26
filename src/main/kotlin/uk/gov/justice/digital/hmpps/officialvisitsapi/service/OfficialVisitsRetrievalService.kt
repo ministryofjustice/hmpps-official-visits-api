@@ -31,6 +31,27 @@ class OfficialVisitsRetrievalService(
 ) {
 
   @Transactional(readOnly = true)
+  fun getPrisonCodeForOfficialVisitId(id: Long): String {
+    val ov = officialVisitRepository.findByOfficialVisitId(id)
+      ?: throw EntityNotFoundException("Official visit with id $id was not found")
+    return ov.prisonCode
+  }
+
+  @Transactional(readOnly = true)
+  fun getOfficialVisitById(id: Long): OfficialVisitDetails {
+    val ove = officialVisitRepository.findByOfficialVisitId(id)
+      ?: throw EntityNotFoundException("Official visit with id $id was not found")
+
+    val prisoner = prisonerSearchClient.getPrisoner(ove.prisonerNumber)
+      ?: throw EntityNotFoundException("Prisoner not found ${ove.prisonerNumber}")
+
+    val pve = prisonerVisitedRepository.findByOfficialVisit(ove)
+      ?: throw EntityNotFoundException("Prisoner visited not found for visit ID $id")
+
+    return populateOfficialVisitDetails(ove, prisoner, pve)
+  }
+
+  @Transactional(readOnly = true)
   fun getOfficialVisitByPrisonCodeAndId(prisonCode: String, id: Long): OfficialVisitDetails {
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(id, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $id and prison code $prisonCode not found")

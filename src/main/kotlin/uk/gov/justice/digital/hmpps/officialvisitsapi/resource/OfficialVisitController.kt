@@ -85,7 +85,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Official visit found",
+        description = "Visit details",
         content = [
           Content(
             mediaType = "application/json",
@@ -95,7 +95,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No official visit found",
+        description = "Official visit not found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -115,6 +115,41 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       required = true,
     ) officialVisitId: Long,
   ): OfficialVisitDetails = facade.getOfficialVisitByPrisonCodeAndId(prisonCode, officialVisitId)
+
+  @GetMapping("/id/{officialVisitId}")
+  @Operation(
+    summary = "Get an official visit by official visit ID",
+    description = "Get the full details of an official visit, its visitors and prisoner details",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit details",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = OfficialVisitDetails::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Official visit not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun getOfficialVisitById(
+    @PathVariable @Parameter(
+      name = "officialVisitId",
+      description = "The official visit ID",
+      example = "123456",
+      required = true,
+    ) officialVisitId: Long,
+    httpRequest: HttpServletRequest,
+  ): OfficialVisitDetails = facade.getOfficialVisitById(officialVisitId, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Endpoint to search for official visit summaries for given search criteria.")
   @PostMapping(path = ["/prison/{prisonCode}/find-by-criteria"], consumes = [MediaType.APPLICATION_JSON_VALUE])
