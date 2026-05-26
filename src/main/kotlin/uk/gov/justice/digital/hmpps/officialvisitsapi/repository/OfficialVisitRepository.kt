@@ -16,6 +16,8 @@ import java.time.LocalTime
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   fun findByOfficialVisitIdAndPrisonCode(officialVisitId: Long, prisonCode: String): OfficialVisitEntity?
 
+  fun findByOfficialVisitId(officialVisitId: Long): OfficialVisitEntity?
+
   @Query("SELECT ov.officialVisitId FROM OfficialVisitEntity ov WHERE (:currentTermOnly is null OR ov.currentTerm = :currentTermOnly)")
   fun findAllOfficialVisitIds(currentTermOnly: Boolean?, pageable: Pageable): Page<Long>
 
