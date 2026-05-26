@@ -19,9 +19,15 @@ menu_function() {
   echo " 5 - Add a prison"
   echo " 6 - Remove a prison"
   echo ""
-  echo " 7 - Toggle two month calendar feature"
+  echo "Prisons which see a warning for pending NOMIS screen switch-off"
   echo ""
-  echo " 9 - Restart services for changes to take effect"
+  echo " 7 - Replace with a new list"
+  echo " 8 - Add a prison"
+  echo " 9 - Remove a prison"
+  echo ""
+  echo " 10 - Toggle two month calendar feature"
+  echo ""
+  echo " 11 - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
   echo "----------------------------"
@@ -36,15 +42,17 @@ show_current() {
   FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS}' | base64 -d)
   FEATURE_DPS_ENABLED_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_DPS_ENABLED_PRISONS}' | base64 -d)
   FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
+  FEATURE_NOMIS_SWITCH_OFF_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
   NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
 
   clear
   echo "-------------------------------------------------------------------------------------"
-  echo "Environment                 : $ENV"
-  echo "Social visitors allowed in  : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
-  echo "DPS visits enabled in       : $FEATURE_DPS_ENABLED_PRISONS"
-  echo "Notify API key              : ${NOTIFY_API_KEY:-Missing}"
-  echo "Two month calendar enabled  : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
+  echo "Environment                   : $ENV"
+  echo "Social visitors allowed in    : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
+  echo "DPS visits enabled in         : $FEATURE_DPS_ENABLED_PRISONS"
+  echo "Notify API key                : ${NOTIFY_API_KEY:-Missing}"
+  echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
+  echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
 }
 
 add_dps_enabled_prison() {
@@ -99,6 +107,34 @@ remove_prison_from_social_allowed_prisons() {
   NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
   echo "Applying new value : $NEW"
   stringData="{\"stringData\":{\"FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+add_nomis_switch_off_prison() {
+  echo "Adding $3 to NOMIS switch off prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
+  NEW="$CURRENT,$3"
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_NOMIS_SWITCH_OFF_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+add_list_nomis_switch_off_prisons() {
+  echo "Replace existing list with $3 for NOMIS switch off prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
+  NEW=$3
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_NOMIS_SWITCH_OFF_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+remove_prison_from_nomis_switch_off_prisons() {
+  echo "Removing prison $3 from NOMIS switch off prisons in $1 namespace $2"
+  prison=$3
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
+  NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_NOMIS_SWITCH_OFF_PRISONS\":\"$NEW\"}}"
   kubectl -n "$2" patch secret feature-toggles -p $stringData
 }
 
@@ -166,13 +202,29 @@ while true; do
           read -p "Enter a prison code to remove : " prison
           remove_prison_from_social_allowed_prisons "$ENV" "$NAMESPACE" "$prison"
           ;;
-      
+
       7)
+          echo "Replace the list of prisons which warn of NOMIS screen switch off"
+          read -p "Enter a comma-separated list of prison to replace the current list : " prison_list
+          add_list_nomis_switch_off_prisons "$ENV" "$NAMESPACE" "$prison_list"
+          ;;
+      8)
+          echo "Add a prison to the list which warn of NOMIS screen switch off"
+          read -p "Enter a prison code to add : " prison
+          add_nomis_switch_off_prison "$ENV" "$NAMESPACE" "$prison"
+          ;;
+       9)
+          echo "Remove a prison from the list which warn of NOMIS screen switch off"
+          read -p "Enter a prison code to remove : " prison
+          remove_prison_from_nomis_switch_off_prisons "$ENV" "$NAMESPACE" "$prison"
+          ;;
+
+      10)
           echo "Toggle two month calendar - currently ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           toggle_two_month_calendar "$ENV" "$NAMESPACE" "${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           ;;
 
-      9)  echo "Restarting services"
+      11)  echo "Restarting services"
           restart_services "$ENV" "$NAMESPACE"
           ;;
 
