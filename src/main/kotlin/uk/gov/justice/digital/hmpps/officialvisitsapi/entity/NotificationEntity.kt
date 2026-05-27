@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.entity
 
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -25,5 +27,14 @@ class NotificationEntity(
 
   val govNotifyNotificationId: UUID,
 
+  @Enumerated(EnumType.STRING)
+  val emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
+
   val createdTime: LocalDateTime = LocalDateTime.now(),
 )
+
+enum class NotificationEmailStatus {
+  PENDING,
+  SENT,
+  FAILED,
+}
