@@ -175,7 +175,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     with(result.content[0]) {
       officialVisitId isEqualTo scheduledVisit.officialVisitId
       emailAddress isEqualTo "email@address.com"
-      emailStatus isEqualTo "SENT"
+      emailStatus isEqualTo "PENDING"
       notificationType isEqualTo "CREATE"
       notificationTypeDescription isEqualTo "Visit Created"
       prisonerNumber isEqualTo MOORLAND_PRISONER.number

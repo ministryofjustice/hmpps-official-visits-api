@@ -57,4 +57,3 @@ data class SentEmailSearchPage(
   @Schema(description = "The total number of pages", example = "8")
   val totalPages: Long,
 )
-

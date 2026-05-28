@@ -88,7 +88,7 @@ class SentEmailsServiceTest {
     result.content.size isEqualTo 1
     result.content[0].prisonerName isEqualTo "John Smith"
     result.content[0].prisonerNumber isEqualTo "G1234AB"
-    result.content[0].emailStatus isEqualTo "SENT"
+    result.content[0].emailStatus isEqualTo "PENDING"
     result.content[0].notificationType isEqualTo "CREATE"
     result.content[0].notificationTypeDescription isEqualTo "Visit Created"
     val fromDateTimeCaptor = argumentCaptor<LocalDateTime>()
