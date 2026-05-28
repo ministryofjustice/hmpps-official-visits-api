@@ -28,11 +28,9 @@ class NotificationEntity(
   val govNotifyNotificationId: UUID,
 
   @Enumerated(EnumType.STRING)
-  val emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
+  var emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
 
   val createdTime: LocalDateTime = LocalDateTime.now(),
-
-  var status: String? = null,
 
   var statusUpdatedTime: LocalDateTime? = null,
 )
