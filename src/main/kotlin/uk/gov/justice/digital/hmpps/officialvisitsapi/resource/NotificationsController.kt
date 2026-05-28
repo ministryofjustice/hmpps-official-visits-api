@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -22,7 +23,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.E
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationsFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 
 @Tag(name = "Notifications")
 @RestController
@@ -66,4 +69,34 @@ class NotificationsController(private val notificationFacade: NotificationsFacad
     request: NotificationRequest,
     httpRequest: HttpServletRequest,
   ) = notificationFacade.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
+
+  @Operation(summary = "Endpoint to retrieve a list of sent email notifications with search and pagination support.")
+  @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun searchSentEmails(
+    @PathVariable @Parameter(
+      name = "prisonCode",
+      description = "The prison code",
+      example = "MDI",
+      required = true,
+    ) prisonCode: String,
+    @Valid
+    @RequestBody
+    @Parameter(description = "The request containing sent-email search criteria", required = true)
+    request: SentEmailSearchCriteria,
+    @Parameter(
+      description = "Zero-based page index (0..N)",
+      name = "page",
+      schema = Schema(type = "integer", defaultValue = "0"),
+    )
+    page: Int = 0,
+    @Parameter(
+      description = "The size of the page to be returned",
+      name = "size",
+      schema = Schema(type = "integer", defaultValue = "10"),
+    )
+    size: Int = 20,
+    httpRequest: HttpServletRequest,
+  ): PagedModel<SentEmailRecord> = notificationFacade.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 }

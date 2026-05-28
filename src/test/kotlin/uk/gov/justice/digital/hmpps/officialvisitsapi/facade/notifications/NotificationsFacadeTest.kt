@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
@@ -40,8 +41,9 @@ class NotificationsFacadeTest {
   private val emailService: EmailService = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val notificationRepository: NotificationRepository = mock()
+  private val sentEmailsService: SentEmailsService = mock()
   private val notification: NotificationEntity = mock()
-  private val facade = NotificationsFacade(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository)
+  private val facade = NotificationsFacade(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository, sentEmailsService)
 
   @BeforeEach
   fun beforeEach() {

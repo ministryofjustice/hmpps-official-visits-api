@@ -2,18 +2,23 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
@@ -27,6 +32,7 @@ class NotificationsFacade(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val emailService: EmailService,
   private val notificationRepository: NotificationRepository,
+  private val sentEmailsService: SentEmailsService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -52,6 +58,8 @@ class NotificationsFacade(
     NotificationResponse(officialVisitId, request.notificationType!!, recipients.toList())
   }
 
+  fun searchSentEmails(prisonCode: String, criteria: SentEmailSearchCriteria, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
+
   /**
    * Will return the identifier of the notification created if successful, otherwise null.
    */
@@ -68,6 +76,7 @@ class NotificationsFacade(
             emailAddress = email.emailAddress,
             reason = email.type().name,
             govNotifyNotificationId = govNotifyNotificationId,
+            emailStatus = NotificationEmailStatus.PENDING,
             createdTime = LocalDateTime.now(),
           ),
         ).also { notificationId = it.notificationId }

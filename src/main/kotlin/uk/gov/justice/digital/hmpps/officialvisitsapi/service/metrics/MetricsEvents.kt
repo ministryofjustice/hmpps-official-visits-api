@@ -59,6 +59,12 @@ enum class MetricsEvents(val eventType: String) {
       additionalInformation = additionalInformation,
     )
   },
+  SENT_EMAIL_SEARCH("SentEmailSearch") {
+    override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
+      eventType = eventType,
+      additionalInformation = additionalInformation,
+    )
+  },
   ;
 
   abstract fun event(
@@ -92,6 +98,10 @@ data class OfficialVisitMetricTelemetry(
       is TimeSlotInfo -> {
         baseMap + additionalInformation.timeSLotInfo()
       }
+
+      is SentEmailSearchInfo -> {
+        baseMap + additionalInformation.sentEmailSearchAdditionalInfo()
+      }
     }
   }
 
@@ -100,6 +110,11 @@ data class OfficialVisitMetricTelemetry(
       visitMetrics(additionalInformation)
     }
     is SearchInfo -> {
+      mapOf(
+        "number_of_results" to additionalInformation.numberOfResults.toDouble(),
+      )
+    }
+    is SentEmailSearchInfo -> {
       mapOf(
         "number_of_results" to additionalInformation.numberOfResults.toDouble(),
       )
@@ -153,6 +168,11 @@ private fun SearchInfo.searchAdditionalInfo(): Map<String, String> = mapOf(
   "location_Ids" to "$locationIds",
 )
 
+private fun SentEmailSearchInfo.sentEmailSearchAdditionalInfo(): Map<String, String> = mapOf(
+  "from_date" to "${fromDate ?: ""}",
+  "to_date" to "${toDate ?: ""}",
+)
+
 sealed class MetricInfo(
   open val source: Source = Source.DPS,
   open val username: String,
@@ -196,4 +216,13 @@ data class TimeSlotInfo(
   override val username: String,
   override val prisonCode: String,
   val dayCode: String,
+) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
+
+data class SentEmailSearchInfo(
+  override val source: Source = Source.DPS,
+  override val username: String,
+  override val prisonCode: String,
+  val fromDate: LocalDate? = null,
+  val toDate: LocalDate? = null,
+  val numberOfResults: Int = 0,
 ) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
