@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import java.time.LocalDateTime
@@ -32,7 +33,7 @@ class NotifyCallbackService(
       return
     }
 
-    notification.status = request.status
+    notification.emailStatus = request.status.toEmailStatus()
     notification.statusUpdatedTime = request.completedAt?.toLocalDateTime() ?: LocalDateTime.now()
 
     logger.info(
@@ -40,5 +41,16 @@ class NotifyCallbackService(
       request.id,
       request.status,
     )
+  }
+
+  private fun String.toEmailStatus(): NotificationEmailStatus = when (this.lowercase()) {
+    "delivered" -> NotificationEmailStatus.SENT
+    "permanent-failure" -> NotificationEmailStatus.PERMANENT_FAILURE
+    "temporary-failure" -> NotificationEmailStatus.TEMPORARY_FAILURE
+    "technical-failure" -> NotificationEmailStatus.TECHNICAL_FAILURE
+    else -> {
+      logger.warn("Unknown GOV.UK Notify callback status received: {}", this)
+      NotificationEmailStatus.UNKNOWN
+    }
   }
 }

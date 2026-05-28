@@ -9,6 +9,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.web.server.ResponseStatusException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
@@ -38,8 +39,36 @@ class NotifyCallbackServiceTest {
     facade.processCallback(NotifyCallbackRequest(id = notificationId, status = "delivered", completedAt = completedAt), null)
 
     verify(repository).findByGovNotifyNotificationId(notificationId)
-    assertThat(notification.status).isEqualTo("delivered")
+    assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.SENT)
     assertThat(notification.statusUpdatedTime).isEqualTo(completedAt.toLocalDateTime())
+  }
+
+  @Test
+  fun `should map all notify statuses to internal enum`() {
+    val notificationId = UUID.randomUUID()
+    val notification = NotificationEntity(
+      officialVisitId = 1,
+      templateId = "template-id",
+      emailAddress = "test@example.com",
+      reason = "OFFICIAL_VISIT_CREATED",
+      govNotifyNotificationId = notificationId,
+      createdTime = LocalDateTime.now(),
+    )
+
+    whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
+    val service = NotifyCallbackService(repository, "")
+
+    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "permanent-failure"), null)
+    assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.PERMANENT_FAILURE)
+
+    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "temporary-failure"), null)
+    assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TEMPORARY_FAILURE)
+
+    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "technical-failure"), null)
+    assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TECHNICAL_FAILURE)
+
+    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "unexpected-status"), null)
+    assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.UNKNOWN)
   }
 
   @Test

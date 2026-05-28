@@ -40,5 +40,8 @@ class NotificationEntity(
 enum class NotificationEmailStatus {
   PENDING,
   SENT,
-  FAILED,
+  PERMANENT_FAILURE,
+  TEMPORARY_FAILURE,
+  TECHNICAL_FAILURE,
+  UNKNOWN,
 }
