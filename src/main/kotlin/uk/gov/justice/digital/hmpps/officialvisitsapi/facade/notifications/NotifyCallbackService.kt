@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import java.time.LocalDateTime
 
@@ -21,24 +21,24 @@ class NotifyCallbackService(
   }
 
   @Transactional
-  fun processCallback(request: NotifyCallbackRequest, authorizationHeader: String?) {
+  fun processCallback(request: NotifyCallbackNotificationRequest, authorizationHeader: String?) {
     if (callbackBearerToken.isNotBlank() && authorizationHeader != "Bearer $callbackBearerToken") {
       throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid callback token")
     }
 
-    val notification = notificationRepository.findByGovNotifyNotificationId(request.id)
+    val notification = notificationRepository.findByGovNotifyNotificationId(request.notificationId)
 
     if (notification == null) {
-      logger.warn("Received GOV.UK Notify callback for unknown notification id {}", request.id)
+      logger.warn("Received GOV.UK Notify callback for unknown notification id {}", request.notificationId)
       return
     }
 
     notification.emailStatus = request.status.toEmailStatus()
-    notification.statusUpdatedTime = request.completedAt?.toLocalDateTime() ?: LocalDateTime.now()
+    notification.statusUpdatedTime = request.completedAt ?: LocalDateTime.now()
 
     logger.info(
       "Processed GOV.UK Notify callback for notification id {} with status {}",
-      request.id,
+      request.notificationId,
       request.status,
     )
   }

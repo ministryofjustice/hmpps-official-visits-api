@@ -11,10 +11,9 @@ import org.mockito.kotlin.whenever
 import org.springframework.web.server.ResponseStatusException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.util.UUID
 
 class NotifyCallbackServiceTest {
@@ -31,16 +30,16 @@ class NotifyCallbackServiceTest {
       govNotifyNotificationId = notificationId,
       createdTime = LocalDateTime.now(),
     )
-    val completedAt = OffsetDateTime.parse("2026-05-28T10:15:00Z")
+    val completedAt = LocalDateTime.parse("2026-05-28T10:15:00")
 
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
 
     val facade = NotifyCallbackService(repository, "")
-    facade.processCallback(NotifyCallbackRequest(id = notificationId, status = "delivered", completedAt = completedAt), null)
+    facade.processCallback(callbackRequest(notificationId, "delivered", completedAt), null)
 
     verify(repository).findByGovNotifyNotificationId(notificationId)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.SENT)
-    assertThat(notification.statusUpdatedTime).isEqualTo(completedAt.toLocalDateTime())
+    assertThat(notification.statusUpdatedTime).isEqualTo(completedAt)
   }
 
   @Test
@@ -58,16 +57,16 @@ class NotifyCallbackServiceTest {
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
     val service = NotifyCallbackService(repository, "")
 
-    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "permanent-failure"), null)
+    service.processCallback(callbackRequest(notificationId, "permanent-failure"), null)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.PERMANENT_FAILURE)
 
-    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "temporary-failure"), null)
+    service.processCallback(callbackRequest(notificationId, "temporary-failure"), null)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TEMPORARY_FAILURE)
 
-    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "technical-failure"), null)
+    service.processCallback(callbackRequest(notificationId, "technical-failure"), null)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TECHNICAL_FAILURE)
 
-    service.processCallback(NotifyCallbackRequest(id = notificationId, status = "unexpected-status"), null)
+    service.processCallback(callbackRequest(notificationId, "unexpected-status"), null)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.UNKNOWN)
   }
 
@@ -76,9 +75,26 @@ class NotifyCallbackServiceTest {
     val facade = NotifyCallbackService(repository, "expected-token")
 
     assertThrows<ResponseStatusException> {
-      facade.processCallback(NotifyCallbackRequest(id = UUID.randomUUID(), status = "delivered"), "Bearer wrong-token")
+      facade.processCallback(callbackRequest(UUID.randomUUID(), "delivered"), "Bearer wrong-token")
     }
 
     verifyNoInteractions(repository)
   }
+
+  private fun callbackRequest(
+    notificationId: UUID,
+    status: String,
+    completedAt: LocalDateTime? = null,
+  ) = NotifyCallbackNotificationRequest(
+    notificationId = notificationId,
+    eventAuditReference = "event-audit-reference",
+    status = status,
+    createdAt = LocalDateTime.parse("2026-05-28T09:00:00"),
+    completedAt = completedAt,
+    sentAt = LocalDateTime.parse("2026-05-28T09:05:00"),
+    sentTo = "test@example.com",
+    notificationType = "email",
+    templateId = UUID.randomUUID(),
+    templateVersion = 1,
+  )
 }

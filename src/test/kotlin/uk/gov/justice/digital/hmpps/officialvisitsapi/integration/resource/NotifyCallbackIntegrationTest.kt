@@ -44,8 +44,13 @@ class NotifyCallbackIntegrationTest : IntegrationTestBase() {
           {
             "id": "$govNotifyId",
             "status": "delivered",
+            "created_at": "2026-05-28T09:00:00",
             "completed_at": "$completedAt",
+            "sent_at": "2026-05-28T09:05:00",
+            "to": "email@address.com",
             "notification_type": "email"
+            ,"template_id": "${UUID.randomUUID()}"
+            ,"template_version": 1
           }
         """.trimIndent(),
       )
@@ -80,7 +85,12 @@ class NotifyCallbackIntegrationTest : IntegrationTestBase() {
           {
             "id": "$govNotifyId",
             "status": "permanent-failure",
+            "created_at": "2026-05-28T09:00:00",
+            "sent_at": "2026-05-28T09:05:00",
+            "to": "email@address.com",
             "notification_type": "email"
+            ,"template_id": "${UUID.randomUUID()}"
+            ,"template_version": 1
           }
         """.trimIndent(),
       )
