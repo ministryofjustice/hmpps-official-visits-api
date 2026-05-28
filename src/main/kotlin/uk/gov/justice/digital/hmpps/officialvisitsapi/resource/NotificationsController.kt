@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailSearchResults
 
 @Tag(name = "Notifications")
 @RestController
@@ -72,20 +71,6 @@ class NotificationsController(private val notificationFacade: NotificationsFacad
   ) = notificationFacade.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Endpoint to retrieve a list of sent email notifications with search and pagination support.")
-  @ApiResponses(
-    value = [
-      ApiResponse(
-        responseCode = "200",
-        description = "The paginated response containing the list of sent email notifications",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = SentEmailSearchResults::class),
-          ),
-        ],
-      ),
-    ],
-  )
   @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")

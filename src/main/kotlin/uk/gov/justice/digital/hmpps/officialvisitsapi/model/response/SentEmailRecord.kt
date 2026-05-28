@@ -39,21 +39,3 @@ data class SentEmailRecord(
   @Schema(description = "The description of the notification type", example = "Visit Created")
   val notificationTypeDescription: String,
 )
-
-data class SentEmailSearchResults(
-  @Schema(description = "The page content")
-  val content: List<SentEmailRecord>,
-  @Schema(description = "Paging metadata for the current response")
-  val page: SentEmailSearchPage,
-)
-
-data class SentEmailSearchPage(
-  @Schema(description = "The size of the current page", example = "20")
-  val size: Long,
-  @Schema(description = "The current page number (zero-based)", example = "0")
-  val number: Long,
-  @Schema(description = "The total number of elements", example = "150")
-  val totalElements: Long,
-  @Schema(description = "The total number of pages", example = "8")
-  val totalPages: Long,
-)
