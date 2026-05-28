@@ -12,6 +12,7 @@ class ResourceServerConfiguration {
       addPaths = setOf(
         "/queue-admin/retry-all-dlqs",
         "/job-admin/**",
+        "/notify/callback",
       )
     }
   }

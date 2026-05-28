@@ -31,6 +31,10 @@ class NotificationEntity(
   val emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
 
   val createdTime: LocalDateTime = LocalDateTime.now(),
+
+  var status: String? = null,
+
+  var statusUpdatedTime: LocalDateTime? = null,
 )
 
 enum class NotificationEmailStatus {
