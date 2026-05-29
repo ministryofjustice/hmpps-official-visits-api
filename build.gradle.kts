@@ -27,7 +27,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
   implementation("org.springdoc:springdoc-openapi-starter-common:3.0.3")
   constraints {
-    implementation("org.webjars:swagger-ui:5.32.2")
+    implementation("org.webjars:swagger-ui:5.32.6")
   }
 
   // Postgresql dependencies
@@ -42,7 +42,7 @@ dependencies {
 
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
-  testImplementation("org.springframework.security:spring-security-test:7.0.2")
+  testImplementation("org.springframework.security:spring-security-test:7.0.5")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
@@ -55,9 +55,9 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.1")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.1")
-  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.2")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.2")
+  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.2")
 
   // Mockito
   testImplementation("org.mockito:mockito-inline:5.2.0")
