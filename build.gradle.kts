@@ -4,23 +4,15 @@ import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.3.1"
-  id("org.openapi.generator") version "7.16.0"
+  id("org.openapi.generator") version "7.22.0"
   kotlin("plugin.spring") version "2.3.21"
   kotlin("plugin.jpa") version "2.3.21"
 }
 
-allOpen {
-  annotations(
-    "javax.persistence.Entity",
-    "javax.persistence.MappedSuperclass",
-    "javax.persistence.Embeddable",
-  )
-}
-
 dependencies {
   // HMPPS dependencies
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.2.0")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.3.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.5.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.3.2")
 
   // Spring boot dependencies
   implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -30,32 +22,26 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
-  // Gson
-  implementation("org.springframework.boot:spring-boot-gson:4.0.0")
-
   // OpenAPI dependencies
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.0.3")
   constraints {
     implementation("org.webjars:swagger-ui:5.32.2")
   }
-  implementation("org.springdoc:springdoc-openapi-starter-common:3.0.2")
-
-  // ?? Jackson databind
-  implementation("org.openapitools:jackson-databind-nullable:0.2.7")
 
   // Postgresql dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
-  runtimeOnly("org.postgresql:postgresql:42.7.10")
+  runtimeOnly("org.postgresql:postgresql:42.7.11")
 
   // Open telemetry dependencies
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.21.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.28.1")
 
   // Gov Notify client
   implementation("uk.gov.service.notify:notifications-java-client:6.0.0-RELEASE")
 
   // Test dependencies
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.2.0")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
   testImplementation("org.springframework.security:spring-security-test:7.0.2")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
@@ -69,45 +55,34 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.1")
 
   // Mockito
   testImplementation("org.mockito:mockito-inline:5.2.0")
 
   // Test containers
-  testImplementation("org.testcontainers:postgresql:1.21.3")
+  testImplementation("org.testcontainers:postgresql:1.21.4")
 
   // Wiremock
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.41") {
+  // Swagger
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.43") {
     exclude(group = "io.swagger.core.v3")
   }
 }
 
 kotlin {
   jvmToolchain(25)
-  compilerOptions {
-    freeCompilerArgs.addAll("-Xwhen-guards", "-Xannotation-default-target=param-property")
-  }
-}
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_24
-  targetCompatibility = JavaVersion.VERSION_24
 }
 
 tasks {
   withType<KotlinCompile> {
     dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel")
-    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
+    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
-    compilerOptions.freeCompilerArgs.add("-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled")
-  }
-  withType<Test> {
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
   }
 }
 
