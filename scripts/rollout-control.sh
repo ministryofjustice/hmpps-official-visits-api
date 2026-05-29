@@ -27,10 +27,22 @@ menu_function() {
   echo ""
   echo " 10 - Toggle two month calendar feature"
   echo ""
-  echo " 11 - Restart services for changes to take effect"
+  echo " 11 - Set Notify callback bearer token"
+  echo ""
+  echo " 12 - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
   echo "----------------------------"
+}
+
+mask_secret() {
+  local value="$1"
+
+  if [[ -z "$value" ]]; then
+    echo "Missing"
+  else
+    echo "Present"
+  fi
 }
 
 show_current() {
@@ -44,13 +56,15 @@ show_current() {
   FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
   FEATURE_NOMIS_SWITCH_OFF_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
   NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
+  NOTIFY_CALLBACK_BEARER_TOKEN=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_CALLBACK_BEARER_TOKEN}' | base64 -d)
 
   clear
   echo "-------------------------------------------------------------------------------------"
   echo "Environment                   : $ENV"
   echo "Social visitors allowed in    : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
   echo "DPS visits enabled in         : $FEATURE_DPS_ENABLED_PRISONS"
-  echo "Notify API key                : ${NOTIFY_API_KEY:-Missing}"
+  echo "Notify API key                : $(mask_secret "$NOTIFY_API_KEY")"
+  echo "Notify callback bearer token  : $(mask_secret "$NOTIFY_CALLBACK_BEARER_TOKEN")"
   echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
 }
@@ -155,6 +169,17 @@ toggle_two_month_calendar() {
   kubectl -n "$namespace" patch secret feature-toggles -p $stringData
 }
 
+set_notify_callback_bearer_token() {
+  local env="$1"
+  local namespace="$2"
+  local token="$3"
+
+  echo "Updating Notify callback bearer token in $env namespace $namespace"
+
+  stringData="{\"stringData\":{\"NOTIFY_CALLBACK_BEARER_TOKEN\":\"$token\"}}"
+  kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
+}
+
 restart_services() {
    echo "Restarting UI service in $1 namespace $2"
    kubectl -n "$2" rollout restart deployments/hmpps-official-visits-ui
@@ -224,7 +249,12 @@ while true; do
           toggle_two_month_calendar "$ENV" "$NAMESPACE" "${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           ;;
 
-      11)  echo "Restarting services"
+      11)
+          read -r -p "Enter NOTIFY_CALLBACK_BEARER_TOKEN value : " notify_callback_bearer_token
+          set_notify_callback_bearer_token "$ENV" "$NAMESPACE" "$notify_callback_bearer_token"
+          ;;
+
+      12)  echo "Restarting services"
           restart_services "$ENV" "$NAMESPACE"
           ;;
 
