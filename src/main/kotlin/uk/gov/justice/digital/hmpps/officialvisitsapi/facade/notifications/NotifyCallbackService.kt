@@ -2,10 +2,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
@@ -21,11 +19,7 @@ class NotifyCallbackService(
   }
 
   @Transactional
-  fun processCallback(request: NotifyCallbackNotificationRequest, authorizationHeader: String?) {
-    if (callbackBearerToken.isNotBlank() && authorizationHeader != "Bearer $callbackBearerToken") {
-      throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid callback token")
-    }
-
+  fun processCallback(request: NotifyCallbackNotificationRequest) {
     val notification = notificationRepository.findByGovNotifyNotificationId(request.notificationId)
 
     if (notification == null) {

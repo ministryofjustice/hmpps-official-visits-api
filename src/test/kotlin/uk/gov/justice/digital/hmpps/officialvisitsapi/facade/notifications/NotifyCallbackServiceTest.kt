@@ -2,13 +2,10 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
-import org.springframework.web.server.ResponseStatusException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
@@ -35,7 +32,7 @@ class NotifyCallbackServiceTest {
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
 
     val facade = NotifyCallbackService(repository, "")
-    facade.processCallback(callbackRequest(notificationId, "delivered", completedAt), null)
+    facade.processCallback(callbackRequest(notificationId, "delivered", completedAt))
 
     verify(repository).findByGovNotifyNotificationId(notificationId)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.SENT)
@@ -57,28 +54,17 @@ class NotifyCallbackServiceTest {
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
     val service = NotifyCallbackService(repository, "")
 
-    service.processCallback(callbackRequest(notificationId, "permanent-failure"), null)
+    service.processCallback(callbackRequest(notificationId, "permanent-failure"))
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.PERMANENT_FAILURE)
 
-    service.processCallback(callbackRequest(notificationId, "temporary-failure"), null)
+    service.processCallback(callbackRequest(notificationId, "temporary-failure"))
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TEMPORARY_FAILURE)
 
-    service.processCallback(callbackRequest(notificationId, "technical-failure"), null)
+    service.processCallback(callbackRequest(notificationId, "technical-failure"))
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TECHNICAL_FAILURE)
 
-    service.processCallback(callbackRequest(notificationId, "unexpected-status"), null)
+    service.processCallback(callbackRequest(notificationId, "unexpected-status"))
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.UNKNOWN)
-  }
-
-  @Test
-  fun `should reject callback when bearer token is invalid`() {
-    val facade = NotifyCallbackService(repository, "expected-token")
-
-    assertThrows<ResponseStatusException> {
-      facade.processCallback(callbackRequest(UUID.randomUUID(), "delivered"), "Bearer wrong-token")
-    }
-
-    verifyNoInteractions(repository)
   }
 
   private fun callbackRequest(

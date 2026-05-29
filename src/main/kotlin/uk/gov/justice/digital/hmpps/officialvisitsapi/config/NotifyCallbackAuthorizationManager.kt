@@ -28,7 +28,7 @@ class NotifyCallbackAuthorizationManager(
   ): AuthorizationResult {
     if (govNotifyAccessToken.isBlank()) {
       LOG.info("GOV.UK Notify callback authorization disabled because no token is configured")
-      return AuthorizationDecision(true)
+      return AuthorizationDecision(false)
     }
 
     val providedToken = requestAuthorizationContext.request.getHeader("Authorization")?.removePrefix("Bearer ")

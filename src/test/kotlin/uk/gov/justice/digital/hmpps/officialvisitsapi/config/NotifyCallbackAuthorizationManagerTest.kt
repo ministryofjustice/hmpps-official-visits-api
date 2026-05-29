@@ -13,12 +13,12 @@ import java.util.function.Supplier
 class NotifyCallbackAuthorizationManagerTest {
 
   @Test
-  fun `should allow callback when no token configured`() {
+  fun `should not allow callback when no token configured`() {
     val manager = NotifyCallbackAuthorizationManager("")
 
     val decision = manager.authorize(authenticationSupplier(), RequestAuthorizationContext(MockHttpServletRequest()))
 
-    assertThat((decision as AuthorizationDecision).isGranted).isTrue()
+    assertThat((decision as AuthorizationDecision).isGranted).isFalse()
   }
 
   @Test
