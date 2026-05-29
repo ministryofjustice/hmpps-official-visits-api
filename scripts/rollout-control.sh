@@ -63,8 +63,8 @@ show_current() {
   echo "Environment                   : $ENV"
   echo "Social visitors allowed in    : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
   echo "DPS visits enabled in         : $FEATURE_DPS_ENABLED_PRISONS"
-  echo "Notify API key                : $(mask_secret "$NOTIFY_API_KEY")"
-  echo "Notify callback bearer token  : $(mask_secret "$NOTIFY_CALLBACK_BEARER_TOKEN")"
+  echo "Notify API key                : ${NOTIFY_API_KEY:-Missing}"
+  echo "Notify callback bearer token  : $(NOTIFY_CALLBACK_BEARER_TOKEN:-Missing}"
   echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
 }
