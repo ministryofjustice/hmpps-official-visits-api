@@ -9,9 +9,11 @@ import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.REQUEST_TIMEOUT
+import org.springframework.http.HttpStatus.UNAUTHORIZED
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
@@ -80,6 +82,17 @@ class OfficialVisitsApiExceptionHandler {
         developerMessage = e.message,
       ),
     ).also { log.debug("Forbidden (403) returned: {}", e.message) }
+
+  @ExceptionHandler(BadCredentialsException::class)
+  fun handleBadCredentialsException(e: BadCredentialsException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(UNAUTHORIZED)
+    .body(
+      ErrorResponse(
+        status = UNAUTHORIZED,
+        userMessage = "Unauthorized: ${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.debug("Unauthorized (401) returned: {}", e.message) }
 
   @ExceptionHandler(EntityInUseException::class)
   fun handleEntityInUseException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity

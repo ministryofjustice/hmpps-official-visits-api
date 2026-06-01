@@ -28,13 +28,18 @@ class NotificationEntity(
   val govNotifyNotificationId: UUID,
 
   @Enumerated(EnumType.STRING)
-  val emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
+  var emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
 
   val createdTime: LocalDateTime = LocalDateTime.now(),
+
+  var statusUpdatedTime: LocalDateTime? = null,
 )
 
 enum class NotificationEmailStatus {
   PENDING,
   SENT,
-  FAILED,
+  PERMANENT_FAILURE,
+  TEMPORARY_FAILURE,
+  TECHNICAL_FAILURE,
+  UNKNOWN,
 }

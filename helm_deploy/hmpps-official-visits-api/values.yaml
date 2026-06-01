@@ -66,8 +66,12 @@ generic-service:
     feature-toggles:
       FEATURE_DPS_ENABLED_PRISONS: "FEATURE_DPS_ENABLED_PRISONS?"
       FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS: 'FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS'
+      NOTIFY_CALLBACK_SECRET: 'NOTIFY_CALLBACK_SECRET'
 
   allowlist:
+    gov-notify-1: 52.17.149.153
+    gov-notify-2: 63.33.132.231
+    gov-notify-3: 54.216.159.202
     groups:
       - moj_cloud_platform
       - digital_staff_and_mojo

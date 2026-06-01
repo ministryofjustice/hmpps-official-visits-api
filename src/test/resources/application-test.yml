@@ -60,3 +60,7 @@ feature:
         created: true
         updated: true
         deleted: true
+
+notify:
+  callback:
+    secret: "TestSecret"
