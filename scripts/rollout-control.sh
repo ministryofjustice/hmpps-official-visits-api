@@ -56,7 +56,7 @@ show_current() {
   FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
   FEATURE_NOMIS_SWITCH_OFF_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
   NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
-  NOTIFY_CALLBACK_BEARER_TOKEN=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_CALLBACK_BEARER_TOKEN}' | base64 -d)
+  NOTIFY_CALLBACK_SECRET=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_CALLBACK_SECRET}' | base64 -d)
 
   clear
   echo "-------------------------------------------------------------------------------------"
@@ -64,7 +64,7 @@ show_current() {
   echo "Social visitors allowed in    : $FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS"
   echo "DPS visits enabled in         : $FEATURE_DPS_ENABLED_PRISONS"
   echo "Notify API key                : ${NOTIFY_API_KEY:-Missing}"
-  echo "Notify callback bearer token  : $(NOTIFY_CALLBACK_BEARER_TOKEN:-Missing}"
+  echo "Notify callback secret        : ${NOTIFY_CALLBACK_SECRET:-Missing}"
   echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
 }
@@ -169,14 +169,14 @@ toggle_two_month_calendar() {
   kubectl -n "$namespace" patch secret feature-toggles -p $stringData
 }
 
-set_notify_callback_bearer_token() {
+set_notify_callback_secret() {
   local env="$1"
   local namespace="$2"
   local token="$3"
 
-  echo "Updating Notify callback bearer token in $env namespace $namespace"
+  echo "Updating Notify callback secret in $env namespace $namespace"
 
-  stringData="{\"stringData\":{\"NOTIFY_CALLBACK_BEARER_TOKEN\":\"$token\"}}"
+  stringData="{\"stringData\":{\"NOTIFY_CALLBACK_SECRET\":\"$token\"}}"
   kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
 }
 
@@ -250,8 +250,8 @@ while true; do
           ;;
 
       11)
-          read -r -p "Enter NOTIFY_CALLBACK_BEARER_TOKEN value : " notify_callback_bearer_token
-          set_notify_callback_bearer_token "$ENV" "$NAMESPACE" "$notify_callback_bearer_token"
+          read -r -p "Enter NOTIFY_CALLBACK_SECRET value : " notify_callback_secret
+          set_notify_callback_secret "$ENV" "$NAMESPACE" "$notify_callback_secret"
           ;;
 
       12)  echo "Restarting services"

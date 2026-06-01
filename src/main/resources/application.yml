@@ -142,4 +142,4 @@ notify:
   templates:
     official-visit-created: 99292100-5858-4b08-8e20-101e8df708de
   callback:
-    bearer-token: ${NOTIFY_CALLBACK_BEARER_TOKEN:}
+    secret: ${NOTIFY_CALLBACK_SECRET:}
