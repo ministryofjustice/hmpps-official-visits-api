@@ -16,6 +16,8 @@ import java.util.UUID
 class NotifyCallbackServiceTest {
   private val repository: NotificationRepository = mock()
 
+  private val sharedSecret = "TestValue"
+
   @Test
   fun `should update notification status when callback exists`() {
     val notificationId = UUID.randomUUID()
@@ -31,8 +33,9 @@ class NotifyCallbackServiceTest {
 
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
 
-    val facade = NotifyCallbackService(repository, "")
-    facade.processCallback(callbackRequest(notificationId, "delivered", completedAt))
+    val service = NotifyCallbackService(repository, sharedSecret)
+
+    service.processCallback(callbackRequest(notificationId, "delivered", completedAt), "Bearer $sharedSecret")
 
     verify(repository).findByGovNotifyNotificationId(notificationId)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.SENT)
@@ -52,18 +55,19 @@ class NotifyCallbackServiceTest {
     )
 
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
-    val service = NotifyCallbackService(repository, "")
 
-    service.processCallback(callbackRequest(notificationId, "permanent-failure"))
+    val service = NotifyCallbackService(repository, sharedSecret)
+
+    service.processCallback(callbackRequest(notificationId, "permanent-failure"), "Bearer $sharedSecret")
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.PERMANENT_FAILURE)
 
-    service.processCallback(callbackRequest(notificationId, "temporary-failure"))
+    service.processCallback(callbackRequest(notificationId, "temporary-failure"), "Bearer $sharedSecret")
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TEMPORARY_FAILURE)
 
-    service.processCallback(callbackRequest(notificationId, "technical-failure"))
+    service.processCallback(callbackRequest(notificationId, "technical-failure"), "Bearer $sharedSecret")
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.TECHNICAL_FAILURE)
 
-    service.processCallback(callbackRequest(notificationId, "unexpected-status"))
+    service.processCallback(callbackRequest(notificationId, "unexpected-status"), "Bearer $sharedSecret")
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.UNKNOWN)
   }
 

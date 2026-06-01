@@ -13,8 +13,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTes
 import java.time.LocalDateTime
 import java.util.UUID
 
-@TestPropertySource(properties = ["notify.callback.bearer-token=notify-callback-token"])
+@TestPropertySource(properties = ["notify.callback.secret=IntegrationTestSecret"])
 class NotifyCallbackAuthenticationIntegrationTest : IntegrationTestBase() {
+  private val validSecret = "Bearer IntegrationTestSecret"
+  private val invalidSecret = "Bearer WrongSecret"
 
   @BeforeEach
   @Transactional
@@ -39,14 +41,14 @@ class NotifyCallbackAuthenticationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should reject callback when callback bearer token is invalid`() {
+  fun `should reject callback when an incorrect secret is provided`() {
     val notification = createNotification()
 
     webTestClient
       .post()
       .uri("/notify/callback")
       .contentType(MediaType.APPLICATION_JSON)
-      .header(HttpHeaders.AUTHORIZATION, "Bearer wrong-token")
+      .header(HttpHeaders.AUTHORIZATION, invalidSecret)
       .bodyValue(callbackBody(notification.govNotifyNotificationId, "delivered"))
       .exchange()
       .expectStatus().isUnauthorized
@@ -56,14 +58,14 @@ class NotifyCallbackAuthenticationIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should accept callback when callback bearer token is valid`() {
+  fun `should accept callback when a valid secret is provided`() {
     val notification = createNotification()
 
     webTestClient
       .post()
       .uri("/notify/callback")
       .contentType(MediaType.APPLICATION_JSON)
-      .header(HttpHeaders.AUTHORIZATION, "Bearer notify-callback-token")
+      .header(HttpHeaders.AUTHORIZATION, validSecret)
       .bodyValue(callbackBody(notification.govNotifyNotificationId, "delivered"))
       .exchange()
       .expectStatus().isNoContent
