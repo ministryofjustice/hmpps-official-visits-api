@@ -21,6 +21,7 @@ generic-service:
   namespace_secrets:
     hmpps-official-visits-gov-notify-creds:
       NOTIFY_API_KEY: "NOTIFY_API_KEY"
+      NOTIFY_CALLBACK_SECRET: "NOTIFY_CALLBACK_SECRET"
 
   allowlist:
     kpmg: 195.68.59.74
