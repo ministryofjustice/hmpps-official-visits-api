@@ -38,7 +38,7 @@ class OfficialVisitCancellationService(
     val prisonerVisited = prisonerVisitedRepository.findByOfficialVisit(officialVisit)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId prisoner not found")
 
-    officialVisit.cancel(request.cancellationReason!!, request.cancellationNotes, user)
+    officialVisit.cancel(request.cancellationReason, request.cancellationNotes, user)
 
     prisonerVisitedRepository.saveAndFlush(
       prisonerVisited.copy(

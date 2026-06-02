@@ -53,12 +53,12 @@ class SyncOfficialVisitService(
     val createdBy = userService.getUser(request.createUsername!!)
       ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.createUsername}")
 
-    val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
+    val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} does not exist")
     }
 
     // When an offenderVisitId is supplied perform a check for duplicates
-    request.offenderVisitId?.let { offenderVisitId ->
+    request.offenderVisitId.let { offenderVisitId ->
       officialVisitRepository.findByOffenderVisitId(offenderVisitId)?.let { duplicate ->
         throw DuplicateOffenderVisitIdConflictException(
           offenderVisitId,

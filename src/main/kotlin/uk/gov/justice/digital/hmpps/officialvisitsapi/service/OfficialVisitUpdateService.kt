@@ -52,7 +52,7 @@ class OfficialVisitUpdateService(
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
-    val newPrisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!)
+    val newPrisonVisitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId)
       .orElseThrow { throw ValidationException("Prison visit slot with id ${request.prisonVisitSlotId} not found.") }
 
     val auditChangeEvent = auditVisitChangeEvent {
@@ -74,11 +74,11 @@ class OfficialVisitUpdateService(
 
     val changedOVEntity = ove.apply {
       prisonVisitSlot = newPrisonVisitSlot
-      visitDate = request.visitDate!!
-      startTime = request.startTime!!
-      endTime = request.endTime!!
-      dpsLocationId = request.dpsLocationId!!
-      visitTypeCode = request.visitTypeCode!!
+      visitDate = request.visitDate
+      startTime = request.startTime
+      endTime = request.endTime
+      dpsLocationId = request.dpsLocationId
+      visitTypeCode = request.visitTypeCode
       updatedBy = user.username
       updatedTime = LocalDateTime.now()
     }

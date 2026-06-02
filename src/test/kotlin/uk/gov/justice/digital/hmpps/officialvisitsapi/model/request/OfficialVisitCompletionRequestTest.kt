@@ -28,8 +28,6 @@ class OfficialVisitCompletionRequestTest : ValidatorBase<OfficialVisitCompletion
 
   @Test
   fun `should be errors for in valid requests`() {
-    request.copy(completionReason = null) failsWithSingle ModelError("completionReason", "The completion reason is mandatory")
-    request.copy(prisonerAttendance = null) failsWithSingle ModelError("prisonerAttendance", "The prisoner attendance is mandatory")
     request.copy(completionNotes = "a".repeat(241)) failsWithSingle ModelError("completionNotes", "The completion notes should not exceed 240 characters")
 
     VisitCompletionType.entries.filter { it.isCancellation }.forEach { reason ->

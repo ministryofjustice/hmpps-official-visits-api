@@ -18,7 +18,6 @@ class OfficialVisitCancellationRequestTest : ValidatorBase<OfficialVisitCancella
 
   @Test
   fun `should be errors for invalid requests`() {
-    request.copy(cancellationReason = null) failsWithSingle ModelError("cancellationReason", "The cancellation reason is mandatory")
     request.copy(cancellationNotes = "a".repeat(241)) failsWithSingle ModelError("cancellationNotes", "The cancellation notes should not exceed 240 characters")
 
     VisitCompletionType.entries.filterNot { it.isCancellation }.forEach { reason ->

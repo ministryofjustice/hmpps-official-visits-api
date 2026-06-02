@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
@@ -16,20 +15,16 @@ import java.util.UUID
 
 data class SyncCreateOfficialVisitRequest(
   @Schema(description = "The NOMIS offender visit ID", example = "133232", required = true)
-  @field:NotNull(message = "The NOMIS offender visit ID is mandatory")
-  var offenderVisitId: Long?,
+  var offenderVisitId: Long,
 
   @Schema(description = "The DPS visit slot ID - this provides the location, start time and end time via configuration data", example = "123132", required = true)
-  @field:NotNull(message = "The DPS visit slot ID is mandatory")
-  var prisonVisitSlotId: Long?,
+  var prisonVisitSlotId: Long,
 
   @Schema(description = "The prison code where the visit takes place", example = "PVI", required = true)
-  @field:NotBlank(message = "The prison code is mandatory")
-  val prisonCode: String?,
+  val prisonCode: String,
 
   @Schema(description = "The offender book ID to echo back. It will be stored in DPS against the visit.", example = "74748", required = true)
-  @field:NotNull(message = "The offender book ID is mandatory")
-  var offenderBookId: Long?,
+  var offenderBookId: Long,
 
   @Schema(description = "The prisoner number (NOMS ID)", example = "A1234AA", required = true)
   @field:NotBlank(message = "The prisoner number for the official visit is mandatory")
@@ -37,31 +32,25 @@ data class SyncCreateOfficialVisitRequest(
   val prisonerNumber: String?,
 
   @Schema(description = "If this visit relates to the current or latest term (booking) in prison true, else false.", example = "true", required = true)
-  @field:NotNull(message = "The current term flag is mandatory")
-  var currentTerm: Boolean? = true,
+  var currentTerm: Boolean = true,
 
   @Schema(description = "The date the official visit will take place", example = "2022-12-23", required = true)
-  @field:NotNull(message = "The date for the official visit is mandatory")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
-  var visitDate: LocalDate?,
+  var visitDate: LocalDate,
 
   @Schema(description = "The start time for this official visit", example = "09:15", required = true)
-  @field:NotNull(message = "The start time is mandatory")
   @JsonFormat(pattern = "HH:mm")
-  var startTime: LocalTime?,
+  var startTime: LocalTime,
 
   @Schema(description = "The end time for this official visit", example = "10:15", required = true)
-  @field:NotNull(message = "The end time is mandatory")
   @JsonFormat(pattern = "HH:mm")
-  var endTime: LocalTime?,
+  var endTime: LocalTime,
 
   @Schema(description = "The DPS location where the visit takes place.", example = "aaaa-bbbb-xxxxxxxx-yyyyyyyy", required = true)
-  @field:NotNull(message = "The DPS location ID is mandatory")
-  var dpsLocationId: UUID?,
+  var dpsLocationId: UUID,
 
   @Schema(description = "The DPS visit status code. The Syscon sync service will map the NOMIS state to a value in this enumerated type.", example = "SCHEDULED", required = true)
-  @field:NotNull(message = "The visit status code from NOMIS is mandatory")
-  var visitStatusCode: VisitStatusType? = VisitStatusType.SCHEDULED,
+  var visitStatusCode: VisitStatusType = VisitStatusType.SCHEDULED,
 
   @Schema(description = "The DPS visit type code. For sync'd NOMIS visits this will default to type UNKNOWN. Other values are IN_PERSON, VIDEO, or TELEPHONE.", example = "UNKNOWN", nullable = true)
   val visitTypeCode: VisitType? = VisitType.UNKNOWN,

@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.SearchLevelType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
@@ -12,36 +11,30 @@ import java.time.LocalTime
 import java.util.UUID
 
 data class CreateOfficialVisitRequest(
-  @field:NotNull(message = "The prison visit slot identifier for the official visit is mandatory")
   val prisonVisitSlotId: Long,
 
   @field:NotBlank(message = "The prisoner number for the official visit is mandatory")
   @field:Size(max = 7, message = "Prisoner number must not exceed {max} characters")
   @Schema(description = "The prisoner number (NOMIS ID)", example = "A1234AA")
-  val prisonerNumber: String?,
+  val prisonerNumber: String,
 
-  @field:NotNull(message = "The date for the official visit is mandatory")
   @Schema(description = "The date the official visit will take place", example = "2022-12-23")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
-  val visitDate: LocalDate?,
+  val visitDate: LocalDate,
 
-  @field:NotNull(message = "The start time of the official visit is mandatory")
   @Schema(description = "The start time of the official visit", example = "10:00")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
-  val startTime: LocalTime?,
+  val startTime: LocalTime,
 
-  @field:NotNull(message = "The end time of the official visit is mandatory")
   @Schema(description = "The end time of the official visit", example = "11:00")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
-  val endTime: LocalTime?,
+  val endTime: LocalTime,
 
-  @field:NotNull(message = "The DPS location ID is mandatory")
   @Schema(description = "The DPS location ID where the official visit is to take place", example = "aaaa-bbbb-9f9f9f9f-9f9f9f9f")
-  val dpsLocationId: UUID?,
+  val dpsLocationId: UUID,
 
-  @field:NotNull(message = "Visit type code is mandatory")
   @Schema(description = "The visit type code", example = "IN_PERSON", required = true, allowableValues = ["IN_PERSON", "TELEPHONE", "VIDEO"])
-  val visitTypeCode: VisitType?,
+  val visitTypeCode: VisitType,
 
   @field:Size(max = 240, message = "The staff notes should not exceed {max} characters")
   @Schema(description = "Notes for staff that will not be shared on movement slips", example = "Staff notes")

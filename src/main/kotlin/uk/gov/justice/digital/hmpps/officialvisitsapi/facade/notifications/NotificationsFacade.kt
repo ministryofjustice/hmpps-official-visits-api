@@ -50,12 +50,12 @@ class NotificationsFacade(
       request.emailAddresses.distinct().forEach { emailAddress ->
         sendOfficialVisitEmail(
           officialVisit.officialVisitId,
-          getEmail(request.notificationType!!, officialVisit, emailAddress, prisoner, location, user),
+          getEmail(request.notificationType, officialVisit, emailAddress, prisoner, location, user),
         )?.let { notificationId -> add(NotificationRecipient(emailAddress, notificationId)) }
       }
     }
 
-    NotificationResponse(officialVisitId, request.notificationType!!, recipients.toList())
+    NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
   fun searchSentEmails(prisonCode: String, criteria: SentEmailSearchCriteria, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)

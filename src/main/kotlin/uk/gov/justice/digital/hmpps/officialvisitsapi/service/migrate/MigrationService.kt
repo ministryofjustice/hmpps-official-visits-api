@@ -43,12 +43,12 @@ class MigrationService(
   fun migrateVisitConfiguration(request: MigrateVisitConfigRequest): MigrateVisitConfigResponse {
     logger.info(
       "Migrate time slot in {} day {} timeSlotSeq {} start {} end {} effective {} with {} visit slots",
-      request.prisonCode!!,
-      request.dayCode!!,
-      request.timeSlotSeq!!,
-      request.startTime!!,
-      request.endTime!!,
-      request.effectiveDate!!,
+      request.prisonCode,
+      request.dayCode,
+      request.timeSlotSeq,
+      request.startTime,
+      request.endTime,
+      request.effectiveDate,
       request.visitSlots.size,
     )
 
@@ -80,11 +80,11 @@ class MigrationService(
 
   fun extractAndSaveVisitSlots(timeSlotId: Long, request: MigrateVisitConfigRequest) = request.visitSlots.map { slot ->
     Pair(
-      slot.agencyVisitSlotId!!,
+      slot.agencyVisitSlotId,
       prisonVisitSlotRepository.saveAndFlush(
         PrisonVisitSlotEntity(
           prisonTimeSlotId = timeSlotId,
-          dpsLocationId = slot.dpsLocationId!!,
+          dpsLocationId = slot.dpsLocationId,
           maxAdults = slot.maxAdults,
           maxGroups = slot.maxGroups,
           maxVideoSessions = slot.maxVideoSessions,
@@ -102,15 +102,15 @@ class MigrationService(
     logger.info(
       "Migrate official visit ID {} at {} for {} (bookId {}) on {} with {} visitors",
       request.offenderVisitId,
-      request.prisonCode!!,
-      request.prisonerNumber!!,
+      request.prisonCode,
+      request.prisonerNumber,
       request.offenderBookId,
       request.visitDate,
       request.visitors.size,
     )
 
     // The visit slot must exist prior to related visits being migrated
-    val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId!!).orElseThrow {
+    val visitSlot = prisonVisitSlotRepository.findById(request.prisonVisitSlotId).orElseThrow {
       EntityNotFoundException("Prison visit slot ID ${request.prisonVisitSlotId} not found on offender visit ID ${request.offenderVisitId}")
     }
 
@@ -121,15 +121,15 @@ class MigrationService(
     val visitorPairs = extractAndSaveVisitors(visit, request)
 
     return MigrateVisitResponse(
-      visit = IdPair(elementType = ElementType.OFFICIAL_VISIT, nomisId = request.offenderVisitId!!, dpsId = visit.officialVisitId),
-      prisoner = IdPair(elementType = ElementType.PRISONER_VISITED, nomisId = request.offenderBookId!!, dpsId = prisoner.prisonerVisitedId),
+      visit = IdPair(elementType = ElementType.OFFICIAL_VISIT, nomisId = request.offenderVisitId, dpsId = visit.officialVisitId),
+      prisoner = IdPair(elementType = ElementType.PRISONER_VISITED, nomisId = request.offenderBookId, dpsId = prisoner.prisonerVisitedId),
       visitors = visitorPairs.map { IdPair(elementType = ElementType.OFFICIAL_VISITOR, nomisId = it.first, dpsId = it.second.officialVisitorId) },
     )
   }
 
   fun extractAndSaveVisitors(dpsVisit: OfficialVisitEntity, request: MigrateVisitRequest) = request.visitors.map { visitor ->
     Pair(
-      visitor.offenderVisitVisitorId!!,
+      visitor.offenderVisitVisitorId,
       officialVisitorRepository.saveAndFlush(
         OfficialVisitorEntity(
           officialVisit = dpsVisit,

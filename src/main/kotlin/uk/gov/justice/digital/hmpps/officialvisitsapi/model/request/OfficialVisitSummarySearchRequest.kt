@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import java.time.LocalDate
@@ -11,13 +10,11 @@ data class OfficialVisitSummarySearchRequest(
   @Schema(description = "The search term can be a prisoner number, name or partial name.  Must be a minimum of 2 characters or not provided.", example = "Smith")
   val searchTerm: String? = null,
 
-  @field:NotNull(message = "The start date for search mandatory")
   @Schema(description = "The earliest date the official visits will start", example = "2022-12-23")
-  val startDate: LocalDate?,
+  val startDate: LocalDate,
 
-  @field:NotNull(message = "The end date for search mandatory")
   @Schema(description = "The latest date the official visits will end", example = "2022-12-23")
-  val endDate: LocalDate?,
+  val endDate: LocalDate,
 
   @Schema(description = "The visit types to search for", examples = ["IN_PERSON", "VIDEO", "TELEPHONE", "UNKNOWN"])
   val visitTypes: List<VisitType>?,
