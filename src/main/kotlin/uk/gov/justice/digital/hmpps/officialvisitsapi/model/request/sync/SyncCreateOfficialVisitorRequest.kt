@@ -1,19 +1,17 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.sync
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import java.time.LocalDateTime
 
 data class SyncCreateOfficialVisitorRequest(
   @Schema(description = "The NOMIS offender visit visitor ID", example = "133232", required = true)
-  @field:NotNull(message = "The NOMIS offender visit visitor ID is mandatory")
-  val offenderVisitVisitorId: Long?,
+  val offenderVisitVisitorId: Long,
 
   @Schema(description = "The NOMIS person ID (same as contactId) for this visitor", example = "13989898", required = true)
-  @field:NotNull(message = "The NOMIS person ID is mandatory")
-  val personId: Long?,
+  val personId: Long,
 
   @Schema(description = "The first name of the visitor", example = "Bob", nullable = true)
   val firstName: String? = null,
@@ -43,5 +41,6 @@ data class SyncCreateOfficialVisitorRequest(
   var createDateTime: LocalDateTime? = null,
 
   @Schema(description = "The username who created the row", example = "X999X", required = true)
-  var createUsername: String? = null,
+  @field:NotBlank("The username cannot be blank")
+  var createUsername: String,
 )

@@ -45,7 +45,7 @@ class SyncOfficialVisitorService(
   }
 
   fun createVisitor(officialVisitId: Long, request: SyncCreateOfficialVisitorRequest): SyncAddVisitorResponse {
-    val createdBy = userService.getUser(request.createUsername!!)
+    val createdBy = userService.getUser(request.createUsername)
       ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.createUsername}")
 
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
@@ -60,7 +60,7 @@ class SyncOfficialVisitorService(
     }
 
     // Get the prisoner contact relationship to check if this person is approved to visit
-    val contactSummary = contactsService.getPrisonerContactSummary(visit.prisonerNumber, request.personId!!)
+    val contactSummary = contactsService.getPrisonerContactSummary(visit.prisonerNumber, request.personId)
     val thisContact = contactSummary.find { it.contactId == request.personId && it.currentTerm }
     if (thisContact != null) {
       if (!thisContact.isApprovedVisitor) {
@@ -83,7 +83,7 @@ class SyncOfficialVisitorService(
         leadVisitor = request.groupLeaderFlag ?: false,
         assistedVisit = request.assistedVisitFlag ?: false,
         visitorNotes = request.commentText,
-        createdBy = request.createUsername ?: "SYNC",
+        createdBy = request.createUsername,
         createdTime = request.createDateTime ?: LocalDateTime.now(),
       ),
     ).also {
@@ -119,8 +119,6 @@ class SyncOfficialVisitorService(
       auditingService.recordAuditEvent(auditChangeEvent)
     }
   }
-
-  private fun OfficialVisitorEntity.name() = "${firstName?.replaceFirstChar { it.uppercase() }} ${lastName?.replaceFirstChar { it.uppercase() }}"
 
   private fun OfficialVisitorEntity.relationshipType() = relationshipTypeCode?.name?.lowercase()?.replaceFirstChar { it.uppercase() }
 
@@ -171,7 +169,7 @@ class SyncOfficialVisitorService(
   }
 
   fun updateVisitor(officialVisitId: Long, officialVisitorId: Long, request: SyncUpdateOfficialVisitorRequest): SyncUpdateVisitorResponse {
-    val updatedByUser = request.updateUsername?.let { userService.getUser(it) }
+    val updatedByUser = request.updateUsername.let { userService.getUser(it) }
       ?: throw DownstreamServiceException("Cannot retrieve user details for ${request.updateUsername}")
 
     val visit = officialVisitRepository.findById(officialVisitId).orElseThrow {
@@ -183,7 +181,7 @@ class SyncOfficialVisitorService(
 
     // Check if the request has changed the person visiting and if so, get their relationship to the prisoner
     val updatedPrisonerContactId = if (visitor.contactId != request.personId) {
-      val contactSummary = contactsService.getPrisonerContactSummary(visit.prisonerNumber, request.personId!!)
+      val contactSummary = contactsService.getPrisonerContactSummary(visit.prisonerNumber, request.personId)
       val thisContact = contactSummary.find { it.contactId == request.personId && it.currentTerm }
       if (thisContact != null) {
         if (!thisContact.isApprovedVisitor) {

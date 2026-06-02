@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AvailableSlot
 
 object AvailableSlotSpecificationFactory {
-  fun getAvailableSlotSpecification(request: CreateOfficialVisitRequest): AvailableSlotSpecification = when (request.visitTypeCode!!) {
+  fun getAvailableSlotSpecification(request: CreateOfficialVisitRequest): AvailableSlotSpecification = when (request.visitTypeCode) {
     VisitType.IN_PERSON -> InPersonSpecification(request)
     VisitType.VIDEO -> VideoSpecification(request)
     VisitType.TELEPHONE -> TelephoneSpecification(request)

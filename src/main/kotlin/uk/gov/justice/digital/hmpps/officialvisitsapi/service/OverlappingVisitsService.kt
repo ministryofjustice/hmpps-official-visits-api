@@ -23,16 +23,16 @@ class OverlappingVisitsService(
   }
 
   fun findOverlappingScheduledVisits(prisonCode: String, request: OverlappingVisitsCriteriaRequest): OverlappingVisitsResponse = run {
-    require(request.visitDate!!.atTime(request.startTime!!).isAfter(LocalDateTime.now())) {
+    require(request.visitDate.atTime(request.startTime).isAfter(LocalDateTime.now())) {
       "Cannot overlap visits in the past. Visit date: ${request.visitDate} and start time: ${request.startTime} must be in the future."
     }
 
     val overlappingPrisonerVisits = officialVisitRepository.findScheduledOverlappingVisitsBy(
       prisonCode = prisonCode,
-      prisonerNumber = request.prisonerNumber!!,
+      prisonerNumber = request.prisonerNumber,
       visitDate = request.visitDate,
       startTime = request.startTime,
-      endTime = request.endTime!!,
+      endTime = request.endTime,
     ).ignoring(request.existingOfficialVisitId)
 
     val overlappingContactVisits = buildMap {

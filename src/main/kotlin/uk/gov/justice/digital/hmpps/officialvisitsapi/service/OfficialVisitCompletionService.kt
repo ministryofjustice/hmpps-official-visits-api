@@ -40,12 +40,12 @@ class OfficialVisitCompletionService(
 
     officialVisitRepository.saveAndFlush(
       officialVisit.complete(
-        completionCode = request.completionReason!!,
+        completionCode = request.completionReason,
         completionNotes = request.completionNotes,
-        prisonerSearchType = request.prisonerSearchType!!,
+        prisonerSearchType = request.prisonerSearchType,
         visitorAttendance = request.visitorAttendance.associateBy(
           { it.officialVisitorId },
-          { it.visitorAttendance!! },
+          { it.visitorAttendance },
         ),
         completedBy = user,
       ),

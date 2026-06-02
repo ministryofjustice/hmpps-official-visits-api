@@ -43,13 +43,13 @@ class OfficialVisitSearchService(
   private val metricsService: MetricsService,
 ) {
   fun searchForOfficialVisitSummaries(prisonCode: String, request: OfficialVisitSummarySearchRequest, user: User, page: Int, size: Int): PagedModel<OfficialVisitSummarySearchResponse> = run {
-    require(request.endDate!! >= request.startDate) { "End date must be on or after the start date" }
+    require(request.endDate >= request.startDate) { "End date must be on or after the start date" }
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
 
     val mayBeSearchTerm = request.searchTerm?.trim()
     require(mayBeSearchTerm == null || mayBeSearchTerm.length >= 2) { "Search term must be a minimum of 2 characters if provided" }
-    val prisoners = mayBeSearchTerm?.let { st -> prisonerSearchClient.findPrisonersBySearchTerm(prisonCode, mayBeSearchTerm) } ?: emptyList()
+    val prisoners = mayBeSearchTerm?.let { prisonerSearchClient.findPrisonersBySearchTerm(prisonCode, mayBeSearchTerm) } ?: emptyList()
 
     // Avoid an unnecessary query if no prisoners found in search above
     if (mayBeSearchTerm != null && prisoners.isEmpty()) {
@@ -59,7 +59,7 @@ class OfficialVisitSearchService(
     val results = officialVisitSummaryRepository.findOfficialVisitSummaryEntityBy(
       prisonCode = prisonCode,
       prisonerNumbers = mayBeSearchTerm?.let { prisoners.map { it.prisonerNumber }.toSet() },
-      startDate = request.startDate!!,
+      startDate = request.startDate,
       endDate = request.endDate,
       visitTypes = request.visitTypes.takeIf { !it.isNullOrEmpty() }?.toSet(),
       visitStatuses = request.visitStatuses.takeIf { !it.isNullOrEmpty() }?.toSet(),

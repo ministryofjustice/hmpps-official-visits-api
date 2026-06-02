@@ -62,12 +62,12 @@ class OfficialVisitCreateService(
       OfficialVisitEntity(
         prisonVisitSlot = prisonVisitSlot,
         prisonCode = prisonCode,
-        prisonerNumber = request.prisonerNumber!!,
-        visitDate = request.visitDate!!,
-        startTime = request.startTime!!,
-        endTime = request.endTime!!,
-        dpsLocationId = request.dpsLocationId!!,
-        visitTypeCode = request.visitTypeCode!!,
+        prisonerNumber = request.prisonerNumber,
+        visitDate = request.visitDate,
+        startTime = request.startTime,
+        endTime = request.endTime,
+        dpsLocationId = request.dpsLocationId,
+        visitTypeCode = request.visitTypeCode,
         staffNotes = request.staffNotes,
         prisonerNotes = request.prisonerNotes,
         offenderBookId = prisonerDetails.bookingId?.toLong(),
@@ -174,16 +174,16 @@ class OfficialVisitCreateService(
   }
 
   private fun CreateOfficialVisitRequest.checkVisitDateAndTimes() = also {
-    require(visitDate!!.atTime(startTime) > now()) { "Official visit cannot be scheduled in the past" }
-    require(startTime!! < endTime) { "Official visit start time must be before end time" }
+    require(visitDate.atTime(startTime) > now()) { "Official visit cannot be scheduled in the past" }
+    require(startTime < endTime) { "Official visit start time must be before end time" }
   }
 
   private fun CreateOfficialVisitRequest.checkStillAvailable(prisonCode: String, prisonVisitSlot: PrisonVisitSlotEntity) = also {
     val availableSlots = availableSlotService.getAvailableSlotsForPrison(
       prisonCode = prisonCode,
-      fromDate = visitDate!!,
+      fromDate = visitDate,
       toDate = visitDate,
-      videoOnly = visitTypeCode!! == VisitType.VIDEO,
+      videoOnly = visitTypeCode == VisitType.VIDEO,
     )
 
     val availableSlotSpecification: AvailableSlotSpecification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(this)
@@ -194,7 +194,7 @@ class OfficialVisitCreateService(
   }
 
   private fun CreateOfficialVisitRequest.getPrisonersDetails(prisonCode: String) = run {
-    prisonerValidator.validatePrisonerAtPrison(prisonerNumber!!, prisonCode)
+    prisonerValidator.validatePrisonerAtPrison(prisonerNumber, prisonCode)
   }
 
   private fun CreateOfficialVisitRequest.getVisitorDetails() = run {
@@ -203,7 +203,7 @@ class OfficialVisitCreateService(
     val requestedVisitors = officialVisitors.filter { it.visitorTypeCode == VisitorType.CONTACT }.toSet()
 
     // This will intentionally allow either active or inactive contacts - as long as they are currentTerm=true and approved=true
-    val approvedVisitors = contactsService.getAllPrisonerContacts(prisonerNumber = prisonerNumber!!, approved = true, currentTerm = true)
+    val approvedVisitors = contactsService.getAllPrisonerContacts(prisonerNumber = prisonerNumber, approved = true, currentTerm = true)
 
     requestedVisitors.map { requestedVisitor ->
       // As we are creating a visit locally in DPS the check for contactId and prisonerContactId is fine here
