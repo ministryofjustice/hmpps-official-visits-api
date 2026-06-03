@@ -148,7 +148,7 @@ class AvailableSlotSpecificationFactoryTest {
     }
 
     @Test
-    fun `should not be available when no available groups `() {
+    fun `should not be available when no available group capacity`() {
       val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(telephoneVisit)
 
       val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 0, availableGroups = 0)
@@ -157,7 +157,7 @@ class AvailableSlotSpecificationFactoryTest {
     }
 
     @Test
-    fun `should not be even if available adults allows - its the groups that count for telephone visits `() {
+    fun `should not be available even where adult capacity allows - only the groups count for telephone visits `() {
       val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(telephoneVisit)
 
       val availableSlot = availableSlot(availableVideoSessions = 0, availableAdults = 10, availableGroups = 0)
