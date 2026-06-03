@@ -112,6 +112,8 @@ class SentEmailsService(
       notificationType = normalizedNotificationType,
       notificationTypeDescription = when (emailType) {
         EmailType.OFFICIAL_VISIT_CREATED -> "Visit Created"
+        EmailType.OFFICIAL_VISIT_UPDATED -> "Visit Updated"
+        EmailType.OFFICIAL_VISIT_CANCELLED -> "Visit Cancelled"
         else -> "Unknown"
       },
     )
@@ -121,6 +123,8 @@ class SentEmailsService(
 
   private fun EmailType.toApiNotificationType(): String = when (this) {
     EmailType.OFFICIAL_VISIT_CREATED -> "CREATE"
+    EmailType.OFFICIAL_VISIT_UPDATED -> "UPDATED"
+    EmailType.OFFICIAL_VISIT_CANCELLED -> "CANCELLED"
   }
 
   private companion object {

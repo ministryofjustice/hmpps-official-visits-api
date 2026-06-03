@@ -33,6 +33,8 @@ data class EmailTemplate(val templateId: TemplateId, val emailType: EmailType)
 
 enum class EmailType {
   OFFICIAL_VISIT_CREATED,
+  OFFICIAL_VISIT_UPDATED,
+  OFFICIAL_VISIT_CANCELLED,
 }
 
 class OfficialVisitCreatedEmail(
@@ -52,4 +54,44 @@ class OfficialVisitCreatedEmail(
   }
 
   override fun type(): EmailType = EmailType.OFFICIAL_VISIT_CREATED
+}
+
+class OfficialVisitUpdatedEmail(
+  emailAddress: String,
+  prisonerName: String,
+  appointmentDate: LocalDate,
+  appointmentTime: LocalTime,
+  appointmentLocation: String,
+  userName: String,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_name", prisonerName)
+    addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
+    addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
+    addPersonalisation("appointment_location", appointmentLocation)
+    addPersonalisation("user_name", userName)
+  }
+
+  override fun type(): EmailType = EmailType.OFFICIAL_VISIT_UPDATED
+}
+
+class OfficialVisitCancelledEmail(
+  emailAddress: String,
+  prisonerName: String,
+  visitorNames: String,
+  appointmentDate: LocalDate,
+  appointmentTime: LocalTime,
+  appointmentLocation: String,
+  userName: String,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_name", prisonerName)
+    addPersonalisation("visitor_names", visitorNames)
+    addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
+    addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
+    addPersonalisation("appointment_location", appointmentLocation)
+    addPersonalisation("user_name", userName)
+  }
+
+  override fun type(): EmailType = EmailType.OFFICIAL_VISIT_CANCELLED
 }
