@@ -72,12 +72,10 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
 
   private val datedInPersonVisits = mutableMapOf<DatedVisit, Int>()
   private val datedVideoVisits = mutableMapOf<DatedVisit, Int>()
+  private val datedTelephoneVisits = mutableMapOf<DatedVisit, Int>()
 
   fun add(bookedSlot: VisitBookedEntity) {
     val key = DatedVisit(bookedSlot)
-
-    // TODO: Telephone visits should take 1 off the maxGroups capacity, but ignore the maxAdults limit
-    // TODO: Should we treat telephone visits like video visits and decrement the same capacities?
 
     when {
       bookedSlot.isVisitType(VisitType.IN_PERSON) || bookedSlot.isVisitType(VisitType.UNKNOWN) -> {
@@ -87,6 +85,10 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
       bookedSlot.isVisitType(VisitType.VIDEO) -> {
         datedVideoVisits.computeIfPresent(key) { _, count -> count + 1 }
         datedVideoVisits.computeIfAbsent(key) { 1 }
+      }
+      bookedSlot.isVisitType(VisitType.TELEPHONE) -> {
+        datedTelephoneVisits.computeIfPresent(key) { _, count -> count + 1 }
+        datedTelephoneVisits.computeIfAbsent(key) { 1 }
       }
     }
   }
@@ -102,7 +104,11 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
             val availableGroups = availableSlot.availableGroupsOn(date)
             val availableVideoSessions = availableSlot.availableVideoSessionsOn(date)
 
-            if ((availableAdults > 0 && availableGroups > 0 && !videoOnly) || (availableGroups > 0 && availableVideoSessions > 0)) {
+            // Only add the to the list if the slot has some capacity for visits remaining - in person, video or telephone
+            if ((availableAdults > 0 && availableGroups > 0 && !videoOnly) ||
+              (availableGroups > 0 && availableVideoSessions > 0 && videoOnly) ||
+              (availableGroups > 0 && !videoOnly && (availableSlot.maxAdults ?: 0) == 0)
+            ) {
               add(
                 AvailableSlot(
                   visitSlotId = availableSlot.prisonVisitSlotId,
@@ -137,7 +143,7 @@ private class AvailableSlotBuilder private constructor(private val timeSource: T
 
   private fun AvailableSlotEntity.availableAdultsOn(date: LocalDate) = (maxAdults ?: 0) - datedInPersonVisits.individualVisitCount(date, this)
 
-  private fun AvailableSlotEntity.availableGroupsOn(date: LocalDate) = (maxGroups ?: 0) - datedInPersonVisits.groupVisitCount(date, this) - datedVideoVisits.groupVisitCount(date, this)
+  private fun AvailableSlotEntity.availableGroupsOn(date: LocalDate) = (maxGroups ?: 0) - datedInPersonVisits.groupVisitCount(date, this) - datedVideoVisits.groupVisitCount(date, this) - datedTelephoneVisits.groupVisitCount(date, this)
 
   private fun AvailableSlotEntity.availableVideoSessionsOn(date: LocalDate) = (maxVideoSessions ?: 0) - datedVideoVisits.groupVisitCount(date, this)
 
