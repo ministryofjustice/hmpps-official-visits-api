@@ -22,11 +22,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCancelledEmail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCreatedEmail
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitUpdatedEmail
 import java.time.LocalDateTime
 
 @Component
-class NotificationsFacade(
+class NotificationsService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val locationsService: LocationsService,
   private val prisonerSearchClient: PrisonerSearchClient,
@@ -104,7 +106,24 @@ class NotificationsFacade(
         userName = user.name,
       )
 
-      else -> throw IllegalArgumentException("Unknown notification type $notificationType")
+      NotificationType.AMEND -> OfficialVisitUpdatedEmail(
+        emailAddress = emailAddress,
+        prisonerName = prisoner.firstName + " " + prisoner.lastName,
+        appointmentDate = officialVisit.visitDate,
+        appointmentTime = officialVisit.startTime,
+        appointmentLocation = location,
+        userName = user.name,
+      )
+
+      NotificationType.CANCEL -> OfficialVisitCancelledEmail(
+        emailAddress = emailAddress,
+        prisonerName = prisoner.firstName + " " + prisoner.lastName,
+        visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.firstName + " " + it.lastName },
+        appointmentDate = officialVisit.visitDate,
+        appointmentTime = officialVisit.startTime,
+        appointmentLocation = location,
+        userName = user.name,
+      )
     }
   }
 }

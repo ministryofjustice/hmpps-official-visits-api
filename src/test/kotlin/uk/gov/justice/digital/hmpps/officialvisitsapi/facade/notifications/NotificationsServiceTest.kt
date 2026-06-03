@@ -30,11 +30,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCancelledEmail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCreatedEmail
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitUpdatedEmail
 import java.util.Optional
 import java.util.UUID
 
-class NotificationsFacadeTest {
+class NotificationsServiceTest {
   private val notificationId = UUID.randomUUID()
   private val locationsService: LocationsService = mock()
   private val prisonerSearchClient: PrisonerSearchClient = mock()
@@ -43,7 +45,7 @@ class NotificationsFacadeTest {
   private val notificationRepository: NotificationRepository = mock()
   private val sentEmailsService: SentEmailsService = mock()
   private val notification: NotificationEntity = mock()
-  private val facade = NotificationsFacade(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository, sentEmailsService)
+  private val service = NotificationsService(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository, sentEmailsService)
 
   @BeforeEach
   fun beforeEach() {
@@ -55,7 +57,7 @@ class NotificationsFacadeTest {
   fun `should delegate to email service and save notification`() {
     whenever { emailService.send(FakeEmail) } doReturn Result.success(notificationId to "fake template id")
 
-    facade.sendOfficialVisitEmail(1L, FakeEmail)
+    service.sendOfficialVisitEmail(1L, FakeEmail)
 
     inOrder(emailService, notificationRepository) {
       verify(emailService).send(FakeEmail)
@@ -67,7 +69,7 @@ class NotificationsFacadeTest {
   fun `should delegate to email service but fail to save notification`() {
     whenever { emailService.send(FakeEmail) } doReturn Result.failure(RuntimeException("Bang!"))
 
-    facade.sendOfficialVisitEmail(1L, FakeEmail)
+    service.sendOfficialVisitEmail(1L, FakeEmail)
 
     verify(emailService).send(FakeEmail)
     verifyNoInteractions(notificationRepository)
@@ -88,7 +90,7 @@ class NotificationsFacadeTest {
     whenever { locationsService.getLocationById(officialVisit.dpsLocationId) } doReturn moorlandLocation
     whenever { prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) } doReturn prisoner
 
-    facade.sendNotification(
+    service.sendNotification(
       officialVisitId = 1,
       request = NotificationRequest(
         notificationType = NotificationType.CREATE,
@@ -116,6 +118,83 @@ class NotificationsFacadeTest {
       "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
       "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
       "user_name" to MOORLAND_PRISON_USER.name,
+    )
+  }
+
+  @Test
+  fun `should send amend email via email service`() {
+    whenever { emailService.send(any()) } doReturn Result.success(notificationId to "fake template id")
+
+    val officialVisit = createAVisitEntity(1)
+    val prisoner = prisonerSearchPrisoner(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonCode = MOORLAND_PRISONER.prison,
+      bookingId = MOORLAND_PRISONER.bookingId,
+    )
+
+    whenever { officialVisitRepository.findById(1) } doReturn Optional.of(officialVisit)
+    whenever { locationsService.getLocationById(officialVisit.dpsLocationId) } doReturn moorlandLocation
+    whenever { prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) } doReturn prisoner
+
+    service.sendNotification(
+      officialVisitId = 1,
+      request = NotificationRequest(
+        notificationType = NotificationType.AMEND,
+        emailAddresses = listOf("email@address"),
+      ),
+      user = MOORLAND_PRISON_USER,
+    )
+
+    val emailCaptor = argumentCaptor<Email>()
+    verify(emailService).send(emailCaptor.capture())
+
+    val email = emailCaptor.firstValue
+    email isInstanceOf OfficialVisitUpdatedEmail::class.java
+    email.personalisation() containsEntriesExactlyInAnyOrder mapOf(
+      "appointment_date" to officialVisit.visitDate.toMediumFormatStyle(),
+      "appointment_location" to moorlandLocation.localName,
+      "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
+      "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
+      "user_name" to MOORLAND_PRISON_USER.name,
+    )
+  }
+
+  @Test
+  fun `should send cancel email via email service`() {
+    whenever { emailService.send(any()) } doReturn Result.success(notificationId to "fake template id")
+
+    val officialVisit = createAVisitEntity(1)
+    val prisoner = prisonerSearchPrisoner(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      prisonCode = MOORLAND_PRISONER.prison,
+      bookingId = MOORLAND_PRISONER.bookingId,
+    )
+
+    whenever { officialVisitRepository.findById(1) } doReturn Optional.of(officialVisit)
+    whenever { locationsService.getLocationById(officialVisit.dpsLocationId) } doReturn moorlandLocation
+    whenever { prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) } doReturn prisoner
+
+    service.sendNotification(
+      officialVisitId = 1,
+      request = NotificationRequest(
+        notificationType = NotificationType.CANCEL,
+        emailAddresses = listOf("email@address"),
+      ),
+      user = MOORLAND_PRISON_USER,
+    )
+
+    val emailCaptor = argumentCaptor<Email>()
+    verify(emailService).send(emailCaptor.capture())
+
+    val email = emailCaptor.firstValue
+    email isInstanceOf OfficialVisitCancelledEmail::class.java
+    email.personalisation() containsEntriesExactlyInAnyOrder mapOf(
+      "appointment_date" to officialVisit.visitDate.toMediumFormatStyle(),
+      "appointment_location" to moorlandLocation.localName,
+      "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
+      "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
+      "user_name" to MOORLAND_PRISON_USER.name,
+      "visitor_names" to "Community Manager, Prison Manager",
     )
   }
 
