@@ -105,7 +105,7 @@ class AvailableSlotSpecificationFactoryTest {
     fun `should be available`() {
       val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(videoVisit)
 
-      val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 0, availableGroups = 0)
+      val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 0, availableGroups = 1)
 
       specification.isSatisfiedBy(availableSlot, prisonVisitSlot) isBool true
     }
@@ -115,6 +115,15 @@ class AvailableSlotSpecificationFactoryTest {
       val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(videoVisit)
 
       val availableSlot = availableSlot(availableVideoSessions = 0, availableAdults = 1, availableGroups = 1)
+
+      specification.isSatisfiedBy(availableSlot, prisonVisitSlot) isBool false
+    }
+
+    @Test
+    fun `should not be available when exceeds available groups despite video sessions available`() {
+      val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(videoVisit)
+
+      val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 0, availableGroups = 0)
 
       specification.isSatisfiedBy(availableSlot, prisonVisitSlot) isBool false
     }
@@ -133,16 +142,25 @@ class AvailableSlotSpecificationFactoryTest {
     fun `should be available`() {
       val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(telephoneVisit)
 
-      val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 1, availableGroups = 1)
+      val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 0, availableGroups = 1)
 
       specification.isSatisfiedBy(availableSlot, prisonVisitSlot) isBool true
     }
 
     @Test
-    fun `should not be available when no available adults or groups `() {
+    fun `should not be available when no available groups `() {
       val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(telephoneVisit)
 
       val availableSlot = availableSlot(availableVideoSessions = 1, availableAdults = 0, availableGroups = 0)
+
+      specification.isSatisfiedBy(availableSlot, prisonVisitSlot) isBool false
+    }
+
+    @Test
+    fun `should not be even if available adults allows - its the groups that count for telephone visits `() {
+      val specification = AvailableSlotSpecificationFactory.getAvailableSlotSpecification(telephoneVisit)
+
+      val availableSlot = availableSlot(availableVideoSessions = 0, availableAdults = 10, availableGroups = 0)
 
       specification.isSatisfiedBy(availableSlot, prisonVisitSlot) isBool false
     }

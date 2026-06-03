@@ -33,6 +33,7 @@ class VideoSpecification(private val request: CreateOfficialVisitRequest) : Avai
     slot.visitSlotId == prisonVisitSlot.prisonVisitSlotId &&
       slot.startTime == request.startTime &&
       slot.dpsLocationId == request.dpsLocationId &&
+      slot.availableGroups > 0 &&
       slot.availableVideoSessions > 0
   }
 }
@@ -42,7 +43,6 @@ class TelephoneSpecification(private val request: CreateOfficialVisitRequest) : 
     slot.visitSlotId == prisonVisitSlot.prisonVisitSlotId &&
       slot.startTime == request.startTime &&
       slot.dpsLocationId == request.dpsLocationId &&
-      slot.availableGroups > 0 &&
-      slot.availableAdults > 0
+      slot.availableGroups > 0
   }
 }
