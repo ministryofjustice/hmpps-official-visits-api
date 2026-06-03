@@ -185,4 +185,63 @@ class SentEmailsServiceTest {
       service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
     }.message?.contains("From date must be on or before to date")
   }
+
+  @Test
+  fun `should map updated and cancelled notification types`() {
+    val criteria = SentEmailSearchCriteria(fromDate = null, toDate = null)
+
+    val updatedViewEntity = SentEmailRecordViewEntity(
+      notificationId = 200L,
+      officialVisitId = 2L,
+      prisonCode = "MDI",
+      sentDateTime = LocalDateTime.of(2026, 5, 23, 9, 30),
+      visitDate = LocalDate.of(2026, 6, 2),
+      visitStartTime = LocalTime.of(14, 0),
+      visitEndTime = LocalTime.of(15, 0),
+      emailAddress = "updated@example.com",
+      emailStatus = NotificationEmailStatus.SENT,
+      notificationType = EmailType.OFFICIAL_VISIT_UPDATED.name,
+      prisonerNumber = "G1234AB",
+    )
+
+    val cancelledViewEntity = SentEmailRecordViewEntity(
+      notificationId = 300L,
+      officialVisitId = 3L,
+      prisonCode = "MDI",
+      sentDateTime = LocalDateTime.of(2026, 5, 24, 11, 0),
+      visitDate = LocalDate.of(2026, 6, 3),
+      visitStartTime = LocalTime.of(10, 30),
+      visitEndTime = LocalTime.of(11, 30),
+      emailAddress = "cancelled@example.com",
+      emailStatus = NotificationEmailStatus.PERMANENT_FAILURE,
+      notificationType = EmailType.OFFICIAL_VISIT_CANCELLED.name,
+      prisonerNumber = "G5678CD",
+    )
+
+    whenever(sentEmailRecordViewRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
+      .thenReturn(PageImpl(listOf(updatedViewEntity, cancelledViewEntity), PageRequest.of(0, 10), 2))
+    whenever(prisonerSearchClient.findByPrisonerNumbers(any(), any())).thenReturn(
+      listOf(
+        Prisoner(
+          prisonerNumber = "G1234AB",
+          firstName = "John",
+          lastName = "Smith",
+          dateOfBirth = LocalDate.of(1990, 1, 1),
+        ),
+        Prisoner(
+          prisonerNumber = "G5678CD",
+          firstName = "Jane",
+          lastName = "Taylor",
+          dateOfBirth = LocalDate.of(1988, 8, 8),
+        ),
+      ),
+    )
+
+    val result = service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+
+    result.content[0].notificationType isEqualTo "UPDATED"
+    result.content[0].notificationTypeDescription isEqualTo "Visit Updated"
+    result.content[1].notificationType isEqualTo "CANCELLED"
+    result.content[1].notificationTypeDescription isEqualTo "Visit Cancelled"
+  }
 }

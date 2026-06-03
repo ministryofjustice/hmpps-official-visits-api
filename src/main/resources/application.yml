@@ -141,5 +141,7 @@ springdoc:
 notify:
   templates:
     official-visit-created: 99292100-5858-4b08-8e20-101e8df708de
+    official-visit-cancelled: 5354cbd9-fcfa-4d41-a8d2-d9372ee2374e
+    official-visit-updated: 2f052775-8bb8-4a28-9baa-9f6a3fc22bc4
   callback:
     secret: ${NOTIFY_CALLBACK_SECRET:}
