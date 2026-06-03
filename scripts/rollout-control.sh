@@ -31,7 +31,7 @@ menu_function() {
   echo ""
   echo " 10 - Toggle two month calendar feature"
   echo ""
-  echo " 11 - Set Notify callback bearer token"
+  echo " 11 - Set Notify callback secret"
   echo ""
   echo " 12 - Restart services for changes to take effect"
   echo ""
