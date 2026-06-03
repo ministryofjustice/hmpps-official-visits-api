@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationType
 
 data class NotificationRequest(
-  @Schema(name = "Notification Type", description = "The type of notification to send", example = "CREATE")
+  @Schema(description = "The type of notification to send", example = "CREATE")
   val notificationType: NotificationType,
 
   @Schema(description = "The recipient email address to send the notification to")
