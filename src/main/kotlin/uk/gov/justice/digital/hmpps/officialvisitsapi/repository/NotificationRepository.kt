@@ -8,4 +8,6 @@ import java.util.UUID
 @Repository
 interface NotificationRepository : JpaRepository<NotificationEntity, Long> {
   fun findByGovNotifyNotificationId(govNotifyNotificationId: UUID): NotificationEntity?
+
+  fun findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId: Long): NotificationEntity?
 }
