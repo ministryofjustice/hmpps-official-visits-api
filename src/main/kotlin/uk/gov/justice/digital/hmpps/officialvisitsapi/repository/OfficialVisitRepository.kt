@@ -97,4 +97,10 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   fun findAllByPrisonerNumberAndOffenderBookId(prisonerNumber: String, bookingId: Long): List<OfficialVisitEntity>
 
   fun findAllByPrisonerNumberAndOffenderBookIdNot(prisonerNumber: String, bookingId: Long): List<OfficialVisitEntity>
+
+  fun findAllByPrisonerNumberAndVisitDateBetween(
+    prisonerNumber: String,
+    visitDateAfter: LocalDate,
+    visitDateBefore: LocalDate,
+  ): List<OfficialVisitEntity>
 }
