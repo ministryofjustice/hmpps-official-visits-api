@@ -117,7 +117,7 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
 
     val response = webTestClient.getVisitChangeStatus(scheduledVisit.officialVisitId)
 
-    response.hasChanged isEqualTo false
+    response.hasChanged isEqualTo true
   }
 
   @Test

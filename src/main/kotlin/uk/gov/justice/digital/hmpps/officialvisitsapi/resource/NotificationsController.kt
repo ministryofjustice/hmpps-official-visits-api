@@ -106,12 +106,12 @@ class NotificationsController(
     httpRequest: HttpServletRequest,
   ): PagedModel<SentEmailRecord> = notificationsService.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 
-  @Operation(summary = "Check if an official visit has been modified since the last notification was sent.")
+  @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Check completed - returns whether the visit has changed since the last notification was sent",
+        description = "Check completed — returns whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.",
         content = [
           Content(
             mediaType = "application/json",
@@ -136,7 +136,5 @@ class NotificationsController(
       example = "1",
       required = true,
     ) officialVisitId: Long,
-  ): VisitChangeStatusResponse = VisitChangeStatusResponse(
-    hasChanged = visitChangeDetectionService.hasVisitDetailsChanged(officialVisitId),
-  )
+  ): VisitChangeStatusResponse = visitChangeDetectionService.requiresEmailUpdate(officialVisitId)
 }

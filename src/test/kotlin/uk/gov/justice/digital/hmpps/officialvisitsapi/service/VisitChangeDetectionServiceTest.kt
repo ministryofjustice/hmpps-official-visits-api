@@ -32,12 +32,12 @@ class VisitChangeDetectionServiceTest {
   }
 
   @Test
-  fun `should return false when no notification exists`() {
+  fun `should return true when no notification exists`() {
     whenever { notificationRepository.findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId) } doReturn null
 
-    val result = service.hasVisitDetailsChanged(officialVisitId)
+    val result = service.requiresEmailUpdate(officialVisitId)
 
-    result isBool false
+    result.hasChanged isBool true
     verify(notificationRepository).findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
   }
 
@@ -45,9 +45,9 @@ class VisitChangeDetectionServiceTest {
   fun `should return false when there are no relevant audit events after notification`() {
     whenever { auditedEventRepository.findRelevantAuditEventsAfter(officialVisitId, createdTime, topOnePage) } doReturn emptyList()
 
-    val result = service.hasVisitDetailsChanged(officialVisitId)
+    val result = service.requiresEmailUpdate(officialVisitId)
 
-    result isBool false
+    result.hasChanged isBool false
     verify(notificationRepository).findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
     verify(auditedEventRepository).findRelevantAuditEventsAfter(officialVisitId, createdTime, topOnePage)
   }
@@ -58,9 +58,9 @@ class VisitChangeDetectionServiceTest {
       cancelledAuditEvent(eventDateTime = createdTime.plusMinutes(1)),
     )
 
-    val result = service.hasVisitDetailsChanged(officialVisitId)
+    val result = service.requiresEmailUpdate(officialVisitId)
 
-    result isBool true
+    result.hasChanged isBool true
     verify(notificationRepository).findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
     verify(auditedEventRepository).findRelevantAuditEventsAfter(officialVisitId, createdTime, topOnePage)
   }
