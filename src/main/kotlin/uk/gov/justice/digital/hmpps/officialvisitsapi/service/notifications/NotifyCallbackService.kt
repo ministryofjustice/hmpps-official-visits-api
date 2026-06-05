@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

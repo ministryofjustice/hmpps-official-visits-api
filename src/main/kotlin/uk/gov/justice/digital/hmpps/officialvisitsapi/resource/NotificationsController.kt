@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
@@ -35,7 +35,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.VisitChangeDetecti
 @RequestMapping(value = ["notification"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @AuthApiResponses
 class NotificationsController(
-  private val notificationsService: NotificationsService,
+  private val notificationFacade: NotificationFacade,
   private val visitChangeDetectionService: VisitChangeDetectionService,
 ) {
 
@@ -74,7 +74,7 @@ class NotificationsController(
     @Parameter(description = "The request containing the details of the notification", required = true)
     request: NotificationRequest,
     httpRequest: HttpServletRequest,
-  ) = notificationsService.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
+  ) = notificationFacade.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Endpoint to retrieve a list of sent email notifications with search and pagination support.")
   @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -104,7 +104,7 @@ class NotificationsController(
     )
     size: Int = 20,
     httpRequest: HttpServletRequest,
-  ): PagedModel<SentEmailRecord> = notificationsService.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
+  ): PagedModel<SentEmailRecord> = notificationFacade.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
   @ApiResponses(

@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
@@ -11,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
 class TestApiClient(private val webTestClient: WebTestClient, private val jwtAuthHelper: JwtAuthorisationHelper) {
