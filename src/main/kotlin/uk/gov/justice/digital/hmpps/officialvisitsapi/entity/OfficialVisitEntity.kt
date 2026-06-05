@@ -211,14 +211,14 @@ open class OfficialVisitEntity(
     fun migrated(visitSlot: PrisonVisitSlotEntity, request: MigrateVisitRequest) = run {
       OfficialVisitEntity(
         prisonVisitSlot = visitSlot,
-        visitDate = request.visitDate!!,
-        startTime = request.startTime!!,
-        endTime = request.endTime!!,
-        dpsLocationId = request.dpsLocationId!!,
+        visitDate = request.visitDate,
+        startTime = request.startTime,
+        endTime = request.endTime,
+        dpsLocationId = request.dpsLocationId,
         visitTypeCode = request.visitTypeCode!!,
-        prisonCode = request.prisonCode!!,
-        prisonerNumber = request.prisonerNumber!!,
-        currentTerm = request.currentTerm!!,
+        prisonCode = request.prisonCode,
+        prisonerNumber = request.prisonerNumber,
+        currentTerm = request.currentTerm,
         staffNotes = null, // Never supplied
         prisonerNotes = request.commentText,
         visitorConcernNotes = request.visitorConcernText,
@@ -227,10 +227,10 @@ open class OfficialVisitEntity(
         createdBy = request.createUsername ?: "MIGRATION",
         createdTime = request.createDateTime ?: now(),
         offenderBookId = request.offenderBookId,
-        offenderVisitId = request.offenderVisitId!!,
+        offenderVisitId = request.offenderVisitId,
         visitOrderNumber = request.visitOrderNumber,
       ).apply {
-        this.visitStatusCode = request.visitStatusCode!!
+        this.visitStatusCode = request.visitStatusCode
         this.completionCode = request.visitCompletionCode
         this.searchTypeCode = request.searchTypeCode
         this.updatedBy = request.modifyUsername
@@ -241,14 +241,14 @@ open class OfficialVisitEntity(
     fun synchronised(visitSlot: PrisonVisitSlotEntity, request: SyncCreateOfficialVisitRequest) = run {
       OfficialVisitEntity(
         prisonVisitSlot = visitSlot,
-        visitDate = request.visitDate!!,
-        startTime = request.startTime!!,
-        endTime = request.endTime!!,
-        dpsLocationId = request.dpsLocationId!!,
+        visitDate = request.visitDate,
+        startTime = request.startTime,
+        endTime = request.endTime,
+        dpsLocationId = request.dpsLocationId,
         visitTypeCode = request.visitTypeCode!!,
-        prisonCode = request.prisonCode!!,
+        prisonCode = request.prisonCode,
         prisonerNumber = request.prisonerNumber!!,
-        currentTerm = request.currentTerm!!,
+        currentTerm = request.currentTerm,
         staffNotes = null, // Never supplied from NOMIS
         prisonerNotes = request.commentText,
         visitorConcernNotes = request.visitorConcernText,
@@ -257,10 +257,10 @@ open class OfficialVisitEntity(
         createdBy = request.createUsername ?: "SYNC",
         createdTime = request.createDateTime ?: now(),
         offenderBookId = request.offenderBookId,
-        offenderVisitId = request.offenderVisitId!!, // The visit id in NOMIS - reference only
+        offenderVisitId = request.offenderVisitId, // The visit id in NOMIS - reference only
         visitOrderNumber = request.visitOrderNumber, // Not usually supplied - reference only
       ).apply {
-        this.visitStatusCode = request.visitStatusCode!!
+        this.visitStatusCode = request.visitStatusCode
         this.completionCode = request.visitCompletionCode
         this.searchTypeCode = request.searchTypeCode
       }
