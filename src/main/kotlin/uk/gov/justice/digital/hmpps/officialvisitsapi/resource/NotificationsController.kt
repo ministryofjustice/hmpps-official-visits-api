@@ -13,6 +13,7 @@ import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -21,17 +22,22 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitChangeStatusResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.VisitChangeDetectionService
 
 @Tag(name = "Notifications")
 @RestController
 @RequestMapping(value = ["notification"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @AuthApiResponses
-class NotificationsController(private val notificationsService: NotificationsService) {
+class NotificationsController(
+  private val notificationFacade: NotificationFacade,
+  private val visitChangeDetectionService: VisitChangeDetectionService,
+) {
 
   @Operation(summary = "Endpoint to support the sending of notifications for official visits.")
   @ApiResponses(
@@ -68,7 +74,7 @@ class NotificationsController(private val notificationsService: NotificationsSer
     @Parameter(description = "The request containing the details of the notification", required = true)
     request: NotificationRequest,
     httpRequest: HttpServletRequest,
-  ) = notificationsService.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
+  ) = notificationFacade.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Endpoint to retrieve a list of sent email notifications with search and pagination support.")
   @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -98,5 +104,37 @@ class NotificationsController(private val notificationsService: NotificationsSer
     )
     size: Int = 20,
     httpRequest: HttpServletRequest,
-  ): PagedModel<SentEmailRecord> = notificationsService.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
+  ): PagedModel<SentEmailRecord> = notificationFacade.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
+
+  @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Check completed — returns whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = VisitChangeStatusResponse::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No official visit found with the given ID.",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @GetMapping(path = ["/{officialVisitId}/change-status"])
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun getVisitChangeStatus(
+    @PathVariable @Parameter(
+      name = "officialVisitId",
+      description = "The identifier of the official visit to check for changes.",
+      example = "1",
+      required = true,
+    ) officialVisitId: Long,
+  ): VisitChangeStatusResponse = visitChangeDetectionService.requiresEmailUpdate(officialVisitId)
 }

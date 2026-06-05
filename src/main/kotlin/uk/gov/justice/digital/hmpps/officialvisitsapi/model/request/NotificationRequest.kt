@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 
 data class NotificationRequest(
   @Schema(description = "The type of notification to send", example = "CREATE")
