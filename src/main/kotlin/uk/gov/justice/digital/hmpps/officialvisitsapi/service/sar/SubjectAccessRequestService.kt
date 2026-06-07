@@ -51,15 +51,13 @@ class SubjectAccessRequestService(
       return null
     }
 
-    val sarVisits = officialVisits.map { visit ->
+    log.info("SAR: matches found for prisoner $prn, from $from to $to.")
 
-      // Get the events relating to this visit
+    val sarVisits = officialVisits.map { visit ->
       val auditEvents = auditedEventRepository.findAllByOfficialVisitId(visit.officialVisitId)
 
-      // Get the prisoner attendance at this visit
       val prisonerVisited = prisonerVisitedRepository.findByOfficialVisit(visit)
 
-      // Construct the SAR response for each visit
       SarVisit(
         officialVisitId = visit.officialVisitId,
         prisonCode = visit.prisonCode,
@@ -100,7 +98,7 @@ class SubjectAccessRequestService(
       )
     }
 
-    log.info("SAR: matches found for prisoner $prn, from $from to $to.")
+    log.info("SAR: Returning SAR response for prisoner $prn, from $from to $to.")
 
     HmppsSubjectAccessRequestContent(
       content = SubjectAccessResponseData(

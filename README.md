@@ -46,3 +46,34 @@ Then run the service with the script:
 ```bash
 ./run-local.sh
 ```
+# Changes to SAR template or database schema
+
+If you are making any changes to the SAR .mustache template, you'll need to regenerate the sar-generated-report.html test file which records 
+what the result of the SAR report generation process should look like. This allows the integration test to run the SAR generation process and 
+compare the output to this file.
+
+To generate the file, run the integration test with the below env variable set to true:
+SAR_GENERATE_ACTUAL=true
+
+e.g.
+SAR_GENERATE_ACTUAL=true ./gradlew integrationTest --tests "uk.gov.justice.digital.hmpps.officialvisitsapi.integration.sar.SarIntegrationTest"
+
+This will output a new file sar-generated-file.html.log into the src/test/resources folder, generate a new schema file, and generate an API response file.
+
+Rename these files to remove the .log extension and copy them into the src/test/resources/sar directory to act as the new templates for comparison.
+
+If the database schema is updated via Flyway, this will also be detected by the SAR tests. To enable this tests to pass, you will need to 
+make sure that the latest Flyway schema version is reflected in the properties within `application-test.yaml`
+
+    hmpps:
+      sar:
+        tests:
+          expected-flyway-schema-version: 2026.05.28
+          expected-jpa-entity-schema:
+            path: /sar/entity-schema.json
+          expected-api-response:
+            path: /sar/sar-api-response.json
+          expected-render-result:
+            path: /sar/sar-generated-report.html
+
+[Further info here](https://github.com/ministryofjustice/hmpps-subject-access-request-lib/blob/main/README.md)

@@ -129,6 +129,10 @@ hmpps:
   sqs:
     queueAdminRole: OFFICIAL_VISITS_ADMIN
     defaultErrorVisibilityTimeout: 1, 10, 60, 600
+  sar:
+    template:
+      path: /sar/templates/sar_template.mustache
+      enabled: true
 
 springdoc:
   swagger-ui:

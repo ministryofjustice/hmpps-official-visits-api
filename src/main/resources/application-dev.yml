@@ -3,3 +3,7 @@
 spring:
   flyway:
     locations: classpath:/migrations/common,classpath:/migrations/dev
+
+hmpps:
+  sar:
+    additionalAccessRole: ROLE_OFFICIAL_VISITS_ADMIN
