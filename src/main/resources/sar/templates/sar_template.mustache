@@ -18,8 +18,8 @@
             <tr><td>Visit date</td><td>{{ formatDate visitDate }}</td></tr>
             <tr><td>Start time</td><td>{{ formatDate startTime }}</td></tr>
             <tr><td>End time</td><td>{{ formatDate endTime }}</td></tr>
-            <tr><td>Visit type</td><td>{{ optionalValue visitType }}</td></tr>
-            <tr><td>Visit status</td><td>{{ optionalValue visitStatus }}</td></tr>
+            <tr><td>Visit type</td><td>{{ optionalString visitType }}</td></tr>
+            <tr><td>Visit status</td><td>{{ optionalString visitStatus }}</td></tr>
             <tr><td>Staff notes</td><td>{{ optionalString staffNotes }}</td></tr>
             <tr><td>Prisoner notes</td><td>{{ optionalString prisonerNotes }}</td></tr>
             <tr><td>Location</td><td>{{ getLocationNameByDpsId dpsLocationId }}</td></tr>
@@ -31,8 +31,8 @@
         {{#visitors}}
         <table class="summary-list">
             <tr><td>First name</td><td>{{ optionalString firstName }}</td></tr>
-            <tr><td>Last name</td><td>{{ optionalValue lastName }}</td></tr>
-            <tr><td>Relationship code</td><td>{{ formatDate relationshipCode }}</td></tr>
+            <tr><td>Last name</td><td>{{ optionalString lastName }}</td></tr>
+            <tr><td>Relationship code</td><td>{{ optionalString relationshipCode }}</td></tr>
             <tr><td>Relationship</td><td>{{ optionalString relationshipDescription }}</td></tr>
             <tr><td>Notes</td><td>{{ optionalString visitorNotes }}</td></tr>
             <tr><td>Attendance</td><td>{{ optionalString visitorAttendance }}</td></tr>
