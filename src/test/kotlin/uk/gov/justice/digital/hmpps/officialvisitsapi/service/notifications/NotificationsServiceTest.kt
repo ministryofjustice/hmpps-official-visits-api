@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

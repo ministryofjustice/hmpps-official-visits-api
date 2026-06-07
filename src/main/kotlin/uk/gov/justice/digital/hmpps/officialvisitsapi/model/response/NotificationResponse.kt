@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 
 data class NotificationResponse(
   @Schema(description = "The official visit id", example = "1")
