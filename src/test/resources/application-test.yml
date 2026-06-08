@@ -64,3 +64,15 @@ feature:
 notify:
   callback:
     secret: "TestSecret"
+
+hmpps:
+  sar:
+    tests:
+      attachments-expected: false
+      expected-flyway-schema-version: 2026.05.28
+      expected-jpa-entity-schema:
+        path: /sar/entity-schema.json
+      expected-api-response:
+        path: /sar/sar-api-response.json
+      expected-render-result:
+        path: /sar/sar-generated-report.html

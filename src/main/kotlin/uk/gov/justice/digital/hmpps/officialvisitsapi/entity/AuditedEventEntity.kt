@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "audited_event")
-class AuditedEventEntity(
+open class AuditedEventEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val auditedEventId: Long = 0L,

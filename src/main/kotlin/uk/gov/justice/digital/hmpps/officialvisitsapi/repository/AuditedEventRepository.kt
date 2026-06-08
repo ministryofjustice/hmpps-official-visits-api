@@ -20,6 +20,8 @@ interface AuditedEventRepository : JpaRepository<AuditedEventEntity, Long> {
   @Modifying
   fun deleteAllByPrisonerNumber(prisonerNumber: String)
 
+  fun findAllByOfficialVisitId(officialVisitId: Long): List<AuditedEventEntity>
+
   @Query(
     value = """
     SELECT ae FROM AuditedEventEntity ae
