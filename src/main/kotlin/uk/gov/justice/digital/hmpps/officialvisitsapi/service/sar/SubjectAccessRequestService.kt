@@ -42,8 +42,8 @@ class SubjectAccessRequestService(
 
     val officialVisits = officialVisitRepository.findAllByPrisonerNumberAndVisitDateBetween(
       prisonerNumber = prn,
-      visitDateAfter = from,
-      visitDateBefore = to,
+      fromDate = from,
+      toDate = to,
     )
 
     if (officialVisits.isEmpty()) {

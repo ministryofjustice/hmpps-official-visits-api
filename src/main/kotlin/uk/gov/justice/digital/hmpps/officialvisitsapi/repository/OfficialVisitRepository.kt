@@ -100,7 +100,7 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
 
   fun findAllByPrisonerNumberAndVisitDateBetween(
     prisonerNumber: String,
-    visitDateAfter: LocalDate,
-    visitDateBefore: LocalDate,
+    fromDate: LocalDate,
+    toDate: LocalDate,
   ): List<OfficialVisitEntity>
 }
