@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
@@ -61,6 +62,8 @@ class NotificationsService(
   }
 
   fun searchSentEmails(prisonCode: String, criteria: SentEmailSearchCriteria, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
+
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long): List<OfficialVisitNotification> = notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId).map { it.toOfficialVisitNotification() }
 
   /**
    * Will return the identifier of the notification created if successful, otherwise null.
@@ -126,6 +129,18 @@ class NotificationsService(
       )
     }
   }
+
+  private fun NotificationEntity.toOfficialVisitNotification() = OfficialVisitNotification(
+    notificationId = notificationId,
+    officialVisitId = officialVisitId,
+    templateId = templateId,
+    emailAddress = emailAddress,
+    reason = reason,
+    govNotifyNotificationId = govNotifyNotificationId,
+    emailStatus = emailStatus,
+    createdTime = createdTime,
+    statusUpdatedTime = statusUpdatedTime,
+  )
 }
 
 enum class NotificationType {

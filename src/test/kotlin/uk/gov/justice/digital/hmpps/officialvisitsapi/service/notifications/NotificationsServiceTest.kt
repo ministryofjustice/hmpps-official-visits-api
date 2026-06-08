@@ -13,6 +13,7 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toHourMinuteStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -33,6 +34,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCancelledEmail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCreatedEmail
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitUpdatedEmail
+import java.time.LocalDateTime
 import java.util.Optional
 import java.util.UUID
 
@@ -196,6 +198,52 @@ class NotificationsServiceTest {
       "user_name" to MOORLAND_PRISON_USER.name,
       "visitor_names" to "Community Manager, Prison Manager",
     )
+  }
+
+  @Test
+  fun `should return mapped notifications for official visit id`() {
+    val createdTime = LocalDateTime.now()
+    val statusUpdatedTime = createdTime.plusMinutes(10)
+    val notificationEntity = NotificationEntity(
+      notificationId = 123L,
+      officialVisitId = 999L,
+      templateId = "template-1",
+      emailAddress = "email@address.com",
+      reason = "OFFICIAL_VISIT_CREATED",
+      govNotifyNotificationId = UUID.randomUUID(),
+      emailStatus = NotificationEmailStatus.SENT,
+      createdTime = createdTime,
+      statusUpdatedTime = statusUpdatedTime,
+    )
+
+    whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(999L) } doReturn listOf(notificationEntity)
+
+    val result = service.getNotificationsByOfficialVisitId(999L)
+
+    result.size isEqualTo 1
+    with(result.first()) {
+      notificationId isEqualTo notificationEntity.notificationId
+      officialVisitId isEqualTo notificationEntity.officialVisitId
+      templateId isEqualTo notificationEntity.templateId
+      emailAddress isEqualTo notificationEntity.emailAddress
+      reason isEqualTo notificationEntity.reason
+      govNotifyNotificationId isEqualTo notificationEntity.govNotifyNotificationId
+      emailStatus isEqualTo notificationEntity.emailStatus
+      createdTime isEqualTo notificationEntity.createdTime
+      statusUpdatedTime isEqualTo notificationEntity.statusUpdatedTime
+    }
+
+    verify(notificationRepository).findByOfficialVisitIdOrderByCreatedTimeDesc(999L)
+  }
+
+  @Test
+  fun `should return empty list when official visit has no notifications`() {
+    whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(77L) } doReturn emptyList()
+
+    val result = service.getNotificationsByOfficialVisitId(77L)
+
+    result.isEmpty() isEqualTo true
+    verify(notificationRepository).findByOfficialVisitIdOrderByCreatedTimeDesc(77L)
   }
 
   object FakeEmail : Email("email@address") {

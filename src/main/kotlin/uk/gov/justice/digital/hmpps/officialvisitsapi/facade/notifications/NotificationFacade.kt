@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 
 @Service
@@ -25,5 +25,5 @@ class NotificationFacade(
     user: User,
   ): PagedModel<SentEmailRecord> = notificationsService.searchSentEmails(prisonCode, criteria, page, size, user)
 
-  fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = notificationsService.sendOfficialVisitEmail(officialVisitId, email)
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(officialVisitId)
 }
