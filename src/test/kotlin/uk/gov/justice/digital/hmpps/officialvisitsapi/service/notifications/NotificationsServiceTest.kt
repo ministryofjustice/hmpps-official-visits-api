@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
+import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -215,7 +217,7 @@ class NotificationsServiceTest {
       createdTime = createdTime,
       statusUpdatedTime = statusUpdatedTime,
     )
-
+    whenever { officialVisitRepository.findById(999L) } doReturn Optional.of(createAVisitEntity(999L))
     whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(999L) } doReturn listOf(notificationEntity)
 
     val result = service.getNotificationsByOfficialVisitId(999L)
@@ -238,12 +240,24 @@ class NotificationsServiceTest {
 
   @Test
   fun `should return empty list when official visit has no notifications`() {
+    whenever { officialVisitRepository.findById(77L) } doReturn Optional.of(createAVisitEntity(77L))
     whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(77L) } doReturn emptyList()
 
     val result = service.getNotificationsByOfficialVisitId(77L)
 
     result.isEmpty() isEqualTo true
     verify(notificationRepository).findByOfficialVisitIdOrderByCreatedTimeDesc(77L)
+  }
+
+  @Test
+  fun `should throw not found when official visit not found`() {
+    val officialVisitId = 77L
+    whenever { officialVisitRepository.findById(officialVisitId) } doReturn Optional.empty()
+    whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId) } doReturn emptyList()
+
+    assertThrows<EntityNotFoundException> {
+      service.getNotificationsByOfficialVisitId(officialVisitId)
+    }.message isEqualTo "Official visit with id $officialVisitId not found"
   }
 
   object FakeEmail : Email("email@address") {

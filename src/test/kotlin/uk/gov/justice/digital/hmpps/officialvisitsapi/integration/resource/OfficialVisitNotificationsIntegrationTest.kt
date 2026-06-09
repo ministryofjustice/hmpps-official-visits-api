@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactly
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isBool
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
@@ -111,7 +112,12 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
 
     val notifications = webTestClient.getNotificationsByOfficialVisitId(scheduledVisit.officialVisitId)
 
-    notifications.isEmpty() isEqualTo true
+    notifications.isEmpty() isBool true
+  }
+
+  @Test
+  fun `should return 404 when no visit exists for id`() {
+    webTestClient.getNotificationsByOfficialVisitIdNotFound(999L)
   }
 
   private fun WebTestClient.send(officialVisitId: Long, request: NotificationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
@@ -139,4 +145,17 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody<List<OfficialVisitNotification>>()
     .returnResult().responseBody!!
+
+  private fun WebTestClient.getNotificationsByOfficialVisitIdNotFound(
+    officialVisitId: Long,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = this
+    .get()
+    .uri("/official-visit/id/$officialVisitId/notifications")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isNotFound
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id $officialVisitId not found")
 }

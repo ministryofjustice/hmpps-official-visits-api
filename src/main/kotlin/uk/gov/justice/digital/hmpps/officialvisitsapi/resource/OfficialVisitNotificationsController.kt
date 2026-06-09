@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -35,7 +36,7 @@ class OfficialVisitNotificationsController(
         content = [
           Content(
             mediaType = "application/json",
-            schema = Schema(implementation = OfficialVisitNotification::class),
+            array = ArraySchema(schema = Schema(implementation = OfficialVisitNotification::class)),
           ),
         ],
       ),

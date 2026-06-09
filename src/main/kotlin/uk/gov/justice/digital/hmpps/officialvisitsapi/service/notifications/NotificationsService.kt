@@ -47,7 +47,8 @@ class NotificationsService(
       .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
 
     val location = locationsService.getLocationById(officialVisit.dpsLocationId)?.localName ?: "Unknown location"
-    val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) ?: throw EntityNotFoundException("Prisoner not found ${officialVisit.prisonerNumber}")
+    val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber)
+      ?: throw EntityNotFoundException("Prisoner not found ${officialVisit.prisonerNumber}")
 
     val recipients = buildSet {
       request.emailAddresses.distinct().forEach { emailAddress ->
@@ -61,9 +62,20 @@ class NotificationsService(
     NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
-  fun searchSentEmails(prisonCode: String, criteria: SentEmailSearchCriteria, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
+  fun searchSentEmails(
+    prisonCode: String,
+    criteria: SentEmailSearchCriteria,
+    page: Int,
+    size: Int,
+    user: User,
+  ): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
 
-  fun getNotificationsByOfficialVisitId(officialVisitId: Long): List<OfficialVisitNotification> = notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId).map { it.toOfficialVisitNotification() }
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long): List<OfficialVisitNotification> = run {
+    officialVisitRepository.findById(officialVisitId)
+      .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
+    notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
+      .map { it.toOfficialVisitNotification() }
+  }
 
   /**
    * Will return the identifier of the notification created if successful, otherwise null.
