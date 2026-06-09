@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -70,10 +71,10 @@ class NotificationsService(
     user: User,
   ): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
 
-  fun getNotificationsByOfficialVisitId(officialVisitId: Long): List<OfficialVisitNotification> = run {
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = run {
     officialVisitRepository.findById(officialVisitId)
       .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
-    notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
+    notificationRepository.findByOfficialVisitId(officialVisitId, sort)
       .map { it.toOfficialVisitNotification() }
   }
 
@@ -83,7 +84,7 @@ class NotificationsService(
   @Transactional
   fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = run {
     var notificationId: Long? = null
-
+    logger.info("sending email ${email.type()} officialVisitId $officialVisitId and emailAddress ${email.emailAddress}.")
     emailService.send(email)
       .onSuccess { (govNotifyNotificationId, templateId) ->
         notificationRepository.saveAndFlush(
@@ -96,7 +97,10 @@ class NotificationsService(
             emailStatus = NotificationEmailStatus.PENDING,
             createdTime = LocalDateTime.now(),
           ),
-        ).also { notificationId = it.notificationId }
+        ).also {
+          notificationId = it.notificationId
+          logger.info("sent notification with notification id $notificationId and emailAddress ${email.emailAddress}.")
+        }
       }
       .onFailure { exception -> logger.info("Failed to send email ${email.type()}.", exception) }
 

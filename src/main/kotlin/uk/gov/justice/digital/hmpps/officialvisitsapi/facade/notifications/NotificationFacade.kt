@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications
 
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
@@ -25,5 +26,8 @@ class NotificationFacade(
     user: User,
   ): PagedModel<SentEmailRecord> = notificationsService.searchSentEmails(prisonCode, criteria, page, size, user)
 
-  fun getNotificationsByOfficialVisitId(officialVisitId: Long): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(officialVisitId)
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(
+    officialVisitId,
+    sort,
+  )
 }

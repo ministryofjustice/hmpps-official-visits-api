@@ -1,5 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
-
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -21,10 +21,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -90,15 +88,16 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
   fun `should return notifications for an official visit id`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    webTestClient.send(
+    testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email@address.com", "email2@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com", "email2@address.com"),
     )
 
-    val notifications = webTestClient.getNotificationsByOfficialVisitId(scheduledVisit.officialVisitId)
+    val notifications = webTestClient.getNotificationsByOfficialVisitId(
+      scheduledVisit.officialVisitId,
+      sort = "sortDirection=ASC",
+    )
 
     notifications.size isEqualTo 2
     notifications.map { it.officialVisitId }.distinct() containsExactly listOf(scheduledVisit.officialVisitId)
@@ -107,10 +106,52 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should return notifications for an official visit id with sort ascending or descending`() {
+    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+    val older = testAPIClient.sendNotification(
+      officialVisitId = scheduledVisit.officialVisitId,
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com", "email2@address.com"),
+    )
+
+    val newer = testAPIClient.sendNotification(
+      officialVisitId = scheduledVisit.officialVisitId,
+      notificationType = NotificationType.AMEND,
+      emailAddresses = listOf("email@address.com"),
+    )
+
+    val resultDesc = webTestClient.getNotificationsByOfficialVisitId(
+      scheduledVisit.officialVisitId,
+      sort = "sortDirection=DESC",
+    ).map { it.notificationId }
+
+    assertThat(resultDesc).containsExactly(
+      newer.recipients.first().notificationId,
+      older.recipients.last().notificationId,
+      older.recipients.first().notificationId,
+    )
+
+    val resultAsc = webTestClient.getNotificationsByOfficialVisitId(
+      scheduledVisit.officialVisitId,
+      sort = "sortDirection=ASC",
+    ).map { it.notificationId }
+
+    assertThat(resultAsc).containsExactly(
+      older.recipients.first().notificationId,
+      older.recipients.last().notificationId,
+      newer.recipients.first().notificationId,
+    )
+  }
+
+  @Test
   fun `should return empty notifications list when none exist for official visit id`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    val notifications = webTestClient.getNotificationsByOfficialVisitId(scheduledVisit.officialVisitId)
+    val notifications = webTestClient.getNotificationsByOfficialVisitId(
+      scheduledVisit.officialVisitId,
+      sort = "sortDirection=ASC",
+    )
 
     notifications.isEmpty() isBool true
   }
@@ -120,24 +161,13 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
     webTestClient.getNotificationsByOfficialVisitIdNotFound(999L)
   }
 
-  private fun WebTestClient.send(officialVisitId: Long, request: NotificationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
-    .post()
-    .uri("/notification/$officialVisitId")
-    .bodyValue(request)
-    .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-    .exchange()
-    .expectStatus().isCreated
-    .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody<NotificationResponse>()
-    .returnResult().responseBody!!
-
   private fun WebTestClient.getNotificationsByOfficialVisitId(
     officialVisitId: Long,
     prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+    sort: String,
   ) = this
     .get()
-    .uri("/official-visit/id/$officialVisitId/notifications")
+    .uri("/official-visit/id/$officialVisitId/notifications?$sort")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()

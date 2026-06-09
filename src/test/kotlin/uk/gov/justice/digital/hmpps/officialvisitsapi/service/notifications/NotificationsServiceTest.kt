@@ -12,6 +12,7 @@ import org.mockito.kotlin.inOrder
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
+import org.springframework.data.domain.Sort
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toHourMinuteStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
@@ -218,9 +219,9 @@ class NotificationsServiceTest {
       statusUpdatedTime = statusUpdatedTime,
     )
     whenever { officialVisitRepository.findById(999L) } doReturn Optional.of(createAVisitEntity(999L))
-    whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(999L) } doReturn listOf(notificationEntity)
+    whenever { notificationRepository.findByOfficialVisitId(999L, sort = Sort.by(Sort.Direction.DESC, "createdTime")) } doReturn listOf(notificationEntity)
 
-    val result = service.getNotificationsByOfficialVisitId(999L)
+    val result = service.getNotificationsByOfficialVisitId(999L, sort = Sort.by(Sort.Direction.DESC, "createdTime"))
 
     result.size isEqualTo 1
     with(result.first()) {
@@ -235,28 +236,28 @@ class NotificationsServiceTest {
       statusUpdatedTime isEqualTo notificationEntity.statusUpdatedTime
     }
 
-    verify(notificationRepository).findByOfficialVisitIdOrderByCreatedTimeDesc(999L)
+    verify(notificationRepository).findByOfficialVisitId(999L, sort = Sort.by(Sort.Direction.DESC, "createdTime"))
   }
 
   @Test
   fun `should return empty list when official visit has no notifications`() {
     whenever { officialVisitRepository.findById(77L) } doReturn Optional.of(createAVisitEntity(77L))
-    whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(77L) } doReturn emptyList()
+    whenever { notificationRepository.findByOfficialVisitId(77L, sort = Sort.by(Sort.Direction.DESC, "createdTime")) } doReturn emptyList()
 
-    val result = service.getNotificationsByOfficialVisitId(77L)
+    val result = service.getNotificationsByOfficialVisitId(77L, sort = Sort.by(Sort.Direction.DESC, "createdTime"))
 
     result.isEmpty() isEqualTo true
-    verify(notificationRepository).findByOfficialVisitIdOrderByCreatedTimeDesc(77L)
+    verify(notificationRepository).findByOfficialVisitId(77L, sort = Sort.by(Sort.Direction.DESC, "createdTime"))
   }
 
   @Test
   fun `should throw not found when official visit not found`() {
     val officialVisitId = 77L
     whenever { officialVisitRepository.findById(officialVisitId) } doReturn Optional.empty()
-    whenever { notificationRepository.findByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId) } doReturn emptyList()
+    whenever { notificationRepository.findByOfficialVisitId(officialVisitId, sort = Sort.by(Sort.Direction.DESC, "createdTime")) } doReturn emptyList()
 
     assertThrows<EntityNotFoundException> {
-      service.getNotificationsByOfficialVisitId(officialVisitId)
+      service.getNotificationsByOfficialVisitId(officialVisitId, sort = Sort.by(Sort.Direction.DESC, "createdTime"))
     }.message isEqualTo "Official visit with id $officialVisitId not found"
   }
 
