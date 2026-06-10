@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -32,6 +33,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OverlappingVisitsCriteriaRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEventResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
@@ -419,4 +421,38 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     @Parameter(description = "The request with the overlapping criteria to check against", required = true)
     request: OverlappingVisitsCriteriaRequest,
   ) = facade.findOverlappingScheduledVisits(prisonCode, request)
+
+  @GetMapping("/id/{officialVisitId}/audited-events")
+  @Operation(
+    summary = "Get the audited events for an official visit",
+    description = "Get the audited event details of an official visit",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Returns a list of audited events",
+        content = [
+          Content(
+            mediaType = "application/json",
+            array = ArraySchema(schema = Schema(implementation = AuditedEventResponse::class)),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Official visit not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun getOfficialVisitAuditedEvents(
+    @PathVariable @Parameter(
+      name = "officialVisitId",
+      description = "The official visit ID",
+      example = "123456",
+      required = true,
+    ) officialVisitId: Long,
+  ): List<AuditedEventResponse> = emptyList()
 }
