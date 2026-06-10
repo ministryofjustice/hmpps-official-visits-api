@@ -120,7 +120,8 @@ class CurrentTermComponentTest {
       assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
       assertThat(eventSource).isEqualTo("NOMIS")
-      assertThat(summaryText).isEqualTo("Current term marker updated to true")
+      assertThat(summaryText).isEqualTo("Current term changed")
+      assertThat(detailText).isEqualTo("current_term|false|true")
     }
 
     with(auditEventCaptor.secondValue) {
@@ -128,7 +129,8 @@ class CurrentTermComponentTest {
       assertThat(prisonerNumber).isEqualTo(PENTONVILLE_PRISONER.number)
       assertThat(prisonCode).isEqualTo(PENTONVILLE)
       assertThat(eventSource).isEqualTo("NOMIS")
-      assertThat(summaryText).isEqualTo("Current term marker updated to false")
+      assertThat(summaryText).isEqualTo("Current term changed")
+      assertThat(detailText).isEqualTo("current_term|true|false")
     }
   }
 
@@ -270,22 +272,26 @@ class CurrentTermComponentTest {
 
     with(auditEventCaptor.firstValue) {
       assertThat(officialVisitId).isEqualTo(1L)
-      assertThat(summaryText).isEqualTo("Current term marker updated to true")
+      assertThat(summaryText).isEqualTo("Current term changed")
+      assertThat(detailText).isEqualTo("current_term|false|true")
     }
 
     with(auditEventCaptor.secondValue) {
       assertThat(officialVisitId).isEqualTo(2L)
-      assertThat(summaryText).isEqualTo("Current term marker updated to true")
+      assertThat(summaryText).isEqualTo("Current term changed")
+      assertThat(detailText).isEqualTo("current_term|false|true")
     }
 
     with(auditEventCaptor.thirdValue) {
       assertThat(officialVisitId).isEqualTo(3L)
-      assertThat(summaryText).isEqualTo("Current term marker updated to true")
+      assertThat(summaryText).isEqualTo("Current term changed")
+      assertThat(detailText).isEqualTo("current_term|false|true")
     }
 
     with(auditEventCaptor.lastValue) {
       assertThat(officialVisitId).isEqualTo(4L)
-      assertThat(summaryText).isEqualTo("Current term marker updated to true")
+      assertThat(summaryText).isEqualTo("Current term changed")
+      assertThat(detailText).isEqualTo("current_term|false|true")
     }
   }
 }

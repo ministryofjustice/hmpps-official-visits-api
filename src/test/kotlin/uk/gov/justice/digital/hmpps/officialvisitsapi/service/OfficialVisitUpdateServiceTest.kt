@@ -117,8 +117,8 @@ class OfficialVisitUpdateServiceTest {
       eventSource isEqualTo "DPS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Update visit visit type and visit slot"
-      detailText isEqualTo "Visit date changed from ${oldVisitDate.toMediumFormatStyle()} to ${request.visitDate.toMediumFormatStyle()}; Start time changed from $oldStartTime to ${request.startTime}; End time changed from $oldEndTime to ${request.endTime}; Location changed from $oldDpsLocationId to ${request.dpsLocationId}; Visit type changed from $oldVisitTypeCode to VIDEO; Visit slot changed from 1 to 99."
+      summaryText isEqualTo "Visit updated"
+      detailText isEqualTo "visit_date|${oldVisitDate.toMediumFormatStyle()}|${request.visitDate.toMediumFormatStyle()};start_time|$oldStartTime|${request.startTime};end_time|$oldEndTime|${request.endTime};location|$oldDpsLocationId|${request.dpsLocationId};visit_type|$oldVisitTypeCode|VIDEO;visit_slot|1|99;"
       eventDateTime isCloseTo now()
     }
   }
@@ -192,8 +192,8 @@ class OfficialVisitUpdateServiceTest {
       eventSource isEqualTo "DPS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Update visit comments"
-      detailText isEqualTo "Prisoner notes changed from '' to prisoner updated; Staff notes changed from '' to staff updated."
+      summaryText isEqualTo "Visit updated"
+      detailText isEqualTo "prisoner_notes||prisoner updated;staff_notes||staff updated;"
       eventDateTime isCloseTo now()
     }
   }

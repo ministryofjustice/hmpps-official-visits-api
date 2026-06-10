@@ -11,6 +11,9 @@ data class AuditedEventResponse(
   @Schema(description = "The official visit identifier", example = "1")
   val officialVisitId: Long,
 
+  @Schema(description = "The source of the auditing event", example = "DPS", allowableValues = ["DPS", "NOMIS"])
+  val eventSource: String,
+
   @Schema(description = "A short summary of the audit event", example = "Visit updated")
   val eventSummary: String,
 
@@ -18,7 +21,7 @@ data class AuditedEventResponse(
   val eventType: String,
 
   @Schema(description = "The changes related to an update, otherwise empty", example = "[{\"field\":\"start_time\",\"oldValue\":\"12:00\",\"newValue\":\"17:00\"},{\"field\":\"end_time\",\"oldValue\":\"14:00\",\"newValue\":\"19:00\"}]")
-  val eventChanges: List<AuditedEventChange>,
+  val eventChanges: List<AuditedEventChange> = emptyList(),
 
   @Schema(description = "The date and time the audited event was recorded", example = "2026-05-04 09:50")
   val eventDateTime: LocalDateTime,

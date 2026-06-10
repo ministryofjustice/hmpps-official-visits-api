@@ -146,8 +146,8 @@ class SyncOfficialVisitorServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visitor added"
-      detailText isEqualTo "Visitor added by user Prison User."
+      summaryText isEqualTo "Visitor added"
+      detailText isEqualTo "Visitor First Last added"
       eventDateTime isCloseTo now()
     }
     verify(metricsService).send(
@@ -307,8 +307,8 @@ class SyncOfficialVisitorServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo "NOMIS"
       userFullName isEqualTo "NOMIS"
-      summaryText isEqualTo "Official visitor removed"
-      detailText isEqualTo "Visitor removed by user NOMIS."
+      summaryText isEqualTo "Visitor removed"
+      detailText isEqualTo "Visitor removed"
       eventDateTime isCloseTo now()
     }
   }
@@ -407,8 +407,8 @@ class SyncOfficialVisitorServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visitor updated"
-      detailText isEqualTo "Visitor first name changed from First to FirstX; Visitor last name changed from Last to LastX; Visitor relationship code changed from POL to POM; Visitor notes changed from Notes to Changed; Visitor attendance code changed from '' to ATTENDED."
+      summaryText isEqualTo "Visitor change"
+      detailText isEqualTo "visitor_first_name|First|FirstX;visitor_last_name|Last|LastX;visitor_relationship_code|POL|POM;visitor_notes|Notes|Changed;visitor_attendance_code||ATTENDED;"
       eventDateTime isCloseTo now()
     }
   }

@@ -1,16 +1,77 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.AuditedEventEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEventChange
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEventResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.properties.Delegates
 
 @Service
-class AuditingService(private val auditedEventRepository: AuditedEventRepository) {
+class AuditingService(
+  private val officialVisitRepository: OfficialVisitRepository,
+  private val auditedEventRepository: AuditedEventRepository,
+) {
+  @Transactional(readOnly = true)
+  fun findByOfficialVisitId(officialVisitId: Long): List<AuditedEventResponse> {
+    officialVisitRepository.findById(officialVisitId).orElseThrow { throw EntityNotFoundException("Official visit with id $officialVisitId not found") }
+
+    return auditedEventRepository.findAllByOfficialVisitId(officialVisitId).map { event ->
+      val eventType = AuditEventType.entries.single { it.summaryText == event.summaryText }
+
+      when (eventType) {
+        AuditEventType.VISIT_CREATED -> {
+          AuditedEventResponse(
+            auditedEventId = event.auditedEventId,
+            officialVisitId = officialVisitId,
+            eventSource = event.eventSource,
+            eventSummary = event.summaryText,
+            eventType = "CREATE",
+            eventDateTime = event.eventDateTime,
+            eventUsername = event.userName,
+            eventUserFullName = event.userFullName,
+          )
+        }
+        AuditEventType.VISIT_UPDATED -> {
+          AuditedEventResponse(
+            auditedEventId = event.auditedEventId,
+            officialVisitId = officialVisitId,
+            eventSource = event.eventSource,
+            eventSummary = event.summaryText,
+            eventType = "UPDATE",
+            eventDateTime = event.eventDateTime,
+            eventUsername = event.userName,
+            eventUserFullName = event.userFullName,
+            eventChanges = event.toAuditEventChanges(),
+          )
+        }
+        // TODO support for other audit event types
+        else -> throw IllegalStateException("Audit event type not yet supported: $eventType")
+      }
+    }
+  }
+
+  private fun AuditedEventEntity.toAuditEventChanges() = this.detailText
+    .split(';')
+    .filter { it.isNotBlank() }
+    .map {
+      val change = it.split('|')
+
+      AuditedEventChange(
+        field = change[0],
+        oldValue = change[1],
+        newValue = change[2],
+        significantChange = change[0].contains("visit_date") || change[0].contains("start_time") || change[0].contains("end_time") || change[0].contains("location"),
+      )
+    }
+
   fun recordAuditEvent(auditEvent: AuditEventDto) {
     auditedEventRepository.saveAndFlush(
       AuditedEventEntity(
@@ -58,6 +119,10 @@ abstract class AuditEventDsl {
 
   fun officialVisitId(ovId: Long) {
     officialVisitId = ovId
+  }
+
+  fun summaryText(auditEventType: AuditEventType) {
+    summaryText = auditEventType.summaryText
   }
 
   fun summaryText(st: String) {
@@ -119,9 +184,9 @@ class ChangeVisitDsl : AuditEventDsl() {
     if (changes.changes().isEmpty()) return@run "No recorded changes."
 
     changes.changes().joinToString(
-      separator = "; ",
-      postfix = ".",
-    ) { it.alternativeText(it.old, it.new) ?: "${it.descriptiveText} changed from ${it.old ?: "''"} to ${it.new ?: "''"}" }
+      separator = ";",
+      postfix = ";",
+    ) { it.alternativeText(it.old, it.new) ?: "${it.descriptiveText}|${it.old ?: ""}|${it.new ?: ""}" }
   }
 
   @AuditEventDslMarker
@@ -145,27 +210,39 @@ class ChangeVisitDsl : AuditEventDsl() {
 }
 
 class CancelVisitDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visit cancelled by user ${user.name}"
+  override fun detailsText(): String = "Visit cancelled"
 }
 
 class DeleteVisitDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visit deleted by user ${user.name}."
+  override fun detailsText(): String = "Visit deleted"
 }
 
 class AddVisitorDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visitor added by user ${user.name}."
+  private lateinit var visitorName: String
+
+  fun visitorName(visitorName: String) {
+    this.visitorName = visitorName
+  }
+
+  override fun detailsText(): String = "Visitor $visitorName added"
 }
 
 class RemoveVisitorDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visitor removed by user ${user.name}."
+  override fun detailsText(): String = "Visitor removed"
 }
 
 class CompleteVisitDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visit completed by user ${user.name}"
+  override fun detailsText(): String = "Visit completed"
 }
 
 class NewBookingVisitDsl : AuditEventDsl() {
-  override fun detailsText(): String = "A new booking for the prisoner has changed the current term"
+  private var currentTerm by Delegates.notNull<Boolean>()
+
+  fun currentTerm(value: Boolean) {
+    currentTerm = value
+  }
+
+  override fun detailsText(): String = "current_term|${currentTerm.not()}|$currentTerm"
 }
 
 data class AuditEventDto(
@@ -179,3 +256,17 @@ data class AuditEventDto(
   val detailText: String,
   val eventDateTime: LocalDateTime = LocalDateTime.now(),
 )
+
+enum class AuditEventType(val summaryText: String) {
+  VISIT_CREATED("Visit created"),
+  VISIT_UPDATED("Visit updated"),
+  VISIT_CANCELLED("Visit cancelled"),
+  VISIT_COMPLETED("Visit completed"),
+  VISIT_DELETED("Visit deleted"),
+  VISITOR_CHANGE("Visitor change"),
+  VISITOR_ADDED("Visitor added"),
+  VISITOR_REMOVED("Visitor removed"),
+  PRISONER_MERGED("Prisoner merged"),
+  PRISONER_BOOKING_MOVED("Prisoner booking moved"),
+  CURRENT_TERM_CHANGED("Current term changed"),
+}

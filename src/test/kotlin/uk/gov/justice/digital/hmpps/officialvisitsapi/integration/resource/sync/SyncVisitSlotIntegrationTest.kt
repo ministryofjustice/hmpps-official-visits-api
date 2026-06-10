@@ -70,6 +70,8 @@ class SyncVisitSlotIntegrationTest : IntegrationTestBase() {
 
   @BeforeEach
   fun initialiseData() {
+    clearAllVisitData()
+
     // Needed for the visit create used in testing
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation))
 

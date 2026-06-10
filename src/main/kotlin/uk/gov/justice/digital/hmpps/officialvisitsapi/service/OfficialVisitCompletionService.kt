@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCompletionEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
@@ -74,7 +75,7 @@ class OfficialVisitCompletionService(
     auditingService.recordAuditEvent(
       auditVisitCompletionEvent {
         officialVisitId(officialVisit.officialVisitId)
-        summaryText("Official visit completed")
+        summaryText(AuditEventType.VISIT_COMPLETED)
         eventSource("DPS")
         user(user)
         prisonCode(prisonCode)

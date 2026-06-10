@@ -167,11 +167,11 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    with(auditedEventRepository.findAll().single { it.summaryText == "Official visit cancelled" }) {
+    with(auditedEventRepository.findAll().single { it.summaryText == "Visit cancelled" }) {
       officialVisitId isEqualTo cancelledVisit.officialVisitId
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      detailText isEqualTo "Visit cancelled by user ${MOORLAND_PRISON_USER.name}"
+      detailText isEqualTo "Visit cancelled"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name

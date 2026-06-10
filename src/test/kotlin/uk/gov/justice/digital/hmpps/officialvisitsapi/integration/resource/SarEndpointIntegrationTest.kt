@@ -148,7 +148,7 @@ class SarEndpointIntegrationTest : IntegrationTestBase() {
       }
 
       assertThat(events).hasSize(2)
-      assertThat(events).extracting("eventType").containsAll(listOf("Official visit created", "Official visit completed"))
+      assertThat(events).extracting("eventType").containsAll(listOf("Visit created", "Visit completed"))
     }
   }
 

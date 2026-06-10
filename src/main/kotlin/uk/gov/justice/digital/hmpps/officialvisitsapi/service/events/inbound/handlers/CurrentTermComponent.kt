@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Pris
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCurrentTermEvent
 
@@ -60,11 +61,13 @@ class CurrentTermComponent(
   private fun auditCurrentTermChange(visit: OfficialVisitEntity, currentTermMarker: Boolean) = auditingService.recordAuditEvent(
     auditVisitCurrentTermEvent {
       officialVisitId(visit.officialVisitId)
-      summaryText("Current term marker updated to $currentTermMarker")
+      summaryText("The visit current term marker has been updated by a merge")
+      summaryText(AuditEventType.CURRENT_TERM_CHANGED)
       eventSource("NOMIS")
       user(UserService.getServiceAsUser())
       prisonCode(visit.prisonCode)
       prisonerNumber(visit.prisonerNumber)
+      currentTerm(visit.currentTerm)
     },
   )
 }

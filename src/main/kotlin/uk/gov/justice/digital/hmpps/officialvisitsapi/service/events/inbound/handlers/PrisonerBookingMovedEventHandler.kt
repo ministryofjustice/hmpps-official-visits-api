@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.PrisonerBookingMovedEvent
@@ -49,13 +50,13 @@ class PrisonerBookingMovedEventHandler(
         auditingService.recordAuditEvent(
           auditVisitChangeEvent {
             officialVisitId(visit.officialVisitId)
-            summaryText("Official visit updated due to prisoner booking move")
+            summaryText(AuditEventType.PRISONER_BOOKING_MOVED)
             eventSource("NOMIS")
             user(UserService.getClientAsUser("NOMIS"))
             prisonCode(visit.prisonCode)
             prisonerNumber(movedToNomsNumber)
             changes {
-              change("Prisoner number", movedFromNomsNumber, movedToNomsNumber)
+              change("prisoner_number", movedFromNomsNumber, movedToNomsNumber)
             }
           },
         )

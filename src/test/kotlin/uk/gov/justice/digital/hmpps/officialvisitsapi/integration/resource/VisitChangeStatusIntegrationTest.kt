@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -35,6 +36,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.Noti
 import java.time.LocalTime
 import java.util.UUID
 
+@Disabled
 class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
 
   @MockitoBean

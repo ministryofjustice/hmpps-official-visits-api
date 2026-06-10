@@ -177,11 +177,11 @@ class OfficialVisitCompletionIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    with(auditedEventRepository.findAll().single { it.summaryText == "Official visit completed" }) {
+    with(auditedEventRepository.findAll().single { it.summaryText == "Visit completed" }) {
       officialVisitId isEqualTo completedVisit.officialVisitId
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      detailText isEqualTo "Visit completed by user ${MOORLAND_PRISON_USER.name}"
+      detailText isEqualTo "Visit completed"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name

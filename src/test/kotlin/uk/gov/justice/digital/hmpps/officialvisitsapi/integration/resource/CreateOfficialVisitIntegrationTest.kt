@@ -214,7 +214,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       officialVisitId isEqualTo persistedOfficialVisit.officialVisitId
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      summaryText isEqualTo "Official visit created"
+      summaryText isEqualTo "Visit created"
       detailText isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number} with 1 visitor(s)"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name

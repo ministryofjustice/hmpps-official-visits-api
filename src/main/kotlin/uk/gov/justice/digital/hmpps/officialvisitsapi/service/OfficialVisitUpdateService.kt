@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -57,18 +58,18 @@ class OfficialVisitUpdateService(
 
     val auditChangeEvent = auditVisitChangeEvent {
       officialVisitId(ove.officialVisitId)
-      summaryText("Update visit visit type and visit slot")
+      summaryText(AuditEventType.VISIT_UPDATED)
       eventSource("DPS")
       user(user)
       prisonCode(ove.prisonCode)
       prisonerNumber(ove.prisonerNumber)
       changes {
-        change("Visit date", ove.visitDate, request.visitDate)
-        change("Start time", ove.startTime, request.startTime)
-        change("End time", ove.endTime, request.endTime)
-        change("Location", ove.dpsLocationId, request.dpsLocationId)
-        change("Visit type", ove.visitTypeCode, request.visitTypeCode)
-        change("Visit slot", ove.prisonVisitSlot.prisonVisitSlotId, newPrisonVisitSlot.prisonVisitSlotId)
+        change("visit_date", ove.visitDate, request.visitDate)
+        change("start_time", ove.startTime, request.startTime)
+        change("end_time", ove.endTime, request.endTime)
+        change("location", ove.dpsLocationId, request.dpsLocationId)
+        change("visit_type", ove.visitTypeCode, request.visitTypeCode)
+        change("visit_slot", ove.prisonVisitSlot.prisonVisitSlotId, newPrisonVisitSlot.prisonVisitSlotId)
       }
     }
 
@@ -120,14 +121,14 @@ class OfficialVisitUpdateService(
 
     val auditChangeEvent = auditVisitChangeEvent {
       officialVisitId(ove.officialVisitId)
-      summaryText("Update visit comments")
+      summaryText(AuditEventType.VISIT_UPDATED)
       eventSource("DPS")
       user(user)
       prisonCode(ove.prisonCode)
       prisonerNumber(ove.prisonerNumber)
       changes {
-        change("Prisoner notes", ove.prisonerNotes, request.prisonerNotes)
-        change("Staff notes", ove.staffNotes, request.staffNotes)
+        change("prisoner_notes", ove.prisonerNotes, request.prisonerNotes)
+        change("staff_notes", ove.staffNotes, request.staffNotes)
       }
     }
 
@@ -187,28 +188,34 @@ class OfficialVisitUpdateService(
       Triple(new, updates, removals)
     }
 
-    val matchingContacts = request.getMatchingContactDetails(ove.prisonerNumber)
+    val allPrisonerContacts = contactsService.getAllPrisonerContacts(prisonerNumber = ove.prisonerNumber, approved = null, currentTerm = true)
 
     return OfficialVisitUpdateVisitorsResponse(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
       prisonerNumber = ove.prisonerNumber,
-      visitorsAdded = addNewVisitors(ove, newVisitors.values, matchingContacts, user),
+      visitorsAdded = addNewVisitors(ove, newVisitors.values, allPrisonerContacts, user),
       visitorsDeleted = deleteExistingVisitors(ove, removedVisitors),
-      visitorsUpdated = updateExistingVisitors(updatedVisitors, matchingContacts, user),
+      visitorsUpdated = updateExistingVisitors(updatedVisitors, allPrisonerContacts, user),
     ).also {
       auditingService.recordAuditEvent(
         auditVisitChangeEvent {
           officialVisitId(ove.officialVisitId)
-          summaryText("Update visit visitors")
+          summaryText(AuditEventType.VISITOR_CHANGE)
           eventSource("DPS")
           user(user)
           prisonCode(ove.prisonCode)
           prisonerNumber(ove.prisonerNumber)
           changes {
-            change("_", 0, newVisitors.size, { _, new -> "Visitors added $new" })
-            change("_", 0, updatedVisitors.size, { _, new -> "Visitors updated $new" })
-            change("_", 0, removedVisitors.size, { _, new -> "Visitors removed $new" })
+            newVisitors.forEach { (_, visitor) ->
+              change("_", 0, newVisitors.size, { _, new -> "Visitor ${findMatchingPerson(allPrisonerContacts, visitor).fullName()} added" })
+            }
+            updatedVisitors.forEach { (_, visitor) ->
+              change("_", 0, updatedVisitors.size, { _, new -> "Visitor ${findMatchingPerson(allPrisonerContacts, visitor).fullName()} updated" })
+            }
+            removedVisitors.forEach { visitor ->
+              change("_", 0, removedVisitors.size, { _, new -> "Visitor ${findMatchingPerson(allPrisonerContacts, visitor).fullName()} removed" })
+            }
           }
         },
       )
@@ -242,6 +249,8 @@ class OfficialVisitUpdateService(
       }
     }
   }
+
+  private fun PrisonerContact.fullName() = "${firstName.lowercase().replaceFirstChar { it.uppercase() }} ${lastName.lowercase().replaceFirstChar { it.uppercase() }}"
 
   private fun OfficialVisitor.isNewVisitor() = officialVisitorId == 0L
 
@@ -342,13 +351,6 @@ class OfficialVisitUpdateService(
     }
   }
 
-  private fun OfficialVisitUpdateVisitorsRequest.getMatchingContactDetails(prisonerNumber: String) = run {
-    val contacts =
-      contactsService.getAllPrisonerContacts(prisonerNumber = prisonerNumber, approved = null, currentTerm = true)
-
-    officialVisitors.map { findMatchingPerson(contacts, it) }
-  }
-
   private fun visitorChanged(old: OfficialVisitorEntity, new: OfficialVisitor, person: PrisonerContact?): Boolean {
     if (old.firstName != person?.firstName) {
       return true
@@ -373,16 +375,28 @@ class OfficialVisitUpdateService(
     }
     return false
   }
-}
 
-private fun findMatchingPerson(
-  matchingContacts: List<PrisonerContact>,
-  visitor: OfficialVisitor,
-): PrisonerContact = matchingContacts.singleOrNull {
-  if (visitor.prisonerContactId != null) {
-    it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
-  } else {
-    // fallback to relationship code if prisonerContactId is not provided in the request, as this because it is nullable and existing visitors may not have it populated
-    it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
-  }
-} ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
+  private fun findMatchingPerson(
+    matchingContacts: List<PrisonerContact>,
+    visitor: OfficialVisitor,
+  ): PrisonerContact = matchingContacts.singleOrNull {
+    if (visitor.prisonerContactId != null) {
+      it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
+    } else {
+      // fallback to relationship code if prisonerContactId is not provided in the request, as this because it is nullable and existing visitors may not have it populated
+      it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
+    }
+  } ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
+
+  private fun findMatchingPerson(
+    matchingContacts: List<PrisonerContact>,
+    visitor: OfficialVisitorEntity,
+  ): PrisonerContact = matchingContacts.singleOrNull {
+    if (visitor.prisonerContactId != null) {
+      it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
+    } else {
+      // fallback to relationship code if prisonerContactId is not provided in the request, as this because it is nullable and existing visitors may not have it populated
+      it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
+    }
+  } ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
+}

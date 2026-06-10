@@ -55,7 +55,7 @@ class AuditEventServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       prisonerNumber isEqualTo "A1234AA"
-      detailText isEqualTo "FIELD_1 changed from 1 to 2; FIELD_2 changed from a to b."
+      detailText isEqualTo "FIELD_1|1|2;FIELD_2|a|b;"
     }
   }
 
@@ -103,7 +103,7 @@ class AuditEventServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       prisonerNumber isEqualTo "A1234AA"
-      detailText isEqualTo "Field 1 was 1 now 2."
+      detailText isEqualTo "Field 1 was 1 now 2;"
     }
   }
 
@@ -127,7 +127,7 @@ class AuditEventServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       prisonerNumber isEqualTo "A1234AA"
-      detailText isEqualTo "FIELD_1 changed from a to ".plus("b".repeat(1001)).take(1000)
+      detailText isEqualTo "FIELD_1|a|".plus("b".repeat(1001)).take(1000)
     }
   }
 
@@ -150,7 +150,7 @@ class AuditEventServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       prisonerNumber isEqualTo "A1234AA"
-      detailText isEqualTo "Visit cancelled by user ${MOORLAND_PRISON_USER.name}"
+      detailText isEqualTo "Visit cancelled"
     }
   }
 
@@ -173,7 +173,7 @@ class AuditEventServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       prisonerNumber isEqualTo "A1234AA"
-      detailText isEqualTo "Visit completed by user ${MOORLAND_PRISON_USER.name}"
+      detailText isEqualTo "Visit completed"
     }
   }
 }

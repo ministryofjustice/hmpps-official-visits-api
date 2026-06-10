@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetr
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OverlappingVisitsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
@@ -37,6 +38,7 @@ class OfficialVisitFacade(
   private val outboundEventsService: OutboundEventsService,
   private val overlappingVisitsService: OverlappingVisitsService,
   private val notificationsService: NotificationsService,
+  private val auditingService: AuditingService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
@@ -251,6 +253,8 @@ class OfficialVisitFacade(
       }
     }
   }
+
+  fun findOfficialVisitAuditEvents(officialVisitId: Long) = auditingService.findByOfficialVisitId(officialVisitId)
 }
 
 class CaseloadAccessException(message: String) : RuntimeException(message)

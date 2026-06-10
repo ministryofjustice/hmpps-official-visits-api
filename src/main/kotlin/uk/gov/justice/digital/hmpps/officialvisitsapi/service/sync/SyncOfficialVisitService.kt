@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
@@ -96,7 +97,7 @@ class SyncOfficialVisitService(
       auditingService.recordAuditEvent(
         auditVisitCreateEvent {
           officialVisitId(visit.officialVisitId)
-          summaryText("Official visit created")
+          summaryText(AuditEventType.VISIT_CREATED)
           eventSource("NOMIS")
           user(createdBy)
           prisonCode(visit.prisonCode)
@@ -144,29 +145,29 @@ class SyncOfficialVisitService(
 
     val auditChangeEvent = auditVisitChangeEvent {
       officialVisitId(visit.officialVisitId)
-      summaryText("Official visit updated")
+      summaryText(AuditEventType.VISIT_UPDATED)
       eventSource("NOMIS")
       user(updatedBy)
       prisonCode(request.prisonCode)
       prisonerNumber(request.prisonerNumber)
       changes {
-        change("Visit slot", visit.prisonVisitSlot.prisonVisitSlotId, request.prisonVisitSlotId)
-        change("Visit date", visit.visitDate, request.visitDate)
-        change("Start time", visit.startTime, request.startTime)
-        change("End time", visit.endTime, request.endTime)
-        change("Location", visit.dpsLocationId, request.dpsLocationId)
-        change("Prison code", visit.prisonCode, request.prisonCode)
-        change("Prisoner number", visit.prisonerNumber, request.prisonerNumber)
-        change("Prisoner notes", visit.prisonerNotes, request.commentText)
-        change("Prisoner current term", visit.currentTerm, request.currentTerm)
-        change("Visitor concern notes", visit.visitorConcernNotes, request.visitorConcernText)
-        change("Override ban by", visit.overrideBanBy, request.overrideBanStaffUsername)
-        change("Offender book ID", visit.offenderBookId, request.offenderBookId)
-        change("Offender visit ID", visit.offenderVisitId, request.offenderVisitId)
-        change("Visit order number", visit.visitOrderNumber, request.visitOrderNumber)
-        change("Visit status code", visit.visitStatusCode, request.visitStatusCode)
-        change("Visit completion code", visit.completionCode, request.visitCompletionCode)
-        change("Search type code", visit.searchTypeCode, request.searchTypeCode)
+        change("visit _slot", visit.prisonVisitSlot.prisonVisitSlotId, request.prisonVisitSlotId)
+        change("visit_date", visit.visitDate, request.visitDate)
+        change("start_time", visit.startTime, request.startTime)
+        change("end_time", visit.endTime, request.endTime)
+        change("location", visit.dpsLocationId, request.dpsLocationId)
+        change("prison_code", visit.prisonCode, request.prisonCode)
+        change("prisoner_number", visit.prisonerNumber, request.prisonerNumber)
+        change("prisoner_notes", visit.prisonerNotes, request.commentText)
+        change("prisoner_current_term", visit.currentTerm, request.currentTerm)
+        change("visitor_concern_notes", visit.visitorConcernNotes, request.visitorConcernText)
+        change("override_ban_by", visit.overrideBanBy, request.overrideBanStaffUsername)
+        change("offender_book_id", visit.offenderBookId, request.offenderBookId)
+        change("offender_visit_id", visit.offenderVisitId, request.offenderVisitId)
+        change("visit_order_number", visit.visitOrderNumber, request.visitOrderNumber)
+        change("visit_status_code", visit.visitStatusCode, request.visitStatusCode)
+        change("visit_completion_code", visit.completionCode, request.visitCompletionCode)
+        change("search_type_code", visit.searchTypeCode, request.searchTypeCode)
       }
     }
 
@@ -219,7 +220,7 @@ class SyncOfficialVisitService(
     auditingService.recordAuditEvent(
       auditVisitDeletedEvent {
         officialVisitId(officialVisit.officialVisitId)
-        summaryText("Official visit deleted")
+        summaryText(AuditEventType.VISIT_DELETED)
         eventSource("NOMIS")
         user(UserService.getClientAsUser("NOMIS"))
         prisonCode(officialVisit.prisonCode)
