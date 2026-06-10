@@ -95,7 +95,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
-          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+          roles = listOf("ROLE_WRONG_ONE"),
         ),
       )
       .exchange()
@@ -109,7 +109,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
-          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+          roles = listOf("ROLE_WRONG_ONE"),
         ),
       )
       .bodyValue(createVisitSlotRequest())
@@ -124,7 +124,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
-          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+          roles = listOf("ROLE_WRONG_ONE"),
         ),
       )
       .bodyValue(updateVisitSlotRequest())
@@ -138,7 +138,7 @@ class VisitSlotIntegrationTest : IntegrationTestBase() {
       .headers(
         setAuthorisation(
           username = MOORLAND_PRISON_USER.username,
-          roles = listOf("ROLE_OFFICIAL_VISITS_STAFF"),
+          roles = listOf("ROLE_WRONG_ONE"),
         ),
       )
       .exchange()

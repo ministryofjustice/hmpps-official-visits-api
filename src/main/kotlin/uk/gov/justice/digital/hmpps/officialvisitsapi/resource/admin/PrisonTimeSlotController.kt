@@ -58,7 +58,7 @@ class PrisonTimeSlotController(val facade: PrisonTimeSlotFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN')")
   fun getAllTimeSlotsAndVisitSlots(
     @Parameter(description = "The prison code", required = true)
     @PathVariable prisonCode: String,

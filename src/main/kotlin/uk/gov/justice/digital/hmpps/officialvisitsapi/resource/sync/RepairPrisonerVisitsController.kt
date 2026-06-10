@@ -50,7 +50,7 @@ class RepairPrisonerVisitsController(val repairPrisonerVisitsService: RepairPris
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   fun repairPrisonerVisits(
     @PathVariable(required = true) prisonerNumber: String,
     @Valid @RequestBody request: RepairPrisonerVisitsRequest,

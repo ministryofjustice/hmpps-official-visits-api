@@ -52,7 +52,7 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   fun getOfficialVisitById(
     @PathVariable(required = true) officialVisitId: Long,
   ): SyncOfficialVisit = syncFacade.getOfficialVisitById(officialVisitId)
@@ -155,6 +155,7 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
   @Operation(
     summary = "Delete an official visit by ID",
     description = """
+      Requires role: OFFICIAL_VISITS_MIGRATION.
       Delete an official visit including all related information. 
       This endpoint is idempotent, so if the visit is not present it will silently succeed.
       """,
@@ -167,7 +168,7 @@ class OfficialVisitSyncController(private val syncFacade: SyncFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @ResponseStatus(value = HttpStatus.NO_CONTENT)
   fun syncDeleteOfficialVisit(
     @Parameter(description = "The official visit ID to remove", required = true)
