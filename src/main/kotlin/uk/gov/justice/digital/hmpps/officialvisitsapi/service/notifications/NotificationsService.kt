@@ -84,7 +84,7 @@ class NotificationsService(
   @Transactional
   fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = run {
     var notificationId: Long? = null
-    logger.info("sending email ${email.type()} officialVisitId $officialVisitId and emailAddress ${email.emailAddress}.")
+    logger.info("sending email ${email.type()} officialVisitId $officialVisitId")
     emailService.send(email)
       .onSuccess { (govNotifyNotificationId, templateId) ->
         notificationRepository.saveAndFlush(
