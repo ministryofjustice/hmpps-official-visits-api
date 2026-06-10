@@ -123,7 +123,7 @@ class MigrateVisitServiceTest {
           .extracting("prisonCode", "dayCode", "startTime", "endTime", "effectiveDate", "expiryDate", "createdBy", "createdTime")
           .contains(
             request.prisonCode,
-            DayType.valueOf(request.dayCode!!),
+            DayType.valueOf(request.dayCode),
             request.startTime,
             request.endTime,
             request.effectiveDate,
@@ -237,7 +237,7 @@ class MigrateVisitServiceTest {
       PrisonVisitSlotEntity(
         prisonVisitSlotId = 1L,
         prisonTimeSlotId = 1L,
-        dpsLocationId = request.visitSlots[0].dpsLocationId!!,
+        dpsLocationId = request.visitSlots[0].dpsLocationId,
         maxAdults = request.visitSlots[0].maxAdults,
         maxGroups = request.visitSlots[0].maxGroups,
         maxVideoSessions = request.visitSlots[0].maxVideoSessions,
@@ -247,7 +247,7 @@ class MigrateVisitServiceTest {
       PrisonVisitSlotEntity(
         prisonVisitSlotId = 2L,
         prisonTimeSlotId = 1L,
-        dpsLocationId = request.visitSlots[1].dpsLocationId!!,
+        dpsLocationId = request.visitSlots[1].dpsLocationId,
         maxAdults = request.visitSlots[1].maxAdults,
         maxGroups = request.visitSlots[1].maxGroups,
         maxVideoSessions = request.visitSlots[1].maxVideoSessions,
@@ -400,7 +400,7 @@ class MigrateVisitServiceTest {
     private fun prisonerVisitedEntity(request: MigrateVisitRequest, visit: OfficialVisitEntity) = PrisonerVisitedEntity(
       prisonerVisitedId = 1L,
       officialVisit = visit,
-      prisonerNumber = request.prisonerNumber!!,
+      prisonerNumber = request.prisonerNumber,
       createdBy = aUsername,
       createdTime = aDateTime,
     )
@@ -421,7 +421,7 @@ class MigrateVisitServiceTest {
         visitorNotes = request.visitors[0].commentText,
         createdBy = aUsername,
         createdTime = aDateTime,
-        offenderVisitVisitorId = request.visitors[0].offenderVisitVisitorId!!,
+        offenderVisitVisitorId = request.visitors[0].offenderVisitVisitorId,
       ).apply {
         attendanceCode = request.visitors[0].attendanceCode
       },
@@ -440,7 +440,7 @@ class MigrateVisitServiceTest {
         visitorNotes = request.visitors[1].commentText,
         createdBy = aUsername,
         createdTime = aDateTime,
-        offenderVisitVisitorId = request.visitors[1].offenderVisitVisitorId!!,
+        offenderVisitVisitorId = request.visitors[1].offenderVisitVisitorId,
       ).apply {
         attendanceCode = request.visitors[1].attendanceCode
       },

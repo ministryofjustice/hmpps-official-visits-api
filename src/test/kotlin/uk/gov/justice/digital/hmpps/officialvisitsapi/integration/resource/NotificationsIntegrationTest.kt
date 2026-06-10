@@ -26,12 +26,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
@@ -100,12 +98,10 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
   fun `should send single create visit notification`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    val response = webTestClient.send(
+    val response = testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
     )
 
     val notification = notificationRepository.findAll().single()
@@ -128,12 +124,10 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
   fun `should send multiple create visit notifications`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    val response = webTestClient.send(
+    val response = testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email1@address.com", "email2s@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email1@address.com", "email2s@address.com"),
     )
 
     val notificationRecipients = notificationRepository.findAll().map { NotificationRecipient(it.emailAddress, it.notificationId) }
@@ -150,12 +144,10 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     // Create a visit and send a notification
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    webTestClient.send(
+    testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
     )
 
     // Search for sent emails
@@ -193,12 +185,10 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     // Create a visit and send a notification
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    webTestClient.send(
+    testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
     )
 
     // Search with matching date range
@@ -234,12 +224,10 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
   fun `should include records when from and to dates are the same day`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    webTestClient.send(
+    testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
     )
 
     val today = LocalDate.now()
@@ -258,12 +246,10 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
   fun `should return no sent emails for a different prison code`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    webTestClient.send(
+    testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
-      request = NotificationRequest(
-        notificationType = NotificationType.CREATE,
-        emailAddresses = listOf("email@address.com"),
-      ),
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
     )
 
     val result = webTestClient.searchSentEmails(
@@ -276,18 +262,6 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     result.page.totalElements isEqualTo 0L
     result.content.isEmpty()
   }
-
-  private fun WebTestClient.send(officialVisitId: Long, request: NotificationRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
-    .post()
-    .uri("/notification/$officialVisitId")
-    .bodyValue(request)
-    .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-    .exchange()
-    .expectStatus().isCreated
-    .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody<NotificationResponse>()
-    .returnResult().responseBody!!
 
   private fun WebTestClient.searchSentEmails(
     prisonCode: String,

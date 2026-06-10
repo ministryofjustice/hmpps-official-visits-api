@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
@@ -46,7 +48,8 @@ class NotificationsService(
       .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
 
     val location = locationsService.getLocationById(officialVisit.dpsLocationId)?.localName ?: "Unknown location"
-    val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) ?: throw EntityNotFoundException("Prisoner not found ${officialVisit.prisonerNumber}")
+    val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber)
+      ?: throw EntityNotFoundException("Prisoner not found ${officialVisit.prisonerNumber}")
 
     val recipients = buildSet {
       request.emailAddresses.distinct().forEach { emailAddress ->
@@ -60,7 +63,20 @@ class NotificationsService(
     NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
-  fun searchSentEmails(prisonCode: String, criteria: SentEmailSearchCriteria, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
+  fun searchSentEmails(
+    prisonCode: String,
+    criteria: SentEmailSearchCriteria,
+    page: Int,
+    size: Int,
+    user: User,
+  ): PagedModel<SentEmailRecord> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
+
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = run {
+    officialVisitRepository.findById(officialVisitId)
+      .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
+    notificationRepository.findByOfficialVisitId(officialVisitId, sort)
+      .map { it.toOfficialVisitNotification() }
+  }
 
   /**
    * Will return the identifier of the notification created if successful, otherwise null.
@@ -68,7 +84,7 @@ class NotificationsService(
   @Transactional
   fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = run {
     var notificationId: Long? = null
-
+    logger.info("sending email ${email.type()} officialVisitId $officialVisitId")
     emailService.send(email)
       .onSuccess { (govNotifyNotificationId, templateId) ->
         notificationRepository.saveAndFlush(
@@ -81,7 +97,10 @@ class NotificationsService(
             emailStatus = NotificationEmailStatus.PENDING,
             createdTime = LocalDateTime.now(),
           ),
-        ).also { notificationId = it.notificationId }
+        ).also {
+          notificationId = it.notificationId
+          logger.info("sent notification with notification id $notificationId.")
+        }
       }
       .onFailure { exception -> logger.info("Failed to send email ${email.type()}.", exception) }
 
@@ -126,6 +145,18 @@ class NotificationsService(
       )
     }
   }
+
+  private fun NotificationEntity.toOfficialVisitNotification() = OfficialVisitNotification(
+    notificationId = notificationId,
+    officialVisitId = officialVisitId,
+    templateId = templateId,
+    emailAddress = emailAddress,
+    reason = reason,
+    govNotifyNotificationId = govNotifyNotificationId,
+    emailStatus = emailStatus,
+    createdTime = createdTime,
+    statusUpdatedTime = statusUpdatedTime,
+  )
 }
 
 enum class NotificationType {

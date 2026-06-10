@@ -3,11 +3,13 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
@@ -68,6 +70,9 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isCreated
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody<NotificationResponse>()
+    .returnResult().responseBody!!
 
   private fun setAuthorisation(prisonUser: PrisonUser, roles: List<String>): (HttpHeaders) -> Unit = run {
     jwtAuthHelper.setAuthorisationHeader(
