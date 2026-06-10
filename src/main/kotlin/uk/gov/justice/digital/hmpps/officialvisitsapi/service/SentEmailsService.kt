@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentEmailRecordViewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
@@ -87,14 +88,12 @@ class SentEmailsService(
     return PagedModel(
       pageResult.map { viewEntity ->
         val prisoner = prisonerMap[viewEntity.prisonerNumber]
-        val prisonerName = prisoner?.let { "${it.firstName} ${it.lastName}" } ?: "Unknown"
-
-        viewEntity.toSentEmailRecord(prisonerName = prisonerName)
+        viewEntity.toSentEmailRecord(prisoner)
       },
     )
   }
 
-  private fun SentEmailRecordViewEntity.toSentEmailRecord(prisonerName: String): SentEmailRecord {
+  private fun SentEmailRecordViewEntity.toSentEmailRecord(prisoner: Prisoner?): SentEmailRecord {
     val emailType = notificationType.toEmailTypeOrNull()
     val normalizedNotificationType = emailType?.toApiNotificationType() ?: notificationType
 
@@ -105,7 +104,8 @@ class SentEmailsService(
       visitDate = visitDate.format(dateFormatter),
       visitStartTime = visitStartTime.format(timeFormatter),
       visitEndTime = visitEndTime.format(timeFormatter),
-      prisonerName = prisonerName,
+      firstName = prisoner?.firstName,
+      lastName = prisoner?.lastName,
       prisonerNumber = prisonerNumber,
       emailAddress = emailAddress,
       emailStatus = emailStatus.name,
