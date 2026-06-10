@@ -21,8 +21,11 @@ data class SentEmailRecord(
   @Schema(description = "The visit end time (HH:MM format)", example = "10:00")
   val visitEndTime: String,
 
-  @Schema(description = "The prisoner's full name", example = "John Smith")
-  val prisonerName: String,
+  @Schema(description = "The first name of the visitor", example = "Bob", nullable = true)
+  val firstName: String? = null,
+
+  @Schema(description = "The last name of the visitor", example = "Harris", nullable = true)
+  val lastName: String? = null,
 
   @Schema(description = "The prisoner's number", example = "G1234AB")
   val prisonerNumber: String,

@@ -86,7 +86,8 @@ class SentEmailsServiceTest {
     // Then
     result.metadata.totalElements isEqualTo 1L
     result.content.size isEqualTo 1
-    result.content[0].prisonerName isEqualTo "John Smith"
+    result.content[0].firstName isEqualTo "John"
+    result.content[0].lastName isEqualTo "Smith"
     result.content[0].prisonerNumber isEqualTo "G1234AB"
     result.content[0].emailStatus isEqualTo "PENDING"
     result.content[0].notificationType isEqualTo "CREATE"
