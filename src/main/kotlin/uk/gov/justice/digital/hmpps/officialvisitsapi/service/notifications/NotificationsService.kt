@@ -99,7 +99,7 @@ class NotificationsService(
           ),
         ).also {
           notificationId = it.notificationId
-          logger.info("sent notification with notification id $notificationId and emailAddress ${email.emailAddress}.")
+          logger.info("sent notification with notification id $notificationId.")
         }
       }
       .onFailure { exception -> logger.info("Failed to send email ${email.type()}.", exception) }
