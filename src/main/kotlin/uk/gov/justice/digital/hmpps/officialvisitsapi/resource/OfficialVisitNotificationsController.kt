@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
 import org.springframework.data.domain.Sort.Direction.ASC
-import org.springframework.data.domain.Sort.Direction.DESC
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -51,13 +50,13 @@ class OfficialVisitNotificationsController(
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
   fun getNotificationsByOfficialVisitId(
-      @PathVariable @Parameter(
+    @PathVariable @Parameter(
       name = "officialVisitId",
       description = "The official visit identifier",
       example = "1",
       required = true,
     ) officialVisitId: Long,
-      @RequestParam(defaultValue = "ASC")
+    @RequestParam(defaultValue = "ASC")
     @Parameter(description = "Sort results by created time desc or asc, default to ASC", required = false)
     sortDirection: Direction = ASC,
   ): List<OfficialVisitNotification> = notificationFacade.getNotificationsByOfficialVisitId(officialVisitId, sort = Sort.by(sortDirection, "createdTime"))
