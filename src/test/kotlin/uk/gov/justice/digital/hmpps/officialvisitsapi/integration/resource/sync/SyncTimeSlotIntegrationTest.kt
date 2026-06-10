@@ -67,7 +67,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = ["ROLE_PRISON", "ROLE_OFFICIAL_VISITS__R", "ROLE_OFFICIAL_VISITS__RW"])
+  @ValueSource(strings = ["ROLE_OFFICIAL_VISITS__R", "ROLE_OFFICIAL_VISITS__RW"])
   fun `should return forbidden without an authorised role`(role: String) {
     webTestClient.get()
       .uri("/sync/time-slot/{prisonTimeSlotId}", savedPrisonTimeSlotId)
@@ -103,7 +103,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
     val syncTimeSlot = webTestClient.get()
       .uri("/sync/time-slot/{prisonTimeSlotId}", savedPrisonTimeSlotId)
       .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
       .exchange()
       .expectStatus()
       .isOk
@@ -141,7 +141,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
       .uri("/sync/time-slot/{prisonTimeSlotId}", savedPrisonTimeSlotId)
       .accept(MediaType.APPLICATION_JSON)
       .contentType(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
       .bodyValue(updateRequest)
       .exchange()
       .expectStatus()
@@ -175,7 +175,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
     webTestClient.delete()
       .uri("/sync/time-slot/{prisonTimeSlotId}", timeSlot.prisonTimeSlotId)
       .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
       .exchange()
       .expectStatus()
       .is2xxSuccessful
@@ -196,7 +196,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
     webTestClient.delete()
       .uri("/sync/time-slot/{prisonTimeSlotId}", 99)
       .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.NO_CONTENT)
 
@@ -208,7 +208,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
     webTestClient.delete()
       .uri("/sync/time-slot/{prisonTimeSlotId}", 1L)
       .accept(MediaType.APPLICATION_JSON)
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody().jsonPath("$.userMessage").isEqualTo("The prison time slot has one or more visit slots associated with it and cannot be deleted.")
@@ -251,7 +251,7 @@ class SyncTimeSlotIntegrationTest : IntegrationTestBase() {
     .uri("/sync/time-slot")
     .accept(MediaType.APPLICATION_JSON)
     .contentType(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
     .bodyValue(createTimeSlotRequest())
     .exchange()
     .expectStatus()

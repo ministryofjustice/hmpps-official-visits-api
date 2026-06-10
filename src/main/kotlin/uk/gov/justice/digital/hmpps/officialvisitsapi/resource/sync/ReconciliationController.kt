@@ -35,7 +35,7 @@ class ReconciliationController(private val reconciliationService: Reconciliation
 
   @Operation(summary = "Return a paged list of all official visit IDs")
   @GetMapping(value = ["/official-visits/identifiers"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   @PageableAsQueryParam
   @ApiResponses(
     value = [
@@ -69,7 +69,7 @@ class ReconciliationController(private val reconciliationService: Reconciliation
     ],
   )
   @GetMapping(value = ["/official-visit/id/{officialVisitId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
   fun getOfficialVisitById(
     @PathVariable(required = true) officialVisitId: Long,
   ): SyncOfficialVisit = reconciliationService.getOfficialVisitById(officialVisitId)
@@ -90,8 +90,8 @@ class ReconciliationController(private val reconciliationService: Reconciliation
     ],
   )
   @GetMapping(value = ["/prisoner/{prisonerNumber}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION', 'OFFICIAL_VISITS_ADMIN')")
-  fun getAllOfficialVisitForPrisoner(
+  @PreAuthorize("hasAnyRole('OFFICIAL_VISITS_MIGRATION')")
+  fun getAllOfficialVisitsForPrisoner(
     @PathVariable(required = true) @Parameter(description = "Prisoner number", required = true)
     prisonerNumber: String,
     @Parameter(description = "Current term only, true of false. Defaults to true.")

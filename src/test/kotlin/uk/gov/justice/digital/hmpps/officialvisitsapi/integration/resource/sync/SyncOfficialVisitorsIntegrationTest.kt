@@ -452,7 +452,7 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
   private fun WebTestClient.syncGetVisit(officialVisitId: Long) = this.get()
     .uri("/sync/official-visit/id/{officialVisitId}", officialVisitId)
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("OFFICIAL_VISITS_MIGRATION")))
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_MIGRATION")))
     .exchange()
     .expectStatus()
     .isOk
