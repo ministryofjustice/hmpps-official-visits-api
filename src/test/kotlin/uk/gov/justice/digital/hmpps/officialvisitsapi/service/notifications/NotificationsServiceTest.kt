@@ -30,7 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.SentNotificationsService
 import java.time.LocalDateTime
 import java.util.Optional
 import java.util.UUID
@@ -42,9 +42,9 @@ class NotificationsServiceTest {
   private val emailService: EmailService = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val notificationRepository: NotificationRepository = mock()
-  private val sentEmailsService: SentEmailsService = mock()
+  private val sentNotificationsService: SentNotificationsService = mock()
   private val notification: NotificationEntity = mock()
-  private val service = NotificationsService(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository, sentEmailsService)
+  private val service = NotificationsService(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository, sentNotificationsService)
 
   @BeforeEach
   fun beforeEach() {

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.web.PagedModel
@@ -10,37 +10,44 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentNotificationEnt
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationSearchRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType
 import java.time.format.DateTimeFormatter
 
 @Service
 @Transactional(readOnly = true)
-class SentEmailsService(
+class SentNotificationsService(
   private val notificationSearchRepository: NotificationSearchRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
   private val metricsService: MetricsService,
 ) {
-
-  fun searchSentEmails(prisonCode: String, criteria: NotificationSearchRequest, page: Int, size: Int, user: User): PagedModel<SentNotification> {
+  fun searchSentNotifications(
+    prisonCode: String,
+    request: NotificationSearchRequest,
+    page: Int,
+    size: Int,
+    user: User,
+  ): PagedModel<SentNotification> {
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
-    val normalizedPrisonCode = prisonCode.trim()
-    require(normalizedPrisonCode.isNotEmpty()) { "Prison code must be provided" }
-    require(criteria.fromDate == null || criteria.toDate == null || !criteria.fromDate.isAfter(criteria.toDate)) {
+
+    val trimmedPrisonCode = prisonCode.trim()
+
+    require(trimmedPrisonCode.isNotEmpty()) { "Prison code must be provided" }
+    require(request.fromDate == null || request.toDate == null || !request.fromDate.isAfter(request.toDate)) {
       "From date must be on or before to date"
     }
 
-    val fromDateTime = criteria.fromDate?.atStartOfDay()
-    val toDateTimeExclusive = criteria.toDate?.plusDays(1)?.atStartOfDay()
+    val fromDateTime = request.fromDate?.atStartOfDay()
+    val toDateTimeExclusive = request.toDate?.plusDays(1)?.atStartOfDay()
 
     val pageable = PageRequest.of(page, size)
     val pageResult = when {
       fromDateTime != null && toDateTimeExclusive != null ->
         notificationSearchRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
-          normalizedPrisonCode,
+          trimmedPrisonCode,
           fromDateTime,
           toDateTimeExclusive,
           pageable,
@@ -48,28 +55,28 @@ class SentEmailsService(
 
       fromDateTime != null ->
         notificationSearchRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualOrderBySentDateTimeDesc(
-          normalizedPrisonCode,
+          trimmedPrisonCode,
           fromDateTime,
           pageable,
         )
 
       toDateTimeExclusive != null ->
         notificationSearchRepository.findByPrisonCodeAndSentDateTimeLessThanOrderBySentDateTimeDesc(
-          normalizedPrisonCode,
+          trimmedPrisonCode,
           toDateTimeExclusive,
           pageable,
         )
 
-      else -> notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(normalizedPrisonCode, pageable)
+      else -> notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(trimmedPrisonCode, pageable)
     }
 
     metricsService.send(
       eventType = MetricsEvents.NOTIFICATION_SEARCH,
       info = NotificationSearchInfo(
-        prisonCode = normalizedPrisonCode,
+        prisonCode = trimmedPrisonCode,
         username = user.username,
-        fromDate = criteria.fromDate,
-        toDate = criteria.toDate,
+        fromDate = request.fromDate,
+        toDate = request.toDate,
         numberOfResults = pageResult.numberOfElements,
       ),
     )
@@ -79,21 +86,19 @@ class SentEmailsService(
     val prisonerMap = if (prisonerNumbers.isEmpty()) {
       emptyMap()
     } else {
-      prisonerSearchClient.findByPrisonerNumbers(
-        prisonerNumbers,
-        prisonerNumbers.size,
-      ).associateBy { it.prisonerNumber }
+      prisonerSearchClient.findByPrisonerNumbers(prisonerNumbers, prisonerNumbers.size)
+        .associateBy { it.prisonerNumber }
     }
 
     return PagedModel(
       pageResult.map { viewEntity ->
         val prisoner = prisonerMap[viewEntity.prisonerNumber]
-        viewEntity.toSentEmailRecord(prisoner)
+        viewEntity.toSentNotification(prisoner)
       },
     )
   }
 
-  private fun SentNotificationEntity.toSentEmailRecord(prisoner: Prisoner?): SentNotification {
+  private fun SentNotificationEntity.toSentNotification(prisoner: Prisoner?): SentNotification {
     val emailType = notificationType.toEmailTypeOrNull()
     val normalizedNotificationType = emailType?.toApiNotificationType() ?: notificationType
 

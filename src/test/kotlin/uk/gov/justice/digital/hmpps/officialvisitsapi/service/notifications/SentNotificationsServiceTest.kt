@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -23,22 +23,20 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationSea
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-class SentEmailsServiceTest {
+class SentNotificationsServiceTest {
   private val notificationSearchRepository: NotificationSearchRepository = mock()
   private val prisonerSearchClient: PrisonerSearchClient = mock()
   private val metricsService: MetricsService = mock()
 
-  private val service = SentEmailsService(notificationSearchRepository, prisonerSearchClient, metricsService)
+  private val service = SentNotificationsService(notificationSearchRepository, prisonerSearchClient, metricsService)
 
   @Test
   fun `should search sent emails with pagination`() {
-    // Given
-    val criteria = NotificationSearchRequest(
+    val request = NotificationSearchRequest(
       fromDate = LocalDate.of(2026, 5, 1),
       toDate = LocalDate.of(2026, 5, 31),
     )
@@ -80,10 +78,9 @@ class SentEmailsServiceTest {
     ).thenReturn(pageResult)
     whenever(prisonerSearchClient.findByPrisonerNumbers(any(), any())).thenReturn(listOf(prisoner))
 
-    // When
-    val result = service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+    val result =
+      service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
 
-    // Then
     result.metadata.totalElements isEqualTo 1L
     result.content.size isEqualTo 1
     result.content[0].firstName isEqualTo "John"
@@ -92,6 +89,7 @@ class SentEmailsServiceTest {
     result.content[0].emailStatus isEqualTo "PENDING"
     result.content[0].notificationType isEqualTo "CREATE"
     result.content[0].notificationTypeDescription isEqualTo "Visit Created"
+
     val fromDateTimeCaptor = argumentCaptor<LocalDateTime>()
     val toDateTimeCaptor = argumentCaptor<LocalDateTime>()
     verify(notificationSearchRepository).findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
@@ -118,57 +116,40 @@ class SentEmailsServiceTest {
 
   @Test
   fun `should throw exception when page number is negative`() {
-    // Given
-    val criteria = NotificationSearchRequest(
-      fromDate = null,
-      toDate = null,
-    )
+    val request = NotificationSearchRequest(fromDate = null, toDate = null)
 
-    // Then
     assertThrows<IllegalArgumentException> {
-      service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = -1, size = 10, user = MOORLAND_PRISON_USER)
+      service.searchSentNotifications(prisonCode = "MDI", request, page = -1, size = 10, user = MOORLAND_PRISON_USER)
     }.message?.contains("Page number must be greater than or equal to zero")
   }
 
   @Test
   fun `should throw exception when page size is zero`() {
-    // Given
-    val criteria = NotificationSearchRequest(
-      fromDate = null,
-      toDate = null,
-    )
+    val request = NotificationSearchRequest(fromDate = null, toDate = null)
 
-    // Then
     assertThrows<IllegalArgumentException> {
-      service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 0, user = MOORLAND_PRISON_USER)
+      service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 0, user = MOORLAND_PRISON_USER)
     }.message?.contains("Page size must be greater than zero")
   }
 
   @Test
   fun `should throw exception when prison code is blank`() {
-    // Given
-    val criteria = NotificationSearchRequest(
-      fromDate = null,
-      toDate = null,
-    )
+    val request = NotificationSearchRequest(fromDate = null, toDate = null)
 
-    // Then
     assertThrows<IllegalArgumentException> {
-      service.searchSentEmails(prisonCode = " ", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+      service.searchSentNotifications(prisonCode = " ", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
     }.message?.contains("Prison code must be provided")
   }
 
   @Test
   fun `should search without date filters`() {
-    val criteria = NotificationSearchRequest(
-      fromDate = null,
-      toDate = null,
-    )
+    val request = NotificationSearchRequest(fromDate = null, toDate = null)
 
     whenever(notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
       .thenReturn(PageImpl(emptyList(), PageRequest.of(0, 10), 0))
 
-    val result = service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+    val result =
+      service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
 
     result.content.size isEqualTo 0
     result.metadata.totalElements isEqualTo 0L
@@ -177,21 +158,21 @@ class SentEmailsServiceTest {
 
   @Test
   fun `should throw exception when from date is after to date`() {
-    val criteria = NotificationSearchRequest(
+    val request = NotificationSearchRequest(
       fromDate = LocalDate.of(2026, 5, 31),
       toDate = LocalDate.of(2026, 5, 1),
     )
 
     assertThrows<IllegalArgumentException> {
-      service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+      service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
     }.message?.contains("From date must be on or before to date")
   }
 
   @Test
   fun `should map updated and cancelled notification types`() {
-    val criteria = NotificationSearchRequest(fromDate = null, toDate = null)
+    val request = NotificationSearchRequest(fromDate = null, toDate = null)
 
-    val updatedViewEntity = SentNotificationEntity(
+    val updatedEntity = SentNotificationEntity(
       notificationId = 200L,
       officialVisitId = 2L,
       prisonCode = "MDI",
@@ -205,7 +186,7 @@ class SentEmailsServiceTest {
       prisonerNumber = "G1234AB",
     )
 
-    val cancelledViewEntity = SentNotificationEntity(
+    val cancelledEntity = SentNotificationEntity(
       notificationId = 300L,
       officialVisitId = 3L,
       prisonCode = "MDI",
@@ -220,7 +201,8 @@ class SentEmailsServiceTest {
     )
 
     whenever(notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
-      .thenReturn(PageImpl(listOf(updatedViewEntity, cancelledViewEntity), PageRequest.of(0, 10), 2))
+      .thenReturn(PageImpl(listOf(updatedEntity, cancelledEntity), PageRequest.of(0, 10), 2))
+
     whenever(prisonerSearchClient.findByPrisonerNumbers(any(), any())).thenReturn(
       listOf(
         Prisoner(
@@ -238,7 +220,8 @@ class SentEmailsServiceTest {
       ),
     )
 
-    val result = service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+    val result =
+      service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
 
     result.content[0].notificationType isEqualTo "UPDATED"
     result.content[0].notificationTypeDescription isEqualTo "Visit Updated"

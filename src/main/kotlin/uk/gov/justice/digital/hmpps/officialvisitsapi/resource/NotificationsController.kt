@@ -80,7 +80,7 @@ class NotificationsController(
   @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
-  fun searchSentEmails(
+  fun searchSentNotifications(
     @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
@@ -89,7 +89,7 @@ class NotificationsController(
     ) prisonCode: String,
     @Valid
     @RequestBody
-    @Parameter(description = "Notification search criteria", required = true)
+    @Parameter(description = "Notification search request", required = true)
     request: NotificationSearchRequest,
     @Parameter(
       description = "Zero-based page index (0..n)",
@@ -104,7 +104,7 @@ class NotificationsController(
     )
     size: Int = 20,
     httpRequest: HttpServletRequest,
-  ): PagedModel<SentNotification> = notificationsService.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
+  ): PagedModel<SentNotification> = notificationsService.searchSentNotifications(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
   @ApiResponses(

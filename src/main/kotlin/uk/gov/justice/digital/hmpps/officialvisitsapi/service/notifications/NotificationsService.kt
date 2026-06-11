@@ -20,24 +20,23 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotific
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDateTime
 
 @Component
+@Transactional
 class NotificationsService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val locationsService: LocationsService,
   private val prisonerSearchClient: PrisonerSearchClient,
   private val emailService: EmailService,
   private val notificationRepository: NotificationRepository,
-  private val sentEmailsService: SentEmailsService,
+  private val sentNotificationsService: SentNotificationsService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @Transactional
   fun sendNotification(officialVisitId: Long, request: NotificationRequest, user: User): NotificationResponse = run {
     val officialVisit = officialVisitRepository.findById(officialVisitId)
       .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
@@ -58,25 +57,9 @@ class NotificationsService(
     NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
-  fun searchSentEmails(
-    prisonCode: String,
-    criteria: NotificationSearchRequest,
-    page: Int,
-    size: Int,
-    user: User,
-  ): PagedModel<SentNotification> = sentEmailsService.searchSentEmails(prisonCode, criteria, page, size, user)
-
-  fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = run {
-    officialVisitRepository.findById(officialVisitId)
-      .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
-    notificationRepository.findByOfficialVisitId(officialVisitId, sort)
-      .map { it.toOfficialVisitNotification() }
-  }
-
   /**
-   * Will return the identifier of the notification created if successful, otherwise null.
+   * Send a notification and return its identifier if successful, otherwise null.
    */
-  @Transactional
   fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = run {
     var notificationId: Long? = null
     logger.info("sending email ${email.type()} officialVisitId $officialVisitId")
@@ -100,6 +83,29 @@ class NotificationsService(
       .onFailure { exception -> logger.info("Failed to send email ${email.type()}.", exception) }
 
     notificationId
+  }
+
+  /**
+   * Return a page of sent notifications for the prison which match within the requested date range.
+   */
+  @Transactional(readOnly = true)
+  fun searchSentNotifications(
+    prisonCode: String,
+    request: NotificationSearchRequest,
+    page: Int,
+    size: Int,
+    user: User,
+  ): PagedModel<SentNotification> = sentNotificationsService.searchSentNotifications(prisonCode, request, page, size, user)
+
+  /**
+   * Return the list of notifications sent for one official visit
+   */
+  @Transactional(readOnly = true)
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = run {
+    officialVisitRepository.findById(officialVisitId)
+      .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
+    notificationRepository.findByOfficialVisitId(officialVisitId, sort)
+      .map { it.toOfficialVisitNotification() }
   }
 
   private fun getEmail(
