@@ -29,7 +29,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsSer
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import java.util.UUID
 
-class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
+class NotificationRetrievalIntegrationTest : IntegrationTestBase() {
 
   @MockitoBean
   private lateinit var metricsService: MetricsService

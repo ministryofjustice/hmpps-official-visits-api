@@ -57,9 +57,6 @@ class NotificationsService(
     NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
-  /**
-   * Send a notification and return its identifier if successful, otherwise null.
-   */
   fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = run {
     var notificationId: Long? = null
     logger.info("sending email ${email.type()} officialVisitId $officialVisitId")
@@ -85,9 +82,6 @@ class NotificationsService(
     notificationId
   }
 
-  /**
-   * Return a page of sent notifications for the prison which match within the requested date range.
-   */
   @Transactional(readOnly = true)
   fun searchSentNotifications(
     prisonCode: String,
@@ -97,9 +91,6 @@ class NotificationsService(
     user: User,
   ): PagedModel<SentNotification> = sentNotificationsService.searchSentNotifications(prisonCode, request, page, size, user)
 
-  /**
-   * Return the list of notifications sent for one official visit
-   */
   @Transactional(readOnly = true)
   fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = run {
     officialVisitRepository.findById(officialVisitId)

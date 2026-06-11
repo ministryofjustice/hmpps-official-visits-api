@@ -252,7 +252,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     )
 
     // Update the visitors - add one, delete one, update one
-    val res = webTestClient.updateVisitors(
+    webTestClient.updateVisitors(
       MOORLAND_PRISONER.prison,
       officialVisitId = scheduledVisit?.officialVisitId!!,
       request = OfficialVisitUpdateVisitorsRequest(
