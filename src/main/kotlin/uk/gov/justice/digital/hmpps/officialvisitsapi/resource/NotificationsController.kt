@@ -77,7 +77,7 @@ class NotificationsController(
   ) = notificationsService.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Retrieve a list of sent notifications with search parameters and pagination support.")
-  @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(path = ["/prison/{prisonCode}/sent-notifications"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
   fun searchSentNotifications(

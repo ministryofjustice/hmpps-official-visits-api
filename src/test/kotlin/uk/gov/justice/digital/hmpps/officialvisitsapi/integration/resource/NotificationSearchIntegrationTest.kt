@@ -216,7 +216,7 @@ class NotificationSearchIntegrationTest : IntegrationTestBase() {
     prisonUser: PrisonUser = MOORLAND_PRISON_USER,
   ) = this
     .post()
-    .uri("/notification/prison/$prisonCode/sent-emails?page=$page&size=$size")
+    .uri("/notification/prison/$prisonCode/sent-notifications?page=$page&size=$size")
     .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
