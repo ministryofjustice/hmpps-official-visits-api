@@ -22,11 +22,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCancelledEmail
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCreatedEmail
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitUpdatedEmail
 import java.time.LocalDateTime
 
 @Component

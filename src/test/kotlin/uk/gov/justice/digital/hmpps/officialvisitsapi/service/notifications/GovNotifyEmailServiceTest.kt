@@ -1,7 +1,7 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
+import org.mockito.Mockito
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
@@ -13,10 +13,15 @@ import uk.gov.service.notify.SendEmailResponse
 import java.util.UUID
 
 class GovNotifyEmailServiceTest {
-  private val sendEmailResponse = mock<SendEmailResponse>()
+  private val sendEmailResponse = Mockito.mock<SendEmailResponse>()
   private val notificationId = UUID.randomUUID()
-  private val notificationClient = mock<NotificationClient>()
-  private val service = GovNotifyEmailService(notificationClient, EmailTemplates(setOf(EmailTemplate("template_id", EmailType.OFFICIAL_VISIT_CREATED))))
+  private val notificationClient = Mockito.mock<NotificationClient>()
+  private val service = GovNotifyEmailService(
+    notificationClient,
+    EmailTemplates(
+      setOf(EmailTemplate("template_id", EmailType.OFFICIAL_VISIT_CREATED)),
+    ),
+  )
 
   @Test
   fun `should succeed to send of email`() {

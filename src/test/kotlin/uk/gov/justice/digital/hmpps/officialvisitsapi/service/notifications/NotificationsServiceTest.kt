@@ -31,12 +31,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRep
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.SentEmailsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.Email
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCancelledEmail
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitCreatedEmail
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.OfficialVisitUpdatedEmail
 import java.time.LocalDateTime
 import java.util.Optional
 import java.util.UUID

@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.config
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType
 
 class GovNotifyConfigurationTest {
   @Test

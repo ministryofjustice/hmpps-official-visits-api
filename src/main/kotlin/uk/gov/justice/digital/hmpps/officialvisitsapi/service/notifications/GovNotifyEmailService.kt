@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import uk.gov.service.notify.NotificationClient
 

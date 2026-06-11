@@ -20,10 +20,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.contains
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationSearchRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
