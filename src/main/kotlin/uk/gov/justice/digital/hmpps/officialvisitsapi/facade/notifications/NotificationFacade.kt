@@ -4,7 +4,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
@@ -20,7 +20,7 @@ class NotificationFacade(
 
   fun searchSentEmails(
     prisonCode: String,
-    criteria: SentEmailSearchCriteria,
+    criteria: NotificationSearchRequest,
     page: Int,
     size: Int,
     user: User,

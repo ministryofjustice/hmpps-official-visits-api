@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.E
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitChangeStatusResponse
@@ -89,8 +89,8 @@ class NotificationsController(
     ) prisonCode: String,
     @Valid
     @RequestBody
-    @Parameter(description = "The request containing sent-email search criteria", required = true)
-    request: SentEmailSearchCriteria,
+    @Parameter(description = "The request containing notification search criteria", required = true)
+    request: NotificationSearchRequest,
     @Parameter(
       description = "Zero-based page index (0..N)",
       name = "page",

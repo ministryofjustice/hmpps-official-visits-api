@@ -26,15 +26,15 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SentEmailSearchInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import java.time.LocalDate
 import java.util.UUID
@@ -153,7 +153,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     // Search for sent emails
     val result = webTestClient.searchSentEmails(
       prisonCode = MOORLAND,
-      request = SentEmailSearchCriteria(fromDate = null, toDate = null),
+      request = NotificationSearchRequest(fromDate = null, toDate = null),
       page = 0,
       size = 10,
     )
@@ -176,8 +176,8 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     }
 
     verify(metricsService).send(
-      eventType = eq(MetricsEvents.SENT_EMAIL_SEARCH),
-      info = any<SentEmailSearchInfo>(),
+      eventType = eq(MetricsEvents.NOTIFICATION_SEARCH),
+      info = any<NotificationSearchInfo>(),
     )
   }
 
@@ -195,7 +195,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     // Search with matching date range
     val resultWithMatch = webTestClient.searchSentEmails(
       prisonCode = MOORLAND,
-      request = SentEmailSearchCriteria(
+      request = NotificationSearchRequest(
         fromDate = LocalDate.now().minusDays(1),
         toDate = LocalDate.now().plusDays(1),
       ),
@@ -209,7 +209,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     // Search with non-matching date range
     val resultWithoutMatch = webTestClient.searchSentEmails(
       prisonCode = MOORLAND,
-      request = SentEmailSearchCriteria(
+      request = NotificationSearchRequest(
         fromDate = LocalDate.now().plusDays(30),
         toDate = LocalDate.now().plusDays(60),
       ),
@@ -234,7 +234,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
     val today = LocalDate.now()
     val result = webTestClient.searchSentEmails(
       prisonCode = MOORLAND,
-      request = SentEmailSearchCriteria(fromDate = today, toDate = today),
+      request = NotificationSearchRequest(fromDate = today, toDate = today),
       page = 0,
       size = 10,
     )
@@ -255,7 +255,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
 
     val result = webTestClient.searchSentEmails(
       prisonCode = PENTONVILLE,
-      request = SentEmailSearchCriteria(fromDate = null, toDate = null),
+      request = NotificationSearchRequest(fromDate = null, toDate = null),
       page = 0,
       size = 10,
     )
@@ -266,7 +266,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
 
   private fun WebTestClient.searchSentEmails(
     prisonCode: String,
-    request: SentEmailSearchCriteria,
+    request: NotificationSearchRequest,
     page: Int = 0,
     size: Int = 10,
     prisonUser: PrisonUser = MOORLAND_PRISON_USER,

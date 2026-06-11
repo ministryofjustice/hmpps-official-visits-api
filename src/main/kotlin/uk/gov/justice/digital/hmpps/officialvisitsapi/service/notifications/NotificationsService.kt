@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailSt
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
@@ -65,7 +65,7 @@ class NotificationsService(
 
   fun searchSentEmails(
     prisonCode: String,
-    criteria: SentEmailSearchCriteria,
+    criteria: NotificationSearchRequest,
     page: Int,
     size: Int,
     user: User,

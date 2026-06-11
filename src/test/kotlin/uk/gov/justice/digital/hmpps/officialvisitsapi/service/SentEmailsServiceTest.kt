@@ -18,12 +18,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentEmailRecordView
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.contains
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.SentEmailRecordViewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SentEmailSearchInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -38,7 +38,7 @@ class SentEmailsServiceTest {
   @Test
   fun `should search sent emails with pagination`() {
     // Given
-    val criteria = SentEmailSearchCriteria(
+    val criteria = NotificationSearchRequest(
       fromDate = LocalDate.of(2026, 5, 1),
       toDate = LocalDate.of(2026, 5, 31),
     )
@@ -103,9 +103,9 @@ class SentEmailsServiceTest {
     fromDateTimeCaptor.firstValue isEqualTo LocalDateTime.of(2026, 5, 1, 0, 0)
     toDateTimeCaptor.firstValue isEqualTo LocalDateTime.of(2026, 6, 1, 0, 0)
     verify(metricsService).send(
-      eventType = eq(MetricsEvents.SENT_EMAIL_SEARCH),
+      eventType = eq(MetricsEvents.NOTIFICATION_SEARCH),
       info = eq(
-        SentEmailSearchInfo(
+        NotificationSearchInfo(
           prisonCode = "MDI",
           username = MOORLAND_PRISON_USER.username,
           fromDate = LocalDate.of(2026, 5, 1),
@@ -119,7 +119,7 @@ class SentEmailsServiceTest {
   @Test
   fun `should throw exception when page number is negative`() {
     // Given
-    val criteria = SentEmailSearchCriteria(
+    val criteria = NotificationSearchRequest(
       fromDate = null,
       toDate = null,
     )
@@ -133,7 +133,7 @@ class SentEmailsServiceTest {
   @Test
   fun `should throw exception when page size is zero`() {
     // Given
-    val criteria = SentEmailSearchCriteria(
+    val criteria = NotificationSearchRequest(
       fromDate = null,
       toDate = null,
     )
@@ -147,7 +147,7 @@ class SentEmailsServiceTest {
   @Test
   fun `should throw exception when prison code is blank`() {
     // Given
-    val criteria = SentEmailSearchCriteria(
+    val criteria = NotificationSearchRequest(
       fromDate = null,
       toDate = null,
     )
@@ -160,7 +160,7 @@ class SentEmailsServiceTest {
 
   @Test
   fun `should search without date filters`() {
-    val criteria = SentEmailSearchCriteria(
+    val criteria = NotificationSearchRequest(
       fromDate = null,
       toDate = null,
     )
@@ -177,7 +177,7 @@ class SentEmailsServiceTest {
 
   @Test
   fun `should throw exception when from date is after to date`() {
-    val criteria = SentEmailSearchCriteria(
+    val criteria = NotificationSearchRequest(
       fromDate = LocalDate.of(2026, 5, 31),
       toDate = LocalDate.of(2026, 5, 1),
     )
@@ -189,7 +189,7 @@ class SentEmailsServiceTest {
 
   @Test
   fun `should map updated and cancelled notification types`() {
-    val criteria = SentEmailSearchCriteria(fromDate = null, toDate = null)
+    val criteria = NotificationSearchRequest(fromDate = null, toDate = null)
 
     val updatedViewEntity = SentEmailRecordViewEntity(
       notificationId = 200L,

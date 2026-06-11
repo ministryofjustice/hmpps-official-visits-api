@@ -7,13 +7,13 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentEmailRecordViewEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.SentEmailSearchCriteria
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.SentEmailRecordViewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SentEmailSearchInfo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -24,7 +24,7 @@ class SentEmailsService(
   private val metricsService: MetricsService,
 ) {
 
-  fun searchSentEmails(prisonCode: String, criteria: SentEmailSearchCriteria, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> {
+  fun searchSentEmails(prisonCode: String, criteria: NotificationSearchRequest, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> {
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
     val normalizedPrisonCode = prisonCode.trim()
@@ -64,8 +64,8 @@ class SentEmailsService(
     }
 
     metricsService.send(
-      eventType = MetricsEvents.SENT_EMAIL_SEARCH,
-      info = SentEmailSearchInfo(
+      eventType = MetricsEvents.NOTIFICATION_SEARCH,
+      info = NotificationSearchInfo(
         prisonCode = normalizedPrisonCode,
         username = user.username,
         fromDate = criteria.fromDate,
