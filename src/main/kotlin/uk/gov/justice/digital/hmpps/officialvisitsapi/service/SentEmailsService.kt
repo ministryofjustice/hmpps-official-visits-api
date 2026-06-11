@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentEmailRecordViewEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentNotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.SentEmailRecordViewRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationSearchRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -19,12 +19,12 @@ import java.time.format.DateTimeFormatter
 @Service
 @Transactional(readOnly = true)
 class SentEmailsService(
-  private val sentEmailRecordViewRepository: SentEmailRecordViewRepository,
+  private val notificationSearchRepository: NotificationSearchRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
   private val metricsService: MetricsService,
 ) {
 
-  fun searchSentEmails(prisonCode: String, criteria: NotificationSearchRequest, page: Int, size: Int, user: User): PagedModel<SentEmailRecord> {
+  fun searchSentEmails(prisonCode: String, criteria: NotificationSearchRequest, page: Int, size: Int, user: User): PagedModel<SentNotification> {
     require(page >= 0) { "Page number must be greater than or equal to zero" }
     require(size > 0) { "Page size must be greater than zero" }
     val normalizedPrisonCode = prisonCode.trim()
@@ -39,7 +39,7 @@ class SentEmailsService(
     val pageable = PageRequest.of(page, size)
     val pageResult = when {
       fromDateTime != null && toDateTimeExclusive != null ->
-        sentEmailRecordViewRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
+        notificationSearchRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
           normalizedPrisonCode,
           fromDateTime,
           toDateTimeExclusive,
@@ -47,20 +47,20 @@ class SentEmailsService(
         )
 
       fromDateTime != null ->
-        sentEmailRecordViewRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualOrderBySentDateTimeDesc(
+        notificationSearchRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualOrderBySentDateTimeDesc(
           normalizedPrisonCode,
           fromDateTime,
           pageable,
         )
 
       toDateTimeExclusive != null ->
-        sentEmailRecordViewRepository.findByPrisonCodeAndSentDateTimeLessThanOrderBySentDateTimeDesc(
+        notificationSearchRepository.findByPrisonCodeAndSentDateTimeLessThanOrderBySentDateTimeDesc(
           normalizedPrisonCode,
           toDateTimeExclusive,
           pageable,
         )
 
-      else -> sentEmailRecordViewRepository.findByPrisonCodeOrderBySentDateTimeDesc(normalizedPrisonCode, pageable)
+      else -> notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(normalizedPrisonCode, pageable)
     }
 
     metricsService.send(
@@ -93,11 +93,11 @@ class SentEmailsService(
     )
   }
 
-  private fun SentEmailRecordViewEntity.toSentEmailRecord(prisoner: Prisoner?): SentEmailRecord {
+  private fun SentNotificationEntity.toSentEmailRecord(prisoner: Prisoner?): SentNotification {
     val emailType = notificationType.toEmailTypeOrNull()
     val normalizedNotificationType = emailType?.toApiNotificationType() ?: notificationType
 
-    return SentEmailRecord(
+    return SentNotification(
       officialVisitId = officialVisitId,
       sentDate = sentDateTime.toLocalDate().format(dateFormatter),
       sentDateTime = sentDateTime.format(dateTimeFormatter),

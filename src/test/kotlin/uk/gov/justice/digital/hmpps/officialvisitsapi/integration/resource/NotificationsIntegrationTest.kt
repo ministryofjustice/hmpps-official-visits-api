@@ -30,7 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -284,7 +284,7 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
 }
 
 private data class SentEmailSearchResponse(
-  val content: List<SentEmailRecord>,
+  val content: List<SentNotification>,
   val page: PageMetadata,
 )
 

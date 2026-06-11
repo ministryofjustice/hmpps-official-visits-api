@@ -14,12 +14,12 @@ import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentEmailRecordViewEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentNotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.contains
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.SentEmailRecordViewRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationSearchRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.emails.EmailType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -29,11 +29,11 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 class SentEmailsServiceTest {
-  private val sentEmailRecordViewRepository: SentEmailRecordViewRepository = mock()
+  private val notificationSearchRepository: NotificationSearchRepository = mock()
   private val prisonerSearchClient: PrisonerSearchClient = mock()
   private val metricsService: MetricsService = mock()
 
-  private val service = SentEmailsService(sentEmailRecordViewRepository, prisonerSearchClient, metricsService)
+  private val service = SentEmailsService(notificationSearchRepository, prisonerSearchClient, metricsService)
 
   @Test
   fun `should search sent emails with pagination`() {
@@ -43,7 +43,7 @@ class SentEmailsServiceTest {
       toDate = LocalDate.of(2026, 5, 31),
     )
 
-    val viewEntity = SentEmailRecordViewEntity(
+    val viewEntity = SentNotificationEntity(
       notificationId = 100L,
       officialVisitId = 1L,
       prisonCode = "MDI",
@@ -64,14 +64,14 @@ class SentEmailsServiceTest {
       dateOfBirth = LocalDate.of(1990, 1, 1),
     )
 
-    val pageResult: Page<SentEmailRecordViewEntity> = PageImpl(
+    val pageResult: Page<SentNotificationEntity> = PageImpl(
       listOf(viewEntity),
       PageRequest.of(0, 10),
       1,
     )
 
     whenever(
-      sentEmailRecordViewRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
+      notificationSearchRepository.findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
         any(),
         any(),
         any(),
@@ -94,7 +94,7 @@ class SentEmailsServiceTest {
     result.content[0].notificationTypeDescription isEqualTo "Visit Created"
     val fromDateTimeCaptor = argumentCaptor<LocalDateTime>()
     val toDateTimeCaptor = argumentCaptor<LocalDateTime>()
-    verify(sentEmailRecordViewRepository).findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
+    verify(notificationSearchRepository).findByPrisonCodeAndSentDateTimeGreaterThanEqualAndSentDateTimeLessThanOrderBySentDateTimeDesc(
       eq("MDI"),
       fromDateTimeCaptor.capture(),
       toDateTimeCaptor.capture(),
@@ -165,14 +165,14 @@ class SentEmailsServiceTest {
       toDate = null,
     )
 
-    whenever(sentEmailRecordViewRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
+    whenever(notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
       .thenReturn(PageImpl(emptyList(), PageRequest.of(0, 10), 0))
 
     val result = service.searchSentEmails(prisonCode = "MDI", criteria = criteria, page = 0, size = 10, user = MOORLAND_PRISON_USER)
 
     result.content.size isEqualTo 0
     result.metadata.totalElements isEqualTo 0L
-    verify(sentEmailRecordViewRepository).findByPrisonCodeOrderBySentDateTimeDesc(eq("MDI"), any())
+    verify(notificationSearchRepository).findByPrisonCodeOrderBySentDateTimeDesc(eq("MDI"), any())
   }
 
   @Test
@@ -191,7 +191,7 @@ class SentEmailsServiceTest {
   fun `should map updated and cancelled notification types`() {
     val criteria = NotificationSearchRequest(fromDate = null, toDate = null)
 
-    val updatedViewEntity = SentEmailRecordViewEntity(
+    val updatedViewEntity = SentNotificationEntity(
       notificationId = 200L,
       officialVisitId = 2L,
       prisonCode = "MDI",
@@ -205,7 +205,7 @@ class SentEmailsServiceTest {
       prisonerNumber = "G1234AB",
     )
 
-    val cancelledViewEntity = SentEmailRecordViewEntity(
+    val cancelledViewEntity = SentNotificationEntity(
       notificationId = 300L,
       officialVisitId = 3L,
       prisonCode = "MDI",
@@ -219,7 +219,7 @@ class SentEmailsServiceTest {
       prisonerNumber = "G5678CD",
     )
 
-    whenever(sentEmailRecordViewRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
+    whenever(notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
       .thenReturn(PageImpl(listOf(updatedViewEntity, cancelledViewEntity), PageRequest.of(0, 10), 2))
     whenever(prisonerSearchClient.findByPrisonerNumbers(any(), any())).thenReturn(
       listOf(

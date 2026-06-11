@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.Notif
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitChangeStatusResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.VisitChangeDetectionService
 
@@ -104,7 +104,7 @@ class NotificationsController(
     )
     size: Int = 20,
     httpRequest: HttpServletRequest,
-  ): PagedModel<SentEmailRecord> = notificationFacade.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
+  ): PagedModel<SentNotification> = notificationFacade.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
   @ApiResponses(

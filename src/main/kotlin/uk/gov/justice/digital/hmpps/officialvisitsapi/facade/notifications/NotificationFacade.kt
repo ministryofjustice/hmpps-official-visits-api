@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentEmailRecord
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 
@@ -24,7 +24,7 @@ class NotificationFacade(
     page: Int,
     size: Int,
     user: User,
-  ): PagedModel<SentEmailRecord> = notificationsService.searchSentEmails(prisonCode, criteria, page, size, user)
+  ): PagedModel<SentNotification> = notificationsService.searchSentEmails(prisonCode, criteria, page, size, user)
 
   fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(
     officialVisitId,
