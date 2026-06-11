@@ -38,6 +38,7 @@ class OfficialVisitUpdateService(
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository,
   private val contactsService: ContactsService,
   private val metricsService: MetricsService,
+  private val locationsService: LocationsService,
   private val auditingService: AuditingService,
 ) {
   /**
@@ -67,7 +68,12 @@ class OfficialVisitUpdateService(
         change("visit_date", ove.visitDate, request.visitDate)
         change("start_time", ove.startTime, request.startTime)
         change("end_time", ove.endTime, request.endTime)
-        change("location", ove.dpsLocationId, request.dpsLocationId)
+        if (ove.dpsLocationId != request.dpsLocationId) {
+          val oldLocation = locationsService.getLocationById(ove.dpsLocationId)
+          val newLocation = locationsService.getLocationById(request.dpsLocationId)
+
+          change("location", oldLocation?.localName, newLocation?.localName)
+        }
         change("visit_type", ove.visitTypeCode, request.visitTypeCode)
         change("visit_slot", ove.prisonVisitSlot.prisonVisitSlotId, newPrisonVisitSlot.prisonVisitSlotId)
       }
