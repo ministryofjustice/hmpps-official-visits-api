@@ -7,6 +7,7 @@ import org.mockito.Mockito.mock
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.data.domain.Sort
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -36,6 +37,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -49,6 +51,8 @@ class OfficialVisitFacadeTest {
   private val officialVisitCancellationService: OfficialVisitCancellationService = mock()
   private val officialVisitUpdateService: OfficialVisitUpdateService = mock()
   private val overlappingVisitsService: OverlappingVisitsService = mock()
+  private val notificationsService: NotificationsService = mock()
+
   private val user = MOORLAND_PRISON_USER
 
   private val facade = OfficialVisitFacade(
@@ -60,6 +64,7 @@ class OfficialVisitFacadeTest {
     officialVisitUpdateService,
     outboundEventsService,
     overlappingVisitsService,
+    notificationsService,
   )
 
   @Test
@@ -287,5 +292,15 @@ class OfficialVisitFacadeTest {
       facade.updateVisitors(1, MOORLAND, request, PENTONVILLE_PRISON_USER)
     }
       .message isEqualTo "This visit cannot be updated in a prison outside the user's caseload list"
+  }
+
+  @Test
+  fun `should delegate to correct service on retrieve notifications for a visit`() {
+    val officialVisitId = 1L
+    val sort = Sort.by(Sort.Direction.ASC, "createdTime")
+
+    facade.getNotificationsByOfficialVisitId(officialVisitId, sort)
+
+    verify(notificationsService).getNotificationsByOfficialVisitId(officialVisitId, sort)
   }
 }

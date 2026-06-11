@@ -22,24 +22,24 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotificationFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitChangeStatusResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.VisitChangeDetectionService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 
 @Tag(name = "Notifications")
 @RestController
 @RequestMapping(value = ["notification"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @AuthApiResponses
 class NotificationsController(
-  private val notificationFacade: NotificationFacade,
+  private val notificationsService: NotificationsService,
   private val visitChangeDetectionService: VisitChangeDetectionService,
 ) {
 
-  @Operation(summary = "Endpoint to support the sending of notifications for official visits.")
+  @Operation(summary = "Send notifications for an official visit")
   @ApiResponses(
     value = [
       ApiResponse(
@@ -74,9 +74,9 @@ class NotificationsController(
     @Parameter(description = "The request containing the details of the notification", required = true)
     request: NotificationRequest,
     httpRequest: HttpServletRequest,
-  ) = notificationFacade.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
+  ) = notificationsService.sendNotification(officialVisitId, request, httpRequest.getLocalRequestContext().user)
 
-  @Operation(summary = "Endpoint to retrieve a list of sent email notifications with search and pagination support.")
+  @Operation(summary = "Retrieve a list of sent notifications with search parameters and pagination support.")
   @PostMapping(path = ["/prison/{prisonCode}/sent-emails"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
@@ -89,10 +89,10 @@ class NotificationsController(
     ) prisonCode: String,
     @Valid
     @RequestBody
-    @Parameter(description = "The request containing notification search criteria", required = true)
+    @Parameter(description = "Notification search criteria", required = true)
     request: NotificationSearchRequest,
     @Parameter(
-      description = "Zero-based page index (0..N)",
+      description = "Zero-based page index (0..n)",
       name = "page",
       schema = Schema(type = "integer", defaultValue = "0"),
     )
@@ -104,7 +104,7 @@ class NotificationsController(
     )
     size: Int = 20,
     httpRequest: HttpServletRequest,
-  ): PagedModel<SentNotification> = notificationFacade.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
+  ): PagedModel<SentNotification> = notificationsService.searchSentEmails(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 
   @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
   @ApiResponses(

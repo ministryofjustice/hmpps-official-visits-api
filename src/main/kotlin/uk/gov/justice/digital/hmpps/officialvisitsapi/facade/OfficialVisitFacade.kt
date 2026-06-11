@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
@@ -11,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OverlappingVisitsCriteriaRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -22,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 
 @Component
 class OfficialVisitFacade(
@@ -33,6 +36,7 @@ class OfficialVisitFacade(
   private val officialVisitUpdateService: OfficialVisitUpdateService,
   private val outboundEventsService: OutboundEventsService,
   private val overlappingVisitsService: OverlappingVisitsService,
+  private val notificationsService: NotificationsService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
@@ -230,6 +234,11 @@ class OfficialVisitFacade(
       )
     }
   }
+
+  fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(
+    officialVisitId,
+    sort,
+  )
 
   fun findOverlappingScheduledVisits(prisonCode: String, request: OverlappingVisitsCriteriaRequest) = overlappingVisitsService.findOverlappingScheduledVisits(prisonCode, request)
 

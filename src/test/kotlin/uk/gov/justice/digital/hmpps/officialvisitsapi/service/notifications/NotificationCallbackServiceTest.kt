@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRep
 import java.time.LocalDateTime
 import java.util.UUID
 
-class NotifyCallbackServiceTest {
+class NotificationCallbackServiceTest {
   private val repository: NotificationRepository = mock()
 
   private val sharedSecret = "TestValue"
@@ -33,7 +33,7 @@ class NotifyCallbackServiceTest {
 
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
 
-    val service = NotifyCallbackService(repository, sharedSecret)
+    val service = NotificationCallbackService(repository, sharedSecret)
 
     service.processCallback(callbackRequest(notificationId, "delivered", completedAt), "Bearer $sharedSecret")
 
@@ -56,7 +56,7 @@ class NotifyCallbackServiceTest {
 
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
 
-    val service = NotifyCallbackService(repository, sharedSecret)
+    val service = NotificationCallbackService(repository, sharedSecret)
 
     service.processCallback(callbackRequest(notificationId, "permanent-failure"), "Bearer $sharedSecret")
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.PERMANENT_FAILURE)

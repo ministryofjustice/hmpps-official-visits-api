@@ -171,8 +171,8 @@ class NotificationsIntegrationTest : IntegrationTestBase() {
       notificationType isEqualTo "CREATE"
       notificationTypeDescription isEqualTo "Visit Created"
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      firstName isEqualTo "${MOORLAND_PRISONER.firstName}"
-      lastName isEqualTo "${MOORLAND_PRISONER.lastName}"
+      firstName isEqualTo MOORLAND_PRISONER.firstName
+      lastName isEqualTo MOORLAND_PRISONER.lastName
     }
 
     verify(metricsService).send(
