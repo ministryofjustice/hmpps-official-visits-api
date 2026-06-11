@@ -202,7 +202,7 @@ class SyncOfficialVisitorService(
 
     val auditChangeEvent = auditVisitChangeEvent {
       officialVisitId(visit.officialVisitId)
-      summaryText(AuditEventType.VISITOR_CHANGE)
+      summaryText(AuditEventType.VISITOR_CHANGED)
       eventSource("NOMIS")
       user(updatedByUser)
       prisonCode(visit.prisonCode)

@@ -411,11 +411,11 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
     auditEvents.single { it.summaryText == "Visit created" }
 
-    with(auditEvents.single { it.summaryText == "Visitor change" }) {
+    with(auditEvents.single { it.summaryText == "Visitor changed" }) {
       officialVisitId isEqualTo result.officialVisitId
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      summaryText isEqualTo "Visitor change"
+      summaryText isEqualTo "Visitor changed"
       detailText isEqualTo "Visitor John Doe125 added;Visitor John Doe123 updated;Visitor John Doe130 removed;"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name

@@ -336,7 +336,7 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
 
     val events = auditedEventRepository.findAll()
 
-    val updatedVisitorAudit = events.single { it.summaryText == "Visitor change" }
+    val updatedVisitorAudit = events.single { it.summaryText == "Visitor changed" }
     assertThat(updatedVisitorAudit.officialVisitId).isEqualTo(savedOfficialVisitId)
     assertThat(updatedVisitorAudit.prisonCode).isEqualTo(MOORLAND)
     assertThat(updatedVisitorAudit.prisonerNumber).isEqualTo(MOORLAND_PRISONER.number)

@@ -407,7 +407,7 @@ class SyncOfficialVisitorServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Visitor change"
+      summaryText isEqualTo "Visitor changed"
       detailText isEqualTo "visitor_first_name|First|FirstX;visitor_last_name|Last|LastX;visitor_relationship_code|POL|POM;visitor_notes|Notes|Changed;visitor_attendance_code||ATTENDED;"
       eventDateTime isCloseTo now()
     }

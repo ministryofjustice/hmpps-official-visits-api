@@ -201,7 +201,7 @@ class OfficialVisitUpdateService(
       auditingService.recordAuditEvent(
         auditVisitChangeEvent {
           officialVisitId(ove.officialVisitId)
-          summaryText(AuditEventType.VISITOR_CHANGE)
+          summaryText(AuditEventType.VISITOR_CHANGED)
           eventSource("DPS")
           user(user)
           prisonCode(ove.prisonCode)

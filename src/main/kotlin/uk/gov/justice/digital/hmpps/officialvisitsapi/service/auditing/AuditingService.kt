@@ -62,15 +62,17 @@ class AuditingService(
     .split(';')
     .filter { it.isNotBlank() }
     .map {
-      val change = it.split('|')
+      val (field, oldValue, newValue) = it.split('|').let { element -> Triple(element[0], element[1], element[2]) }
 
       AuditedEventChange(
-        field = change[0],
-        oldValue = change[1],
-        newValue = change[2],
-        significantChange = change[0].contains("visit_date") || change[0].contains("start_time") || change[0].contains("end_time") || change[0].contains("location"),
+        field = field,
+        oldValue = oldValue,
+        newValue = newValue,
+        significantChange = isSignificantChange(field),
       )
     }
+
+  private fun isSignificantChange(field: String) = listOf("visit_date", "start_time", "end_time", "location", "visit_status").contains(field)
 
   fun recordAuditEvent(auditEvent: AuditEventDto) {
     auditedEventRepository.saveAndFlush(
@@ -263,7 +265,7 @@ enum class AuditEventType(val summaryText: String) {
   VISIT_CANCELLED("Visit cancelled"),
   VISIT_COMPLETED("Visit completed"),
   VISIT_DELETED("Visit deleted"),
-  VISITOR_CHANGE("Visitor change"),
+  VISITOR_CHANGED("Visitor changed"),
   VISITOR_ADDED("Visitor added"),
   VISITOR_REMOVED("Visitor removed"),
   PRISONER_MERGED("Prisoner merged"),
