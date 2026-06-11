@@ -127,7 +127,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   fun `should update the visit type and slot`() {
     val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1,
-      visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
+      visitDate = nextMondayAt9.visitDate.plusMonths(20),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       dpsLocationId = location.id,
@@ -447,7 +447,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   fun `should fail to update a visit when the visit ID does not exist`() {
     val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1,
-      visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
+      visitDate = nextMondayAt9.visitDate.plusMonths(20),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       dpsLocationId = location.id,
@@ -466,7 +466,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
   fun `should fail to update comments when the visit ID does not exist`() {
     val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
       prisonVisitSlotId = 1,
-      visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
+      visitDate = nextMondayAt9.visitDate.plusMonths(20),
       startTime = LocalTime.of(10, 0),
       endTime = LocalTime.of(11, 0),
       dpsLocationId = location.id,

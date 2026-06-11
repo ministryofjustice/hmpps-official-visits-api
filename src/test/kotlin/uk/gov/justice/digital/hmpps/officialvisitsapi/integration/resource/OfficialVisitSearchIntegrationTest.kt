@@ -174,9 +174,9 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
           SearchInfo(
             username = MOORLAND_PRISON_USER.username,
             prisonCode = MOORLAND_PRISON_USER.caseloads.first(),
-            startDate = searchRequest.startDate!!,
+            startDate = searchRequest.startDate,
             searchTerm = searchRequest.searchTerm?.trim(),
-            endDate = searchRequest.endDate!!,
+            endDate = searchRequest.endDate,
             visitTypes = null,
             locationIds = null,
             visitStatuses = null,
@@ -257,9 +257,9 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
           SearchInfo(
             username = MOORLAND_PRISON_USER.username,
             prisonCode = MOORLAND_PRISON_USER.caseloads.first(),
-            startDate = searchRequest.startDate!!,
+            startDate = searchRequest.startDate,
             searchTerm = searchRequest.searchTerm?.trim(),
-            endDate = searchRequest.endDate!!,
+            endDate = searchRequest.endDate,
             visitTypes = null,
             locationIds = null,
             visitStatuses = null,
@@ -529,7 +529,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
     fun `should fail on invalid dates`() {
       val searchRequest = OfficialVisitSummarySearchRequest(
         startDate = nextMondayAt9.visitDate,
-        endDate = nextMondayAt9.visitDate!!.minusDays(1),
+        endDate = nextMondayAt9.visitDate.minusDays(1),
         visitTypes = emptyList(),
         visitStatuses = emptyList(),
         locationIds = emptyList(),

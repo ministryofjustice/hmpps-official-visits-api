@@ -135,7 +135,7 @@ class SyncOfficialVisitServiceTest {
     )
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
-    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(null)
+    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId)).thenReturn(null)
     whenever(officialVisitRepository.saveAndFlush(officialVisitEntity)).thenReturn(officialVisitEntity)
     whenever(prisonerVisitedRepository.saveAndFlush(prisonerVisitedEntity)).thenReturn(prisonerVisitedEntity)
 
@@ -151,7 +151,7 @@ class SyncOfficialVisitServiceTest {
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
-    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
+    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
     verify(prisonerVisitedRepository).saveAndFlush(prisonerVisitedEntity)
     verify(metricsService, atLeastOnce()).send(
@@ -224,7 +224,7 @@ class SyncOfficialVisitServiceTest {
     )
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
-    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(null)
+    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId)).thenReturn(null)
     whenever(officialVisitRepository.saveAndFlush(officialVisitEntity)).thenReturn(officialVisitEntity)
     whenever(prisonerVisitedRepository.saveAndFlush(prisonerVisitedEntity)).thenThrow(RuntimeException("bang!"))
 
@@ -233,7 +233,7 @@ class SyncOfficialVisitServiceTest {
     }
 
     verify(prisonVisitSlotRepository).findById(1L)
-    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
+    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId)
     verify(officialVisitRepository).saveAndFlush(officialVisitEntity)
     verify(prisonerVisitedRepository).saveAndFlush(prisonerVisitedEntity)
   }
@@ -245,7 +245,7 @@ class SyncOfficialVisitServiceTest {
     val officialVisitEntity = OfficialVisitEntity.synchronised(visitSlotEntity, request)
 
     whenever(prisonVisitSlotRepository.findById(1L)).thenReturn(Optional.of(visitSlotEntity))
-    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId!!)).thenReturn(officialVisitEntity)
+    whenever(officialVisitRepository.findByOffenderVisitId(request.offenderVisitId)).thenReturn(officialVisitEntity)
 
     val exception = assertThrows<DuplicateOffenderVisitIdConflictException> {
       syncOfficialVisitService.createVisit(request)
@@ -256,7 +256,7 @@ class SyncOfficialVisitServiceTest {
     )
 
     verify(prisonVisitSlotRepository).findById(1L)
-    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId!!)
+    verify(officialVisitRepository).findByOffenderVisitId(request.offenderVisitId)
     verifyNoMoreInteractions(officialVisitRepository, prisonerVisitedRepository, metricsService)
   }
 
