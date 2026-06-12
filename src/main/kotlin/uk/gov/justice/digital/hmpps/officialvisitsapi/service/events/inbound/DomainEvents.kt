@@ -107,8 +107,8 @@ enum class DomainEventType(val eventType: String, val description: String = "") 
   abstract fun toInboundEvent(mapper: ObjectMapper, message: String): DomainEvent<*>
 }
 
-enum class Identifier { PERSON }
+enum class Identifier { NOMS }
 data class PersonIdentifier(val type: Identifier, val value: String)
 data class PersonReference(val identifiers: List<PersonIdentifier>) {
-  fun prisonerNumber(): String? = identifiers.firstOrNull { it.type == Identifier.PERSON }?.value
+  fun prisonerNumber(): String? = identifiers.firstOrNull { it.type == Identifier.NOMS }?.value
 }

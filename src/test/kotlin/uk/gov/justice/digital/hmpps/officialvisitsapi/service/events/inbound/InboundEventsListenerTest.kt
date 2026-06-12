@@ -80,7 +80,7 @@ class InboundEventsListenerTest {
   fun `should delegate prisoner booking deleted domain event to service`() {
     val event = PrisonerBookingDeletedEvent(
       BookingDeletedInformation("123"),
-      PersonReference(listOf(PersonIdentifier(Identifier.PERSON, "A1111AA"))),
+      PersonReference(listOf(PersonIdentifier(Identifier.NOMS, "A1111AA"))),
     )
     val message = message(event)
     val rawMessage = mapper.writeValueAsString(message)

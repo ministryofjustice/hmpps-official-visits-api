@@ -21,7 +21,7 @@ class PrisonerBookingDeletedEventHandlerTest {
 
     val bookingDeletedEvent = PrisonerBookingDeletedEvent(
       BookingDeletedInformation("1"),
-      PersonReference(listOf(PersonIdentifier(Identifier.PERSON, "ABC222"))),
+      PersonReference(listOf(PersonIdentifier(Identifier.NOMS, "ABC222"))),
     )
 
     whenever(officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual("ABC222", 1L, bookingStartDateTime)).thenReturn(
@@ -37,7 +37,7 @@ class PrisonerBookingDeletedEventHandlerTest {
 
     val bookingDeletedEvent = PrisonerBookingDeletedEvent(
       BookingDeletedInformation("1"),
-      PersonReference(listOf(PersonIdentifier(Identifier.PERSON, "ABC222"))),
+      PersonReference(listOf(PersonIdentifier(Identifier.NOMS, "ABC222"))),
     )
 
     whenever(officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual("ABC222", 1L, bookingStartDateTime)).thenReturn(emptyList())
