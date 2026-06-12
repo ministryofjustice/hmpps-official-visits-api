@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.BIRMINGHAM
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerBookingDeletedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerBookingMovedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerMergedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerReceivedEventHandler
@@ -14,12 +15,14 @@ class InboundEventsServiceTest {
   private val prisonerMergedEventHandler: PrisonerMergedEventHandler = mock()
   private val prisonerReceivedEventHandler: PrisonerReceivedEventHandler = mock()
   private val prisonerMovedEventHandler: PrisonerBookingMovedEventHandler = mock()
+  private val prisonerDeletedEventHandler: PrisonerBookingDeletedEventHandler = mock()
 
   private val service = InboundEventsService(
     prisonerReleasedEventHandler,
     prisonerMergedEventHandler,
     prisonerReceivedEventHandler,
     prisonerMovedEventHandler,
+    prisonerDeletedEventHandler,
   )
 
   @Test
@@ -52,5 +55,12 @@ class InboundEventsServiceTest {
     val event = mock<PrisonerBookingMovedEvent>()
     service.process(event)
     verify(prisonerMovedEventHandler).handle(event)
+  }
+
+  @Test
+  fun `should call prisoner booking deleted event handler when prisoner booking deleted event`() {
+    val event = mock<PrisonerBookingDeletedEvent>()
+    service.process(event)
+    verify(prisonerDeletedEventHandler).handle(event)
   }
 }
