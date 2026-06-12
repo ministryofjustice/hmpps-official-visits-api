@@ -59,7 +59,7 @@ enum class MetricsEvents(val eventType: String) {
       additionalInformation = additionalInformation,
     )
   },
-  SENT_EMAIL_SEARCH("SentEmailSearch") {
+  NOTIFICATION_SEARCH("NotificationSearch") {
     override fun event(additionalInformation: MetricInfo) = OfficialVisitMetricTelemetry(
       eventType = eventType,
       additionalInformation = additionalInformation,
@@ -85,22 +85,22 @@ data class OfficialVisitMetricTelemetry(
     )
     return when (additionalInformation) {
       is VisitMetricInfo -> {
-        baseMap + additionalInformation.visitAdditionalInfo()
+        baseMap + additionalInformation.visitInfo()
       }
       is SearchInfo -> {
-        baseMap + additionalInformation.searchAdditionalInfo()
+        baseMap + additionalInformation.searchInfo()
       }
 
       is VisitorMetricInfo -> {
-        baseMap + additionalInformation.visitorAdditionalInfo()
+        baseMap + additionalInformation.visitorInfo()
       }
 
       is TimeSlotInfo -> {
         baseMap + additionalInformation.timeSLotInfo()
       }
 
-      is SentEmailSearchInfo -> {
-        baseMap + additionalInformation.sentEmailSearchAdditionalInfo()
+      is NotificationSearchInfo -> {
+        baseMap + additionalInformation.notificationSearchInfo()
       }
     }
   }
@@ -114,13 +114,13 @@ data class OfficialVisitMetricTelemetry(
         "number_of_results" to additionalInformation.numberOfResults.toDouble(),
       )
     }
-    is SentEmailSearchInfo -> {
+    is NotificationSearchInfo -> {
       mapOf(
         "number_of_results" to additionalInformation.numberOfResults.toDouble(),
       )
     }
     else -> {
-      emptyMap<String, Double>()
+      emptyMap()
     }
   }
 
@@ -135,12 +135,12 @@ data class OfficialVisitMetricTelemetry(
   fun VisitMetricInfo.numberOfVisitors(): Pair<String, Double> = "number_of_visitors" to numberOfVisitors.toDouble()
 }
 
-private fun VisitMetricInfo.visitAdditionalInfo(): Map<String, String> = mapOf(
+private fun VisitMetricInfo.visitInfo(): Map<String, String> = mapOf(
   "prisoner_number" to prisonerNumber,
   "official_visit_id" to "$officialVisitId",
 )
 
-private fun VisitorMetricInfo.visitorAdditionalInfo(): Map<String, String> = mapOf(
+private fun VisitorMetricInfo.visitorInfo(): Map<String, String> = mapOf(
   "official_visitor_id" to "$officialVisitorId",
   "contact_id" to "$contactId",
   "official_visit_id" to "$officialVisitId",
@@ -159,7 +159,7 @@ private fun OfficialVisitMetricTelemetry.visitMetrics(
     .takeIf { eventType == MetricsEvents.COMPLETE.eventType },
 ).toMap()
 
-private fun SearchInfo.searchAdditionalInfo(): Map<String, String> = mapOf(
+private fun SearchInfo.searchInfo(): Map<String, String> = mapOf(
   "start_date" to "$startDate",
   "end_date" to "$endDate",
   "search_term" to searchTerm.orEmpty(),
@@ -168,7 +168,7 @@ private fun SearchInfo.searchAdditionalInfo(): Map<String, String> = mapOf(
   "location_Ids" to "$locationIds",
 )
 
-private fun SentEmailSearchInfo.sentEmailSearchAdditionalInfo(): Map<String, String> = mapOf(
+private fun NotificationSearchInfo.notificationSearchInfo(): Map<String, String> = mapOf(
   "from_date" to "${fromDate ?: ""}",
   "to_date" to "${toDate ?: ""}",
 )
@@ -218,7 +218,7 @@ data class TimeSlotInfo(
   val dayCode: String,
 ) : MetricInfo(source = source, username = username, prisonCode = prisonCode)
 
-data class SentEmailSearchInfo(
+data class NotificationSearchInfo(
   override val source: Source = Source.DPS,
   override val username: String,
   override val prisonCode: String,

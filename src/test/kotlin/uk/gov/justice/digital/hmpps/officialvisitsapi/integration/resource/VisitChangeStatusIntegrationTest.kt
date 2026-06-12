@@ -141,7 +141,7 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
       officialVisitId = scheduledVisit.officialVisitId,
       request = OfficialVisitUpdateSlotRequest(
         prisonVisitSlotId = 1,
-        visitDate = nextMondayAt9.visitDate!!.plusMonths(20),
+        visitDate = nextMondayAt9.visitDate.plusMonths(20),
         startTime = LocalTime.of(10, 0),
         endTime = LocalTime.of(11, 0),
         dpsLocationId = location.id,

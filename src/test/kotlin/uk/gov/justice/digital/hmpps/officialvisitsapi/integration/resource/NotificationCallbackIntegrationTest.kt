@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @TestPropertySource(properties = ["notify.callback.secret=IntegrationTestSecret"])
-class NotifyCallbackAuthenticationIntegrationTest : IntegrationTestBase() {
+class NotificationCallbackIntegrationTest : IntegrationTestBase() {
   private val validSecret = "Bearer IntegrationTestSecret"
   private val invalidSecret = "Bearer WrongSecret"
 

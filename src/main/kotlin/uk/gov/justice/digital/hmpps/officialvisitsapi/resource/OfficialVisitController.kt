@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import org.springframework.data.domain.Sort
+import org.springframework.data.domain.Sort.Direction
+import org.springframework.data.domain.Sort.Direction.ASC
 import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
@@ -36,6 +40,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OverlappingV
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEventResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OverlappingVisitsResponse
 
@@ -455,4 +460,34 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       required = true,
     ) officialVisitId: Long,
   ): List<AuditedEventResponse> = emptyList()
+
+  @Operation(summary = "Get all notifications sent for an official visit ID.")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "A list of notification rows for the official visit",
+        content = [
+          Content(
+            mediaType = "application/json",
+            array = ArraySchema(schema = Schema(implementation = OfficialVisitNotification::class)),
+          ),
+        ],
+      ),
+    ],
+  )
+  @GetMapping(path = ["/id/{officialVisitId}/notifications"])
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun getNotificationsByOfficialVisitId(
+    @PathVariable @Parameter(
+      name = "officialVisitId",
+      description = "The official visit identifier",
+      example = "1",
+      required = true,
+    ) officialVisitId: Long,
+    @RequestParam(defaultValue = "ASC")
+    @Parameter(description = "Sort results by created time desc or asc, default to ASC", required = false)
+    sortDirection: Direction = ASC,
+  ): List<OfficialVisitNotification> = facade.getNotificationsByOfficialVisitId(officialVisitId, sort = Sort.by(sortDirection, "createdTime"))
 }

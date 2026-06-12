@@ -13,7 +13,7 @@ import java.time.LocalTime
 @Entity
 @Immutable
 @Table(name = "v_sent_email_notifications")
-data class SentEmailRecordViewEntity(
+data class SentNotificationEntity(
   @Id
   val notificationId: Long,
 

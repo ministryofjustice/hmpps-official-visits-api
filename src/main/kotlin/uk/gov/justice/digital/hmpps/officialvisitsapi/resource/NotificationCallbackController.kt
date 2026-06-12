@@ -17,15 +17,16 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.notifications.NotifyCallbackFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationCallbackService
 
 @Tag(name = "Notify callback")
 @RestController
 @Validated
 @RequestMapping(value = ["notify/callback"], produces = [MediaType.APPLICATION_JSON_VALUE])
-class NotifyCallbackController(private val callbackFacade: NotifyCallbackFacade) {
-
+class NotificationCallbackController(
+  private val notificationCallbackService: NotificationCallbackService,
+) {
   @Operation(
     summary = "Receives callback events from GOV.UK Notify after notification delivery attempts.",
     description = "Accept and process the gov notify callback for notifications",
@@ -48,6 +49,6 @@ class NotifyCallbackController(private val callbackFacade: NotifyCallbackFacade)
     @Valid @RequestBody request: NotifyCallbackNotificationRequest,
     @RequestHeader(name = "Authorization", required = false) providedSecret: String?,
   ) {
-    callbackFacade.processCallback(request, providedSecret)
+    notificationCallbackService.processCallback(request, providedSecret)
   }
 }

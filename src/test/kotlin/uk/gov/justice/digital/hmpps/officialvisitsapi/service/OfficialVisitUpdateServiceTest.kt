@@ -118,7 +118,7 @@ class OfficialVisitUpdateServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       summaryText isEqualTo "Update visit visit type and visit slot"
-      detailText isEqualTo "Visit date changed from ${oldVisitDate.toMediumFormatStyle()} to ${request.visitDate?.toMediumFormatStyle()}; Start time changed from $oldStartTime to ${request.startTime}; End time changed from $oldEndTime to ${request.endTime}; Location changed from $oldDpsLocationId to ${request.dpsLocationId}; Visit type changed from $oldVisitTypeCode to VIDEO; Visit slot changed from 1 to 99."
+      detailText isEqualTo "Visit date changed from ${oldVisitDate.toMediumFormatStyle()} to ${request.visitDate.toMediumFormatStyle()}; Start time changed from $oldStartTime to ${request.startTime}; End time changed from $oldEndTime to ${request.endTime}; Location changed from $oldDpsLocationId to ${request.dpsLocationId}; Visit type changed from $oldVisitTypeCode to VIDEO; Visit slot changed from 1 to 99."
       eventDateTime isCloseTo now()
     }
   }

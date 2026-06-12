@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 
-data class SentEmailRecord(
+data class SentNotification(
   @Schema(description = "The official visit ID", example = "123")
   val officialVisitId: Long,
 

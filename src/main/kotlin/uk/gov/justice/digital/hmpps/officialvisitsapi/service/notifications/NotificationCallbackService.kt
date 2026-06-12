@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRep
 import java.time.LocalDateTime
 
 @Component
-class NotifyCallbackService(
+class NotificationCallbackService(
   private val notificationRepository: NotificationRepository,
   @Value("\${notify.callback.secret:null}") private val notifySecret: String?,
 ) {

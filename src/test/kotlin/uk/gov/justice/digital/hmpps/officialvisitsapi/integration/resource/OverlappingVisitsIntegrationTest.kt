@@ -101,8 +101,8 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
     val request = OverlappingVisitsCriteriaRequest(
       prisonerNumber = MOORLAND_PRISONER.number,
       visitDate = nextMondayAt9.visitDate,
-      startTime = nextMondayAt9.startTime!!.minusMinutes(1),
-      endTime = nextMondayAt9.endTime!!.minusMinutes(1),
+      startTime = nextMondayAt9.startTime.minusMinutes(1),
+      endTime = nextMondayAt9.endTime.minusMinutes(1),
       contactIds = listOf(officialVisitor.contactId!!),
     )
 
@@ -119,8 +119,8 @@ class OverlappingVisitsIntegrationTest : IntegrationTestBase() {
     val request = OverlappingVisitsCriteriaRequest(
       prisonerNumber = MOORLAND_PRISONER.number,
       visitDate = nextMondayAt9.visitDate,
-      startTime = nextMondayAt9.startTime!!.plusMinutes(1),
-      endTime = nextMondayAt9.endTime!!.plusMinutes(1),
+      startTime = nextMondayAt9.startTime.plusMinutes(1),
+      endTime = nextMondayAt9.endTime.plusMinutes(1),
       contactIds = listOf(officialVisitor.contactId!!),
     )
 

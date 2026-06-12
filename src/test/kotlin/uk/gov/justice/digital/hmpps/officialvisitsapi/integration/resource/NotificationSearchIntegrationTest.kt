@@ -1,7 +1,10 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
-import org.assertj.core.api.Assertions.assertThat
+
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -11,25 +14,27 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactly
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isBool
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.NotificationSearchInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
+import java.time.LocalDate
 import java.util.UUID
 
-class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
+class NotificationSearchIntegrationTest : IntegrationTestBase() {
 
   @MockitoBean
   private lateinit var metricsService: MetricsService
@@ -57,7 +62,6 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
     locationsInsidePrisonApi().stubGetLocationById(location)
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, locations = listOf(location))
 
-    // Stub a known contact
     personalRelationshipsApi().stubAllContacts(
       prisonerNumber = MOORLAND_PRISONER.number,
       prisonerContacts = listOf(
@@ -85,107 +89,152 @@ class OfficialVisitNotificationsIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should return notifications for an official visit id`() {
+  fun `should search sent notifications with pagination`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
     testAPIClient.sendNotification(
       officialVisitId = scheduledVisit.officialVisitId,
       notificationType = NotificationType.CREATE,
-      emailAddresses = listOf("email@address.com", "email2@address.com"),
-    )
-
-    val notifications = webTestClient.getNotificationsByOfficialVisitId(
-      scheduledVisit.officialVisitId,
-      sort = "sortDirection=ASC",
-    )
-
-    notifications.size isEqualTo 2
-    notifications.map { it.officialVisitId }.distinct() containsExactly listOf(scheduledVisit.officialVisitId)
-    notifications.map { it.emailAddress } containsExactlyInAnyOrder listOf("email@address.com", "email2@address.com")
-    notifications.map { it.reason }.distinct() containsExactly listOf("OFFICIAL_VISIT_CREATED")
-  }
-
-  @Test
-  fun `should return notifications for an official visit id with sort ascending or descending`() {
-    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-
-    val older = testAPIClient.sendNotification(
-      officialVisitId = scheduledVisit.officialVisitId,
-      notificationType = NotificationType.CREATE,
-      emailAddresses = listOf("email@address.com", "email2@address.com"),
-    )
-
-    val newer = testAPIClient.sendNotification(
-      officialVisitId = scheduledVisit.officialVisitId,
-      notificationType = NotificationType.AMEND,
       emailAddresses = listOf("email@address.com"),
     )
 
-    val resultDesc = webTestClient.getNotificationsByOfficialVisitId(
-      scheduledVisit.officialVisitId,
-      sort = "sortDirection=DESC",
-    ).map { it.notificationId }
-
-    assertThat(resultDesc).containsExactly(
-      newer.recipients.first().notificationId,
-      older.recipients.last().notificationId,
-      older.recipients.first().notificationId,
+    val result = webTestClient.searchSentNotifications(
+      prisonCode = MOORLAND,
+      request = NotificationSearchRequest(fromDate = null, toDate = null),
+      page = 0,
+      size = 10,
     )
 
-    val resultAsc = webTestClient.getNotificationsByOfficialVisitId(
-      scheduledVisit.officialVisitId,
-      sort = "sortDirection=ASC",
-    ).map { it.notificationId }
+    result.page.totalElements isEqualTo 1L
+    result.content.size isEqualTo 1
+    result.page.totalPages isEqualTo 1L
+    result.page.number isEqualTo 0L
+    result.page.size isEqualTo 10L
 
-    assertThat(resultAsc).containsExactly(
-      older.recipients.first().notificationId,
-      older.recipients.last().notificationId,
-      newer.recipients.first().notificationId,
+    with(result.content[0]) {
+      officialVisitId isEqualTo scheduledVisit.officialVisitId
+      emailAddress isEqualTo "email@address.com"
+      emailStatus isEqualTo "PENDING"
+      notificationType isEqualTo "CREATE"
+      notificationTypeDescription isEqualTo "Visit Created"
+      prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      firstName isEqualTo MOORLAND_PRISONER.firstName
+      lastName isEqualTo MOORLAND_PRISONER.lastName
+    }
+
+    verify(metricsService).send(
+      eventType = eq(MetricsEvents.NOTIFICATION_SEARCH),
+      info = any<NotificationSearchInfo>(),
     )
   }
 
   @Test
-  fun `should return empty notifications list when none exist for official visit id`() {
+  fun `should search notifications with a date filter`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    val notifications = webTestClient.getNotificationsByOfficialVisitId(
-      scheduledVisit.officialVisitId,
-      sort = "sortDirection=ASC",
+    testAPIClient.sendNotification(
+      officialVisitId = scheduledVisit.officialVisitId,
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
     )
 
-    notifications.isEmpty() isBool true
+    val resultWithMatch = webTestClient.searchSentNotifications(
+      prisonCode = MOORLAND,
+      request = NotificationSearchRequest(
+        fromDate = LocalDate.now().minusDays(1),
+        toDate = LocalDate.now().plusDays(1),
+      ),
+      page = 0,
+      size = 10,
+    )
+
+    resultWithMatch.page.totalElements isEqualTo 1L
+    resultWithMatch.content.size isEqualTo 1
+
+    val resultWithoutMatch = webTestClient.searchSentNotifications(
+      prisonCode = MOORLAND,
+      request = NotificationSearchRequest(
+        fromDate = LocalDate.now().plusDays(30),
+        toDate = LocalDate.now().plusDays(60),
+      ),
+      page = 0,
+      size = 10,
+    )
+
+    resultWithoutMatch.page.totalElements isEqualTo 0L
+    resultWithoutMatch.content.isEmpty()
   }
 
   @Test
-  fun `should return 404 when no visit exists for id`() {
-    webTestClient.getNotificationsByOfficialVisitIdNotFound(999L)
+  fun `should find notifications for the day when from and to dates are the same`() {
+    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+    testAPIClient.sendNotification(
+      officialVisitId = scheduledVisit.officialVisitId,
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
+    )
+
+    val today = LocalDate.now()
+    val result = webTestClient.searchSentNotifications(
+      prisonCode = MOORLAND,
+      request = NotificationSearchRequest(fromDate = today, toDate = today),
+      page = 0,
+      size = 10,
+    )
+
+    result.page.totalElements isEqualTo 1L
+    result.content.size isEqualTo 1
   }
 
-  private fun WebTestClient.getNotificationsByOfficialVisitId(
-    officialVisitId: Long,
+  @Test
+  fun `should return no notifications for a different prison code`() {
+    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+    testAPIClient.sendNotification(
+      officialVisitId = scheduledVisit.officialVisitId,
+      notificationType = NotificationType.CREATE,
+      emailAddresses = listOf("email@address.com"),
+    )
+
+    val result = webTestClient.searchSentNotifications(
+      prisonCode = PENTONVILLE,
+      request = NotificationSearchRequest(fromDate = null, toDate = null),
+      page = 0,
+      size = 10,
+    )
+
+    result.page.totalElements isEqualTo 0L
+    result.content.isEmpty()
+  }
+
+  private fun WebTestClient.searchSentNotifications(
+    prisonCode: String,
+    request: NotificationSearchRequest,
+    page: Int = 0,
+    size: Int = 10,
     prisonUser: PrisonUser = MOORLAND_PRISON_USER,
-    sort: String,
   ) = this
-    .get()
-    .uri("/official-visit/id/$officialVisitId/notifications?$sort")
+    .post()
+    .uri("/notification/prison/$prisonCode/sent-notifications?page=$page&size=$size")
+    .bodyValue(request)
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody<List<OfficialVisitNotification>>()
+    .expectBody<NotificationSearchResponse>()
     .returnResult().responseBody!!
-
-  private fun WebTestClient.getNotificationsByOfficialVisitIdNotFound(
-    officialVisitId: Long,
-    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
-  ) = this
-    .get()
-    .uri("/official-visit/id/$officialVisitId/notifications")
-    .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = prisonUser.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-    .exchange()
-    .expectStatus().isNotFound
-    .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id $officialVisitId not found")
 }
+
+private data class NotificationSearchResponse(
+  val content: List<SentNotification>,
+  val page: PageMetadata,
+)
+
+private data class PageMetadata(
+  val size: Long,
+  val number: Long,
+  val totalElements: Long,
+  val totalPages: Long,
+)

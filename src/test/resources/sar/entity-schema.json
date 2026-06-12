@@ -154,7 +154,7 @@
     "groupCode": "ReferenceDataGroup",
     "referenceDataId": "long"
   },
-  "SentEmailRecordViewEntity": {
+  "SentNotificationEntity": {
     "emailAddress": "String",
     "emailStatus": "NotificationEmailStatus",
     "notificationId": "long",
