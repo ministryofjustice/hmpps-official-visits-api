@@ -4,18 +4,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toOffsetString
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Identifier
 import java.time.LocalDateTime
 
 abstract class DomainEvent<T : AdditionalInformation>(
   eventType: DomainEventType,
   val additionalInformation: T,
+  val personReference: PersonReference = PersonReference(emptyList()),
 ) {
   val eventType = eventType.eventType
   val description = eventType.description
   val version: String = "1"
   val occurredAt: String = LocalDateTime.now().toOffsetString()
-
   fun toEventType() = DomainEventType.valueOf(eventType)
 
   override fun toString() = this::class.simpleName + " - (eventType = $eventType, , occurredAt = $occurredAt, additionalInformation = $additionalInformation)"
@@ -75,11 +74,17 @@ class PrisonerBookingMovedEvent(additionalInformation: BookingMovedInformation) 
   fun bookingStartDateTime() = additionalInformation.bookingStartDateTime
 }
 
+class PrisonerBookingDeletedEvent(additionalInformation: BookingDeletedInformation, personReference: PersonReference = PersonReference(emptyList())) : DomainEvent<BookingDeletedInformation>(DomainEventType.PRISONER_BOOKING_DELETED, additionalInformation, personReference) {
+  @JsonIgnore
+  fun bookingId() = additionalInformation.bookingId
+
+  @JsonIgnore
+  fun prisonerNumber() = personReference.prisonerNumber()
+}
+
 data class BookingMovedInformation(val movedFromNomsNumber: String, val movedToNomsNumber: String, val bookingId: String, val bookingStartDateTime: LocalDateTime) : AdditionalInformation
 
-data class PersonReference(val identifiers: List<Identifier>)
-
-data class Identifier(val type: String, val value: String)
+data class BookingDeletedInformation(val bookingId: String) : AdditionalInformation
 
 enum class DomainEventType(val eventType: String, val description: String = "") {
   PRISONER_RECEIVED("prisoner-offender-search.prisoner.received") {
@@ -94,7 +99,16 @@ enum class DomainEventType(val eventType: String, val description: String = "") 
   PRISONER_BOOKING_MOVED("prison-offender-events.prisoner.booking.moved") {
     override fun toInboundEvent(mapper: ObjectMapper, message: String) = mapper.readValue<PrisonerBookingMovedEvent>(message)
   },
+  PRISONER_BOOKING_DELETED("prison-offender-events.prisoner.booking.deleted") {
+    override fun toInboundEvent(mapper: ObjectMapper, message: String) = mapper.readValue<PrisonerBookingDeletedEvent>(message)
+  },
   ;
 
   abstract fun toInboundEvent(mapper: ObjectMapper, message: String): DomainEvent<*>
+}
+
+enum class Identifier { NOMS }
+data class PersonIdentifier(val type: Identifier, val value: String)
+data class PersonReference(val identifiers: List<PersonIdentifier>) {
+  fun prisonerNumber(): String? = identifiers.firstOrNull { it.type == Identifier.NOMS }?.value
 }
