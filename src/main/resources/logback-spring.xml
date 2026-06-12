@@ -43,4 +43,7 @@
   <logger name="org.hibernate.orm.connections.pooling" additivity="false" level="WARN">
     <appender-ref ref="consoleAppender"/>
   </logger>
+
+  <logger name="uk.gov.justice.hmpps.kotlin.clienttracking" level="OFF" additivity="false"/>
+
 </configuration>

@@ -76,6 +76,26 @@ class InboundEventsListenerTest {
     )
   }
 
+  @Test
+  fun `should delegate prisoner booking deleted domain event to service`() {
+    val event = PrisonerBookingDeletedEvent(
+      BookingDeletedInformation("123"),
+      PersonReference(listOf(PersonIdentifier(Identifier.PERSON, "A1111AA"))),
+    )
+    val message = message(event)
+    val rawMessage = mapper.writeValueAsString(message)
+
+    eventListener.onMessage(rawMessage)
+
+    verify(inboundEventsService).process(
+      mockitoCheck {
+        it isInstanceOf PrisonerBookingDeletedEvent::class.java
+        (it as PrisonerBookingDeletedEvent).additionalInformation.bookingId isEqualTo "123"
+        it.personReference.prisonerNumber() isEqualTo "A1111AA"
+      },
+    )
+  }
+
   private fun message(event: DomainEvent<*>) = Message(
     "Notification",
     mapper.writeValueAsString(event),

@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerBookingDeletedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerBookingMovedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerMergedEventHandler
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerReceivedEventHandler
@@ -14,6 +15,7 @@ class InboundEventsService(
   private val prisonerMergedEventHandler: PrisonerMergedEventHandler,
   private val prisonerReceivedEventHandler: PrisonerReceivedEventHandler,
   private val prisonerBookingMovedEventHandler: PrisonerBookingMovedEventHandler,
+  private val prisonerBookingDeletedEventHandler: PrisonerBookingDeletedEventHandler,
 ) {
   companion object {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -25,6 +27,7 @@ class InboundEventsService(
       is PrisonerReleasedEvent -> prisonerReleasedEventHandler.handle(event)
       is PrisonerReceivedEvent -> prisonerReceivedEventHandler.handle(event)
       is PrisonerBookingMovedEvent -> prisonerBookingMovedEventHandler.handle(event)
+      is PrisonerBookingDeletedEvent -> prisonerBookingDeletedEventHandler.handle(event)
       else -> log.warn("Unsupported domain event ${event.javaClass.name}")
     }
   }
