@@ -159,9 +159,9 @@ class OfficialVisitsApiExceptionHandler {
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = message,
-        developerMessage = e.message,
+        developerMessage = message,
       ),
-    ).also { log.error(message, e) }
+    ).also { log.error(e.message, e) }
   }
 
   @ExceptionHandler(DownstreamServiceException::class)
@@ -176,15 +176,18 @@ class OfficialVisitsApiExceptionHandler {
     )
 
   @ExceptionHandler(Exception::class)
-  fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(INTERNAL_SERVER_ERROR)
-    .body(
-      ErrorResponse(
-        status = INTERNAL_SERVER_ERROR,
-        userMessage = "${e.message}",
-        developerMessage = e.message,
-      ),
-    ).also { log.error("Unexpected exception", e) }
+  fun handleException(e: Exception): ResponseEntity<ErrorResponse> {
+    val message = "The request contained invalid values or types. Refer to the API documentation for details of valid requests."
+    return ResponseEntity
+      .status(INTERNAL_SERVER_ERROR)
+      .body(
+        ErrorResponse(
+          status = INTERNAL_SERVER_ERROR,
+          userMessage = message,
+          developerMessage = message,
+        ),
+      ).also { log.error("Unexpected exception", e) }
+  }
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
