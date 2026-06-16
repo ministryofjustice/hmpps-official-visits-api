@@ -25,15 +25,19 @@ menu_function() {
   echo " 8 - Add a prison"
   echo " 9 - Remove a prison"
   echo ""
-  echo "Email notifications"
-  echo ""
-  echo " 13 - Toggle email notifications feature"
+  echo "two month calendar"
   echo ""
   echo " 10 - Toggle two month calendar feature"
   echo ""
+  echo "Email notifications"
+  echo ""
   echo " 11 - Set Notify callback secret"
   echo ""
-  echo " 12 - Restart services for changes to take effect"
+  echo " 12 - Set Notify api key"
+  echo ""
+  echo " 13 - Toggle email notifications feature"
+  echo ""
+  echo " x - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
   echo "----------------------------"
@@ -203,6 +207,17 @@ set_notify_callback_secret() {
   kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
 }
 
+set_notify_api_key() {
+  local env="$1"
+  local namespace="$2"
+  local token="$3"
+
+  echo "Updating Notify api key in $env namespace $namespace"
+
+  stringData="{\"stringData\":{\"NOTIFY_API_KEY\":\"$token\"}}"
+  kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
+}
+
 restart_services() {
    echo "Restarting UI service in $1 namespace $2"
    kubectl -n "$2" rollout restart deployments/hmpps-official-visits-ui
@@ -273,17 +288,24 @@ while true; do
           ;;
 
       11)
+          echo "Toggle NOTIFY_CALLBACK_SECRET - currently ${NOTIFY_CALLBACK_SECRET:-Missing}"
           read -r -p "Enter NOTIFY_CALLBACK_SECRET value : " notify_callback_secret
           set_notify_callback_secret "$ENV" "$NAMESPACE" "$notify_callback_secret"
           ;;
 
-      12)  echo "Restarting services"
-          restart_services "$ENV" "$NAMESPACE"
+      12)
+          echo "Toggle NOTIFY_API_KEY - currently ${NOTIFY_API_KEY:-Missing}"
+          read -r -p "Enter NOTIFY_API_KEY value : " notify_api_key_secret
+          set_notify_api_key "$ENV" "$NAMESPACE" "$notify_api_key_secret"
           ;;
 
       13)
           echo "Toggle email notifications - currently ${FEATURE_EMAIL_NOTIFICATIONS:-false}"
           toggle_email_notifications "$ENV" "$NAMESPACE" "${FEATURE_EMAIL_NOTIFICATIONS:-false}"
+          ;;
+
+      x)  echo "Restarting services"
+          restart_services "$ENV" "$NAMESPACE"
           ;;
 
       0)
