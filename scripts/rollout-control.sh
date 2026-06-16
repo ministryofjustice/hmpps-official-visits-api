@@ -41,8 +41,6 @@ menu_function() {
   echo ""
   echo " 15 - Set Notify api key"
   echo ""
-  echo " 16 - Toggle email notifications feature"
-  echo ""
   echo " x - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
@@ -70,7 +68,6 @@ show_current() {
   FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
   FEATURE_NOMIS_SWITCH_OFF_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
   FEATURE_EMAIL_NOTIFICATIONS_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS_PRISONS}' | base64 -d)
-  FEATURE_EMAIL_NOTIFICATIONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS}' | base64 -d)
   NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
   NOTIFY_CALLBACK_SECRET=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_CALLBACK_SECRET}' | base64 -d)
 
@@ -84,7 +81,6 @@ show_current() {
   echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
   echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
-  echo "Email notifications enabled   : ${FEATURE_EMAIL_NOTIFICATIONS:-false}"
 }
 
 add_dps_enabled_prison() {
@@ -196,23 +192,6 @@ remove_prison_from_email_notification_prisons() {
   echo "Applying new value : $NEW"
   stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS_PRISONS\":\"$NEW\"}}"
   kubectl -n "$2" patch secret feature-toggles -p $stringData
-}
-
-toggle_email_notifications() {
-  local env="$1"
-  local namespace="$2"
-  local current_value="$3"
-
-  if [[ "$current_value" == "true" ]]; then
-     new_value="false"
-  else
-     new_value="true"
-  fi
-
-  echo "Toggling email notifications to $new_value in $env namespace $namespace"
-
-  stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS\":\"$new_value\"}}"
-  kubectl -n "$namespace" patch secret feature-toggles -p $stringData
 }
 
 toggle_two_month_calendar() {
@@ -349,11 +328,6 @@ while true; do
           echo "Toggle NOTIFY_API_KEY - currently ${NOTIFY_API_KEY:-Missing}"
           read -r -p "Enter NOTIFY_API_KEY value : " notify_api_key_secret
           set_notify_api_key "$ENV" "$NAMESPACE" "$notify_api_key_secret"
-          ;;
-
-      16)
-          echo "Toggle email notifications - currently ${FEATURE_EMAIL_NOTIFICATIONS:-false}"
-          toggle_email_notifications "$ENV" "$NAMESPACE" "${FEATURE_EMAIL_NOTIFICATIONS:-false}"
           ;;
 
       x)  echo "Restarting services"
