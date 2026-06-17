@@ -254,7 +254,7 @@ class OfficialVisitFacade(
     }
   }
 
-  fun findOfficialVisitAuditEvents(officialVisitId: Long) = auditingService.findByOfficialVisitId(officialVisitId)
+  fun findOfficialVisitAuditedEvents(officialVisitId: Long) = auditingService.findByOfficialVisitId(officialVisitId)
 }
 
 class CaseloadAccessException(message: String) : RuntimeException(message)

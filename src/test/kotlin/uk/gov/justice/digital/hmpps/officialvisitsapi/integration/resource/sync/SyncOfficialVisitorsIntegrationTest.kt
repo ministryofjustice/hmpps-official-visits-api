@@ -201,7 +201,7 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    val deletedVisitorAudit = auditedEventRepository.findAll().single { it.summaryText == "Visitor removed" }
+    val deletedVisitorAudit = auditedEventRepository.findAll().single { it.summaryText == "Visitor changed" }
     assertThat(deletedVisitorAudit.officialVisitId).isEqualTo(savedVisit.officialVisitId)
     assertThat(deletedVisitorAudit.prisonCode).isEqualTo(MOORLAND)
     assertThat(deletedVisitorAudit.prisonerNumber).isEqualTo(savedVisit.prisonerNumber)
@@ -334,9 +334,9 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    val events = auditedEventRepository.findAll()
+    val events = auditedEventRepository.findAll().sortedBy { it.eventDateTime }
 
-    val updatedVisitorAudit = events.single { it.summaryText == "Visitor changed" }
+    val updatedVisitorAudit = events.last { it.summaryText == "Visitor changed" }
     assertThat(updatedVisitorAudit.officialVisitId).isEqualTo(savedOfficialVisitId)
     assertThat(updatedVisitorAudit.prisonCode).isEqualTo(MOORLAND)
     assertThat(updatedVisitorAudit.prisonerNumber).isEqualTo(MOORLAND_PRISONER.number)

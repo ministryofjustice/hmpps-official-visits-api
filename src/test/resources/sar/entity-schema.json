@@ -9,7 +9,8 @@
     "prisonerNumber": "String",
     "summaryText": "String",
     "userFullName": "String",
-    "userName": "String"
+    "userName": "String",
+    "versionNumber":"Integer"
   },
   "AvailableSlotEntity": {
     "dayCode": "String",

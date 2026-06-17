@@ -459,7 +459,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       example = "123456",
       required = true,
     ) officialVisitId: Long,
-  ): List<AuditedEventResponse> = emptyList()
+  ): List<AuditedEventResponse> = facade.findOfficialVisitAuditedEvents(officialVisitId)
 
   @Operation(summary = "Get all notifications sent for an official visit ID.")
   @ApiResponses(

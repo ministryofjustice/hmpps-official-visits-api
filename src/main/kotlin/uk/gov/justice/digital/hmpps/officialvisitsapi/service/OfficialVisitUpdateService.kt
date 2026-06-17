@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorChangedEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -205,7 +206,7 @@ class OfficialVisitUpdateService(
       visitorsUpdated = updateExistingVisitors(updatedVisitors, allPrisonerContacts, user),
     ).also {
       auditingService.recordAuditEvent(
-        auditVisitChangeEvent {
+        auditVisitorChangedEvent {
           officialVisitId(ove.officialVisitId)
           summaryText(AuditEventType.VISITOR_CHANGED)
           eventSource("DPS")
@@ -213,15 +214,9 @@ class OfficialVisitUpdateService(
           prisonCode(ove.prisonCode)
           prisonerNumber(ove.prisonerNumber)
           changes {
-            newVisitors.forEach { (_, visitor) ->
-              change("_", 0, newVisitors.size, { _, new -> "Visitor ${findMatchingPerson(allPrisonerContacts, visitor).fullName()} added" })
-            }
-            updatedVisitors.forEach { (_, visitor) ->
-              change("_", 0, updatedVisitors.size, { _, new -> "Visitor ${findMatchingPerson(allPrisonerContacts, visitor).fullName()} updated" })
-            }
-            removedVisitors.forEach { visitor ->
-              change("_", 0, removedVisitors.size, { _, new -> "Visitor ${findMatchingPerson(allPrisonerContacts, visitor).fullName()} removed" })
-            }
+            newVisitors.forEach { (_, visitor) -> visitorAdded(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
+            updatedVisitors.forEach { (_, visitor) -> visitorUpdated(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
+            removedVisitors.forEach { visitor -> visitorRemoved(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
           }
         },
       )

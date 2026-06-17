@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
@@ -19,41 +20,127 @@ class AuditingService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val auditedEventRepository: AuditedEventRepository,
 ) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   @Transactional(readOnly = true)
   fun findByOfficialVisitId(officialVisitId: Long): List<AuditedEventResponse> {
     officialVisitRepository.findById(officialVisitId).orElseThrow { throw EntityNotFoundException("Official visit with id $officialVisitId not found") }
 
-    return auditedEventRepository.findAllByOfficialVisitId(officialVisitId).map { event ->
+    return auditedEventRepository.findAllByOfficialVisitId(officialVisitId).sortedBy { it.eventDateTime }.mapNotNull { event ->
       val eventType = AuditEventType.entries.single { it.summaryText == event.summaryText }
 
-      when (eventType) {
-        AuditEventType.VISIT_CREATED -> {
+      if (eventType.isStaffFacing) {
+        if (event.version() == 2) {
+          // Version level is 2 so treating event as new audited event.
+          when (eventType) {
+            AuditEventType.VISIT_CREATED -> {
+              AuditedEventResponse(
+                auditedEventId = event.auditedEventId,
+                officialVisitId = officialVisitId,
+                eventSource = event.eventSource,
+                eventSummary = event.summaryText,
+                eventDetail = event.detailText,
+                eventType = "CREATE",
+                eventDateTime = event.eventDateTime,
+                eventUsername = event.userName,
+                eventUserFullName = event.userFullName,
+                eventVersion = event.version(),
+              )
+            }
+            AuditEventType.VISIT_UPDATED -> {
+              AuditedEventResponse(
+                auditedEventId = event.auditedEventId,
+                officialVisitId = officialVisitId,
+                eventSource = event.eventSource,
+                eventSummary = event.summaryText,
+                eventDetail = event.detailText,
+                eventType = "UPDATE",
+                eventDateTime = event.eventDateTime,
+                eventUsername = event.userName,
+                eventUserFullName = event.userFullName,
+                eventChanges = event.toAuditEventChanges(),
+                eventVersion = event.version(),
+              )
+            }
+            AuditEventType.VISIT_CANCELLED -> {
+              AuditedEventResponse(
+                auditedEventId = event.auditedEventId,
+                officialVisitId = officialVisitId,
+                eventSource = event.eventSource,
+                eventSummary = event.summaryText,
+                eventDetail = event.detailText,
+                eventType = "CANCELLED",
+                eventDateTime = event.eventDateTime,
+                eventUsername = event.userName,
+                eventUserFullName = event.userFullName,
+                eventVersion = event.version(),
+              )
+            }
+            AuditEventType.VISIT_COMPLETED -> {
+              AuditedEventResponse(
+                auditedEventId = event.auditedEventId,
+                officialVisitId = officialVisitId,
+                eventSource = event.eventSource,
+                eventSummary = event.summaryText,
+                eventDetail = event.detailText,
+                eventType = "COMPLETED",
+                eventDateTime = event.eventDateTime,
+                eventUsername = event.userName,
+                eventUserFullName = event.userFullName,
+                eventVersion = event.version(),
+              )
+            }
+            AuditEventType.VISITOR_CHANGED -> {
+              AuditedEventResponse(
+                auditedEventId = event.auditedEventId,
+                officialVisitId = officialVisitId,
+                eventSource = event.eventSource,
+                eventSummary = event.summaryText,
+                eventDetail = event.detailText,
+                eventType = "UPDATE",
+                eventDateTime = event.eventDateTime,
+                eventUsername = event.userName,
+                eventUserFullName = event.userFullName,
+                eventChanges = event.toAuditEventChanges(),
+                eventVersion = event.version(),
+              )
+            }
+            AuditEventType.PRISONER_MERGED -> {
+              AuditedEventResponse(
+                auditedEventId = event.auditedEventId,
+                officialVisitId = officialVisitId,
+                eventSource = event.eventSource,
+                eventSummary = event.summaryText,
+                eventDetail = event.detailText,
+                eventType = "UPDATE",
+                eventDateTime = event.eventDateTime,
+                eventUsername = event.userName,
+                eventUserFullName = event.userFullName,
+                eventChanges = event.toAuditEventChanges(),
+                eventVersion = event.version(),
+              )
+            }
+            else -> null.also { logger.info("Ignoring audit event type : $eventType") }
+          }
+        } else {
+          // Version level is 1 so treating event as old audited event.
           AuditedEventResponse(
             auditedEventId = event.auditedEventId,
             officialVisitId = officialVisitId,
             eventSource = event.eventSource,
             eventSummary = event.summaryText,
-            eventType = "CREATE",
+            eventDetail = event.detailText,
+            eventType = "OTHER",
             eventDateTime = event.eventDateTime,
             eventUsername = event.userName,
             eventUserFullName = event.userFullName,
+            eventVersion = event.version(),
           )
         }
-        AuditEventType.VISIT_UPDATED -> {
-          AuditedEventResponse(
-            auditedEventId = event.auditedEventId,
-            officialVisitId = officialVisitId,
-            eventSource = event.eventSource,
-            eventSummary = event.summaryText,
-            eventType = "UPDATE",
-            eventDateTime = event.eventDateTime,
-            eventUsername = event.userName,
-            eventUserFullName = event.userFullName,
-            eventChanges = event.toAuditEventChanges(),
-          )
-        }
-        // TODO support for other audit event types
-        else -> throw IllegalStateException("Audit event type not yet supported: $eventType")
+      } else {
+        null.also { logger.info("Audit event type is not visible : $eventType") }
       }
     }
   }
@@ -66,8 +153,8 @@ class AuditingService(
 
       AuditedEventChange(
         field = field,
-        oldValue = oldValue,
-        newValue = newValue,
+        oldValue = oldValue.ifBlank { null },
+        newValue = newValue.ifBlank { null },
         significantChange = isSignificantChange(field),
       )
     }
@@ -86,6 +173,7 @@ class AuditingService(
         summaryText = auditEvent.summaryText,
         detailText = auditEvent.detailText,
         eventDateTime = auditEvent.eventDateTime,
+        versionNumber = 2,
       ),
     )
   }
@@ -99,9 +187,7 @@ fun auditVisitCancellationEvent(initializer: CancelVisitDsl.() -> Unit): AuditEv
 
 fun auditVisitDeletedEvent(initializer: DeleteVisitDsl.() -> Unit): AuditEventDto = DeleteVisitDsl().apply(initializer).toAuditEvent()
 
-fun auditVisitorAddedEvent(initializer: AddVisitorDsl.() -> Unit): AuditEventDto = AddVisitorDsl().apply(initializer).toAuditEvent()
-
-fun auditVisitorRemovedEvent(initializer: RemoveVisitorDsl.() -> Unit): AuditEventDto = RemoveVisitorDsl().apply(initializer).toAuditEvent()
+fun auditVisitorChangedEvent(initializer: ChangedVisitorDsl.() -> Unit): AuditEventDto = ChangedVisitorDsl().apply(initializer).toAuditEvent()
 
 fun auditVisitCompletionEvent(initializer: CompleteVisitDsl.() -> Unit): AuditEventDto = CompleteVisitDsl().apply(initializer).toAuditEvent()
 
@@ -211,26 +297,53 @@ class ChangeVisitDsl : AuditEventDsl() {
   }
 }
 
+class ChangedVisitorDsl : AuditEventDsl() {
+  private lateinit var changes: Changes
+
+  fun changes(initializer: Changes.() -> Unit) {
+    changes = Changes()
+    changes.initializer()
+  }
+
+  override fun detailsText(): String = run {
+    if (changes.changes().isEmpty()) return@run "No recorded changes."
+
+    changes.changes().joinToString(
+      separator = ";",
+      postfix = ";",
+    ) { "${it.descriptiveText}|${it.old ?: ""}|${it.new ?: ""}" }
+  }
+
+  @AuditEventDslMarker
+  class Changes {
+    private val changes = mutableListOf<Change<*>>()
+
+    fun visitorAdded(visitorName: String) {
+      changes.add(Change("visitor_added", null, visitorName))
+    }
+
+    fun visitorUpdated(visitorName: String) {
+      changes.add(Change("visitor_updated", null, visitorName))
+    }
+
+    fun visitorRemoved(visitorName: String) {
+      changes.add(Change("visitor_removed", null, visitorName))
+    }
+
+    fun changes() = changes.filter { it.hasChanged }
+
+    data class Change<T : Any>(val descriptiveText: String, val old: T?, val new: T?) {
+      val hasChanged: Boolean = old != new
+    }
+  }
+}
+
 class CancelVisitDsl : AuditEventDsl() {
   override fun detailsText(): String = "Visit cancelled"
 }
 
 class DeleteVisitDsl : AuditEventDsl() {
   override fun detailsText(): String = "Visit deleted"
-}
-
-class AddVisitorDsl : AuditEventDsl() {
-  private lateinit var visitorName: String
-
-  fun visitorName(visitorName: String) {
-    this.visitorName = visitorName
-  }
-
-  override fun detailsText(): String = "Visitor $visitorName added"
-}
-
-class RemoveVisitorDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visitor removed"
 }
 
 class CompleteVisitDsl : AuditEventDsl() {
@@ -259,16 +372,14 @@ data class AuditEventDto(
   val eventDateTime: LocalDateTime = LocalDateTime.now(),
 )
 
-enum class AuditEventType(val summaryText: String) {
-  VISIT_CREATED("Visit created"),
-  VISIT_UPDATED("Visit updated"),
-  VISIT_CANCELLED("Visit cancelled"),
-  VISIT_COMPLETED("Visit completed"),
-  VISIT_DELETED("Visit deleted"),
-  VISITOR_CHANGED("Visitor changed"),
-  VISITOR_ADDED("Visitor added"),
-  VISITOR_REMOVED("Visitor removed"),
-  PRISONER_MERGED("Prisoner merged"),
-  PRISONER_BOOKING_MOVED("Prisoner booking moved"),
-  CURRENT_TERM_CHANGED("Current term changed"),
+enum class AuditEventType(val summaryText: String, val isStaffFacing: Boolean) {
+  VISIT_CREATED("Visit created", true),
+  VISIT_UPDATED("Visit updated", true),
+  VISIT_CANCELLED("Visit cancelled", true),
+  VISIT_COMPLETED("Visit completed", true),
+  VISITOR_CHANGED("Visitor changed", true),
+  PRISONER_MERGED("Prisoner merged", true),
+  VISIT_DELETED("Visit deleted", false),
+  PRISONER_BOOKING_MOVED("Prisoner booking moved", false),
+  CURRENT_TERM_CHANGED("Current term changed", false),
 }

@@ -146,8 +146,8 @@ class SyncOfficialVisitorServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Visitor added"
-      detailText isEqualTo "Visitor First Last added"
+      summaryText isEqualTo "Visitor changed"
+      detailText isEqualTo "visitor_added||First Last;"
       eventDateTime isCloseTo now()
     }
     verify(metricsService).send(
@@ -272,6 +272,9 @@ class SyncOfficialVisitorServiceTest {
     )
 
     whenever(officialVisitRepository.findById(officialVisitId)).thenReturn(Optional.of(officialVisitEntity))
+    whenever(contactsService.getPrisonerContactSummary(MOORLAND_PRISONER.number, contactId)).thenReturn(
+      listOf(prisonerContactSummary(prisonerContactId, MOORLAND_PRISONER.number, contactId)),
+    )
 
     val response = syncOfficialVisitorService.deleteVisitor(officialVisitId, officialVisitorId)
 
@@ -307,8 +310,8 @@ class SyncOfficialVisitorServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo "NOMIS"
       userFullName isEqualTo "NOMIS"
-      summaryText isEqualTo "Visitor removed"
-      detailText isEqualTo "Visitor removed"
+      summaryText isEqualTo "Visitor changed"
+      detailText isEqualTo "visitor_removed||First Last;"
       eventDateTime isCloseTo now()
     }
   }

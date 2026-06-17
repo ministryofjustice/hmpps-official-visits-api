@@ -21,8 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorAddedEvent
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorRemovedEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorChangedEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -108,14 +107,16 @@ class SyncOfficialVisitorService(
       prisonerNumber = visit.prisonerNumber,
       visitor = visitorSaved.toSyncModel(),
     ).also {
-      val auditChangeEvent = auditVisitorAddedEvent {
+      val auditChangeEvent = auditVisitorChangedEvent {
         officialVisitId(visit.officialVisitId)
-        summaryText(AuditEventType.VISITOR_ADDED)
+        summaryText(AuditEventType.VISITOR_CHANGED)
         eventSource("NOMIS")
         user(createdBy)
         prisonCode(visit.prisonCode)
         prisonerNumber(visit.prisonerNumber)
-        visitorName(thisContact?.let { "${it.firstName.replaceFirstChar { it.uppercase() }} ${it.lastName.replaceFirstChar { it.uppercase() }}" } ?: "unknown")
+        changes {
+          visitorAdded(thisContact?.let { "${it.firstName.replaceFirstChar { it.uppercase() }} ${it.lastName.replaceFirstChar { it.uppercase() }}" } ?: "unknown")
+        }
       }
 
       auditingService.recordAuditEvent(auditChangeEvent)
@@ -148,13 +149,18 @@ class SyncOfficialVisitorService(
         }
 
         auditingService.recordAuditEvent(
-          auditVisitorRemovedEvent {
+          auditVisitorChangedEvent {
             officialVisitId(visit.officialVisitId)
-            summaryText(AuditEventType.VISITOR_REMOVED)
+            summaryText(AuditEventType.VISITOR_CHANGED)
             eventSource("NOMIS")
             user(UserService.getClientAsUser("NOMIS"))
             prisonCode(visit.prisonCode)
             prisonerNumber(visit.prisonerNumber)
+            changes {
+              val contactSummary = visitor.contactId?.let { contactsService.getPrisonerContactSummary(visit.prisonerNumber, it) } ?: emptyList()
+              val thisContact = contactSummary.find { it.contactId == visitor.contactId }
+              visitorRemoved(thisContact?.let { "${it.firstName.replaceFirstChar { it.uppercase() }} ${it.lastName.replaceFirstChar { it.uppercase() }}" } ?: "unknown")
+            }
           },
         )
 
