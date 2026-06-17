@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.CurrentTermComponent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerBookingMovedEventHandler
 import java.time.LocalDateTime
 
@@ -19,12 +20,13 @@ class PrisonerBookingMovedEventHandlerTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val prisonerVisitedRepository: PrisonerVisitedRepository = mock()
   private val auditingService: AuditingService = mock()
+  private val currentTermComponent: CurrentTermComponent = mock()
 
-  private val handler = PrisonerBookingMovedEventHandler(officialVisitRepository, prisonerVisitedRepository, auditingService)
+  private val handler = PrisonerBookingMovedEventHandler(officialVisitRepository, prisonerVisitedRepository, auditingService, currentTermComponent)
 
   @Test
-  fun `should update visits and prisoner visited for a booking move event`() {
-    val bookingStartDateTime = LocalDateTime.now()
+  fun `should process a booking moved event and update visits`() {
+    val bookingStartDateTime = LocalDateTime.now().minusDays(1)
 
     val bookingMoveEvent = PrisonerBookingMovedEvent(
       BookingMovedInformation("ABC222", "ABC111", "1", bookingStartDateTime),
@@ -39,10 +41,12 @@ class PrisonerBookingMovedEventHandlerTest {
     verify(officialVisitRepository).bookingMove("ABC222", "ABC111", 1L, bookingStartDateTime)
     verify(prisonerVisitedRepository).replacePrisonerNumberForBooking("ABC222", "ABC111", 1L, bookingStartDateTime)
     verify(auditingService, times(2)).recordAuditEvent(any())
+    verify(currentTermComponent).processCurrentTermMarkers("ABC222", "BOOKING MOVED EVENT")
+    verify(currentTermComponent).processCurrentTermMarkers("ABC111", "BOOKING MOVED EVENT")
   }
 
   @Test
-  fun `should not try to update visits when the count for prisoner number and booking ID is zero`() {
+  fun `should not update visits when none are affected by the booking move event`() {
     val bookingStartDateTime = LocalDateTime.now()
 
     val bookingMoveEvent = PrisonerBookingMovedEvent(
@@ -57,5 +61,7 @@ class PrisonerBookingMovedEventHandlerTest {
 
     verifyNoMoreInteractions(officialVisitRepository)
     verifyNoInteractions(prisonerVisitedRepository)
+    verify(currentTermComponent).processCurrentTermMarkers("ABC222", "BOOKING MOVED EVENT")
+    verify(currentTermComponent).processCurrentTermMarkers("ABC111", "BOOKING MOVED EVENT")
   }
 }

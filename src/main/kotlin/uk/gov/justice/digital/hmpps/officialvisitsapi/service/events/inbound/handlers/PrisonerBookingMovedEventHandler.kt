@@ -15,6 +15,7 @@ class PrisonerBookingMovedEventHandler(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
   private val auditingService: AuditingService,
+  private val currentTermComponent: CurrentTermComponent,
 ) : DomainEventHandler<PrisonerBookingMovedEvent> {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -28,17 +29,22 @@ class PrisonerBookingMovedEventHandler(
     val startDateTime = event.bookingStartDateTime()
 
     log.info("Handling booking move from [$movedFromNomsNumber] to [$movedToNomsNumber] for booking [$bookingId]")
+
+    // Find all visits for the prisoner and bookingId after the start date/time (these will move to the new prisoner number)
     val affectedVisits = officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdAndCreatedTimeGreaterThanEqual(
       movedFromNomsNumber,
       bookingId,
       startDateTime,
     )
 
-    // update prisoner booking if exists
     affectedVisits.takeIf { it.isNotEmpty() }?.let {
+      // Update the prisoner number on affected visits
       officialVisitRepository.bookingMove(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
+
+      // Update the prisoner number on affected prisoner visited rows
       prisonerVisitedRepository.replacePrisonerNumberForBooking(movedFromNomsNumber, movedToNomsNumber, bookingId, startDateTime)
 
+      // Record an audit event for affected visits to record the change of prisoner number
       affectedVisits.forEach { visit ->
         auditingService.recordAuditEvent(
           auditVisitChangeEvent {
@@ -55,5 +61,9 @@ class PrisonerBookingMovedEventHandler(
         )
       }
     }
+
+    // Check and reset current term markers for both prisoner numbers, which may or may not be affected
+    currentTermComponent.processCurrentTermMarkers(movedFromNomsNumber, "BOOKING MOVED EVENT")
+    currentTermComponent.processCurrentTermMarkers(movedToNomsNumber, "BOOKING MOVED EVENT")
   }
 }
