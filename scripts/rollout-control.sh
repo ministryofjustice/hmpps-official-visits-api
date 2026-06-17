@@ -25,15 +25,23 @@ menu_function() {
   echo " 8 - Add a prison"
   echo " 9 - Remove a prison"
   echo ""
+  echo "Email notification prisons"
+  echo ""
+  echo " 10 - Replace with a new list"
+  echo " 11 - Add a prison"
+  echo " 12 - Remove a prison"
+  echo ""
+  echo "two month calendar"
+  echo ""
+  echo " 13 - Toggle two month calendar feature"
+  echo ""
   echo "Email notifications"
   echo ""
-  echo " 13 - Toggle email notifications feature"
+  echo " 14 - Set Notify callback secret"
   echo ""
-  echo " 10 - Toggle two month calendar feature"
+  echo " 15 - Set Notify api key"
   echo ""
-  echo " 11 - Set Notify callback secret"
-  echo ""
-  echo " 12 - Restart services for changes to take effect"
+  echo " x - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
   echo "----------------------------"
@@ -59,7 +67,7 @@ show_current() {
   FEATURE_DPS_ENABLED_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_DPS_ENABLED_PRISONS}' | base64 -d)
   FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
   FEATURE_NOMIS_SWITCH_OFF_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
-  FEATURE_EMAIL_NOTIFICATIONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS}' | base64 -d)
+  FEATURE_EMAIL_NOTIFICATIONS_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS_PRISONS}' | base64 -d)
   NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
   NOTIFY_CALLBACK_SECRET=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_CALLBACK_SECRET}' | base64 -d)
 
@@ -72,7 +80,7 @@ show_current() {
   echo "Notify callback secret        : ${NOTIFY_CALLBACK_SECRET:-Missing}"
   echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
-  echo "Email notifications enabled   : ${FEATURE_EMAIL_NOTIFICATIONS:-false}"
+  echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
 }
 
 add_dps_enabled_prison() {
@@ -158,21 +166,32 @@ remove_prison_from_nomis_switch_off_prisons() {
   kubectl -n "$2" patch secret feature-toggles -p $stringData
 }
 
-toggle_email_notifications() {
-  local env="$1"
-  local namespace="$2"
-  local current_value="$3"
+add_email_notification_prison() {
+  echo "Adding $3 to email notification prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS_PRISONS}' | base64 -d)
+  NEW="$CURRENT,$3"
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
 
-  if [[ "$current_value" == "true" ]]; then
-     new_value="false"
-  else
-     new_value="true"
-  fi
+add_list_email_notification_prisons() {
+  echo "Replace existing list with $3 for email notification prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS_PRISONS}' | base64 -d)
+  NEW=$3
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
 
-  echo "Toggling email notifications to $new_value in $env namespace $namespace"
-
-  stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS\":\"$new_value\"}}"
-  kubectl -n "$namespace" patch secret feature-toggles -p $stringData
+remove_prison_from_email_notification_prisons() {
+  echo "Removing prison $3 from email notification prisons in $1 namespace $2"
+  prison=$3
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS_PRISONS}' | base64 -d)
+  NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
 }
 
 toggle_two_month_calendar() {
@@ -200,6 +219,17 @@ set_notify_callback_secret() {
   echo "Updating Notify callback secret in $env namespace $namespace"
 
   stringData="{\"stringData\":{\"NOTIFY_CALLBACK_SECRET\":\"$token\"}}"
+  kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
+}
+
+set_notify_api_key() {
+  local env="$1"
+  local namespace="$2"
+  local token="$3"
+
+  echo "Updating Notify api key in $env namespace $namespace"
+
+  stringData="{\"stringData\":{\"NOTIFY_API_KEY\":\"$token\"}}"
   kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
 }
 
@@ -268,23 +298,42 @@ while true; do
           ;;
 
       10)
+          echo "Replace the list of email notification prisons"
+          read -p "Enter a comma-separated list of prisons to replace the current list : " prison_list
+          add_list_email_notification_prisons "$ENV" "$NAMESPACE" "$prison_list"
+          ;;
+      11)
+          echo "Add a prison to email notification prisons"
+          read -p "Enter a prison code to add : " prison
+          add_email_notification_prison "$ENV" "$NAMESPACE" "$prison"
+          ;;
+      12)
+          echo "Remove a prison from email notification prisons"
+          read -p "Enter a prison code to remove : " prison
+          remove_prison_from_email_notification_prisons "$ENV" "$NAMESPACE" "$prison"
+          ;;
+
+      13)
           echo "Toggle two month calendar - currently ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           toggle_two_month_calendar "$ENV" "$NAMESPACE" "${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           ;;
 
-      11)
+      14)
+          echo "Toggle NOTIFY_CALLBACK_SECRET - currently ${NOTIFY_CALLBACK_SECRET:-Missing}"
           read -r -p "Enter NOTIFY_CALLBACK_SECRET value : " notify_callback_secret
           set_notify_callback_secret "$ENV" "$NAMESPACE" "$notify_callback_secret"
           ;;
 
-      12)  echo "Restarting services"
+      15)
+          echo "Toggle NOTIFY_API_KEY - currently ${NOTIFY_API_KEY:-Missing}"
+          read -r -p "Enter NOTIFY_API_KEY value : " notify_api_key_secret
+          set_notify_api_key "$ENV" "$NAMESPACE" "$notify_api_key_secret"
+          ;;
+
+      x)  echo "Restarting services"
           restart_services "$ENV" "$NAMESPACE"
           ;;
 
-      13)
-          echo "Toggle email notifications - currently ${FEATURE_EMAIL_NOTIFICATIONS:-false}"
-          toggle_email_notifications "$ENV" "$NAMESPACE" "${FEATURE_EMAIL_NOTIFICATIONS:-false}"
-          ;;
 
       0)
           echo "Exiting..."
