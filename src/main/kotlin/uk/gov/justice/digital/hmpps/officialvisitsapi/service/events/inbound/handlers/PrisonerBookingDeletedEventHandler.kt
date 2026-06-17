@@ -33,22 +33,20 @@ class PrisonerBookingDeletedEventHandler(
     )
 
     // Record an audit event for affected visits
-    affectedVisits.takeIf { it.isNotEmpty() }?.let {
-      affectedVisits.forEach { visit ->
-        auditingService.recordAuditEvent(
-          auditVisitChangeEvent {
-            officialVisitId(visit.officialVisitId)
-            summaryText("Official visit updated due to its booking being deleted")
-            eventSource("NOMIS")
-            user(UserService.getClientAsUser("NOMIS"))
-            prisonCode(visit.prisonCode)
-            prisonerNumber(prisonerNumber)
-            changes {
-              change("Booking deleted", event.bookingId(), "")
-            }
-          },
-        )
-      }
+    affectedVisits.forEach { visit ->
+      auditingService.recordAuditEvent(
+        auditVisitChangeEvent {
+          officialVisitId(visit.officialVisitId)
+          summaryText("Official visit updated due to its booking being deleted")
+          eventSource("NOMIS")
+          user(UserService.getClientAsUser("NOMIS"))
+          prisonCode(visit.prisonCode)
+          prisonerNumber(prisonerNumber)
+          changes {
+            change("Booking deleted", event.bookingId(), "")
+          }
+        },
+      )
     }
 
     // Adjust current term markers on the visits for this prisoner

@@ -38,22 +38,20 @@ class CurrentTermComponent(
 
     // Find visits that match the prisoner number and current bookingId, if currentTerm = false set it to true
     officialVisitRepository.findAllByPrisonerNumberAndOffenderBookId(prisonerNumber, prisoner.bookingId!!.toLong())
+      .filterNot { it.currentTerm }
       .forEach { visit ->
-        if (!visit.currentTerm) {
-          officialVisitRepository.saveAndFlush(visit.apply { currentTerm = true })
-          auditCurrentTermChange(visit, true)
-          currentTermCounter++
-        }
+        officialVisitRepository.saveAndFlush(visit.apply { currentTerm = true })
+        auditCurrentTermChange(visit, true)
+        currentTermCounter++
       }
 
     // Find visits that match the prisoner number but NOT the current bookingId, if currentTerm = true set it to false
     officialVisitRepository.findAllByPrisonerNumberAndOffenderBookIdNot(prisonerNumber, prisoner.bookingId.toLong())
+      .filter { it.currentTerm }
       .forEach { visit ->
-        if (visit.currentTerm) {
-          officialVisitRepository.saveAndFlush(visit.apply { currentTerm = false })
-          auditCurrentTermChange(visit, false)
-          previousTermCounter++
-        }
+        officialVisitRepository.saveAndFlush(visit.apply { currentTerm = false })
+        auditCurrentTermChange(visit, false)
+        previousTermCounter++
       }
 
     log.info("$source : Prisoner [$prisonerNumber] [$currentTermCounter] set to currentTerm = true, [$previousTermCounter] set to currentTerm = false")
