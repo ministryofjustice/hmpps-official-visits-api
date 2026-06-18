@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.never
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.times
@@ -26,6 +27,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.contains
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation2
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toPrisonerContactModel
@@ -54,6 +57,7 @@ class OfficialVisitUpdateServiceTest {
   private val prisonVisitSlotRepository: PrisonVisitSlotRepository = mock()
   private val contactsService: ContactsService = mock()
   private val metricsService: MetricsService = mock()
+  private val locationsService: LocationsService = mock()
   private val auditingService: AuditingService = mock()
 
   private val service = OfficialVisitUpdateService(
@@ -62,6 +66,7 @@ class OfficialVisitUpdateServiceTest {
     prisonVisitSlotRepository,
     contactsService,
     metricsService,
+    locationsService,
     auditingService,
   )
 
@@ -83,11 +88,12 @@ class OfficialVisitUpdateServiceTest {
       visitTypeCode = VisitType.VIDEO,
     )
 
+    whenever { locationsService.getLocationById(visit.dpsLocationId) } doReturn moorlandLocation
+    whenever { locationsService.getLocationById(request.dpsLocationId) } doReturn moorlandLocation2
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(11L, MOORLAND)).thenReturn(visit)
     whenever(prisonVisitSlotRepository.findById(99L)).thenReturn(Optional.of(newSlot))
     whenever(officialVisitRepository.saveAndFlush(any<OfficialVisitEntity>())).thenAnswer { it.arguments[0] as OfficialVisitEntity }
 
-    val oldDpsLocationId = visit.dpsLocationId
     val oldVisitTypeCode = visit.visitTypeCode
     val oldVisitDate = visit.visitDate
     val oldStartTime = visit.startTime
@@ -117,8 +123,8 @@ class OfficialVisitUpdateServiceTest {
       eventSource isEqualTo "DPS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Update visit visit type and visit slot"
-      detailText isEqualTo "Visit date changed from ${oldVisitDate.toMediumFormatStyle()} to ${request.visitDate.toMediumFormatStyle()}; Start time changed from $oldStartTime to ${request.startTime}; End time changed from $oldEndTime to ${request.endTime}; Location changed from $oldDpsLocationId to ${request.dpsLocationId}; Visit type changed from $oldVisitTypeCode to VIDEO; Visit slot changed from 1 to 99."
+      summaryText isEqualTo "Visit updated"
+      detailText isEqualTo "visit_date|${oldVisitDate.toMediumFormatStyle()}|${request.visitDate.toMediumFormatStyle()};start_time|$oldStartTime|${request.startTime};end_time|$oldEndTime|${request.endTime};location|${moorlandLocation.localName}|${moorlandLocation2.localName};visit_type|$oldVisitTypeCode|VIDEO;visit_slot|1|99;"
       eventDateTime isCloseTo now()
     }
   }
@@ -192,8 +198,8 @@ class OfficialVisitUpdateServiceTest {
       eventSource isEqualTo "DPS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Update visit comments"
-      detailText isEqualTo "Prisoner notes changed from '' to prisoner updated; Staff notes changed from '' to staff updated."
+      summaryText isEqualTo "Visit updated"
+      detailText isEqualTo "prisoner_notes||prisoner updated;staff_notes||staff updated;"
       eventDateTime isCloseTo now()
     }
   }

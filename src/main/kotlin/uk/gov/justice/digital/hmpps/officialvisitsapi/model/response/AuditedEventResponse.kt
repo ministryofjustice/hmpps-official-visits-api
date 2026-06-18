@@ -11,14 +11,20 @@ data class AuditedEventResponse(
   @Schema(description = "The official visit identifier", example = "1")
   val officialVisitId: Long,
 
+  @Schema(description = "The source of the auditing event", example = "DPS", allowableValues = ["DPS", "NOMIS"])
+  val eventSource: String,
+
   @Schema(description = "A short summary of the audit event", example = "Visit updated")
   val eventSummary: String,
 
-  @Schema(description = "The type of audit event", example = "UPDATE", allowableValues = ["CREATE", "UPDATE"])
+  @Schema(description = "A more detailed summary of the audit event", example = "Visit updated")
+  val eventDetail: String,
+
+  @Schema(description = "The type of audit event", example = "UPDATE", allowableValues = ["CREATE", "UPDATE", "CANCELLED", "COMPLETED", "OTHER"])
   val eventType: String,
 
   @Schema(description = "The changes related to an update, otherwise empty", example = "[{\"field\":\"start_time\",\"oldValue\":\"12:00\",\"newValue\":\"17:00\"},{\"field\":\"end_time\",\"oldValue\":\"14:00\",\"newValue\":\"19:00\"}]")
-  val eventChanges: List<AuditedEventChange>,
+  val eventChanges: List<AuditedEventChange> = emptyList(),
 
   @Schema(description = "The date and time the audited event was recorded", example = "2026-05-04 09:50")
   val eventDateTime: LocalDateTime,
@@ -28,6 +34,9 @@ data class AuditedEventResponse(
 
   @Schema(description = "The full name of the user responsible for the audited event", example = "Fred Bloggs")
   val eventUserFullName: String,
+
+  @Schema(description = "The version number of the audited event, 2 is the current latest version", example = "2")
+  val eventVersion: Int,
 ) {
   @Schema(
     description =

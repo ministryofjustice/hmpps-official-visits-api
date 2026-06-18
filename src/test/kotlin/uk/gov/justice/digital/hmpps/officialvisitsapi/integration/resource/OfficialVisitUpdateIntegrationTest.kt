@@ -96,24 +96,28 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           type = "O",
           contactId = 123,
           prisonerContactId = 456,
+          lastName = "Doe123",
         ),
         prisonerContact(
           prisonerNumber = MOORLAND_PRISONER.number,
           type = "O",
           contactId = 124,
           prisonerContactId = 457,
-        ),
-        prisonerContact(
-          prisonerNumber = MOORLAND_PRISONER.number,
-          type = "O",
-          contactId = 130,
-          prisonerContactId = 460,
+          lastName = "Doe124",
         ),
         prisonerContact(
           prisonerNumber = MOORLAND_PRISONER.number,
           type = "O",
           contactId = 125,
           prisonerContactId = 458,
+          lastName = "Doe125",
+        ),
+        prisonerContact(
+          prisonerNumber = MOORLAND_PRISONER.number,
+          type = "O",
+          contactId = 130,
+          prisonerContactId = 460,
+          lastName = "Doe130",
         ),
       ),
     )
@@ -405,14 +409,14 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
     auditEvents hasSize 2
 
-    auditEvents.single { it.summaryText == "Official visit created" }
+    auditEvents.single { it.summaryText == "Visit created" }
 
-    with(auditEvents.single { it.summaryText == "Update visit visitors" }) {
+    with(auditEvents.single { it.summaryText == "Visitor changed" }) {
       officialVisitId isEqualTo result.officialVisitId
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      summaryText isEqualTo "Update visit visitors"
-      detailText isEqualTo "Visitors added 1; Visitors updated 1; Visitors removed 1."
+      summaryText isEqualTo "Visitor changed"
+      detailText isEqualTo "visitor_added||John Doe125;visitor_updated||John Doe123;visitor_removed||John Doe130;"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name

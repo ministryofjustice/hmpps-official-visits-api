@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerCon
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCreateEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
@@ -98,7 +99,7 @@ class OfficialVisitCreateService(
         auditingService.recordAuditEvent(
           auditVisitCreateEvent {
             officialVisitId(it.officialVisitId)
-            summaryText("Official visit created")
+            summaryText(AuditEventType.VISIT_CREATED)
             eventSource("DPS")
             user(user)
             prisonCode(prisonCode)

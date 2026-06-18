@@ -18,10 +18,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitChangeEvent
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorAddedEvent
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorRemovedEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitorChangedEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
@@ -107,13 +107,16 @@ class SyncOfficialVisitorService(
       prisonerNumber = visit.prisonerNumber,
       visitor = visitorSaved.toSyncModel(),
     ).also {
-      val auditChangeEvent = auditVisitorAddedEvent {
+      val auditChangeEvent = auditVisitorChangedEvent {
         officialVisitId(visit.officialVisitId)
-        summaryText("${visitorSaved.relationshipType()} visitor added")
+        summaryText(AuditEventType.VISITOR_CHANGED)
         eventSource("NOMIS")
         user(createdBy)
         prisonCode(visit.prisonCode)
         prisonerNumber(visit.prisonerNumber)
+        changes {
+          visitorAdded(thisContact?.let { "${it.firstName.replaceFirstChar { it.uppercase() }} ${it.lastName.replaceFirstChar { it.uppercase() }}" } ?: "unknown")
+        }
       }
 
       auditingService.recordAuditEvent(auditChangeEvent)
@@ -146,13 +149,18 @@ class SyncOfficialVisitorService(
         }
 
         auditingService.recordAuditEvent(
-          auditVisitorRemovedEvent {
+          auditVisitorChangedEvent {
             officialVisitId(visit.officialVisitId)
-            summaryText("${visitor.relationshipType()} visitor removed")
+            summaryText(AuditEventType.VISITOR_CHANGED)
             eventSource("NOMIS")
             user(UserService.getClientAsUser("NOMIS"))
             prisonCode(visit.prisonCode)
             prisonerNumber(visit.prisonerNumber)
+            changes {
+              val contactSummary = visitor.contactId?.let { contactsService.getPrisonerContactSummary(visit.prisonerNumber, it) } ?: emptyList()
+              val thisContact = contactSummary.find { it.contactId == visitor.contactId }
+              visitorRemoved(thisContact?.let { "${it.firstName.replaceFirstChar { it.uppercase() }} ${it.lastName.replaceFirstChar { it.uppercase() }}" } ?: "unknown")
+            }
           },
         )
 
@@ -200,22 +208,22 @@ class SyncOfficialVisitorService(
 
     val auditChangeEvent = auditVisitChangeEvent {
       officialVisitId(visit.officialVisitId)
-      summaryText("${visitor.relationshipType()} visitor updated")
+      summaryText(AuditEventType.VISITOR_CHANGED)
       eventSource("NOMIS")
       user(updatedByUser)
       prisonCode(visit.prisonCode)
       prisonerNumber(visit.prisonerNumber)
       changes {
-        change("Visitor first name", visitor.firstName, request.firstName)
-        change("Visitor last name", visitor.lastName, request.lastName)
-        change("Visitor contact ID", visitor.contactId, request.personId)
-        change("Visitor relationship type", visitor.relationshipTypeCode, request.relationshipTypeCode)
-        change("Visitor relationship code", visitor.relationshipCode, request.relationshipToPrisoner)
-        change("Lead visitor", visitor.leadVisitor, request.groupLeaderFlag ?: false)
-        change("Assisted visitor", visitor.assistedVisit, request.assistedVisitFlag ?: false)
-        change("Visitor notes", visitor.visitorNotes, request.commentText)
-        change("Visitor attendance code", visitor.attendanceCode, request.attendanceCode)
-        change("NOMIS offender visit visitor ID", visitor.offenderVisitVisitorId, request.offenderVisitVisitorId)
+        change("visitor_first_name", visitor.firstName, request.firstName)
+        change("visitor_last_name", visitor.lastName, request.lastName)
+        change("visitor_contact_id", visitor.contactId, request.personId)
+        change("visitor_relationship_type", visitor.relationshipTypeCode, request.relationshipTypeCode)
+        change("visitor_relationship_code", visitor.relationshipCode, request.relationshipToPrisoner)
+        change("lead_visitor", visitor.leadVisitor, request.groupLeaderFlag ?: false)
+        change("assisted_visitor", visitor.assistedVisit, request.assistedVisitFlag ?: false)
+        change("visitor_notes", visitor.visitorNotes, request.commentText)
+        change("visitor_attendance_code", visitor.attendanceCode, request.attendanceCode)
+        change("NOMIS_offender_visit_visitor_id", visitor.offenderVisitVisitorId, request.offenderVisitVisitorId)
       }
     }
 

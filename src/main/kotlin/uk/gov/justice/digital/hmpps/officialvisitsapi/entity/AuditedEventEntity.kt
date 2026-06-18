@@ -32,7 +32,12 @@ open class AuditedEventEntity(
   val detailText: String,
 
   val eventDateTime: LocalDateTime = LocalDateTime.now(),
+
+  private val versionNumber: Int? = null,
 ) {
+  // Defaults to 1 if not set to handle older events. Version 2 is the latest at the time of writing.
+  fun version() = versionNumber ?: 1
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false

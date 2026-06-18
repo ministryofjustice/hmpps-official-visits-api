@@ -178,7 +178,7 @@ class SyncOfficialVisitServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visit created"
+      summaryText isEqualTo "Visit created"
       detailText isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number}"
       eventDateTime isCloseTo now()
     }
@@ -308,8 +308,8 @@ class SyncOfficialVisitServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
-      summaryText isEqualTo "Official visit updated"
-      detailText isEqualTo "Start time changed from 09:00 to 10:00; End time changed from 10:00 to 11:00; Prisoner notes changed from '' to updated comment; Visitor concern notes changed from '' to updated concern; Offender visit ID changed from 1 to 2; Visit order number changed from '' to 5678; Visit status code changed from SCHEDULED to EXPIRED."
+      summaryText isEqualTo "Visit updated"
+      detailText isEqualTo "start_time|09:00|10:00;end_time|10:00|11:00;prisoner_notes||updated comment;visitor_concern_notes||updated concern;offender_visit_id|1|2;visit_order_number||5678;visit_status_code|SCHEDULED|EXPIRED;"
       eventDateTime isCloseTo now()
     }
   }
@@ -381,8 +381,8 @@ class SyncOfficialVisitServiceTest {
       eventSource isEqualTo "NOMIS"
       username isEqualTo "NOMIS"
       userFullName isEqualTo "NOMIS"
-      summaryText isEqualTo "Official visit deleted"
-      detailText isEqualTo "Visit deleted by user NOMIS."
+      summaryText isEqualTo "Visit deleted"
+      detailText isEqualTo "Visit deleted"
       eventDateTime isCloseTo now()
     }
   }

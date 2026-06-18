@@ -210,16 +210,18 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       personReference = PersonReference(contactId = persistedOfficialVisit.officialVisitors().first().contactId!!),
     )
 
-    with(auditedEventRepository.findAll().single()) {
+    val createEvent = testAPIClient.getAuditedEventsByOfficialVisitID(persistedOfficialVisit.officialVisitId).single()
+
+    with(createEvent) {
       officialVisitId isEqualTo persistedOfficialVisit.officialVisitId
-      prisonCode isEqualTo MOORLAND
-      prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      summaryText isEqualTo "Official visit created"
-      detailText isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number} with 1 visitor(s)"
-      userName isEqualTo MOORLAND_PRISON_USER.username
-      userFullName isEqualTo MOORLAND_PRISON_USER.name
+      eventType isEqualTo "CREATE"
+      eventSummary isEqualTo "Visit created"
+      eventDetail isEqualTo "Official visit created for prisoner number ${MOORLAND_PRISONER.number} with 1 visitor(s)"
+      eventUsername isEqualTo MOORLAND_PRISON_USER.username
+      eventUserFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name
       eventDateTime isCloseTo now()
+      eventVersion isEqualTo 2
     }
   }
 

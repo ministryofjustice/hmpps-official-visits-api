@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactEmailDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactPhoneDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PagedModelPrisonerContactSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationship
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PrisonerContactRelationshipsRequest
@@ -54,8 +53,6 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
     )
   }
 
-  fun stubAllApprovedContacts(contact: PrisonerContactSummary) = stubAllApprovedContacts(prisonerNumber = contact.prisonerNumber, contactId = contact.contactId, prisonerContactId = contact.prisonerContactId)
-
   fun stubAllApprovedContacts(prisonerNumber: String, contactId: Long = 1, prisonerContactId: Long = 1) {
     stubFor(
       get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
@@ -73,40 +70,6 @@ class PersonalRelationshipsApiMockServer : MockServer(8094) {
                     prisonerContactId = prisonerContactId,
                   ),
                 ),
-              ),
-            )
-            .withStatus(200),
-        ),
-    )
-  }
-
-  fun stubAllApprovedContacts(prisonerNumber: String, pagedSummary: PagedModelPrisonerContactSummary) {
-    stubFor(
-      get(urlPathEqualTo("/prisoner/$prisonerNumber/contact"))
-        .withQueryParam("active", equalTo("true"))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
-                pagedSummary,
-              ),
-            )
-            .withStatus(200),
-        ),
-    )
-  }
-
-  fun stubAllApprovedContact(contact: PrisonerContactSummary) {
-    stubFor(
-      get(urlPathEqualTo("/prisoner/${contact.prisonerNumber}/contact"))
-        .withQueryParam("active", equalTo("true"))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
-                pagedModelPrisonerContactSummary(contact),
               ),
             )
             .withStatus(200),

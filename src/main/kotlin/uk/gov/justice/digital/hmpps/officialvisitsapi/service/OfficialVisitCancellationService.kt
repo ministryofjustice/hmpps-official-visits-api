@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.AttendanceType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditEventType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.auditVisitCancellationEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
@@ -62,7 +63,7 @@ class OfficialVisitCancellationService(
     auditingService.recordAuditEvent(
       auditVisitCancellationEvent {
         officialVisitId(officialVisit.officialVisitId)
-        summaryText("Official visit cancelled")
+        summaryText(AuditEventType.VISIT_CANCELLED)
         eventSource("DPS")
         user(user)
         prisonCode(prisonCode)
