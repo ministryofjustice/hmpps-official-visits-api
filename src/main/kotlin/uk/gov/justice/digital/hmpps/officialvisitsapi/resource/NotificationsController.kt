@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.Notification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitChangeStatusResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.VisitChangeDetectionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 
 @Tag(name = "Notifications")
@@ -36,7 +35,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.Noti
 @AuthApiResponses
 class NotificationsController(
   private val notificationsService: NotificationsService,
-  private val visitChangeDetectionService: VisitChangeDetectionService,
 ) {
 
   @Operation(summary = "Send notifications for an official visit")
@@ -44,7 +42,7 @@ class NotificationsController(
     value = [
       ApiResponse(
         responseCode = "201",
-        description = "The response containing the details of all notifications sent",
+        description = "The response containing the details of notifications sent",
         content = [
           Content(
             mediaType = "application/json",
@@ -54,7 +52,7 @@ class NotificationsController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No official visit found to send the notification for.",
+        description = "The official visit was not found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -106,12 +104,12 @@ class NotificationsController(
     httpRequest: HttpServletRequest,
   ): PagedModel<SentNotification> = notificationsService.searchSentNotifications(prisonCode, request, page, size, httpRequest.getLocalRequestContext().user)
 
-  @Operation(summary = "Check whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.")
+  @Operation(summary = "Check if a visit has changed significantly since the last notification was sent")
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Check completed — returns whether the visit has changed since the last notification was sent, or whether the email was sent after the visit was created.",
+        description = "Returns the visit changed status true if the visit has changed significantly since the last notification, otherwise false",
         content = [
           Content(
             mediaType = "application/json",
@@ -121,7 +119,7 @@ class NotificationsController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "No official visit found with the given ID.",
+        description = "The official visit was not found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -129,12 +127,12 @@ class NotificationsController(
   @GetMapping(path = ["/{officialVisitId}/change-status"])
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
-  fun getVisitChangeStatus(
+  fun getVisitChangedSinceLastNotification(
     @PathVariable @Parameter(
       name = "officialVisitId",
-      description = "The identifier of the official visit to check for changes.",
+      description = "The identifier of the official visit to check",
       example = "1",
       required = true,
     ) officialVisitId: Long,
-  ): VisitChangeStatusResponse = visitChangeDetectionService.requiresEmailUpdate(officialVisitId)
+  ): VisitChangeStatusResponse = notificationsService.checkVisitChangedSinceLastNotification(officialVisitId)
 }
