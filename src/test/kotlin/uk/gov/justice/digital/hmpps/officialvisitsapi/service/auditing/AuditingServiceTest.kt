@@ -250,7 +250,7 @@ class AuditingServiceTest {
       eventSource = "DPS",
       userName = "X123Y",
       userFullName = "Jane Doe",
-      summaryText = "Visitor changed",
+      summaryText = "Legacy event text",
       detailText = "Some random detail text",
       eventDateTime = LocalDateTime.now(),
       prisonCode = MOORLAND,
@@ -266,7 +266,7 @@ class AuditingServiceTest {
       auditedEventId isEqualTo 100
       officialVisitId isEqualTo visitId
       eventType isEqualTo "OTHER"
-      eventSummary isEqualTo "Visitor changed"
+      eventSummary isEqualTo "Legacy event text"
       eventDetail isEqualTo "Some random detail text"
       eventSource isEqualTo "DPS"
       eventDateTime isEqualTo legacyAuditedEvent.eventDateTime

@@ -29,7 +29,7 @@ class AuditingService(
     officialVisitRepository.findById(officialVisitId).orElseThrow { throw EntityNotFoundException("Official visit with id $officialVisitId not found") }
 
     return auditedEventRepository.findAllByOfficialVisitId(officialVisitId).sortedBy { it.eventDateTime }.mapNotNull { event ->
-      val eventType = AuditEventType.entries.single { it.summaryText == event.summaryText }
+      val eventType = AuditEventType.entries.singleOrNull { it.summaryText == event.summaryText } ?: AuditEventType.OLD
 
       if (eventType.isStaffFacing) {
         if (event.version() == 2) {
@@ -382,4 +382,5 @@ enum class AuditEventType(val summaryText: String, val isStaffFacing: Boolean) {
   VISIT_DELETED("Visit deleted", false),
   PRISONER_BOOKING_MOVED("Prisoner booking moved", false),
   CURRENT_TERM_CHANGED("Current term changed", false),
+  OLD("Old audit event", true),
 }
