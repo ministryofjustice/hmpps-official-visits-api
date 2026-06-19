@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -36,8 +35,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.Noti
 import java.time.LocalTime
 import java.util.UUID
 
-@Disabled
-class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
+class NotificationOfChangesIntegrationTest : IntegrationTestBase() {
 
   @MockitoBean
   private lateinit var metricsService: MetricsService
@@ -114,28 +112,29 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should return false when no notification has been sent for the visit`() {
+  fun `should return false when no notifications have been sent for the visit`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
-    val response = webTestClient.getVisitChangeStatus(scheduledVisit.officialVisitId)
-
-    response.hasChanged isEqualTo true
-  }
-
-  @Test
-  fun `should return false when no changes have been made since notification was sent`() {
-    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
-    testAPIClient.sendNotification(scheduledVisit.officialVisitId, NotificationType.CREATE)
-
-    // No visit update — the create audit event predates the notification so is not detected
-    val response = webTestClient.getVisitChangeStatus(scheduledVisit.officialVisitId)
+    val response = webTestClient.getVisitChangedSinceLastNotification(scheduledVisit.officialVisitId)
 
     response.hasChanged isEqualTo false
   }
 
   @Test
-  fun `should return true when visit slot is updated after notification sent`() {
+  fun `should return false when no changes have been made since notification was sent`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
+    testAPIClient.sendNotification(scheduledVisit.officialVisitId, NotificationType.CREATE)
+
+    val response = webTestClient.getVisitChangedSinceLastNotification(scheduledVisit.officialVisitId)
+
+    response.hasChanged isEqualTo false
+  }
+
+  @Test
+  fun `should return true when the visit time or location is updated after a notification has been sent`() {
+    val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
     testAPIClient.sendNotification(scheduledVisit.officialVisitId, NotificationType.CREATE)
 
     webTestClient.updateSlot(
@@ -151,17 +150,17 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    val response = webTestClient.getVisitChangeStatus(scheduledVisit.officialVisitId)
+    val response = webTestClient.getVisitChangedSinceLastNotification(scheduledVisit.officialVisitId)
 
     response.hasChanged isEqualTo true
   }
 
   @Test
-  fun `should return true when visitors are updated after notification sent`() {
+  fun `should return false (not a significant change) when visitors are updated after notification sent`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
     testAPIClient.sendNotification(scheduledVisit.officialVisitId, NotificationType.CREATE)
 
-    // Replace existing visitor with a different one — produces "Visitors added 1; Visitors removed 1"
     webTestClient.updateVisitors(
       prisonCode = MOORLAND,
       officialVisitId = scheduledVisit.officialVisitId,
@@ -179,14 +178,15 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    val response = webTestClient.getVisitChangeStatus(scheduledVisit.officialVisitId)
+    val response = webTestClient.getVisitChangedSinceLastNotification(scheduledVisit.officialVisitId)
 
-    response.hasChanged isEqualTo true
+    response.hasChanged isEqualTo false
   }
 
   @Test
-  fun `should return true when visit is cancelled after notification sent`() {
+  fun `should return true when visit is cancelled after a notification is sent`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
+
     testAPIClient.sendNotification(scheduledVisit.officialVisitId, NotificationType.CREATE)
 
     testAPIClient.cancel(
@@ -197,7 +197,7 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    val response = webTestClient.getVisitChangeStatus(scheduledVisit.officialVisitId)
+    val response = webTestClient.getVisitChangedSinceLastNotification(scheduledVisit.officialVisitId)
 
     response.hasChanged isEqualTo true
   }
@@ -230,7 +230,7 @@ class VisitChangeStatusIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().isOk
 
-  private fun WebTestClient.getVisitChangeStatus(officialVisitId: Long) = this
+  private fun WebTestClient.getVisitChangedSinceLastNotification(officialVisitId: Long) = this
     .get()
     .uri("/notification/$officialVisitId/change-status")
     .accept(MediaType.APPLICATION_JSON)

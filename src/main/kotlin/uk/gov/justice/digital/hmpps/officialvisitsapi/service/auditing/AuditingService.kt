@@ -75,6 +75,7 @@ class AuditingService(
                 eventDateTime = event.eventDateTime,
                 eventUsername = event.userName,
                 eventUserFullName = event.userFullName,
+                eventChanges = event.toAuditEventChanges(),
                 eventVersion = event.version(),
               )
             }
@@ -339,7 +340,8 @@ class ChangedVisitorDsl : AuditEventDsl() {
 }
 
 class CancelVisitDsl : AuditEventDsl() {
-  override fun detailsText(): String = "Visit cancelled"
+  // Can only cancel a visit which is scheduled, so record the field and old/new values
+  override fun detailsText(): String = "visit_status|SCHEDULED|CANCELLED"
 }
 
 class DeleteVisitDsl : AuditEventDsl() {

@@ -17,10 +17,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.Notificatio
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.SentNotification
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitChangeStatusResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.LocationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingService
 import java.time.LocalDateTime
 
 @Component
@@ -32,6 +34,7 @@ class NotificationsService(
   private val emailService: EmailService,
   private val notificationRepository: NotificationRepository,
   private val sentNotificationsService: SentNotificationsService,
+  private val auditingService: AuditingService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -97,6 +100,19 @@ class NotificationsService(
       .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
     notificationRepository.findByOfficialVisitId(officialVisitId, sort)
       .map { it.toOfficialVisitNotification() }
+  }
+
+  @Transactional(readOnly = true)
+  fun checkVisitChangedSinceLastNotification(officialVisitId: Long): VisitChangeStatusResponse {
+    val lastNotification = notificationRepository.findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
+      ?: return VisitChangeStatusResponse(hasChanged = false)
+
+    val significantEventCount = auditingService.findByOfficialVisitId(officialVisitId)
+      .filter { it.eventDateTime > lastNotification.createdTime }
+      .filterNot { it.eventVersion == 1 }
+      .count { it.significantChange }
+
+    return VisitChangeStatusResponse(hasChanged = (significantEventCount > 0))
   }
 
   private fun getEmail(
