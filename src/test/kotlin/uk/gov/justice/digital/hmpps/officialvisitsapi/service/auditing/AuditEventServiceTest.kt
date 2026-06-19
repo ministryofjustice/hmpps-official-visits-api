@@ -150,7 +150,7 @@ class AuditEventServiceTest {
       username isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       prisonerNumber isEqualTo "A1234AA"
-      detailText isEqualTo "Visit cancelled"
+      detailText isEqualTo "visit_status|SCHEDULED|CANCELLED"
     }
   }
 

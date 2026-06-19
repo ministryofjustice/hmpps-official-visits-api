@@ -107,19 +107,12 @@ class NotificationsService(
     val lastNotification = notificationRepository.findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
       ?: return VisitChangeStatusResponse(hasChanged = false)
 
-    val inScopeEvents = auditingService.findByOfficialVisitId(officialVisitId)
+    val significantEventCount = auditingService.findByOfficialVisitId(officialVisitId)
       .filter { it.eventDateTime > lastNotification.createdTime }
       .filterNot { it.eventVersion == 1 }
+      .count { it.significantChange }
 
-    val cancelledEvents = inScopeEvents
-      .filter { it.eventType == "CANCELLED" }
-      .size
-
-    val significantEvents = inScopeEvents
-      .filter { it.eventChanges.any { change -> change.significantChange } }
-      .size
-
-    return VisitChangeStatusResponse(hasChanged = (cancelledEvents > 0 || significantEvents > 0))
+    return VisitChangeStatusResponse(hasChanged = (significantEventCount > 0))
   }
 
   private fun getEmail(

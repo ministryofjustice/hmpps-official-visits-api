@@ -313,13 +313,13 @@ class NotificationsServiceTest {
       officialVisitId = officialVisitId,
       eventSource = "DPS",
       eventSummary = "Visit cancelled",
-      eventDetail = "",
+      eventDetail = "Visit cancelled",
       eventType = "CANCELLED",
       eventUsername = "STAFF1",
       eventUserFullName = "Staff Member",
+      eventChanges = emptyList(),
       eventDateTime = eventDateTime,
       eventVersion = 2,
-      eventChanges = emptyList(),
     )
 
     private fun auditedEventV1(eventDateTime: LocalDateTime) = AuditedEventResponse(
@@ -327,7 +327,7 @@ class NotificationsServiceTest {
       officialVisitId = officialVisitId,
       eventSource = "DPS",
       eventSummary = "Visit changed",
-      eventDetail = "",
+      eventDetail = "Visit changed",
       eventType = "OTHER",
       eventUsername = "STAFF1",
       eventUserFullName = "Staff Member",
@@ -453,7 +453,20 @@ class NotificationsServiceTest {
 
     @Test
     fun `should return true when a version 2 event indicates a cancellation since the last notification`() {
-      whenever { auditingService.findByOfficialVisitId(officialVisitId) } doReturn listOf(auditedEventV2(LocalDateTime.now()))
+      whenever { auditingService.findByOfficialVisitId(officialVisitId) } doReturn listOf(
+        auditedEventV2(LocalDateTime.now()).copy(
+          eventType = "CANCELLED",
+          eventDetail = "visit_status|SCHEDULED|CANCELLED",
+          eventChanges = listOf(
+            AuditedEventChange(
+              field = "visit_status",
+              oldValue = "SCHEDULED",
+              newValue = "CANCELLED",
+              significantChange = true,
+            ),
+          ),
+        ),
+      )
 
       val result = service.checkVisitChangedSinceLastNotification(officialVisitId)
 
@@ -464,7 +477,7 @@ class NotificationsServiceTest {
     }
 
     @Test
-    fun `should return false when only audited events version 1 are present`() {
+    fun `should return false when only audited events version 1 are present since the last notification`() {
       whenever { auditingService.findByOfficialVisitId(officialVisitId) } doReturn listOf(auditedEventV1(LocalDateTime.now()))
 
       val result = service.checkVisitChangedSinceLastNotification(officialVisitId)

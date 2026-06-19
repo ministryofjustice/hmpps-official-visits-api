@@ -171,7 +171,7 @@ class OfficialVisitCancellationIntegrationTest : IntegrationTestBase() {
       officialVisitId isEqualTo cancelledVisit.officialVisitId
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
-      detailText isEqualTo "Visit cancelled"
+      detailText isEqualTo "visit_status|SCHEDULED|CANCELLED"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name
