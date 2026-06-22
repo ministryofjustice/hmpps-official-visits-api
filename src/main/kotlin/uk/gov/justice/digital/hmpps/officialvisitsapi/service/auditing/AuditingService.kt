@@ -160,7 +160,7 @@ class AuditingService(
       )
     }
 
-  private fun isSignificantChange(field: String) = listOf("visit_date", "start_time", "end_time", "location", "visit_status").contains(field)
+  private fun isSignificantChange(field: String) = listOf("visit_date", "start_time", "end_time", "location", "visit_status", "visit_type").contains(field)
 
   fun recordAuditEvent(auditEvent: AuditEventDto) {
     auditedEventRepository.saveAndFlush(
