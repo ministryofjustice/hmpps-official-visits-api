@@ -428,7 +428,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
       summaryText isEqualTo "Visitor changed"
-      detailText isEqualTo "visitor_added||John Doe125;visitor_added||John Doe125;visitor_updated||John Doe123;visitor_removed||John Doe130;"
+      detailText isEqualTo "visitor_added||John Doe125;visitor_added||John Doe130;visitor_updated||John Doe123;visitor_removed||John Doe130;"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name
