@@ -326,10 +326,17 @@ class OfficialVisitUpdateServiceTest {
           prisonerContactId = 700L,
           relationshipCode = "POM",
         ),
+        OfficialVisitor(
+          officialVisitorId = 0L,
+          visitorTypeCode = VisitorType.CONTACT,
+          contactId = 8L,
+          prisonerContactId = 701L,
+          relationshipCode = "POM",
+        ),
       ),
     )
 
-    val returnedContact = prisonerContact(
+    val returnedContact1 = prisonerContact(
       prisonerNumber = MOORLAND_PRISONER.number,
       type = "O",
       contactId = 7L,
@@ -337,18 +344,29 @@ class OfficialVisitUpdateServiceTest {
       firstName = "Jane",
       lastName = "Doe",
     ).toPrisonerContactModel()
+    val returnedContact2 = prisonerContact(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      type = "O",
+      contactId = 8L,
+      prisonerContactId = 701L,
+      firstName = "Jake",
+      lastName = "Doe",
+    ).toPrisonerContactModel()
 
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(6L, MOORLAND)).thenReturn(visit)
-    whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(returnedContact))
+    whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(returnedContact1, returnedContact2))
     whenever(officialVisitorRepository.saveAndFlush(any<OfficialVisitorEntity>())).thenAnswer { it.arguments[0] as OfficialVisitorEntity }
 
     val savedCaptor = argumentCaptor<OfficialVisitorEntity>()
     val response = service.updateVisitors(6L, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    verify(officialVisitorRepository).saveAndFlush(savedCaptor.capture())
-    assertThat(response.visitorsAdded).hasSize(1)
+    verify(officialVisitorRepository, times(2)).saveAndFlush(savedCaptor.capture())
+    assertThat(response.visitorsAdded).hasSize(2)
     assertThat(savedCaptor.firstValue.firstName).isEqualTo("Jane")
     assertThat(savedCaptor.firstValue.prisonerContactId).isEqualTo(700L)
+
+    assertThat(savedCaptor.secondValue.firstName).isEqualTo("Jake")
+    assertThat(savedCaptor.secondValue.prisonerContactId).isEqualTo(701L)
   }
 
   @Test
