@@ -9,6 +9,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_ADDITIONAL_MOORLAND_PRISONER_ADDED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER_ADDED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -88,6 +89,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     personalRelationshipsApi().stubReferenceGroup()
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER)
     personalRelationshipsApi().stubForContactById(CONTACT_MOORLAND_PRISONER_ADDED)
+    personalRelationshipsApi().stubForContactById(CONTACT_ADDITIONAL_MOORLAND_PRISONER_ADDED)
     personalRelationshipsApi().stubAllContacts(
       MOORLAND_PRISONER.number,
       listOf(
@@ -272,6 +274,16 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
             assistedNotes = "visitor notes added",
             visitorEquipment = VisitorEquipment("Bringing secure laptop"),
           ),
+          OfficialVisitor(
+            visitorTypeCode = VisitorType.CONTACT,
+            relationshipCode = "PPA",
+            contactId = 130,
+            prisonerContactId = 460,
+            leadVisitor = true,
+            assistedVisit = true,
+            assistedNotes = "visitor 2 notes added",
+            visitorEquipment = VisitorEquipment("Bringing secure laptop"),
+          ),
           // Update - contactId = 123 and delete their equipment
           OfficialVisitor(
             officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first!!,
@@ -311,7 +323,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     // Get the visit to check the changes have been applied
     val result = webTestClient.getOfficialVisitByPrisonAndId(MOORLAND, scheduledVisit?.officialVisitId!!)
 
-    stubEvents.assertEventsSize(4)
+    stubEvents.assertEventsSize(5)
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISIT_UPDATED,
@@ -387,7 +399,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     )
 
     with(result) {
-      officialVisitors?.size isEqualTo 2
+      officialVisitors?.size isEqualTo 3
     }
 
     val updatedVisitor = result.officialVisitors.filter { visitor -> visitor.officialVisitorId == existingVisitorId }
@@ -416,7 +428,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       prisonCode isEqualTo MOORLAND
       prisonerNumber isEqualTo MOORLAND_PRISONER.number
       summaryText isEqualTo "Visitor changed"
-      detailText isEqualTo "visitor_added||John Doe125;visitor_updated||John Doe123;visitor_removed||John Doe130;"
+      detailText isEqualTo "visitor_added||John Doe125;visitor_added||John Doe125;visitor_updated||John Doe123;visitor_removed||John Doe130;"
       userName isEqualTo MOORLAND_PRISON_USER.username
       userFullName isEqualTo MOORLAND_PRISON_USER.name
       eventSource isEqualTo Source.DPS.name

@@ -184,9 +184,9 @@ class OfficialVisitUpdateService(
     val existingVisitors = ove.officialVisitors().associateBy { it.officialVisitorId }
 
     val (newVisitors, updatedVisitors, removedVisitors) = run {
-      val new = request.officialVisitors.filter { it.isNewVisitor() }.associateBy { it.officialVisitorId }
+      val new = request.officialVisitors.filter { it.isNewVisitor() }
       val updates = request.officialVisitors.filterNot { it.isNewVisitor() }.associateBy { it.officialVisitorId }
-      val removals = existingVisitors.values.filterNot { new.plus(updates).containsKey(it.officialVisitorId) }
+      val removals = existingVisitors.values.filterNot { updates.containsKey(it.officialVisitorId) }
 
       require(updates.keys.all { existingVisitors.containsKey(it) }) {
         "Request contains visitors which do not exist on official visit with id $officialVisitId"
@@ -201,7 +201,7 @@ class OfficialVisitUpdateService(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
       prisonerNumber = ove.prisonerNumber,
-      visitorsAdded = addNewVisitors(ove, newVisitors.values, allPrisonerContacts, user),
+      visitorsAdded = addNewVisitors(ove, newVisitors, allPrisonerContacts, user),
       visitorsDeleted = deleteExistingVisitors(ove, removedVisitors),
       visitorsUpdated = updateExistingVisitors(updatedVisitors, allPrisonerContacts, user),
     ).also {
