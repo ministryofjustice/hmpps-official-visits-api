@@ -214,7 +214,7 @@ class OfficialVisitUpdateService(
           prisonCode(ove.prisonCode)
           prisonerNumber(ove.prisonerNumber)
           changes {
-            newVisitors.forEach { (_, visitor) -> visitorAdded(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
+            newVisitors.forEach { visitor -> visitorAdded(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
             updatedVisitors.forEach { (_, visitor) -> visitorUpdated(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
             removedVisitors.forEach { visitor -> visitorRemoved(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
           }
