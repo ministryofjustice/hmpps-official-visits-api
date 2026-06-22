@@ -92,6 +92,37 @@ class AuditingServiceTest {
   }
 
   @Test
+  fun `should map audited updated visit type event as a significant change`() {
+    val updatedEvent = event(
+      auditEventId = 101,
+      summaryText = "Visit updated",
+      detailText = "visit_type|VIDEO|TELEPHONE;",
+    )
+
+    whenever(auditedEventRepository.findAllByOfficialVisitId(visitId)) doReturn listOf(updatedEvent)
+
+    val event = auditingService.findByOfficialVisitId(visitId).single()
+
+    with(event) {
+      auditedEventId isEqualTo 101L
+      officialVisitId isEqualTo visitId
+      eventType isEqualTo "UPDATE"
+      eventSummary isEqualTo "Visit updated"
+      eventSource isEqualTo "DPS"
+      eventDateTime isEqualTo updatedEvent.eventDateTime
+      eventUsername isEqualTo updatedEvent.userName
+      eventUserFullName isEqualTo updatedEvent.userFullName
+      significantChange isBool true
+      eventChanges.containsExactly(
+        listOf(
+          AuditedEventChange(field = "visit_type", oldValue = "VIDEO", newValue = "TELEPHONE", true),
+        ),
+      )
+      eventVersion isEqualTo 2
+    }
+  }
+
+  @Test
   fun `should map audited update event without significant changes correctly`() {
     val updatedEvent = event(
       auditEventId = 101,
