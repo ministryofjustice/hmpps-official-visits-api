@@ -19,3 +19,13 @@ val CONTACT_MOORLAND_PRISONER_ADDED = prisonerContact(
   lastName = "Doe",
   phoneNumber = "0987654321",
 )
+
+val CONTACT_ADDITIONAL_MOORLAND_PRISONER_ADDED = prisonerContact(
+  prisonerNumber = MOORLAND_PRISONER.number,
+  contactId = 130,
+  prisonerContactId = 460,
+  type = "O",
+  firstName = "Jake",
+  lastName = "Doe",
+  phoneNumber = "0987654321",
+)
