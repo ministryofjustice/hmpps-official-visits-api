@@ -63,13 +63,21 @@ show_current() {
 
   echo "Getting secrets from $ENV ..."
 
-  FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS}' | base64 -d)
-  FEATURE_DPS_ENABLED_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_DPS_ENABLED_PRISONS}' | base64 -d)
-  FEATURE_TWO_MONTH_CALENDAR_ENABLED=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_TWO_MONTH_CALENDAR_ENABLED}' | base64 -d)
-  FEATURE_NOMIS_SWITCH_OFF_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_NOMIS_SWITCH_OFF_PRISONS}' | base64 -d)
-  FEATURE_EMAIL_NOTIFICATIONS_PRISONS=$(kubectl -n "$NAMESPACE" get secret feature-toggles -o jsonpath='{.data.FEATURE_EMAIL_NOTIFICATIONS_PRISONS}' | base64 -d)
-  NOTIFY_API_KEY=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_API_KEY}' | base64 -d)
-  NOTIFY_CALLBACK_SECRET=$(kubectl -n "$NAMESPACE" get secret hmpps-official-visits-gov-notify-creds -o jsonpath='{.data.NOTIFY_CALLBACK_SECRET}' | base64 -d)
+  # Get feature-toggles secret values
+  KUBE_SECRET=feature-toggles
+  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS < <(
+    kubectl -n "$NAMESPACE" get secret "$KUBE_SECRET" -o json \
+    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS | @base64d' \
+    | tr '\n' ' '
+  )
+
+  # Get hmpps-official-visits-gov-notify-creds secret values
+  KUBE_SECRET=hmpps-official-visits-gov-notify-creds
+  read -r NOTIFY_API_KEY NOTIFY_CALLBACK_SECRET < <(
+     kubectl -n "$NAMESPACE" get secret "$KUBE_SECRET" -o json \
+     | jq -r '.data | .NOTIFY_API_KEY, .NOTIFY_CALLBACK_SECRET | @base64d' \
+     | tr '\n' ' '
+  )
 
   clear
   echo "-------------------------------------------------------------------------------------"
