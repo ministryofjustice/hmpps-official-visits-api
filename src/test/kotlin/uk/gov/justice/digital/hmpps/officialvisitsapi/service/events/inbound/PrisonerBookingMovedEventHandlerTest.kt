@@ -41,8 +41,8 @@ class PrisonerBookingMovedEventHandlerTest {
     verify(officialVisitRepository).bookingMove("ABC222", "ABC111", 1L, bookingStartDateTime)
     verify(prisonerVisitedRepository).replacePrisonerNumberForBooking("ABC222", "ABC111", 1L, bookingStartDateTime)
     verify(auditingService, times(2)).recordAuditEvent(any())
+    verify(currentTermComponent).processCurrentTermMarkers("ABC111", "BOOKING MOVED EVENT", bookingMoveEvent.bookingId().toLong())
     verify(currentTermComponent).processCurrentTermMarkers("ABC222", "BOOKING MOVED EVENT")
-    verify(currentTermComponent).processCurrentTermMarkers("ABC111", "BOOKING MOVED EVENT")
   }
 
   @Test
@@ -61,7 +61,7 @@ class PrisonerBookingMovedEventHandlerTest {
 
     verifyNoMoreInteractions(officialVisitRepository)
     verifyNoInteractions(prisonerVisitedRepository)
+    verify(currentTermComponent).processCurrentTermMarkers("ABC111", "BOOKING MOVED EVENT", bookingMoveEvent.bookingId().toLong())
     verify(currentTermComponent).processCurrentTermMarkers("ABC222", "BOOKING MOVED EVENT")
-    verify(currentTermComponent).processCurrentTermMarkers("ABC111", "BOOKING MOVED EVENT")
   }
 }

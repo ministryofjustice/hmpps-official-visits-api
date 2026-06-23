@@ -52,7 +52,11 @@ class PrisonerMergedEventHandlerTest {
     verify(prisonerVisitedRepository).replacePrisonerNumber(removedPrisonerNumber, retainedPrisonerNumber)
     verify(officialVisitRepository, times(2)).saveAndFlush(any())
     verify(auditingService, times(2)).recordAuditEvent(any())
-    verify(currentTermComponent).processCurrentTermMarkers(retainedPrisonerNumber, "PRISONER MERGED EVENT")
+    verify(currentTermComponent).processCurrentTermMarkers(
+      prisonerNumber = retainedPrisonerNumber,
+      source = "PRISONER MERGED EVENT",
+      checkBookingId = mergeEvent.additionalInformation.bookingId.toLong(),
+    )
   }
 
   @Test
@@ -66,6 +70,10 @@ class PrisonerMergedEventHandlerTest {
 
     verifyNoInteractions(prisonerVisitedRepository, auditingService)
 
-    verify(currentTermComponent).processCurrentTermMarkers(retainedPrisonerNumber, "PRISONER MERGED EVENT")
+    verify(currentTermComponent).processCurrentTermMarkers(
+      prisonerNumber = retainedPrisonerNumber,
+      source = "PRISONER MERGED EVENT",
+      checkBookingId = mergeEvent.additionalInformation.bookingId.toLong(),
+    )
   }
 }

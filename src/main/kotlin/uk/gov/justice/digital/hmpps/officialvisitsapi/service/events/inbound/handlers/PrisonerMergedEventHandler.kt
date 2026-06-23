@@ -56,6 +56,7 @@ class PrisonerMergedEventHandler(
     }
 
     // Check and update the current term markers on visits for the new prisoner only (the old prisoner number is removed)
-    currentTermComponent.processCurrentTermMarkers(newPrisonerNumber, "PRISONER MERGED EVENT")
+    // This event provides a booking ID to check against the prisoner search bookingId - will throw an exception if different.
+    currentTermComponent.processCurrentTermMarkers(newPrisonerNumber, "PRISONER MERGED EVENT", bookingId.toLong())
   }
 }
