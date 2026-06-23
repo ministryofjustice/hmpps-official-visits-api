@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -293,5 +294,22 @@ class CurrentTermComponentTest {
       assertThat(summaryText).isEqualTo("Current term changed")
       assertThat(detailText).isEqualTo("current_term|false|true")
     }
+  }
+
+  @Test
+  fun `should throw a runtime exception if prisoner search reports a different booking ID than the checkBookingId`() {
+    // Provides a checkBookingId that is different from the prisoner search stub reports (1L)
+    val exception = assertThrows<RuntimeException> {
+      currentTermComponent.processCurrentTermMarkers(PENTONVILLE_PRISONER.number, "PRISONER MERGED EVENT", 2L)
+    }
+
+    assertThat(exception.message).isEqualTo(
+      "Event PRISONER MERGED EVENT - Prisoner search ${PENTONVILLE_PRISONER.number} booking 1 is different from event booking 2",
+    )
+
+    verify(prisonerSearchClient).getPrisoner(PENTONVILLE_PRISONER.number)
+
+    verifyNoInteractions(officialVisitRepository)
+    verifyNoInteractions(auditingService)
   }
 }

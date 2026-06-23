@@ -29,13 +29,22 @@ class CurrentTermComponent(
   }
 
   @Transactional
-  fun processCurrentTermMarkers(prisonerNumber: String, source: String) {
+  fun processCurrentTermMarkers(prisonerNumber: String, source: String, checkBookingId: Long? = null) {
     var currentTermCounter = 0
     var previousTermCounter = 0
 
     // Get the current bookingId for this prisoner
     val prisoner = prisonerSearchClient.getPrisoner(prisonerNumber)
       ?: throw EntityNotFoundException("Prisoner not found $prisonerNumber")
+
+    // Check for prisoner search with a different booking ID than the check booking ID (only merges and booking moves provide this)
+    // If the check fails this transaction is rolled back and the event will be retried from DLQ later.
+    checkBookingId?.let {
+      if (checkBookingId != prisoner.bookingId!!.toLong()) {
+        log.info("Event $source - Prisoner search $prisonerNumber current booking ${prisoner.bookingId} is different than event booking $checkBookingId")
+        throw RuntimeException("Event $source - Prisoner search $prisonerNumber booking ${prisoner.bookingId} is different from event booking $checkBookingId")
+      }
+    }
 
     // Find visits that match the prisoner number and current bookingId, if currentTerm = false set it to true
     officialVisitRepository.findAllByPrisonerNumberAndOffenderBookId(prisonerNumber, prisoner.bookingId!!.toLong())
