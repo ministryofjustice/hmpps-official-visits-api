@@ -342,12 +342,12 @@ class NotificationsServiceTest {
     }
 
     @Test
-    fun `should return false when no notifications exist for the visit`() {
+    fun `should return true when no notifications exist for the visit`() {
       whenever { notificationRepository.findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId) } doReturn null
 
       val result = service.checkVisitChangedSinceLastNotification(officialVisitId)
 
-      result.hasChanged isBool false
+      result.hasChanged isBool true
       verify(notificationRepository).findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
       verifyNoInteractions(auditingService)
     }

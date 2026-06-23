@@ -105,7 +105,7 @@ class NotificationsService(
   @Transactional(readOnly = true)
   fun checkVisitChangedSinceLastNotification(officialVisitId: Long): VisitChangeStatusResponse {
     val lastNotification = notificationRepository.findTopByOfficialVisitIdOrderByCreatedTimeDesc(officialVisitId)
-      ?: return VisitChangeStatusResponse(hasChanged = false)
+      ?: return VisitChangeStatusResponse(hasChanged = true)
 
     val significantEventCount = auditingService.findByOfficialVisitId(officialVisitId)
       .filter { it.eventDateTime > lastNotification.createdTime }

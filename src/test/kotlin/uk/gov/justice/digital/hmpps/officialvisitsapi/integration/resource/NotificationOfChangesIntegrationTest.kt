@@ -112,12 +112,12 @@ class NotificationOfChangesIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should return false when no notifications have been sent for the visit`() {
+  fun `should return true when no notifications have been sent for the visit`() {
     val scheduledVisit = testAPIClient.createOfficialVisit(nextMondayAt9, MOORLAND_PRISON_USER)
 
     val response = webTestClient.getVisitChangedSinceLastNotification(scheduledVisit.officialVisitId)
 
-    response.hasChanged isEqualTo false
+    response.hasChanged isEqualTo true
   }
 
   @Test
