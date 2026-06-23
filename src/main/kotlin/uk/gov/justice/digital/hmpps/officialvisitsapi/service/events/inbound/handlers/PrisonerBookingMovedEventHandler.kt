@@ -63,8 +63,11 @@ class PrisonerBookingMovedEventHandler(
       }
     }
 
-    // Check and reset current term markers for both prisoner numbers, which may or may not be affected
+    // For the new prisoner number - add the check bookingId from the event - it will fail if prisoner search reports a different bookingId
+    // On failure, the event will go onto the DLQ and be retried until prisoner search is reporting the same bookingId
+    currentTermComponent.processCurrentTermMarkers(movedToNomsNumber, "BOOKING MOVED EVENT", bookingId)
+
+    // For the old prisoner number - rely on prisoner search to tell us the latest bookingId and reset current term accordingly
     currentTermComponent.processCurrentTermMarkers(movedFromNomsNumber, "BOOKING MOVED EVENT")
-    currentTermComponent.processCurrentTermMarkers(movedToNomsNumber, "BOOKING MOVED EVENT")
   }
 }
