@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.util.UUID
 
 class NotificationCallbackServiceTest {
@@ -29,7 +31,7 @@ class NotificationCallbackServiceTest {
       govNotifyNotificationId = notificationId,
       createdTime = LocalDateTime.now(),
     )
-    val completedAt = LocalDateTime.parse("2026-05-28T10:15:00")
+    val completedAt = OffsetDateTime.parse("2026-06-23T13:27:11.835723Z")
 
     whenever(repository.findByGovNotifyNotificationId(notificationId)) doReturn notification
 
@@ -39,7 +41,9 @@ class NotificationCallbackServiceTest {
 
     verify(repository).findByGovNotifyNotificationId(notificationId)
     assertThat(notification.emailStatus).isEqualTo(NotificationEmailStatus.SENT)
-    assertThat(notification.statusUpdatedTime).isEqualTo(completedAt)
+    assertThat(notification.statusUpdatedTime).isEqualTo(
+      completedAt.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime(),
+    )
   }
 
   @Test
@@ -74,14 +78,14 @@ class NotificationCallbackServiceTest {
   private fun callbackRequest(
     notificationId: UUID,
     status: String,
-    completedAt: LocalDateTime? = null,
+    completedAt: OffsetDateTime? = null,
   ) = NotifyCallbackNotificationRequest(
     notificationId = notificationId,
     eventAuditReference = "event-audit-reference",
     status = status,
-    createdAt = LocalDateTime.parse("2026-05-28T09:00:00"),
+    createdAt = OffsetDateTime.parse("2026-05-28T09:00:00.000000Z"),
     completedAt = completedAt,
-    sentAt = LocalDateTime.parse("2026-05-28T09:05:00"),
+    sentAt = OffsetDateTime.parse("2026-05-28T09:05:00.000000Z"),
     sentTo = "test@example.com",
     notificationType = "email",
     templateId = UUID.randomUUID(),

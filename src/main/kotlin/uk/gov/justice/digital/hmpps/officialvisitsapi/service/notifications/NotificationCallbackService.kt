@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailSt
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @Component
 class NotificationCallbackService(
@@ -27,12 +28,16 @@ class NotificationCallbackService(
 
     val notification = notificationRepository.findByGovNotifyNotificationId(request.notificationId)
     if (notification == null) {
-      logger.warn("Received GOV.UK Notify callback for unknown notification id {}", request.notificationId)
+      logger.warn("Received GOV.UK Notify callback for unknown notification id {} and completed time {}", request.notificationId, request.completedAt)
       return
     }
 
     notification.emailStatus = request.status.toEmailStatus()
-    notification.statusUpdatedTime = request.completedAt ?: LocalDateTime.now()
+    notification.statusUpdatedTime =
+      request.completedAt
+        ?.atZoneSameInstant(ZoneId.systemDefault())
+        ?.toLocalDateTime()
+        ?: LocalDateTime.now()
 
     logger.info(
       "Processed GOV.UK Notify callback for notification id {} with status {}",

@@ -90,8 +90,9 @@ class NotificationCallbackIntegrationTest : IntegrationTestBase() {
       {
         "id": "$notificationId",
         "status": "$status",
-        "created_at": "2026-05-28T09:00:00",
-        "sent_at": "2026-05-28T09:05:00",
+        "created_at": "2026-05-28T09:00:00.000000Z",
+        "completed_at": "2026-06-23T13:27:11.835723Z",
+        "sent_at": "2026-05-28T09:05:00.000000Z",
         "to": "email@address.com",
         "notification_type": "email",
         "template_id": "${UUID.randomUUID()}",
