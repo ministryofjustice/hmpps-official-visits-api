@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.model.request
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.util.*
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -19,13 +19,13 @@ data class NotifyCallbackNotificationRequest(
   val status: String,
   @param:Schema(description = "The timestamp for when the vsip notification service sent the notification to gov notify", required = true)
   @param:JsonAlias("created_at")
-  val createdAt: LocalDateTime,
+  val createdAt: OffsetDateTime,
   @param:Schema(description = "The timestamp for the final update of the notification (when delivered or ultimately failed) ", required = false)
   @param:JsonAlias("completed_at")
-  val completedAt: LocalDateTime?,
+  val completedAt: OffsetDateTime?,
   @param:Schema(description = "The timestamp for when gov notify sent the notification", required = false)
   @param:JsonAlias("sent_at")
-  val sentAt: LocalDateTime?,
+  val sentAt: OffsetDateTime?,
   @param:Schema(description = "The email or phone number the notification was sent to", required = true)
   @param:JsonAlias("to")
   val sentTo: String,
