@@ -31,15 +31,21 @@ menu_function() {
   echo " 11 - Add a prison"
   echo " 12 - Remove a prison"
   echo ""
+  echo "Bulk movement slips prisons"
+  echo ""
+  echo " 13 - Replace with a new list"
+  echo " 14 - Add a prison"
+  echo " 15 - Remove a prison"
+  echo ""
   echo "two month calendar"
   echo ""
-  echo " 13 - Toggle two month calendar feature"
+  echo " 16 - Toggle two month calendar feature"
   echo ""
   echo "Email notifications"
   echo ""
-  echo " 14 - Set Notify callback secret"
+  echo " 17 - Set Notify callback secret"
   echo ""
-  echo " 15 - Set Notify api key"
+  echo " 18 - Set Notify api key"
   echo ""
   echo " x - Restart services for changes to take effect"
   echo ""
@@ -65,9 +71,9 @@ show_current() {
 
   # Get feature-toggles secret values
   KUBE_SECRET=feature-toggles
-  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS < <(
+  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS < <(
     kubectl -n "$NAMESPACE" get secret "$KUBE_SECRET" -o json \
-    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS | @base64d' \
+    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS | @base64d' \
     | tr '\n' ' '
   )
 
@@ -89,6 +95,7 @@ show_current() {
   echo "Two month calendar enabled    : ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
   echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
+  echo "Bulk movement slips prisons   : ${FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}"
 }
 
 add_dps_enabled_prison() {
@@ -199,6 +206,34 @@ remove_prison_from_email_notification_prisons() {
   NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
   echo "Applying new value : $NEW"
   stringData="{\"stringData\":{\"FEATURE_EMAIL_NOTIFICATIONS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+add_bulk_movement_slips_prison() {
+  echo "Adding $3 to bulk movement slips prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}' | base64 -d)
+  NEW="$CURRENT,$3"
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_BULK_MOVEMENT_SLIPS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+add_list_bulk_movement_slips_prisons() {
+  echo "Replace existing list with $3 for bulk movement slips prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}' | base64 -d)
+  NEW=$3
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_BULK_MOVEMENT_SLIPS_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+remove_prison_from_bulk_movement_slips_prisons() {
+  echo "Removing prison $3 from bulk movement slips prisons in $1 namespace $2"
+  prison=$3
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}' | base64 -d)
+  NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_BULK_MOVEMENT_SLIPS_PRISONS\":\"$NEW\"}}"
   kubectl -n "$2" patch secret feature-toggles -p $stringData
 }
 
@@ -322,17 +357,33 @@ while true; do
           ;;
 
       13)
+          echo "Replace the list of bulk movement slips prisons"
+          read -p "Enter a comma-separated list of prisons to replace the current list : " prison_list
+          add_list_bulk_movement_slips_prisons "$ENV" "$NAMESPACE" "$prison_list"
+          ;;
+      14)
+          echo "Add a prison to bulk movement slips prisons"
+          read -p "Enter a prison code to add : " prison
+          add_bulk_movement_slips_prison "$ENV" "$NAMESPACE" "$prison"
+          ;;
+      15)
+          echo "Remove a prison from bulk movement slips prisons"
+          read -p "Enter a prison code to remove : " prison
+          remove_prison_from_bulk_movement_slips_prisons "$ENV" "$NAMESPACE" "$prison"
+          ;;
+
+      16)
           echo "Toggle two month calendar - currently ${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           toggle_two_month_calendar "$ENV" "$NAMESPACE" "${FEATURE_TWO_MONTH_CALENDAR_ENABLED:-false}"
           ;;
 
-      14)
+      17)
           echo "Toggle NOTIFY_CALLBACK_SECRET - currently ${NOTIFY_CALLBACK_SECRET:-Missing}"
           read -r -p "Enter NOTIFY_CALLBACK_SECRET value : " notify_callback_secret
           set_notify_callback_secret "$ENV" "$NAMESPACE" "$notify_callback_secret"
           ;;
 
-      15)
+      18)
           echo "Toggle NOTIFY_API_KEY - currently ${NOTIFY_API_KEY:-Missing}"
           read -r -p "Enter NOTIFY_API_KEY value : " notify_api_key_secret
           set_notify_api_key "$ENV" "$NAMESPACE" "$notify_api_key_secret"
