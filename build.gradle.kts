@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.2"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.3"
   id("org.openapi.generator") version "7.23.0"
   kotlin("plugin.spring") version "2.4.0"
   kotlin("plugin.jpa") version "2.4.0"
@@ -27,12 +27,12 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
   implementation("org.springdoc:springdoc-openapi-starter-common:3.0.3")
   constraints {
-    implementation("org.webjars:swagger-ui:5.32.2")
+    implementation("org.webjars:swagger-ui:5.32.8")
   }
 
   // Postgresql dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
-  runtimeOnly("org.postgresql:postgresql:42.7.11")
+  runtimeOnly("org.postgresql:postgresql:42.7.12")
 
   // Open telemetry dependencies
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.29.0")
@@ -42,14 +42,14 @@ dependencies {
 
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
-  testImplementation("org.springframework.security:spring-security-test:7.0.2")
+  testImplementation("org.springframework.security:spring-security-test:7.1.0")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
 
   // SAR test library
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.4.3")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.6.0")
 
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
 
@@ -58,9 +58,9 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.1")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.1")
-  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.2")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.2")
+  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.2")
 
   // Mockito
   testImplementation("org.mockito:mockito-inline:5.2.0")
@@ -72,7 +72,7 @@ dependencies {
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 
   // Swagger
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.43") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.45") {
     exclude(group = "io.swagger.core.v3")
   }
 }
