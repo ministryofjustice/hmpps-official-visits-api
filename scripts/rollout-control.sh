@@ -47,6 +47,8 @@ menu_function() {
   echo ""
   echo " 18 - Set Notify api key"
   echo ""
+  echo " 19 - Set Switch audit timeline"
+  echo ""
   echo " x - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
@@ -71,9 +73,9 @@ show_current() {
 
   # Get feature-toggles secret values
   KUBE_SECRET=feature-toggles
-  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS < <(
+  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS FEATURE_SWITCH_AUDIT_TIMELINE < <(
     kubectl -n "$NAMESPACE" get secret "$KUBE_SECRET" -o json \
-    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS | @base64d' \
+    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS, .FEATURE_SWITCH_AUDIT_TIMELINE | @base64d' \
     | tr '\n' ' '
   )
 
@@ -96,6 +98,7 @@ show_current() {
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
   echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
   echo "Bulk movement slips prisons   : ${FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}"
+  echo "Switch audit timeline         : ${FEATURE_SWITCH_AUDIT_TIMELINE}"
 }
 
 add_dps_enabled_prison() {
@@ -276,6 +279,17 @@ set_notify_api_key() {
   kubectl -n "$namespace" patch secret hmpps-official-visits-gov-notify-creds -p $stringData
 }
 
+set_switch_audit_timeline() {
+  local env="$1"
+  local namespace="$2"
+  local token="$3"
+
+  echo "Updating Switch audit timeline in $env namespace $namespace"
+
+  stringData="{\"stringData\":{\"FEATURE_SWITCH_AUDIT_TIMELINE\":\"$token\"}}"
+  kubectl -n "$namespace" patch secret feature-toggles -p $stringData
+}
+
 restart_services() {
    echo "Restarting UI service in $1 namespace $2"
    kubectl -n "$2" rollout restart deployments/hmpps-official-visits-ui
@@ -387,6 +401,12 @@ while true; do
           echo "Toggle NOTIFY_API_KEY - currently ${NOTIFY_API_KEY:-Missing}"
           read -r -p "Enter NOTIFY_API_KEY value : " notify_api_key_secret
           set_notify_api_key "$ENV" "$NAMESPACE" "$notify_api_key_secret"
+          ;;
+
+      19)
+          echo "Toggle FEATURE_SWITCH_AUDIT_TIMELINE - currently ${FEATURE_SWITCH_AUDIT_TIMELINE:-Missing}"
+          read -r -p "Enter FEATURE_SWITCH_AUDIT_TIMELINE value : " switch_audit_timeline
+          set_switch_audit_timeline "$ENV" "$NAMESPACE" "$switch_audit_timeline"
           ;;
 
       x)  echo "Restarting services"
