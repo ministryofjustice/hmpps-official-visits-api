@@ -40,6 +40,9 @@ dependencies {
   // Gov Notify client
   implementation("uk.gov.service.notify:notifications-java-client:6.0.0-RELEASE")
 
+  // YAML dependencies
+  implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.21.4")
+
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
   testImplementation("org.springframework.security:spring-security-test:7.0.2")
