@@ -79,7 +79,7 @@ class NotificationsServiceTest {
     fun `should delegate to email service and save notification`() {
       whenever { emailService.send(FakeEmail) } doReturn Result.success(notificationId to "fake template id")
 
-      service.sendOfficialVisitEmail(1L, FakeEmail)
+      service.sendOfficialVisitEmail(1L, FakeEmail, MOORLAND_PRISON_USER)
 
       inOrder(emailService, notificationRepository) {
         verify(emailService).send(FakeEmail)
@@ -91,7 +91,7 @@ class NotificationsServiceTest {
     fun `should delegate to email service but fail to save notification`() {
       whenever { emailService.send(FakeEmail) } doReturn Result.failure(RuntimeException("Bang!"))
 
-      service.sendOfficialVisitEmail(1L, FakeEmail)
+      service.sendOfficialVisitEmail(1L, FakeEmail, MOORLAND_PRISON_USER)
 
       verify(emailService).send(FakeEmail)
       verifyNoInteractions(notificationRepository)
@@ -240,6 +240,7 @@ class NotificationsServiceTest {
         reason = "OFFICIAL_VISIT_CREATED",
         govNotifyNotificationId = UUID.randomUUID(),
         emailStatus = NotificationEmailStatus.SENT,
+        createdBy = MOORLAND_PRISON_USER.username,
         createdTime = createdTime,
         statusUpdatedTime = statusUpdatedTime,
       )
@@ -259,6 +260,7 @@ class NotificationsServiceTest {
         reason isEqualTo notificationEntity.reason
         govNotifyNotificationId isEqualTo notificationEntity.govNotifyNotificationId
         emailStatus isEqualTo notificationEntity.emailStatus
+        createdBy isEqualTo notificationEntity.createdBy
         createdTime isEqualTo notificationEntity.createdTime
         statusUpdatedTime isEqualTo notificationEntity.statusUpdatedTime
       }
@@ -305,6 +307,7 @@ class NotificationsServiceTest {
       emailAddress = "test@example.com",
       reason = "OFFICIAL_VISIT_CREATED",
       govNotifyNotificationId = UUID.randomUUID(),
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = createdTime,
     )
 

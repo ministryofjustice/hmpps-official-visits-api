@@ -35,6 +35,7 @@
     "govNotifyNotificationId": "UUID",
     "notificationId": "long",
     "officialVisitId": "long",
+    "createdBy": "String",
     "reason": "String",
     "statusUpdatedTime": "LocalDateTime",
     "templateId": "String"

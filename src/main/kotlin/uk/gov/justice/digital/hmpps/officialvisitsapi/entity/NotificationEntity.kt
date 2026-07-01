@@ -30,6 +30,8 @@ class NotificationEntity(
   @Enumerated(EnumType.STRING)
   var emailStatus: NotificationEmailStatus = NotificationEmailStatus.PENDING,
 
+  val createdBy: String,
+
   val createdTime: LocalDateTime = LocalDateTime.now(),
 
   var statusUpdatedTime: LocalDateTime? = null,

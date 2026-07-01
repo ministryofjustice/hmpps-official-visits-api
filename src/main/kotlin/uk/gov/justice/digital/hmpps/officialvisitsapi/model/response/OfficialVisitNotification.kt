@@ -22,6 +22,8 @@ data class OfficialVisitNotification(
   val emailStatus: NotificationEmailStatus,
   @Schema(description = "The created time", example = "09:00")
   val createdTime: LocalDateTime,
+  @Schema(description = "The created by", example = "Fred Bloggs")
+  val createdBy: String,
   @Schema(description = "The status updated time", example = "10:00")
   val statusUpdatedTime: LocalDateTime?,
 )
