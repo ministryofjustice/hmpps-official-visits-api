@@ -73,9 +73,9 @@ show_current() {
 
   # Get feature-toggles secret values
   KUBE_SECRET=feature-toggles
-  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS FEATURE_VISIT_HISTORY_TIMELINE < <(
+  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS FEATURE_VISIT_HISTORY_TIMELINE_PRISONS < <(
     kubectl -n "$NAMESPACE" get secret "$KUBE_SECRET" -o json \
-    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS, .FEATURE_VISIT_HISTORY_TIMELINE | @base64d' \
+    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS, .FEATURE_VISIT_HISTORY_TIMELINE_PRISONS | @base64d' \
     | tr '\n' ' '
   )
 
@@ -98,7 +98,7 @@ show_current() {
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
   echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
   echo "Bulk movement slips prisons   : ${FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}"
-  echo "Switch audit timeline         : ${FEATURE_VISIT_HISTORY_TIMELINE}"
+  echo "Visit history enabled prisons : ${FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}"
 }
 
 add_dps_enabled_prison() {
@@ -286,7 +286,7 @@ set_switch_audit_timeline() {
 
   echo "Updating Switch audit timeline in $env namespace $namespace"
 
-  stringData="{\"stringData\":{\"FEATURE_VISIT_HISTORY_TIMELINE\":\"$token\"}}"
+  stringData="{\"stringData\":{\"FEATURE_VISIT_HISTORY_TIMELINE_PRISONS\":\"$token\"}}"
   kubectl -n "$namespace" patch secret feature-toggles -p $stringData
 }
 
@@ -404,8 +404,8 @@ while true; do
           ;;
 
       19)
-          echo "Toggle FEATURE_VISIT_HISTORY_TIMELINE - currently ${FEATURE_VISIT_HISTORY_TIMELINE:-Missing}"
-          read -r -p "Enter FEATURE_VISIT_HISTORY_TIMELINE value : " switch_audit_timeline
+          echo "Toggle FEATURE_VISIT_HISTORY_TIMELINE_PRISONS - currently ${FEATURE_VISIT_HISTORY_TIMELINE_PRISONS:-Missing}"
+          read -r -p "Enter FEATURE_VISIT_HISTORY_TIMELINE_PRISONS value : " switch_audit_timeline
           set_switch_audit_timeline "$ENV" "$NAMESPACE" "$switch_audit_timeline"
           ;;
 
