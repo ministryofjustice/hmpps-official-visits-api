@@ -1,8 +1,6 @@
 prisons:
   - code: DEFAULT
     name: "Default prison"
-    email_address: "default-prison@justice.gov.uk"
-    phone_number: "0800 000 0000"
     address:
       line1:
       line2:
@@ -14,8 +12,6 @@ prisons:
 
   - code: NMI
     name: HMP & YOI Nottingham
-    email_address: "nottingham.prisons@justice.gov.uk"
-    phone_number: "0115 000 0000"
     address:
       line1: Perry Road
       line2: Sherwood
@@ -26,9 +22,7 @@ prisons:
     in_person_visit: Enter via the main visitors' entrance. Follow local visitor signage on arrival.
 
   - code: MDI
-    name: HMP Moorland
-    email_address: "moorland.prisons@justice.gov.uk"
-    phone_number: "0332 000 0000"
+    name: Moorland (HMP & YOI)
     address:
       line1: Bawtry Road
       line2: Hatfield Woodhouse

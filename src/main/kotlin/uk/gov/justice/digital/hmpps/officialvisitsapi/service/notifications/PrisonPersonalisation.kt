@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class PrisonPersonalisation(
-  @Value("\${prison.personalisation.file}") private val prisonPersonalisationFile: String,
+  @Value($$"${prison.personalisation.file}") private val prisonPersonalisationFile: String,
   private val yamlObjectMapper: ObjectMapper,
 ) {
   private val prisonsPersonalisationDto by lazy {
@@ -29,10 +29,6 @@ data class PrisonPersonalisationDto(
   val code: String,
   @JsonProperty("name")
   val name: String,
-  @JsonProperty("email_address")
-  val emailAddress: String,
-  @JsonProperty("phone_number")
-  val phoneNumber: String,
   @JsonProperty("address")
   val address: Address,
   @JsonProperty("video_visit")

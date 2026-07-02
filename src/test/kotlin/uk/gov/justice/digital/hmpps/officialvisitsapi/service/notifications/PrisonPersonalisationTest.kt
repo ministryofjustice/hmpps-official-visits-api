@@ -42,7 +42,7 @@ class PrisonPersonalisationTest {
     fun `should match on Moorland prison code`() {
       with(personalisation.forPrison(MOORLAND)) {
         code isEqualTo "MDI"
-        name isEqualTo "HMP Moorland"
+        name isEqualTo "Moorland (HMP & YOI)"
       }
     }
 
