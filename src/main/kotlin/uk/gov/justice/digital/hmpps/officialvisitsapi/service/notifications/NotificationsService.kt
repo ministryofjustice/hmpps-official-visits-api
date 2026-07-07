@@ -53,6 +53,7 @@ class NotificationsService(
         sendOfficialVisitEmail(
           officialVisit.officialVisitId,
           getEmail(request.notificationType, officialVisit, emailAddress, prisoner, location, user),
+          user,
         )?.let { notificationId -> add(NotificationRecipient(emailAddress, notificationId)) }
       }
     }
@@ -60,7 +61,7 @@ class NotificationsService(
     NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
-  fun sendOfficialVisitEmail(officialVisitId: Long, email: Email): Long? = run {
+  fun sendOfficialVisitEmail(officialVisitId: Long, email: Email, user: User): Long? = run {
     var notificationId: Long? = null
     logger.info("sending email ${email.type()} officialVisitId $officialVisitId")
     emailService.send(email)
@@ -73,6 +74,7 @@ class NotificationsService(
             reason = email.type().name,
             govNotifyNotificationId = govNotifyNotificationId,
             emailStatus = NotificationEmailStatus.PENDING,
+            createdBy = user.username,
             createdTime = LocalDateTime.now(),
           ),
         ).also {
@@ -163,6 +165,7 @@ class NotificationsService(
     govNotifyNotificationId = govNotifyNotificationId,
     emailStatus = emailStatus,
     createdTime = createdTime,
+    createdBy = createdBy,
     statusUpdatedTime = statusUpdatedTime,
   )
 }

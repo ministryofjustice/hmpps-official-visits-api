@@ -8,6 +8,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotifyCallbackNotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
 import java.time.LocalDateTime
@@ -29,6 +30,7 @@ class NotificationCallbackServiceTest {
       emailAddress = "test@example.com",
       reason = "OFFICIAL_VISIT_CREATED",
       govNotifyNotificationId = notificationId,
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = LocalDateTime.now(),
     )
     val completedAt = OffsetDateTime.parse("2026-06-23T13:27:11.835723Z")
@@ -55,6 +57,7 @@ class NotificationCallbackServiceTest {
       emailAddress = "test@example.com",
       reason = "OFFICIAL_VISIT_CREATED",
       govNotifyNotificationId = notificationId,
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = LocalDateTime.now(),
     )
 

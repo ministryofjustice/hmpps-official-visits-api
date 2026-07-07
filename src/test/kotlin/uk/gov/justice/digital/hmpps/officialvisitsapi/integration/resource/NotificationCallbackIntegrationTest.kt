@@ -9,6 +9,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import java.time.LocalDateTime
 import java.util.UUID
@@ -81,6 +82,7 @@ class NotificationCallbackIntegrationTest : IntegrationTestBase() {
       emailAddress = "email@address.com",
       reason = "OFFICIAL_VISIT_CREATED",
       govNotifyNotificationId = UUID.randomUUID(),
+      createdBy = MOORLAND_PRISON_USER.username,
       createdTime = LocalDateTime.now(),
     ),
   )
