@@ -14,7 +14,6 @@
         <h3>Visit</h3>
         <table class="summary-list">
             <tr><td>Prison name</td><td>{{ getPrisonName prisonCode }}</td></tr>
-            <tr><td>Prisoner number</td><td>{{ optionalString prisonerNumber }}</td></tr>
             <tr><td>Visit date</td><td>{{ formatDate visitDate }}</td></tr>
             <tr><td>Start time</td><td>{{ formatDate startTime }}</td></tr>
             <tr><td>End time</td><td>{{ formatDate endTime }}</td></tr>
@@ -22,36 +21,24 @@
             <tr><td>Visit status</td><td>{{ optionalString visitStatus }}</td></tr>
             <tr><td>Staff notes</td><td>{{ optionalString staffNotes }}</td></tr>
             <tr><td>Prisoner notes</td><td>{{ optionalString prisonerNotes }}</td></tr>
-            <tr><td>Location</td><td>{{ getLocationNameByDpsId dpsLocationId }}</td></tr>
             <tr><td>Attendance</td><td>{{ optionalString prisonerAttendance }}</td></tr>
             <tr><td>Completion type</td><td>{{ optionalString completionCode }}</td></tr>
+            <tr><td>Completion notes</td><td>{{ optionalString completionNotes }}</td></tr>
+            <tr><td>Search type</td><td>{{ optionalString searchTypeCode }}</td></tr>
+            <tr><td>Visitor concern notes</td><td>{{ optionalString visitorConcernNotes }}</td></tr>
         </table>
 
         <h3>Visitors</h3>
         {{#visitors}}
         <table class="summary-list">
-            <tr><td>First name</td><td>{{ optionalString firstName }}</td></tr>
-            <tr><td>Last name</td><td>{{ optionalString lastName }}</td></tr>
-            <tr><td>Relationship code</td><td>{{ optionalString relationshipCode }}</td></tr>
-            <tr><td>Relationship</td><td>{{ optionalString relationshipDescription }}</td></tr>
-            <tr><td>Notes</td><td>{{ optionalString visitorNotes }}</td></tr>
+            <tr><td>Relationship type</td><td>{{ optionalString relationshipType }}</td></tr>
+            <tr><td>Relationship</td><td>{{ optionalString relationshipCode }}</td></tr>
             <tr><td>Attendance</td><td>{{ optionalString visitorAttendance }}</td></tr>
         </table>
         {{/visitors}}
         {{^visitors}}
             <p>No data held</p>
         {{/visitors}}
-
-        <h3>Changes</h3>
-        {{#events}}
-        <table class="summary-list">
-            <tr><td>Date and time</td><td>{{ formatDate eventDateTime }}</td></tr>
-            <tr><td>Event type</td><td>{{ optionalString eventType }}</td></tr>
-            <tr><td>Description</td><td>{{ optionalString eventDescription }}</td></tr>
-            <tr><td>Staff code</td><td>{{ optionalString staffCode }}</td></tr>
-            <tr><td>Staff Name</td><td>{{ optionalString staffName }}</td></tr>
-        </table>
-        {{/events}}
 
     {{/officialVisits}}
     {{^officialVisits}}

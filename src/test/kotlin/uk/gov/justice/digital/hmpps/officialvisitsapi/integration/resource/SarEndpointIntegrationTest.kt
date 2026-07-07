@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Import
@@ -131,7 +130,6 @@ class SarEndpointIntegrationTest : IntegrationTestBase() {
     val response = webTestClient.getSarContent(MOORLAND_PRISONER.number, today().minusDays(1), today().plusDays(8))
 
     with(response.content.officialVisits.first()) {
-      prisonerNumber isEqualTo MOORLAND_PRISONER.number
       visitType isEqualTo VisitType.IN_PERSON
       visitStatus isEqualTo VisitStatusType.COMPLETED
       prisonerAttendance isEqualTo AttendanceType.ABSENT
@@ -139,16 +137,10 @@ class SarEndpointIntegrationTest : IntegrationTestBase() {
       prisonerNotes isEqualTo "public notes"
 
       with(visitors.first()) {
-        firstName isEqualTo "John"
-        lastName isEqualTo "Doe"
         relationshipType isEqualTo RelationshipType.OFFICIAL
         relationshipCode isEqualTo "POM"
-        visitorNotes isEqualTo "visitor notes"
         visitorAttendance isEqualTo AttendanceType.ATTENDED
       }
-
-      assertThat(events).hasSize(2)
-      assertThat(events).extracting("eventType").containsAll(listOf("Visit created", "Visit completed"))
     }
   }
 
