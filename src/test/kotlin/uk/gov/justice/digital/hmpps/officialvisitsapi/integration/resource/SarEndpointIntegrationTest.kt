@@ -138,7 +138,7 @@ class SarEndpointIntegrationTest : IntegrationTestBase() {
 
       with(visitors.first()) {
         relationshipType isEqualTo RelationshipType.OFFICIAL
-        relationshipCode isEqualTo "POM"
+        relationshipDescription isEqualTo "Description"
         visitorAttendance isEqualTo AttendanceType.ATTENDED
       }
     }

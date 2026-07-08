@@ -4,11 +4,13 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SarVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SarVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SubjectAccessResponseData
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationshipsReferenceDataService
 import uk.gov.justice.hmpps.kotlin.sar.HmppsPrisonSubjectAccessRequestService
 import uk.gov.justice.hmpps.kotlin.sar.HmppsSubjectAccessRequestContent
 import java.time.LocalDate
@@ -25,6 +27,7 @@ import java.time.LocalDate
 class SubjectAccessRequestService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
+  private val personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
 ) : HmppsPrisonSubjectAccessRequestService {
 
   companion object {
@@ -71,7 +74,7 @@ class SubjectAccessRequestService(
           SarVisitor(
             visitorAttendance = visitor.attendanceCode,
             relationshipType = visitor.relationshipTypeCode,
-            relationshipCode = visitor.relationshipCode,
+            relationshipDescription = visitor.relationshipCode?.let { personalRelationshipsReferenceDataService.getReferenceDataByCode(getRelationShipCode(visitor.relationshipTypeCode.toString()), visitor.relationshipCode!!)?.description } ?: "No relationship",
           )
         },
       )
@@ -87,5 +90,11 @@ class SubjectAccessRequestService(
         officialVisits = sarVisits,
       ),
     )
+  }
+
+  private fun getRelationShipCode(relationshipTypeCode: String?) = if (relationshipTypeCode == "OFFICIAL") {
+    ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString()
+  } else {
+    ReferenceCodeGroup.SOCIAL_RELATIONSHIP.toString()
   }
 }

@@ -6,5 +6,5 @@ insert into prisoner_visited (prisoner_visited_id, official_visit_id, prisoner_n
 values (1, 1, 'A4567AZ', 'TIM', current_timestamp);
 
 insert into official_visitor (official_visitor_id, official_visit_id, visitor_type_code, relationship_type_code, first_name, last_name, contact_id, prisoner_contact_id, relationship_code, lead_visitor, created_time, created_by)
-values (1, 1, 'CONTACT', 'OFFICIAL', 'Adam', 'Adams', 20085662, 7331628,'CUSPO', true, current_timestamp, 'TIM');
+values (1, 1, 'CONTACT', 'OFFICIAL', 'Adam', 'Adams', 20085662, 7331628,'POM', true, current_timestamp, 'TIM');
 

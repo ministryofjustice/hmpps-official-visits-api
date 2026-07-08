@@ -27,6 +27,6 @@ data class SarVisit(
 
 data class SarVisitor(
   val relationshipType: RelationshipType? = null,
-  val relationshipCode: String? = null,
+  val relationshipDescription: String? = null,
   val visitorAttendance: AttendanceType? = null,
 )

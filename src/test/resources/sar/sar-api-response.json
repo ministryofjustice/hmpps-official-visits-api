@@ -18,7 +18,7 @@
     "visitorConcernNotes" : null,
     "visitors" : [ {
       "relationshipType" : "OFFICIAL",
-      "relationshipCode" : "CUSPO",
+      "relationshipDescription" : "Description",
       "visitorAttendance" : null
     } ]
   } ]
