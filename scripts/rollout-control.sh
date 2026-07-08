@@ -47,7 +47,11 @@ menu_function() {
   echo ""
   echo " 18 - Set Notify api key"
   echo ""
-  echo " 19 - Set Switch audit timeline"
+  echo "Visit history timeline enabled prisons"
+  echo ""
+  echo " 19 - Replace with a new list"
+  echo " 20 - Add a prison"
+  echo " 21 - Remove a prison"
   echo ""
   echo " x - Restart services for changes to take effect"
   echo ""
@@ -98,7 +102,7 @@ show_current() {
   echo "Warn NOMIS switch off prisons : ${FEATURE_NOMIS_SWITCH_OFF_PRISONS}"
   echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
   echo "Bulk movement slips prisons   : ${FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}"
-  echo "Visit history enabled prisons : ${FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}"
+  echo "Visit history timeline enabled prisons : ${FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}"
 }
 
 add_dps_enabled_prison() {
@@ -290,6 +294,34 @@ set_switch_audit_timeline() {
   kubectl -n "$namespace" patch secret feature-toggles -p $stringData
 }
 
+add_visit_history_timeline_prison() {
+  echo "Adding $3 to visit history timeline in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}' | base64 -d)
+  NEW="$CURRENT,$3"
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_VISIT_HISTORY_TIMELINE_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+add_list_visit_history_timeline_prisons() {
+  echo "Replace existing list with $3 for visit history timeline in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}' | base64 -d)
+  NEW=$3
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_VISIT_HISTORY_TIMELINE_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+remove_prison_from_visit_history_timeline_prisons() {
+  echo "Removing prison $3 from visit history timeline in $1 namespace $2"
+  prison=$3
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}' | base64 -d)
+  NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_VISIT_HISTORY_TIMELINE_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
 restart_services() {
    echo "Restarting UI service in $1 namespace $2"
    kubectl -n "$2" rollout restart deployments/hmpps-official-visits-ui
@@ -404,9 +436,19 @@ while true; do
           ;;
 
       19)
-          echo "Toggle FEATURE_VISIT_HISTORY_TIMELINE_PRISONS - currently ${FEATURE_VISIT_HISTORY_TIMELINE_PRISONS:-Missing}"
-          read -r -p "Enter FEATURE_VISIT_HISTORY_TIMELINE_PRISONS value : " switch_audit_timeline
-          set_switch_audit_timeline "$ENV" "$NAMESPACE" "$switch_audit_timeline"
+          echo "Replace the list of visit history timeline enabled prisons"
+          read -p "Enter a comma-separated list of prisons to replace the current list : " prison_list
+          add_list_visit_history_timeline_prisons "$ENV" "$NAMESPACE" "$prison_list"
+          ;;
+      20)
+          echo "Add a prison to visit history timeline enabled prisons"
+          read -p "Enter a prison code to add : " prison
+           add_visit_history_timeline_prison "$ENV" "$NAMESPACE" "$prison"
+          ;;
+      21)
+          echo "Remove a prison from visit history timeline enabled prisons"
+          read -p "Enter a prison code to remove : " prison
+          remove_prison_from_visit_history_timeline_prisons "$ENV" "$NAMESPACE" "$prison"
           ;;
 
       x)  echo "Restarting services"
