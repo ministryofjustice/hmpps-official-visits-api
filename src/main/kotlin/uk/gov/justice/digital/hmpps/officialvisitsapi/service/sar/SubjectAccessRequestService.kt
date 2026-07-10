@@ -4,13 +4,13 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SarEvent
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SarVisit
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SarVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sar.SubjectAccessResponseData
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PersonalRelationshipsReferenceDataService
 import uk.gov.justice.hmpps.kotlin.sar.HmppsPrisonSubjectAccessRequestService
 import uk.gov.justice.hmpps.kotlin.sar.HmppsSubjectAccessRequestContent
 import java.time.LocalDate
@@ -27,7 +27,7 @@ import java.time.LocalDate
 class SubjectAccessRequestService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val prisonerVisitedRepository: PrisonerVisitedRepository,
-  private val auditedEventRepository: AuditedEventRepository,
+  private val personalRelationshipsReferenceDataService: PersonalRelationshipsReferenceDataService,
 ) : HmppsPrisonSubjectAccessRequestService {
 
   companion object {
@@ -54,44 +54,27 @@ class SubjectAccessRequestService(
     log.info("SAR: matches found for prisoner $prn, from $from to $to.")
 
     val sarVisits = officialVisits.map { visit ->
-      val auditEvents = auditedEventRepository.findAllByOfficialVisitId(visit.officialVisitId)
-
       val prisonerVisited = prisonerVisitedRepository.findByOfficialVisit(visit)
 
       SarVisit(
-        officialVisitId = visit.officialVisitId,
-        prisonCode = visit.prisonCode,
-        prisonerNumber = visit.prisonerNumber,
-        visitDate = visit.visitDate,
-        startTime = visit.startTime,
-        endTime = visit.endTime,
-        dpsLocationId = visit.dpsLocationId,
-        visitType = visit.visitTypeCode,
-        visitStatus = visit.visitStatusCode,
         completionCode = visit.completionCode,
-        prisonerAttendance = prisonerVisited?.attendanceCode,
-        staffNotes = visit.staffNotes,
+        completionNotes = visit.completionNotes,
+        endTime = visit.endTime,
+        prisonCode = visit.prisonCode,
         prisonerNotes = visit.prisonerNotes,
+        searchTypeCode = visit.searchTypeCode?.name,
+        staffNotes = visit.staffNotes,
+        startTime = visit.startTime,
+        visitDate = visit.visitDate,
+        visitorConcernNotes = visit.visitorConcernNotes,
+        visitStatus = visit.visitStatusCode,
+        visitType = visit.visitTypeCode,
+        prisonerAttendance = prisonerVisited?.attendanceCode,
         visitors = visit.officialVisitors().map { visitor ->
           SarVisitor(
-            officialVisitorId = visitor.officialVisitorId,
-            firstName = visitor.firstName,
-            lastName = visitor.lastName,
-            relationshipType = visitor.relationshipTypeCode,
-            relationshipCode = visitor.relationshipCode,
-            relationshipDescription = "TODO - lookup relationship description",
-            visitorNotes = visitor.visitorNotes,
             visitorAttendance = visitor.attendanceCode,
-          )
-        },
-        events = auditEvents.map { event ->
-          SarEvent(
-            auditedEventId = event.auditedEventId,
-            eventDateTime = event.eventDateTime,
-            eventType = event.summaryText,
-            eventDescription = event.detailText,
-            staffCode = event.userName,
-            staffName = event.userFullName,
+            relationshipType = visitor.relationshipTypeCode,
+            relationshipDescription = visitor.relationshipCode?.let { personalRelationshipsReferenceDataService.getReferenceDataByCode(getRelationShipCode(visitor.relationshipTypeCode.toString()), visitor.relationshipCode!!)?.description } ?: "No relationship",
           )
         },
       )
@@ -107,5 +90,11 @@ class SubjectAccessRequestService(
         officialVisits = sarVisits,
       ),
     )
+  }
+
+  private fun getRelationShipCode(relationshipTypeCode: String?) = if (relationshipTypeCode == "OFFICIAL") {
+    ReferenceCodeGroup.OFFICIAL_RELATIONSHIP.toString()
+  } else {
+    ReferenceCodeGroup.SOCIAL_RELATIONSHIP.toString()
   }
 }

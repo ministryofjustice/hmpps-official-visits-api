@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.sar
 
 import jakarta.persistence.EntityManager
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
@@ -55,6 +56,11 @@ class SarIntegrationTest :
   // defaults to "current date" which means the date in the expected output will keep
   // changing, causing the comparison with the baseline report to fail
   override fun getToDate(): LocalDate? = LocalDate.parse("2026-03-03")
+
+  @BeforeEach
+  fun `set up official visit and change history data`() {
+    personalRelationshipsApi().stubReferenceGroup()
+  }
 
   @Test
   @Sql("classpath:sar/truncate-tables-with-sar-data.sql", "classpath:sar/seed-sar-data.sql")

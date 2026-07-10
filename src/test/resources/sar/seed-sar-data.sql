@@ -6,9 +6,5 @@ insert into prisoner_visited (prisoner_visited_id, official_visit_id, prisoner_n
 values (1, 1, 'A4567AZ', 'TIM', current_timestamp);
 
 insert into official_visitor (official_visitor_id, official_visit_id, visitor_type_code, relationship_type_code, first_name, last_name, contact_id, prisoner_contact_id, relationship_code, lead_visitor, created_time, created_by)
-values (1, 1, 'CONTACT', 'OFFICIAL', 'Adam', 'Adams', 20085662, 7331628,'CUSPO', true, current_timestamp, 'TIM');
+values (1, 1, 'CONTACT', 'OFFICIAL', 'Adam', 'Adams', 20085662, 7331628,'POM', true, current_timestamp, 'TIM');
 
-insert into audited_event (audited_event_id, official_visit_id, prison_code, prisoner_number, event_source, user_name, user_full_name, summary_text, detail_text, event_date_time)
-values (1, 1, 'MDI', 'A4567AZ', 'DPS', 'TIM', 'Staff officer', 'Official visit created', 'Detail text', '2026-01-01T08:00:00.000000'),
-       (2, 1, 'MDI', 'A4567AZ', 'DPS', 'TIM', 'Staff officer', 'Official visit updated', 'Detail text', '2026-01-02T08:00:00.000000'),
-       (3, 1, 'MDI', 'A4567AZ', 'DPS', 'TIM', 'Staff officer', 'Official visit completed', 'Detail text', '2026-01-03T08:00:00.000000');
