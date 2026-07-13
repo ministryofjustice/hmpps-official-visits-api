@@ -393,7 +393,7 @@ class OfficialVisitSearchIntegrationTest : IntegrationTestBase() {
         visitStatus isEqualTo VisitStatusType.CANCELLED
         visitStatusDescription isEqualTo "Cancelled"
         completionCode isEqualTo VisitCompletionType.VISITOR_CANCELLED
-        completionDescription isEqualTo "Visitor cancelled"
+        completionDescription isEqualTo "Visitor cancellation"
         completionNotes isEqualTo "the visitor cancelled"
         visitDate isEqualTo nextMondayAt9.visitDate
         startTime isEqualTo nextMondayAt9.startTime
