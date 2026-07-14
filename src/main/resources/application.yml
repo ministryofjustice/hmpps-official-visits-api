@@ -149,3 +149,7 @@ notify:
     official-visit-updated: 2f052775-8bb8-4a28-9baa-9f6a3fc22bc4
   callback:
     secret: ${NOTIFY_CALLBACK_SECRET:}
+
+prison:
+  personalisation:
+    file: /config/prison_personalisation.yaml
