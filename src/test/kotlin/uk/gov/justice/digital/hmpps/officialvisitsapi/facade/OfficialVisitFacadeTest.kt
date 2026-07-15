@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateSlotResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateVisitorsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -92,7 +93,13 @@ class OfficialVisitFacadeTest {
     )
 
     whenever(officialVisitCreateService.create(MOORLAND, request, user)).thenReturn(
-      CreateOfficialVisitResponse(officialVisitId = 1L, prisonerNumber = "A1234AA", visitorAndContactIds = listOf(Pair(1L, 1L))),
+      CreateOfficialVisitResponse(
+        officialVisitId = 1L,
+        prisonerNumber = "A1234AA",
+        visitorAndContactIds = listOf(
+          VisitorAndContactId(1L, 1L),
+        ),
+      ),
     )
 
     facade.createOfficialVisit(MOORLAND, request, MOORLAND_PRISON_USER)

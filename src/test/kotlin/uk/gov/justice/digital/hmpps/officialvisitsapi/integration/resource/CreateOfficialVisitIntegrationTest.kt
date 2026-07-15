@@ -148,8 +148,8 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
           source = Source.DPS,
           username = MOORLAND_PRISON_USER.username,
           prisonCode = MOORLAND,
-          contactId = officialVisitResponse.visitorAndContactIds.first().second!!,
-          officialVisitorId = officialVisitResponse.visitorAndContactIds.first().first,
+          contactId = officialVisitResponse.visitorAndContactIds.first().contactId!!,
+          officialVisitorId = officialVisitResponse.visitorAndContactIds.first().visitorId!!,
         ),
       ),
     )

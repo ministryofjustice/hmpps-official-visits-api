@@ -63,8 +63,8 @@ class OfficialVisitFacade(
           outboundEvent = OutboundEvent.VISITOR_CREATED,
           prisonCode = prisonCode,
           identifier = creationResult.officialVisitId,
-          secondIdentifier = pair.first,
-          contactId = pair.second,
+          secondIdentifier = pair.visitorId,
+          contactId = pair.contactId,
           user = user,
         )
       }

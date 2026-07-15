@@ -235,8 +235,8 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           source = Source.DPS,
           username = MOORLAND_PRISON_USER.username,
           prisonCode = MOORLAND,
-          contactId = scheduledVisit?.visitorAndContactIds?.first()?.second!!,
-          officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first!!,
+          contactId = scheduledVisit?.visitorAndContactIds?.first()?.contactId!!,
+          officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.visitorId!!,
         ),
       ),
     )
@@ -251,8 +251,8 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           source = Source.DPS,
           username = MOORLAND_PRISON_USER.username,
           prisonCode = MOORLAND,
-          contactId = scheduledVisit?.visitorAndContactIds?.last()?.second!!,
-          officialVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.first!!,
+          contactId = scheduledVisit?.visitorAndContactIds?.last()?.contactId!!,
+          officialVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.visitorId!!,
         ),
       ),
     )
@@ -286,10 +286,10 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           ),
           // Update - contactId = 123 and delete their equipment
           OfficialVisitor(
-            officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first!!,
+            officialVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.visitorId!!,
             visitorTypeCode = VisitorType.CONTACT,
             relationshipCode = "POM",
-            contactId = scheduledVisit?.visitorAndContactIds?.first()?.second,
+            contactId = scheduledVisit?.visitorAndContactIds?.first()?.contactId!!,
             prisonerContactId = 456,
             leadVisitor = false,
             assistedVisit = true,
@@ -301,8 +301,8 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       ),
     )
 
-    val existingVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.first
-    val deletedVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.first
+    val existingVisitorId = scheduledVisit?.visitorAndContactIds?.first()?.visitorId
+    val deletedVisitorId = scheduledVisit?.visitorAndContactIds?.last()?.visitorId
 
     verify(metricsService).send(
       eventType = eq(
@@ -314,7 +314,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
           source = Source.DPS,
           username = MOORLAND_PRISON_USER.username,
           prisonCode = MOORLAND,
-          contactId = scheduledVisit?.visitorAndContactIds?.last()?.second!!,
+          contactId = scheduledVisit?.visitorAndContactIds?.last()?.contactId!!,
           officialVisitorId = deletedVisitorId!!,
         ),
       ),
@@ -348,7 +348,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(
-        contactId = scheduledVisit?.visitorAndContactIds?.first()?.second!!,
+        contactId = scheduledVisit?.visitorAndContactIds?.first()?.contactId!!,
       ),
     )
 
@@ -362,7 +362,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
         officialVisitId = result.officialVisitId,
       ),
       personReference = PersonReference(
-        contactId = scheduledVisit?.visitorAndContactIds?.last()?.second!!,
+        contactId = scheduledVisit?.visitorAndContactIds?.last()?.contactId!!,
       ),
     )
 
@@ -447,7 +447,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
             officialVisitorId = Long.MAX_VALUE,
             visitorTypeCode = VisitorType.CONTACT,
             relationshipCode = "POM",
-            contactId = scheduledVisit?.visitorAndContactIds?.first()?.second,
+            contactId = scheduledVisit?.visitorAndContactIds?.first()?.contactId,
             prisonerContactId = 456,
             leadVisitor = false,
             assistedVisit = true,

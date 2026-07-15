@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerContact
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
@@ -79,7 +80,7 @@ class OfficialVisitCreateService(
         CreateOfficialVisitResponse(
           officialVisitId = it.officialVisitId,
           prisonerNumber = it.prisonerNumber,
-          visitorAndContactIds = it.officialVisitors().map { visitor -> visitor.officialVisitorId to visitor.contactId },
+          visitorAndContactIds = it.officialVisitors().map { visitor -> VisitorAndContactId(visitor.officialVisitorId, visitor.contactId) },
         )
       }.also {
         logger.info("Official visit created with ID ${it.officialVisitId}")
@@ -118,8 +119,8 @@ class OfficialVisitCreateService(
               username = user.username,
               prisonCode = prisonCode,
               officialVisitId = it.officialVisitId,
-              contactId = value.second!!,
-              officialVisitorId = value.first,
+              contactId = value.contactId!!,
+              officialVisitorId = value.visitorId,
             ),
           )
         }

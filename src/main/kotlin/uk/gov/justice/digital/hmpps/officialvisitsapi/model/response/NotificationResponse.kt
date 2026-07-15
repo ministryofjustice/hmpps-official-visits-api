@@ -14,4 +14,8 @@ data class NotificationResponse(
   val recipients: List<NotificationRecipient>,
 )
 
-data class NotificationRecipient(val emailAddress: String, val notificationId: Long)
+data class NotificationRecipient(
+  @Schema(description = "The email address of the recipient", example = "example@example.com")
+  val emailAddress: String,
+  val notificationId: Long,
+)

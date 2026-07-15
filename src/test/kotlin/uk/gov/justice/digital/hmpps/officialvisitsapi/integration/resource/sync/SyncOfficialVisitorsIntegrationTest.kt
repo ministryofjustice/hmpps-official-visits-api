@@ -184,20 +184,20 @@ class SyncOfficialVisitorsIntegrationTest : IntegrationTestBase() {
 
     webTestClient.syncDeleteVisitor(
       officialVisitId = savedVisit.officialVisitId,
-      officialVisitorId = savedVisit.visitorAndContactIds.first().first,
+      officialVisitorId = savedVisit.visitorAndContactIds.first().visitorId,
     ).expectStatus().isNoContent
 
     stubEvents.assertHasEvent(
       event = OutboundEvent.VISITOR_DELETED,
       additionalInfo = VisitorInfo(
         officialVisitId = savedVisit.officialVisitId,
-        officialVisitorId = savedVisit.visitorAndContactIds.first().first,
+        officialVisitorId = savedVisit.visitorAndContactIds.first().visitorId,
         source = Source.NOMIS,
         username = "NOMIS",
         prisonId = MOORLAND,
       ),
       personReference = PersonReference(
-        contactId = savedVisit.visitorAndContactIds.first().second ?: 0L,
+        contactId = savedVisit.visitorAndContactIds.first().contactId ?: 0L,
       ),
     )
 
