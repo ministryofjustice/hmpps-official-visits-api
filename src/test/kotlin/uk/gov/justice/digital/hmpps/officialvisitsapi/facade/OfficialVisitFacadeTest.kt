@@ -8,6 +8,7 @@ import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.data.domain.Sort
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -26,7 +27,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateSlotResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateVisitorsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
