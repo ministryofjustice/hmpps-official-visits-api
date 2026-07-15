@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerValidator
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
@@ -79,7 +80,12 @@ class OfficialVisitCreateService(
         CreateOfficialVisitResponse(
           officialVisitId = it.officialVisitId,
           prisonerNumber = it.prisonerNumber,
-          visitorAndContactIds = it.officialVisitors().map { visitor -> visitor.officialVisitorId to visitor.contactId },
+          visitorAndContactIds = it.officialVisitors().map { visitor ->
+            VisitorAndContactId(
+              visitor.officialVisitorId,
+              visitor.contactId,
+            )
+          },
         )
       }.also {
         logger.info("Official visit created with ID ${it.officialVisitId}")
@@ -118,8 +124,8 @@ class OfficialVisitCreateService(
               username = user.username,
               prisonCode = prisonCode,
               officialVisitId = it.officialVisitId,
-              contactId = value.second!!,
-              officialVisitorId = value.first,
+              contactId = value.contactId!!,
+              officialVisitorId = value.visitorId,
             ),
           )
         }

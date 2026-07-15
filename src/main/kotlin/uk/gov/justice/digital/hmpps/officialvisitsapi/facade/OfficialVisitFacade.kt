@@ -58,13 +58,13 @@ class OfficialVisitFacade(
         user = user,
       )
 
-      creationResult.visitorAndContactIds.forEach { pair ->
+      creationResult.visitorAndContactIds.forEach { visitorAndContactId ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_CREATED,
           prisonCode = prisonCode,
           identifier = creationResult.officialVisitId,
-          secondIdentifier = pair.first,
-          contactId = pair.second,
+          secondIdentifier = visitorAndContactId.visitorId,
+          contactId = visitorAndContactId.contactId,
           user = user,
         )
       }
@@ -105,13 +105,13 @@ class OfficialVisitFacade(
         user = user,
       )
 
-      completedVisitDto.visitorAndContactIds.forEach { pair ->
+      completedVisitDto.visitorAndContactIds.forEach { visitorAndContactId ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = completedVisitDto.prisonCode,
           identifier = completedVisitDto.officialVisitId,
-          secondIdentifier = pair.first,
-          contactId = pair.second,
+          secondIdentifier = visitorAndContactId.visitorId,
+          contactId = visitorAndContactId.contactId,
           user = user,
         )
       }
@@ -143,13 +143,13 @@ class OfficialVisitFacade(
         user = user,
       )
 
-      cancelledVisitDto.visitorAndContactIds.forEach { pair ->
+      cancelledVisitDto.visitorAndContactIds.forEach { visitorAndContactId ->
         outboundEventsService.send(
           outboundEvent = OutboundEvent.VISITOR_UPDATED,
           prisonCode = cancelledVisitDto.prisonCode,
           identifier = cancelledVisitDto.officialVisitId,
-          secondIdentifier = pair.first,
-          contactId = pair.second,
+          secondIdentifier = visitorAndContactId.visitorId,
+          contactId = visitorAndContactId.contactId,
           user = user,
         )
       }

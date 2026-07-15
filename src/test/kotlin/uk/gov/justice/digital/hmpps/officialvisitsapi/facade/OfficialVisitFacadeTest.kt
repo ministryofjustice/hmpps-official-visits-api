@@ -8,6 +8,7 @@ import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.data.domain.Sort
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -92,7 +93,13 @@ class OfficialVisitFacadeTest {
     )
 
     whenever(officialVisitCreateService.create(MOORLAND, request, user)).thenReturn(
-      CreateOfficialVisitResponse(officialVisitId = 1L, prisonerNumber = "A1234AA", visitorAndContactIds = listOf(Pair(1L, 1L))),
+      CreateOfficialVisitResponse(
+        officialVisitId = 1L,
+        prisonerNumber = "A1234AA",
+        visitorAndContactIds = listOf(
+          VisitorAndContactId(1L, 1L),
+        ),
+      ),
     )
 
     facade.createOfficialVisit(MOORLAND, request, MOORLAND_PRISON_USER)

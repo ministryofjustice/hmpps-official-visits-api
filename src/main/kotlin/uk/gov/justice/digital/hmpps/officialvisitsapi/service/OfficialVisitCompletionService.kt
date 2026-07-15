@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
@@ -88,7 +89,7 @@ class OfficialVisitCompletionService(
       officialVisitId = officialVisitId,
       prisonerVisitedId = prisonerVisited.prisonerVisitedId,
       prisonerNumber = prisonerVisited.prisonerNumber,
-      visitorAndContactIds = officialVisit.officialVisitors().map { it.officialVisitorId to it.contactId },
+      visitorAndContactIds = officialVisit.officialVisitors().map { VisitorAndContactId(it.officialVisitorId, it.contactId) },
     ).also {
       logger.info("Official visit with ID $officialVisitId completed.")
     }
@@ -99,6 +100,6 @@ class OfficialVisitCompletionService(
     val officialVisitId: Long,
     val prisonerVisitedId: Long,
     val prisonerNumber: String,
-    val visitorAndContactIds: List<Pair<Long, Long?>>,
+    val visitorAndContactIds: List<VisitorAndContactId>,
   )
 }
