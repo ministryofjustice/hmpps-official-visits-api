@@ -17,6 +17,9 @@ spring:
   # Apply migrations from common and dev locations for local runs
   flyway:
     locations: classpath:/migrations/common,classpath:/migrations/dev
+    placeholders:
+      dpr_user: ${DPR_USER}
+      dpr_password: ${DPR_PASSWORD}
 
 api:
   # client credentials from environment - provide via .env file
