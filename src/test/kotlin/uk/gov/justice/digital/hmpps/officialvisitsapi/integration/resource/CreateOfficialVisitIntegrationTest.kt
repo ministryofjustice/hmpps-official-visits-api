@@ -149,7 +149,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
           username = MOORLAND_PRISON_USER.username,
           prisonCode = MOORLAND,
           contactId = officialVisitResponse.visitorAndContactIds.first().contactId!!,
-          officialVisitorId = officialVisitResponse.visitorAndContactIds.first().visitorId!!,
+          officialVisitorId = officialVisitResponse.visitorAndContactIds.first().visitorId,
         ),
       ),
     )
