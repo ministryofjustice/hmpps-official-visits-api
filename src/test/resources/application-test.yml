@@ -15,6 +15,9 @@ spring:
 
   flyway:
     locations: classpath:/migrations/common,classpath:/migrations/test
+    placeholders:
+      dpr_user: dpr_user
+      dpr_password: dpr_password
 
 server:
   shutdown: immediate
