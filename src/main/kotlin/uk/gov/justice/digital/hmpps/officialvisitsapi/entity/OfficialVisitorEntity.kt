@@ -66,6 +66,8 @@ class OfficialVisitorEntity(
 
   var updatedTime: LocalDateTime? = null
 
+  fun fullName() = "$firstName $lastName"
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
