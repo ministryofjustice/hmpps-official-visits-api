@@ -100,7 +100,9 @@ data class Prisoner(
   val offenderBookId: String? = null,
   val locationDescription: String? = null,
   val prisonName: String? = null,
-)
+) {
+  val fullName: String = "$firstName $lastName"
+}
 
 // TODO: Matt use generated when replace Prisoner above with generated version
 data class PagedPrisoner(

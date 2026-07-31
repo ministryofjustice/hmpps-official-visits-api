@@ -12,6 +12,7 @@ data class NotificationRequest(
   val notificationType: NotificationType,
 
   @Schema(description = "The recipient email address to send the notification to")
+  @field:NotEmpty(message = "At least one email address is required")
   @field:NotEmpty(message = "The email address is mandatory")
   val emailAddresses: List<
     @NotBlank(message = "Email addresses must not be blank")
@@ -19,4 +20,12 @@ data class NotificationRequest(
     @Size(max = 100, message = "Email addresses must not exceed {max} characters")
     String,
     > = emptyList(),
+
+  @Schema(description = "This could be a PCVL number, a full URL, or some locally-recognised shorthand for the room link.")
+  @field:Size(max = 150, message = "Video link URL must not exceed {max} characters")
+  val videoLinkUrl: String? = null,
+
+  @Schema(description = "Some personalised email notes about the visit.")
+  @field:Size(max = 240, message = "Notes must not exceed {max} characters")
+  val notes: String? = null,
 )

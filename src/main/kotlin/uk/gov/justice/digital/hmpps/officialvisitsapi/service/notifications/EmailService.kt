@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toHourMinuteStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
+import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toTitleCase
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -43,13 +44,19 @@ class OfficialVisitCreatedEmail(
   appointmentDate: LocalDate,
   appointmentTime: LocalTime,
   appointmentLocation: String,
+  videoLinkUrl: String? = null,
+  notes: String? = null,
   userName: String,
 ) : Email(emailAddress) {
   init {
-    addPersonalisation("prisoner_name", prisonerName)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
     addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
     addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
     addPersonalisation("appointment_location", appointmentLocation)
+    addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
+    addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
     addPersonalisation("user_name", userName)
   }
 
@@ -62,13 +69,19 @@ class OfficialVisitUpdatedEmail(
   appointmentDate: LocalDate,
   appointmentTime: LocalTime,
   appointmentLocation: String,
+  videoLinkUrl: String? = null,
+  notes: String? = null,
   userName: String,
 ) : Email(emailAddress) {
   init {
-    addPersonalisation("prisoner_name", prisonerName)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
     addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
     addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
     addPersonalisation("appointment_location", appointmentLocation)
+    addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
+    addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
     addPersonalisation("user_name", userName)
   }
 
@@ -82,14 +95,17 @@ class OfficialVisitCancelledEmail(
   appointmentDate: LocalDate,
   appointmentTime: LocalTime,
   appointmentLocation: String,
+  notes: String? = null,
   userName: String,
 ) : Email(emailAddress) {
   init {
-    addPersonalisation("prisoner_name", prisonerName)
-    addPersonalisation("visitor_names", visitorNames)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
     addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
     addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
     addPersonalisation("appointment_location", appointmentLocation)
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
     addPersonalisation("user_name", userName)
   }
 

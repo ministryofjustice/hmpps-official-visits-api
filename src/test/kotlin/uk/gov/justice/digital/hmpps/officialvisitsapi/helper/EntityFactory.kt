@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import java.time.LocalTime
 import java.util.UUID
 
-fun createAVisitEntity(officialVisitId: Long) = run {
+fun createAVisitEntity(officialVisitId: Long, visitType: VisitType = VisitType.IN_PERSON) = run {
   val prisonVisitSlot = PrisonVisitSlotEntity(
     prisonVisitSlotId = 1,
     prisonTimeSlotId = 1,
@@ -31,7 +31,7 @@ fun createAVisitEntity(officialVisitId: Long) = run {
     startTime = LocalTime.of(11, 45),
     endTime = LocalTime.of(12, 45),
     dpsLocationId = prisonVisitSlot.dpsLocationId,
-    visitTypeCode = VisitType.IN_PERSON,
+    visitTypeCode = visitType,
     createdBy = "test-helper",
   )
 

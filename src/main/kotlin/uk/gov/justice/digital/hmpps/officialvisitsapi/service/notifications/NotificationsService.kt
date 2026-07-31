@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Pris
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationSearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationRecipient
@@ -49,10 +50,19 @@ class NotificationsService(
       ?: throw EntityNotFoundException("Prisoner not found ${officialVisit.prisonerNumber}")
 
     val recipients = buildSet {
-      request.emailAddresses.distinct().forEach { emailAddress ->
+      request.emailAddresses.map { it.lowercase().trim() }.distinct().forEach { emailAddress ->
         sendOfficialVisitEmail(
           officialVisit.officialVisitId,
-          getEmail(request.notificationType, officialVisit, emailAddress, prisoner, location, user),
+          getEmail(
+            notificationType = request.notificationType,
+            officialVisit = officialVisit,
+            emailAddress = emailAddress.trim(),
+            videoLinkUrl = request.videoLinkUrl?.trim(),
+            notes = request.notes?.trim(),
+            prisoner = prisoner,
+            location = location,
+            user = user,
+          ),
           user,
         )?.let { notificationId -> add(NotificationRecipient(emailAddress, notificationId)) }
       }
@@ -124,33 +134,40 @@ class NotificationsService(
     prisoner: Prisoner,
     location: String,
     user: User,
+    videoLinkUrl: String? = null,
+    notes: String? = null,
   ): Email = run {
     when (notificationType) {
       NotificationType.CREATE -> OfficialVisitCreatedEmail(
         emailAddress = emailAddress,
-        prisonerName = prisoner.firstName + " " + prisoner.lastName,
+        prisonerName = prisoner.fullName,
         appointmentDate = officialVisit.visitDate,
         appointmentTime = officialVisit.startTime,
         appointmentLocation = location,
+        videoLinkUrl = videoLinkUrl?.takeIf { officialVisit.visitTypeCode == VisitType.VIDEO },
+        notes = notes,
         userName = user.name,
       )
 
       NotificationType.AMEND -> OfficialVisitUpdatedEmail(
         emailAddress = emailAddress,
-        prisonerName = prisoner.firstName + " " + prisoner.lastName,
+        prisonerName = prisoner.fullName,
         appointmentDate = officialVisit.visitDate,
         appointmentTime = officialVisit.startTime,
         appointmentLocation = location,
+        videoLinkUrl = videoLinkUrl?.takeIf { officialVisit.visitTypeCode == VisitType.VIDEO },
+        notes = notes,
         userName = user.name,
       )
 
       NotificationType.CANCEL -> OfficialVisitCancelledEmail(
         emailAddress = emailAddress,
-        prisonerName = prisoner.firstName + " " + prisoner.lastName,
-        visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.firstName + " " + it.lastName },
+        prisonerName = prisoner.fullName,
+        visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
         appointmentDate = officialVisit.visitDate,
         appointmentTime = officialVisit.startTime,
         appointmentLocation = location,
+        notes = notes,
         userName = user.name,
       )
     }
