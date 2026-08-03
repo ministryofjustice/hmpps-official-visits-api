@@ -83,7 +83,7 @@ kotlin {
 
 tasks {
   withType<KotlinCompile> {
-    dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel")
+    dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel", "buildNonAssociationsApiModel")
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
   }
@@ -124,7 +124,16 @@ tasks.register("buildPersonalRelationshipsApiModel", GenerateTask::class) {
   globalProperties.set(mapOf("models" to ""))
 }
 
-val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi", "personalrelationships")
+tasks.register("buildNonAssociationsApiModel", GenerateTask::class) {
+  generatorName.set("kotlin")
+  inputSpec.set("openapi-specs/non-associations-api.json")
+  outputDir.set("$buildDirectory/generated/nonassociationsapi")
+  modelPackage.set("uk.gov.justice.digital.hmpps.officialvisitsapi.client.nonassociations.model")
+  configOptions.set(configValues)
+  globalProperties.set(mapOf("models" to ""))
+}
+
+val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi", "personalrelationships", "nonassociationsapi")
 
 tasks.register("integrationTest", Test::class) {
   description = "Runs integration tests"
@@ -156,7 +165,7 @@ kotlin {
 }
 
 tasks.named("runKtlintCheckOverMainSourceSet") {
-  dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel")
+  dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel", "buildNonAssociationsApiModel")
 }
 
 configure<KtlintExtension> {
