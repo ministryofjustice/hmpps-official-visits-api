@@ -10,7 +10,6 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.LocationsInsidePrisonClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.nonassociations.NonAssociationsApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.nonassociations.model.PrisonerNonAssociation
@@ -38,8 +37,8 @@ import java.util.UUID
 class NonAssociationsServiceTest {
   private val nonAssociationsApiClient: NonAssociationsApiClient = mock()
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val locationsInsidePrisonClient: LocationsInsidePrisonClient = mock()
-  private val service = NonAssociationsService(nonAssociationsApiClient, officialVisitRepository, locationsInsidePrisonClient)
+  private val locationsService: LocationsService = mock()
+  private val service = NonAssociationsService(nonAssociationsApiClient, officialVisitRepository, locationsService)
 
   private val nonAssociateOne = Prisoner(MOORLAND, "A1232DD", 2, "Steve", "Smith")
   private val nonAssociateTwo = Prisoner(MOORLAND, "A1233EE", 3, "Alan", "Jones")
@@ -123,7 +122,7 @@ class NonAssociationsServiceTest {
 
     service.getNonAssociationVisits(MOORLAND, request) hasSize 2
 
-    verify(locationsInsidePrisonClient, times(1)).getOfficialVisitLocationsAtPrison(eq(MOORLAND), any())
+    verify(locationsService, times(1)).getOfficialVisitLocationsAtPrison(MOORLAND)
   }
 
   @Test
@@ -133,7 +132,7 @@ class NonAssociationsServiceTest {
 
     service.getNonAssociationVisits(MOORLAND, request) hasSize 0
 
-    verifyNoInteractions(locationsInsidePrisonClient)
+    verifyNoInteractions(locationsService)
   }
 
   @Test
@@ -228,7 +227,7 @@ class NonAssociationsServiceTest {
   }
 
   private fun stubLocations(locations: List<Location> = listOf(moorlandLocation)) {
-    whenever(locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(eq(MOORLAND), any())).thenReturn(locations)
+    whenever(locationsService.getOfficialVisitLocationsAtPrison(MOORLAND)).thenReturn(locations)
   }
 
   private fun visitFor(

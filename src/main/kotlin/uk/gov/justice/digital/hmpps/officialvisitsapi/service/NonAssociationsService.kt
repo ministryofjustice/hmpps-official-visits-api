@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.LocationsInsidePrisonClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.nonassociations.NonAssociationsApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.nonassociations.model.OtherPrisonerDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -16,7 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 class NonAssociationsService(
   private val nonAssociationsApiClient: NonAssociationsApiClient,
   private val officialVisitRepository: OfficialVisitRepository,
-  private val locationsInsidePrisonClient: LocationsInsidePrisonClient,
+  private val locationsService: LocationsService,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -62,7 +61,7 @@ class NonAssociationsService(
     }
 
     // Get the locations for visits for this prison
-    val locationDescriptions = locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode)
+    val locationDescriptions = locationsService.getOfficialVisitLocationsAtPrison(prisonCode)
       .associate { location -> location.id to (location.localName ?: location.key) }
 
     return visits.mapNotNull { visit ->
