@@ -87,6 +87,20 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
 
   @Query(
     value = """
+      SELECT ov
+      FROM OfficialVisitEntity ov
+      WHERE ov.prisonCode = :prisonCode
+        AND ov.prisonerNumber IN :prisonerNumbers
+        AND ov.visitDate = :visitDate
+        AND (CAST(:startTime as time) IS NULL OR (:startTime < ov.endTime AND :endTime > ov.startTime))
+        AND ov.visitStatusCode = 'SCHEDULED'
+      ORDER BY ov.startTime, ov.prisonerNumber
+    """,
+  )
+  fun findScheduledVisitsForPrisonersOn(prisonCode: String, prisonerNumbers: Collection<String>, visitDate: LocalDate, startTime: LocalTime?, endTime: LocalTime?): List<OfficialVisitEntity>
+
+  @Query(
+    value = """
       DELETE FROM OfficialVisitEntity ov
       WHERE ov.prisonerNumber = :prisonerNumber
     """,

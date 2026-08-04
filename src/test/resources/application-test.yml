@@ -37,6 +37,7 @@ api:
       prisoner-search: http://localhost:8092
       manage-users: http://localhost:8093
       personal-relationships: http://localhost:8094
+      non-associations: http://localhost:8095
 
 feature:
   event:
