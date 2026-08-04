@@ -23,3 +23,6 @@ class ManageUsersHealthPingCheck(@Qualifier("manageUsersApiHealthWebClient") web
 
 @Component("prisonerSearchApi")
 class PrisonerSearchApiHealthPingCheck(@Qualifier("prisonerSearchApiHealthWebClient") webClient: WebClient) : HealthPingCheck(webClient)
+
+@Component("nonAssociationsApi")
+class NonAssociationsApiHealthPingCheck(@Qualifier("nonAssociationsApiHealthWebClient") webClient: WebClient) : HealthPingCheck(webClient)

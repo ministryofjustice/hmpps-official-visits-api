@@ -23,18 +23,15 @@ class NonAssociationsService(
   }
 
   /**
-   * Checks whether any of the prisoner's open non-associations already have a scheduled official visit at the same
-   * prison on the same date as the visit being checked.
-   *
-   * Returns an empty list when the prisoner has no open non-associations, or when none of those non-associates have a
-   * scheduled visit that day.
+   * Returns the scheduled official visits that any of the prisoner's open non-associations have at the same prison
+   * on the same date as the visit being checked.
    */
-  fun checkForNonAssociationVisits(prisonCode: String, request: NonAssociationCheckRequest): List<NonAssociationVisitResponse> {
+  fun getNonAssociationVisits(prisonCode: String, request: NonAssociationCheckRequest): List<NonAssociationVisitResponse> {
+    // Get the prisoner's open non-associations, keyed by the other prisoner's number
     val nonAssociatesByPrisonerNumber = nonAssociationsApiClient
       .getPrisonerNonAssociations(request.prisonerNumber)
       ?.nonAssociations
       .orEmpty()
-      .filter { it.isOpen }
       .associate { it.otherPrisonerDetails.prisonerNumber to it.otherPrisonerDetails }
 
     if (nonAssociatesByPrisonerNumber.isEmpty()) {
@@ -42,6 +39,7 @@ class NonAssociationsService(
       return emptyList()
     }
 
+    // Get any scheduled visits those non-associates have at this prison on the same date
     val visits = officialVisitRepository.findScheduledVisitsForPrisonersOn(
       prisonCode = prisonCode,
       prisonerNumbers = nonAssociatesByPrisonerNumber.keys,
@@ -53,6 +51,7 @@ class NonAssociationsService(
       return emptyList()
     }
 
+    // Get the locations for visits for this prison
     val locationDescriptions = locationsInsidePrisonClient.getOfficialVisitLocationsAtPrison(prisonCode)
       .associate { location -> location.id to (location.localName ?: location.key) }
 

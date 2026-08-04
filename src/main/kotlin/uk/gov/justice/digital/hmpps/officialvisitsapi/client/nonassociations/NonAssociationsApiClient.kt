@@ -17,15 +17,15 @@ class NonAssociationsApiClient(private val nonAssociationsApiWebClient: WebClien
 
   /**
    * Returns the open (in effect) non-associations for the given prisoner, or null if the prisoner is not known to the
-   * non-associations service. Closed non-associations are never requested as they no longer need to be kept apart.
+   * non-associations service.
    */
-  fun getPrisonerNonAssociations(prisonerNumber: String, includeOtherPrisons: Boolean = false): PrisonerNonAssociations? = nonAssociationsApiWebClient.get()
+  fun getPrisonerNonAssociations(prisonerNumber: String): PrisonerNonAssociations? = nonAssociationsApiWebClient.get()
     .uri { uriBuilder: UriBuilder ->
       uriBuilder
         .path("/prisoner/{prisonerNumber}/non-associations")
         .queryParam("includeOpen", true)
         .queryParam("includeClosed", false)
-        .queryParam("includeOtherPrisons", includeOtherPrisons)
+        .queryParam("includeOtherPrisons", false)
         .build(prisonerNumber)
     }
     .retrieve()

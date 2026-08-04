@@ -81,9 +81,16 @@ kotlin {
   jvmToolchain(25)
 }
 
+val openApiModelTasks = listOf(
+  "buildLocationsInsidePrisonApiModel",
+  "buildManageUsersApiModel",
+  "buildPersonalRelationshipsApiModel",
+  "buildNonAssociationsApiModel",
+)
+
 tasks {
   withType<KotlinCompile> {
-    dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel", "buildNonAssociationsApiModel")
+    dependsOn(openApiModelTasks)
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
     compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
   }
@@ -165,7 +172,11 @@ kotlin {
 }
 
 tasks.named("runKtlintCheckOverMainSourceSet") {
-  dependsOn("buildLocationsInsidePrisonApiModel", "buildManageUsersApiModel", "buildPersonalRelationshipsApiModel", "buildNonAssociationsApiModel")
+  dependsOn(openApiModelTasks)
+}
+
+tasks.named("runKtlintFormatOverMainSourceSet") {
+  dependsOn(openApiModelTasks)
 }
 
 configure<KtlintExtension> {

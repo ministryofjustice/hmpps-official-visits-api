@@ -46,7 +46,7 @@ class NonAssociationCheckController(private val nonAssociationsService: NonAssoc
   )
   @PostMapping(path = ["/prison/{prisonCode}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
   @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__RW')")
-  fun checkForNonAssociationVisits(
+  fun getNonAssociationVisits(
     @PathVariable @Parameter(
       name = "prisonCode",
       description = "The prison code",
@@ -57,5 +57,5 @@ class NonAssociationCheckController(private val nonAssociationsService: NonAssoc
     @RequestBody
     @Parameter(description = "The request with the details of the visit to check", required = true)
     request: NonAssociationCheckRequest,
-  ): List<NonAssociationVisitResponse> = nonAssociationsService.checkForNonAssociationVisits(prisonCode, request)
+  ): List<NonAssociationVisitResponse> = nonAssociationsService.getNonAssociationVisits(prisonCode, request)
 }
