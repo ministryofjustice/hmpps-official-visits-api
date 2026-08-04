@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -162,6 +164,49 @@ class NonAssociationsServiceTest {
     service.getNonAssociationVisits(MOORLAND, request) hasSize 0
   }
 
+  @Test
+  fun `should query visits without times when the request has none`() {
+    stubNonAssociations(listOf(nonAssociation(nonAssociateOne)))
+    stubVisits(emptyList())
+
+    service.getNonAssociationVisits(MOORLAND, request.copy(startTime = null, endTime = null)) hasSize 0
+
+    verifyVisitsQueriedFor(setOf(nonAssociateOne.number), startTime = null, endTime = null)
+  }
+
+  @Test
+  fun `should reject a start time without an end time`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      service.getNonAssociationVisits(MOORLAND, request.copy(endTime = null))
+    }
+
+    exception.message isEqualTo "The start and end times must be supplied together"
+
+    verifyNoInteractions(nonAssociationsApiClient, officialVisitRepository)
+  }
+
+  @Test
+  fun `should reject an end time before the start time`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      service.getNonAssociationVisits(MOORLAND, request.copy(endTime = LocalTime.of(9, 0)))
+    }
+
+    exception.message isEqualTo "The end time must be after the start time"
+
+    verifyNoInteractions(nonAssociationsApiClient, officialVisitRepository)
+  }
+
+  @Test
+  fun `should reject an end time equal to the start time`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      service.getNonAssociationVisits(MOORLAND, request.copy(endTime = request.startTime))
+    }
+
+    exception.message isEqualTo "The end time must be after the start time"
+
+    verifyNoInteractions(nonAssociationsApiClient, officialVisitRepository)
+  }
+
   private fun stubNonAssociations(nonAssociations: List<PrisonerNonAssociation>) = stubNonAssociations(prisonerNonAssociations(nonAssociations = nonAssociations))
 
   private fun stubNonAssociations(response: PrisonerNonAssociations?) {
@@ -169,14 +214,16 @@ class NonAssociationsServiceTest {
   }
 
   private fun stubVisits(visits: List<OfficialVisitEntity>) {
-    whenever(officialVisitRepository.findScheduledVisitsForPrisonersOn(any(), any(), any())).thenReturn(visits)
+    whenever(officialVisitRepository.findScheduledVisitsForPrisonersOn(any(), any(), any(), anyOrNull(), anyOrNull())).thenReturn(visits)
   }
 
-  private fun verifyVisitsQueriedFor(prisonerNumbers: Set<String>) {
+  private fun verifyVisitsQueriedFor(prisonerNumbers: Set<String>, startTime: LocalTime? = request.startTime, endTime: LocalTime? = request.endTime) {
     verify(officialVisitRepository).findScheduledVisitsForPrisonersOn(
       prisonCode = eq(MOORLAND),
       prisonerNumbers = eq(prisonerNumbers),
       visitDate = eq(request.visitDate),
+      startTime = eq(startTime),
+      endTime = eq(endTime),
     )
   }
 

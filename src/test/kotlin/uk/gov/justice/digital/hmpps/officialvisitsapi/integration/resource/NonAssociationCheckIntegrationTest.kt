@@ -120,10 +120,7 @@ class NonAssociationCheckIntegrationTest : IntegrationTestBase() {
       nonAssociations = prisonerNonAssociations(nonAssociations = listOf(nonAssociation(nonAssociate))),
     )
 
-    val response = webTestClient.check(request)
-
-    response hasSize 1
-    with(response.single()) {
+    with(webTestClient.check(request).single()) {
       prisonCode isEqualTo MOORLAND
       officialVisitId isEqualTo nonAssociateVisitId
       visitDate isEqualTo nonAssociateVisit.visitDate
@@ -135,6 +132,82 @@ class NonAssociationCheckIntegrationTest : IntegrationTestBase() {
       firstName isEqualTo "Steve"
       lastName isEqualTo "Smith"
     }
+  }
+
+  @Test
+  fun `should return a visit for each non-associate with a visit on the requested date`() {
+    val otherNonAssociate = Prisoner(MOORLAND, "A1233EE", 3, "Alan", "Jones")
+
+    prisonerSearchApi().stubGetPrisoner(otherNonAssociate)
+    personalRelationshipsApi().stubAllContacts(
+      prisonerNumber = otherNonAssociate.number,
+      prisonerContacts = listOf(
+        prisonerContact(
+          prisonerNumber = otherNonAssociate.number,
+          type = "O",
+          contactId = Moorland.VISITOR.contactId!!,
+          prisonerContactId = Moorland.VISITOR.prisonerContactId!!,
+        ),
+      ),
+    )
+
+    val otherNonAssociateVisitId = testAPIClient.createOfficialVisit(
+      createOfficialVisitRequest(
+        Moorland.MONDAY_9_TO_10_VISIT_SLOT,
+        listOf(Moorland.VISITOR),
+        prisonerNumber = otherNonAssociate.number,
+      ),
+    ).officialVisitId
+
+    nonAssociationsApi().stubGetPrisonerNonAssociations(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      nonAssociations = prisonerNonAssociations(
+        nonAssociations = listOf(
+          nonAssociation(nonAssociate, id = 1),
+          nonAssociation(otherNonAssociate, id = 2),
+        ),
+      ),
+    )
+
+    val response = webTestClient.check(request)
+
+    response.map { it.officialVisitId } containsExactly listOf(nonAssociateVisitId, otherNonAssociateVisitId)
+    response.map { it.prisonerNumber } containsExactly listOf(nonAssociate.number, otherNonAssociate.number)
+    response.map { it.lastName } containsExactly listOf("Smith", "Jones")
+  }
+
+  @Test
+  fun `should return the non-associate's visit when no times are supplied`() {
+    nonAssociationsApi().stubGetPrisonerNonAssociations(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      nonAssociations = prisonerNonAssociations(nonAssociations = listOf(nonAssociation(nonAssociate))),
+    )
+
+    webTestClient.check(request.copy(startTime = null, endTime = null)) hasSize 1
+  }
+
+  @Test
+  fun `should return no visits when the supplied times do not overlap the non-associate's visit`() {
+    nonAssociationsApi().stubGetPrisonerNonAssociations(
+      prisonerNumber = MOORLAND_PRISONER.number,
+      nonAssociations = prisonerNonAssociations(nonAssociations = listOf(nonAssociation(nonAssociate))),
+    )
+
+    webTestClient.check(
+      request.copy(startTime = nonAssociateVisit.endTime, endTime = nonAssociateVisit.endTime.plusHours(1)),
+    ) hasSize 0
+  }
+
+  @Test
+  fun `should reject a start time without an end time`() {
+    webTestClient.post()
+      .uri("/official-visit/non-association-check/prison/$MOORLAND")
+      .bodyValue(request.copy(endTime = null))
+      .accept(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody().jsonPath("$.userMessage").isEqualTo("The start and end times must be supplied together")
   }
 
   @Test

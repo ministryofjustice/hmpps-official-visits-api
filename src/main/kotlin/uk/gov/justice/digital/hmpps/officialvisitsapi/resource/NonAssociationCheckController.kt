@@ -28,7 +28,7 @@ class NonAssociationCheckController(private val nonAssociationsService: NonAssoc
 
   @Operation(
     summary = "Endpoint to check whether a prisoner's non-associates already have an official visit.",
-    description = "Returns the official visits of any of the prisoner's open non-associations that are scheduled at the same prison on the same date as the visit being checked. Returns an empty list when the prisoner has no open non-associations, or when none of them have a visit on that date.",
+    description = "Returns the official visits of any of the prisoner's open non-associations that are scheduled at the same prison on the same date as the visit being checked. When the start and end times are supplied, only the visits overlapping them are returned. Returns an empty list when the prisoner has no open non-associations, or when none of them have a matching visit.",
   )
   @ApiResponses(
     value = [

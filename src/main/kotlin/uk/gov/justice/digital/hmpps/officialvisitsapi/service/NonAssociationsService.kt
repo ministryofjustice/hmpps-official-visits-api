@@ -24,9 +24,17 @@ class NonAssociationsService(
 
   /**
    * Returns the scheduled official visits that any of the prisoner's open non-associations have at the same prison
-   * on the same date as the visit being checked.
+   * on the same date as the visit being checked, filtered to those overlapping the start and end times if supplied.
    */
   fun getNonAssociationVisits(prisonCode: String, request: NonAssociationCheckRequest): List<NonAssociationVisitResponse> {
+    val startTime = request.startTime
+    val endTime = request.endTime
+
+    require((startTime == null) == (endTime == null)) { "The start and end times must be supplied together" }
+    if (startTime != null && endTime != null) {
+      require(endTime > startTime) { "The end time must be after the start time" }
+    }
+
     // Get the prisoner's open non-associations, keyed by the other prisoner's number
     val nonAssociatesByPrisonerNumber = nonAssociationsApiClient
       .getPrisonerNonAssociations(request.prisonerNumber)
@@ -44,6 +52,8 @@ class NonAssociationsService(
       prisonCode = prisonCode,
       prisonerNumbers = nonAssociatesByPrisonerNumber.keys,
       visitDate = request.visitDate,
+      startTime = startTime,
+      endTime = endTime,
     )
 
     if (visits.isEmpty()) {

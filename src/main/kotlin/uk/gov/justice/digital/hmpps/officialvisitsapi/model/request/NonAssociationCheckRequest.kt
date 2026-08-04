@@ -17,11 +17,11 @@ data class NonAssociationCheckRequest(
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd")
   val visitDate: LocalDate,
 
-  @Schema(description = "The start time of the visit being checked", example = "10:00")
+  @Schema(description = "The start time of the visit being checked. Optional, but must be supplied with the end time. When the times are supplied only visits overlapping them are returned", example = "10:00")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
-  val startTime: LocalTime,
+  val startTime: LocalTime? = null,
 
-  @Schema(description = "The end time of the visit being checked", example = "11:00")
+  @Schema(description = "The end time of the visit being checked. Optional, but must be supplied with the start time. When the times are supplied only visits overlapping them are returned", example = "11:00")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
-  val endTime: LocalTime,
+  val endTime: LocalTime? = null,
 )
