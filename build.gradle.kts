@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.4"
   id("org.openapi.generator") version "7.24.0"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
@@ -23,12 +23,9 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
   // OpenAPI dependencies
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
-  implementation("org.springdoc:springdoc-openapi-starter-common:3.0.3")
-  constraints {
-    implementation("org.webjars:swagger-ui:5.32.2")
-  }
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.1.0")
 
   // Postgresql dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
@@ -38,7 +35,7 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.30.0")
 
   // Gov Notify client
-  implementation("uk.gov.service.notify:notifications-java-client:6.0.1-RELEASE")
+  implementation("uk.gov.service.notify:notifications-java-client:6.1.0-RELEASE")
 
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
