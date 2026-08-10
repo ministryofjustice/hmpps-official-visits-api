@@ -32,4 +32,4 @@ CREATE TABLE visit_review_detail
 );
 
 CREATE INDEX idx_visit_review_detail_issue_type ON visit_review_detail (issue_type);
-CREATE INDEX idx_visit_review_acknowledgement_time ON visit_review_detail (acknowledgement_time);
+CREATE INDEX idx_visit_review_detail_acknowledgement_time ON visit_review_detail (acknowledgement_time);
