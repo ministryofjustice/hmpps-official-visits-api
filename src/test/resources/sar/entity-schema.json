@@ -201,5 +201,27 @@
     "updatedBy": "String",
     "updatedTime": "LocalDateTime",
     "visitorEquipmentId": "long"
+  },
+  "VisitReviewQueueEntity": {
+    "visitReviewQueueId": "long",
+    "officialVisitId": "long",
+    "createdTime": "LocalDateTime",
+    "triggeringEvent": "String"
+  },
+  "VisitReviewEntity": {
+    "expiredTime": "LocalDateTime",
+    "officialVisitId": "long",
+    "raisedTime": "LocalDateTime",
+    "visitReviewDetails":"List",
+    "visitReviewId": "long"
+  },
+  "VisitReviewDetailEntity": {
+    "acknowledgedBy":"String",
+    "acknowledgedTime":"LocalDateTime",
+    "issueDetail":"String",
+    "issueType":"IssueType",
+    "raisedTime":"LocalDateTime",
+    "visitReview":"VisitReviewEntity",
+    "visitReviewDetailId":"long"
   }
 }
