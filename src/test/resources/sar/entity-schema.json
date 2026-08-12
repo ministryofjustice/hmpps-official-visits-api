@@ -223,5 +223,25 @@
     "raisedTime":"LocalDateTime",
     "visitReview":"VisitReviewEntity",
     "visitReviewDetailId":"long"
+  },
+  "VisitForReviewEntity": {
+    "acknowledgedBy":"String",
+    "acknowledgedTime":"LocalDateTime",
+    "detailRaisedTime":"LocalDateTime",
+    "dpsLocationId":"UUID",
+    "endTime":"LocalTime",
+    "expiredTime":"LocalDateTime",
+    "issueDetail":"String",
+    "issueType":"IssueType",
+    "officialVisitId":"long",
+    "prisonCode":"String",
+    "prisonerNumber":"String",
+    "raisedTime":"LocalDateTime",
+    "startTime":"LocalTime",
+    "visitDate":"LocalDate",
+    "visitReviewDetailId":"long",
+    "visitReviewId":"long",
+    "visitStatusCode":"VisitStatusType",
+    "visitTypeCode":"VisitType"
   }
 }
