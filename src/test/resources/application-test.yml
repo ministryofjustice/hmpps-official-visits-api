@@ -15,6 +15,9 @@ spring:
 
   flyway:
     locations: classpath:/migrations/common,classpath:/migrations/test
+    placeholders:
+      dpr_user: dpr_user
+      dpr_password: dpr_password
 
 server:
   shutdown: immediate
@@ -70,7 +73,7 @@ hmpps:
   sar:
     tests:
       attachments-expected: false
-      expected-flyway-schema-version: 2026.08.10
+      expected-flyway-schema-version: 2026.08.11
       expected-jpa-entity-schema:
         path: /sar/entity-schema.json
       expected-api-response:
