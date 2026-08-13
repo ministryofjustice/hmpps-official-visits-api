@@ -69,7 +69,7 @@ generic-service:
     feature-toggles:
       FEATURE_DPS_ENABLED_PRISONS: "FEATURE_DPS_ENABLED_PRISONS?"
       FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS: 'FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS'
-    digital_prison_reporting:
+    digital-prison-reporting:
       DPR_USER: "DPR_USER"
       DPR_PASSWORD: "DPR_PASSWORD"
 
