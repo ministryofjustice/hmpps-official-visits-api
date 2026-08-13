@@ -14,6 +14,8 @@ export DB_NAME=official-visits-db
 export DB_USER=official-visits
 export DB_PASS=official-visits
 export DB_SSL_MODE=prefer
+export DPR_USER=dpr_user
+export DPR_PASSWORD=dpr_password
 
 # Pull in any secret values into the current shell environment e.g. system clients/secrets, and any other values to override.
 export $(cat .env | xargs)
