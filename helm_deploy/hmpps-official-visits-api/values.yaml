@@ -69,9 +69,9 @@ generic-service:
     feature-toggles:
       FEATURE_DPS_ENABLED_PRISONS: "FEATURE_DPS_ENABLED_PRISONS?"
       FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS: 'FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS'
-    rds-postgresql-read-replica-output:
-      DPR_USER: "database_username"
-      DPR_PASSWORD: "database_password"
+    digital_prison_reporting:
+      DPR_USER: "DPR_USER"
+      DPR_PASSWORD: "DPR_PASSWORD"
 
   allowlist:
     gov-notify-1: 52.17.149.153
