@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.4"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.5"
   id("org.openapi.generator") version "7.24.0"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
@@ -35,18 +35,18 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.30.0")
 
   // Gov Notify client
-  implementation("uk.gov.service.notify:notifications-java-client:6.1.0-RELEASE")
+  implementation("uk.gov.service.notify:notifications-java-client:6.2.0-RELEASE")
 
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.0")
-  testImplementation("org.springframework.security:spring-security-test:7.0.2")
+  testImplementation("org.springframework.security:spring-security-test:7.1.0")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
 
   // SAR test library
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.4.3")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.0")
 
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
 
@@ -55,9 +55,9 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.2")
   testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.2.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.2")
 
   // Mockito
   testImplementation("org.mockito:mockito-inline:5.2.0")
@@ -69,7 +69,7 @@ dependencies {
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
 
   // Swagger
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.43") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.46") {
     exclude(group = "io.swagger.core.v3")
   }
 }
