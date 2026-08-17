@@ -55,7 +55,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:5.1.2")
+  testImplementation("net.javacrumbs.json-unit:json-unit:6.2.0")
   testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.2.0")
   testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.2")
 
