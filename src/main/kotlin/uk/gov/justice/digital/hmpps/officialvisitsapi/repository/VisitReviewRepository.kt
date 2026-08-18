@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 
 @Repository
-interface VisitReviewRepository : JpaRepository<VisitReviewEntity, Long>
+interface VisitReviewRepository : JpaRepository<VisitReviewEntity, Long> {
+  fun findByOfficialVisitId(officialVisitId: Long): List<VisitReviewEntity>
+}
