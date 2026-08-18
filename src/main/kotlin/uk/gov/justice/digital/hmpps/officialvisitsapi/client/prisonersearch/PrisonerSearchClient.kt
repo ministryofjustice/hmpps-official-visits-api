@@ -100,6 +100,7 @@ data class Prisoner(
   val offenderBookId: String? = null,
   val locationDescription: String? = null,
   val prisonName: String? = null,
+  val status: String? = null,
 ) {
   val fullName: String = "$firstName $lastName"
 }

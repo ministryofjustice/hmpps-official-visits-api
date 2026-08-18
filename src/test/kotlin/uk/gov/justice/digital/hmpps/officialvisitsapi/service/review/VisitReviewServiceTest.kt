@@ -1,8 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
-import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.stub
@@ -35,12 +33,10 @@ class VisitReviewServiceTest {
   }
 
   @Test
-  fun `should throw error when visit not found`() {
+  fun `should be no-op when visit not found`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.empty()
 
-    assertThrows<EntityNotFoundException> {
-      service.check(1, VisitReviewCheckType.CHECK)
-    }
+    service.check(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker, releaseChecker, transferChecker)
