@@ -1,11 +1,11 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
-import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import java.time.LocalDate
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class VisitReviewService(
@@ -16,9 +16,7 @@ class VisitReviewService(
 ) {
   @Transactional
   fun check(officialVisitId: Long, checkType: VisitReviewCheckType) {
-    val officialVisit = officialVisitRepository.findById(officialVisitId)
-      .orElseThrow { throw EntityNotFoundException("Official visit with id $officialVisitId not found") }
-
+    val officialVisit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return
     val today = LocalDate.now()
 
     when {
