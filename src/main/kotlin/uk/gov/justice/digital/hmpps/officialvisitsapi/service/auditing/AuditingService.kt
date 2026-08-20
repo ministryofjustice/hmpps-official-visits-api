@@ -146,19 +146,30 @@ class AuditingService(
     }
   }
 
-  private fun AuditedEventEntity.toAuditEventChanges() = this.detailText
-    .split(';')
-    .filter { it.isNotBlank() }
-    .map {
-      val (field, oldValue, newValue) = it.split('|').let { element -> Triple(element[0], element[1], element[2]) }
-
-      AuditedEventChange(
-        field = field,
-        oldValue = oldValue.ifBlank { null },
-        newValue = newValue.ifBlank { null },
-        significantChange = isSignificantChange(field),
-      )
+  private fun AuditedEventEntity.toAuditEventChanges(): List<AuditedEventChange> {
+    if (this.detailText.isBlank() || !this.detailText.contains('|')) {
+      // e.g. "No recorded changes." — not delimiter-encoded change data
+      logger.warn("Skipping no record changes audit detail segment: '${this.detailText}' in event ${this.auditedEventId} for official visit ${this.officialVisitId}")
+      return emptyList()
     }
+
+    return this.detailText
+      .split(';')
+      .filter { it.isNotBlank() }
+      .mapNotNull {
+        val parts = it.split('|')
+        if (parts.size != 3) {
+          logger.warn("Skipping malformed audit detail segment: '$it' in event ${this.auditedEventId} for official visit ${this.officialVisitId}")
+          return@mapNotNull null
+        }
+        AuditedEventChange(
+          field = parts[0],
+          oldValue = parts[1].ifBlank { null },
+          newValue = parts[2].ifBlank { null },
+          significantChange = isSignificantChange(parts[0]),
+        )
+      }
+  }
 
   private fun isSignificantChange(field: String) = listOf("visit_date", "start_time", "end_time", "location", "visit_status", "visit_type").contains(field)
 
