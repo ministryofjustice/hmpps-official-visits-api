@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEven
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
@@ -84,6 +85,17 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .expectStatus().isOk
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
     .expectBody<List<AuditedEventResponse>>()
+    .returnResult().responseBody!!
+
+  fun getVisitsForReviewCount(prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
+    .get()
+    .uri("/visit-review/prison/${prisonUser.caseloads.first()}/count")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody<VisitsForReviewCountResponse>()
     .returnResult().responseBody!!
 
   private fun setAuthorisation(prisonUser: PrisonUser, roles: List<String>): (HttpHeaders) -> Unit = run {
