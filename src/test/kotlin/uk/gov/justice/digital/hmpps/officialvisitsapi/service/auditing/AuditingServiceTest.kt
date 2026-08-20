@@ -256,6 +256,29 @@ class AuditingServiceTest {
   }
 
   @Test
+  fun `should not map visitor change event with no recorded changes`() {
+    val visitorChangedEvent = event(auditEventId = 101, summaryText = "Visitor changed", detailText = "No recorded changes.")
+
+    whenever(auditedEventRepository.findAllByOfficialVisitId(visitId)) doReturn listOf(visitorChangedEvent)
+
+    val event = auditingService.findByOfficialVisitId(visitId).single()
+
+    with(event) {
+      auditedEventId isEqualTo 101L
+      officialVisitId isEqualTo visitId
+      eventType isEqualTo "UPDATE"
+      eventSummary isEqualTo "Visitor changed"
+      eventSource isEqualTo "DPS"
+      eventDateTime isEqualTo visitorChangedEvent.eventDateTime
+      eventUsername isEqualTo visitorChangedEvent.userName
+      eventUserFullName isEqualTo visitorChangedEvent.userFullName
+      significantChange isBool false
+      eventVersion isEqualTo 2
+      eventChanges hasSize 0
+    }
+  }
+
+  @Test
   fun `should only include staff facing events`() {
     val staffFacingEvent = event(
       auditEventId = 100,
