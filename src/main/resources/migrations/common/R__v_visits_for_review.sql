@@ -17,7 +17,7 @@ SELECT ov.prison_code,
        vrd.issue_type,
        vrd.issue_detail,
        vrd.acknowledged_by,
-       vrd.acknowledgement_time,
+       vrd.acknowledged_time,
        vrd.raised_time as detail_raised_time
 FROM official_visit ov
 JOIN prisoner_visited pv on pv.official_visit_id = ov.official_visit_id

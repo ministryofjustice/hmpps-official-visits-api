@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateSlotResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateVisitorsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitForReviewService
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -55,6 +57,7 @@ class OfficialVisitFacadeTest {
   private val overlappingVisitsService: OverlappingVisitsService = mock()
   private val notificationsService: NotificationsService = mock()
   private val auditingService: AuditingService = mock()
+  private val visitForReviewService: VisitForReviewService = mock()
   private val user = MOORLAND_PRISON_USER
 
   private val facade = OfficialVisitFacade(
@@ -68,6 +71,7 @@ class OfficialVisitFacadeTest {
     overlappingVisitsService,
     notificationsService,
     auditingService,
+    visitForReviewService,
   )
 
   @Test
@@ -159,6 +163,23 @@ class OfficialVisitFacadeTest {
     facade.searchForOfficialVisitSummaries(MOORLAND, request, MOORLAND_PRISON_USER, 0, 10)
 
     verify(officialVisitSearchService).searchForOfficialVisitSummaries(MOORLAND, request, MOORLAND_PRISON_USER, 0, 10)
+  }
+
+  @Test
+  fun `should delegate to service to get visits for review count`() {
+    whenever(visitForReviewService.countVisitsForReview(MOORLAND)).thenReturn(VisitsForReviewCountResponse(MOORLAND, 2))
+
+    facade.countVisitsForReview(MOORLAND, MOORLAND_PRISON_USER) isEqualTo VisitsForReviewCountResponse(MOORLAND, 2)
+
+    verify(visitForReviewService).countVisitsForReview(MOORLAND)
+  }
+
+  @Test
+  fun `should fail visits for review count if user is not in the correct caseload`() {
+    assertThrows<CaseloadAccessException> {
+      facade.countVisitsForReview(MOORLAND, PENTONVILLE_PRISON_USER)
+    }
+      .message isEqualTo "Visits for review count cannot be viewed for a prison outside the user's caseload list"
   }
 
   @Test

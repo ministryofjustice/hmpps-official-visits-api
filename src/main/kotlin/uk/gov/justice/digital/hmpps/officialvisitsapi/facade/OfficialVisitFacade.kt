@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OverlappingV
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -26,6 +27,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingS
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitForReviewService
 
 @Component
 class OfficialVisitFacade(
@@ -39,6 +41,7 @@ class OfficialVisitFacade(
   private val overlappingVisitsService: OverlappingVisitsService,
   private val notificationsService: NotificationsService,
   private val auditingService: AuditingService,
+  private val visitForReviewService: VisitForReviewService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
@@ -243,6 +246,14 @@ class OfficialVisitFacade(
   )
 
   fun findOverlappingScheduledVisits(prisonCode: String, request: OverlappingVisitsCriteriaRequest) = overlappingVisitsService.findOverlappingScheduledVisits(prisonCode, request)
+
+  fun countVisitsForReview(prisonCode: String, user: User): VisitsForReviewCountResponse {
+    if (user is PrisonUser) {
+      checkPrisonUsersCaseloads(prisonCode, user, "Visits for review count cannot be viewed for a prison outside the user's caseload list")
+    }
+
+    return visitForReviewService.countVisitsForReview(prisonCode)
+  }
 
   private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String, hiddenException: Boolean = false) {
     if (!user.hasCaseloadAccess(prisonCode)) {
