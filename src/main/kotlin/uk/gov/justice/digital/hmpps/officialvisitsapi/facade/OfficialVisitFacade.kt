@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
@@ -14,6 +16,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOffic
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -253,6 +256,14 @@ class OfficialVisitFacade(
     }
 
     return visitForReviewService.countVisitsForReview(prisonCode)
+  }
+
+  fun getVisitsForReview(prisonCode: String, user: User, pageable: Pageable): PagedModel<VisitsForReviewResponse> {
+    if (user is PrisonUser) {
+      checkPrisonUsersCaseloads(prisonCode, user, "Visits for review cannot be viewed for a prison outside the user's caseload list")
+    }
+
+    return visitForReviewService.getVisitsForReview(prisonCode, pageable)
   }
 
   private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String, hiddenException: Boolean = false) {
