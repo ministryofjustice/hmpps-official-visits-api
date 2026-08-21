@@ -18,6 +18,8 @@ import java.util.UUID
 @Table(name = "v_visits_for_review")
 data class VisitForReviewEntity(
   @Id
+  val visitReviewDetailId: Long,
+
   val officialVisitId: Long,
 
   val prisonCode: String,
@@ -43,8 +45,6 @@ data class VisitForReviewEntity(
   val raisedTime: LocalDateTime,
 
   val expiredTime: LocalDateTime? = null,
-
-  val visitReviewDetailId: Long,
 
   @Enumerated(EnumType.STRING)
   val issueType: IssueType,
