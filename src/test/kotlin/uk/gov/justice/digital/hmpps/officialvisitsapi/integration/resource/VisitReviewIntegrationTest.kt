@@ -4,7 +4,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.web.PagedModel
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
@@ -21,8 +20,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTes
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import java.time.LocalDateTime
 
@@ -122,7 +119,6 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
 
     val pageOne = testAPIClient.getVisitsForReviewList()
 
-
     with(pageOne) {
       val response = content.get(0)
       response.visit.officialVisitId isEqualTo matchingVisit.officialVisitId
@@ -136,12 +132,10 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
       page.totalElements isEqualTo 1
       page.totalPages isEqualTo 1
     }
-
   }
 
   @Test
   fun `should get empty response with headers for visit review list`() {
-
     val pageOne = testAPIClient.getVisitsForReviewList()
 
     with(pageOne) {
@@ -151,7 +145,6 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
       page.totalElements isEqualTo 0
       page.totalPages isEqualTo 0
     }
-
   }
 
   private fun createVisitReview(
@@ -175,5 +168,4 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
     visitReviewRepository.deleteAll()
     clearAllVisitData()
   }
-
 }
