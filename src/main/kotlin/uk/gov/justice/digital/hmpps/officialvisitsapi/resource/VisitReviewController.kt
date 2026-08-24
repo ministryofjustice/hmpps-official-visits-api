@@ -104,7 +104,7 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
       required = true,
     ) prisonCode: String,
     @Parameter(hidden = true)
-    @PageableDefault(size = 10, page = 0, direction = Sort.Direction.DESC, sort = ["visitDate"])
+    @PageableDefault(size = 10, page = 0, direction = Sort.Direction.ASC, sort = ["visitDate"])
     pageable: Pageable,
     httpRequest: HttpServletRequest,
   ): PagedModel<VisitsForReviewResponse> = facade.getVisitsForReview(prisonCode, httpRequest.getLocalRequestContext().user, pageable)
