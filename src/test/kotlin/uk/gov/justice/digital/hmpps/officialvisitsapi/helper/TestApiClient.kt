@@ -102,7 +102,7 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
 
   fun getVisitsForReviewList(prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .get()
-    .uri("/visit-review/prison/${prisonUser.caseloads.first()}/list?page=0&size=10&sort=visitDate,DESC")
+    .uri("/visit-review/prison/${prisonUser.caseloads.first()}/list?page=0&size=10")
     .accept(MediaType.APPLICATION_JSON)
     .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
     .exchange()
