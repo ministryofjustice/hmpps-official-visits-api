@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 
+import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOffic
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
@@ -98,6 +100,17 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .expectBody<VisitsForReviewCountResponse>()
     .returnResult().responseBody!!
 
+  fun getVisitsForReviewList(prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
+    .get()
+    .uri("/visit-review/prison/${prisonUser.caseloads.first()}/list?page=0&size=10")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody<VisitsForReviewResponseResponse>()
+    .returnResult().responseBody!!
+
   private fun setAuthorisation(prisonUser: PrisonUser, roles: List<String>): (HttpHeaders) -> Unit = run {
     jwtAuthHelper.setAuthorisationHeader(
       username = prisonUser.username,
@@ -105,4 +118,9 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
       roles = roles,
     )
   }
+
+  data class VisitsForReviewResponseResponse(
+    val content: List<VisitsForReviewResponse>,
+    val page: PagedModel.PageMetadata,
+  )
 }

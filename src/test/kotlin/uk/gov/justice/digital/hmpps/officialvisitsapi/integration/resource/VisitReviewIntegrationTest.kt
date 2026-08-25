@@ -23,7 +23,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import java.time.LocalDateTime
 
-class VisitReviewCountIntegrationTest : IntegrationTestBase() {
+class VisitReviewIntegrationTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var visitReviewRepository: VisitReviewRepository
@@ -41,7 +41,18 @@ class VisitReviewCountIntegrationTest : IntegrationTestBase() {
   fun setupTest() {
     clearReviewAndVisitData()
     prisonerSearchApi().stubGetPrisonName(MOORLAND, MOORLAND_PRISONER)
+    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation)
+    locationsInsidePrisonApi().stubGetLocationById(moorlandLocation2)
     locationsInsidePrisonApi().stubGetOfficialVisitLocationsAtPrison(MOORLAND, listOf(moorlandLocation, moorlandLocation2))
+    personalRelationshipsApi().stubReferenceGroup()
+    personalRelationshipsApi().stubForContactById(
+      prisonerContact(
+        prisonerNumber = MOORLAND_PRISONER.number,
+        type = "O",
+        contactId = 123,
+        prisonerContactId = 456,
+      ),
+    )
     personalRelationshipsApi().stubAllContacts(
       prisonerNumber = MOORLAND_PRISONER.number,
       prisonerContacts = listOf(
@@ -85,16 +96,70 @@ class VisitReviewCountIntegrationTest : IntegrationTestBase() {
     response.visitsForReviewCount isEqualTo 1L
   }
 
+  @Test
+  fun `should get current visits for review with grouped issues`() {
+    val matchingVisit = testAPIClient.createOfficialVisit(
+      createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+      MOORLAND_PRISON_USER,
+    )
+    val cancelledVisit = testAPIClient.createOfficialVisit(
+      createOfficialVisitRequest(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+      MOORLAND_PRISON_USER,
+    )
+    officialVisitRepository.findById(cancelledVisit.officialVisitId).orElseThrow().apply {
+      visitStatusCode = VisitStatusType.CANCELLED
+      officialVisitRepository.saveAndFlush(this)
+    }
+
+    createVisitReview(
+      officialVisitId = matchingVisit.officialVisitId,
+      issueTypes = listOf(IssueType.VISITOR_NOT_APPROVED, IssueType.PRISONER_TRANSFERRED),
+    )
+    createVisitReview(cancelledVisit.officialVisitId)
+
+    val pageOne = testAPIClient.getVisitsForReviewList()
+
+    with(pageOne) {
+      val response = content.get(0)
+      response.visit.officialVisitId isEqualTo matchingVisit.officialVisitId
+      response.visit.prisonerVisited?.prisonerNumber isEqualTo MOORLAND_PRISONER.number
+      response.visit.locationDescription isEqualTo moorlandLocation.localName
+      response.issues.size isEqualTo 2
+      response.issues[0].issueType isEqualTo IssueType.VISITOR_NOT_APPROVED
+      response.issues[1].issueType isEqualTo IssueType.PRISONER_TRANSFERRED
+      page.size isEqualTo 10
+      page.number isEqualTo 0
+      page.totalElements isEqualTo 1
+      page.totalPages isEqualTo 1
+    }
+  }
+
+  @Test
+  fun `should get empty response with headers for visit review list`() {
+    val pageOne = testAPIClient.getVisitsForReviewList()
+
+    with(pageOne) {
+      content isEqualTo emptyList()
+      page.size isEqualTo 10
+      page.number isEqualTo 0
+      page.totalElements isEqualTo 0
+      page.totalPages isEqualTo 0
+    }
+  }
+
   private fun createVisitReview(
     officialVisitId: Long,
     expiredTime: LocalDateTime? = null,
+    issueTypes: List<IssueType> = listOf(IssueType.VISITOR_NOT_APPROVED),
   ) {
     val review = VisitReviewEntity(
       officialVisitId = officialVisitId,
       raisedTime = LocalDateTime.now(),
     )
     review.expiredTime = expiredTime
-    review.addVisitReviewDetails(LocalDateTime.now(), IssueType.VISITOR_NOT_APPROVED, null)
+    issueTypes.forEach { issueType ->
+      review.addVisitReviewDetails(LocalDateTime.now(), issueType, null)
+    }
 
     visitReviewRepository.saveAndFlush(review)
   }

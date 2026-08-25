@@ -7,7 +7,10 @@ import org.mockito.Mockito.mock
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.data.web.PagedModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.VisitorAndContactId
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
@@ -28,6 +31,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitUpdateVisitorsResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitorUpdated
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCancellationService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCompletionService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitCreateService
@@ -180,6 +184,40 @@ class OfficialVisitFacadeTest {
       facade.countVisitsForReview(MOORLAND, PENTONVILLE_PRISON_USER)
     }
       .message isEqualTo "Visits for review count cannot be viewed for a prison outside the user's caseload list"
+  }
+
+  @Test
+  fun `should delegate to service to get visits for review`() {
+    val pageable = PageRequest.of(0, 10)
+
+    val result = PagedModel(
+      PageImpl(
+        listOf(
+          VisitsForReviewResponse(
+            visit = mock(),
+            issues = listOf(mock()),
+          ),
+        ),
+        pageable,
+        1,
+      ),
+    )
+
+    whenever(visitForReviewService.getVisitsForReview(MOORLAND, pageable)).thenReturn(result)
+
+    facade.getVisitsForReview(MOORLAND, MOORLAND_PRISON_USER, pageable) isEqualTo result
+
+    verify(visitForReviewService).getVisitsForReview(MOORLAND, pageable)
+  }
+
+  @Test
+  fun `should fail get visits for review if user is not in the correct caseload`() {
+    val pageable = PageRequest.of(0, 10)
+
+    assertThrows<CaseloadAccessException> {
+      facade.getVisitsForReview(MOORLAND, PENTONVILLE_PRISON_USER, pageable)
+    }
+      .message isEqualTo "Visits for review cannot be viewed for a prison outside the user's caseload list"
   }
 
   @Test
