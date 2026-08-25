@@ -49,6 +49,11 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
           ),
         ],
       ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Official visit not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
     ],
   )
   @ResponseStatus(HttpStatus.OK)
@@ -80,6 +85,11 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
             schema = Schema(implementation = VisitsForReviewResponse::class),
           ),
         ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Official visit not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
