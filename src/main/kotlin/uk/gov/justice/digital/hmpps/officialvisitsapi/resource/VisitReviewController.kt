@@ -52,7 +52,7 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Official visit not found",
+        description = "User does not have access to caseload",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -89,7 +89,7 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Official visit not found",
+        description = "User does not have access to caseload",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
