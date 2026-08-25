@@ -44,6 +44,19 @@ class VisitReviewEntity(
 
   fun visitReviewDetails() = visitReviewDetails.toList()
 
+  fun updateAcknowledgedDetails(acknowledgedTime: LocalDateTime, acknowledgedBy: String) {
+    if (expiredTime != null) {
+      return
+    }
+
+    visitReviewDetails
+      .filter { it.acknowledgedTime == null && it.acknowledgedBy == null }
+      .forEach { detail ->
+        detail.acknowledgedTime = acknowledgedTime
+        detail.acknowledgedBy = acknowledgedBy
+      }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false

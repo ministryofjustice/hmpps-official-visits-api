@@ -111,6 +111,14 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .expectBody<VisitsForReviewResponseResponse>()
     .returnResult().responseBody!!
 
+  fun acknowledgeVisitForReview(visitReviewId: Long, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
+    .put()
+    .uri("/visit-review/prison/${prisonUser.caseloads.first()}/id/$visitReviewId/acknowledge")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isOk
+
   private fun setAuthorisation(prisonUser: PrisonUser, roles: List<String>): (HttpHeaders) -> Unit = run {
     jwtAuthHelper.setAuthorisationHeader(
       username = prisonUser.username,

@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
+import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
@@ -8,13 +10,17 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitForReviewEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitForReviewRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -24,8 +30,10 @@ import java.util.UUID
 class VisitForReviewServiceTest {
   private val visitForReviewRepository: VisitForReviewRepository = mock()
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService = mock()
-
-  private val service = VisitForReviewService(visitForReviewRepository, officialVisitsRetrievalService)
+  private val now = LocalDateTime.now()
+  private val timeSource = TimeSource { now }
+  private val visitReviewRepository: VisitReviewRepository = mock()
+  private val service = VisitForReviewService(visitForReviewRepository, officialVisitsRetrievalService, timeSource, visitReviewRepository)
 
   @Test
   fun `should get page of visits for review with grouped issues`() {
@@ -64,6 +72,25 @@ class VisitForReviewServiceTest {
       IssueType.PRISONER_TRANSFERRED,
     )
     verify(officialVisitsRetrievalService).getOfficialVisitByPrisonCodeAndId("MDI", 1)
+  }
+
+  @Test
+  fun `should acknowledge visit review`() {
+    val visitReview = mock<VisitReviewEntity>()
+    whenever(visitReviewRepository.findByVisitReviewIdAndPrisonCode(1, "MDI")).thenReturn(visitReview)
+
+    service.acknowledgeVisitReview("MDI", 1, MOORLAND_PRISON_USER)
+
+    verify(visitReview).updateAcknowledgedDetails(any(), eq(MOORLAND_PRISON_USER.username))
+  }
+
+  @Test
+  fun `should throw EntityNotFoundException when visit review not found`() {
+    whenever(visitReviewRepository.findByVisitReviewIdAndPrisonCode(1, "MDI")).thenReturn(null)
+
+    assertThrows<EntityNotFoundException> {
+      service.acknowledgeVisitReview("MDI", 1, MOORLAND_PRISON_USER)
+    }.message isEqualTo "Visit review with id 1 and prison code MDI not found"
   }
 
   private fun visitForReviewEntity(

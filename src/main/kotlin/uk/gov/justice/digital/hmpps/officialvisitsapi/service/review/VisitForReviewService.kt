@@ -1,16 +1,20 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitForReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitForReviewIssue
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitForReviewRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
 import java.time.LocalDate
 
 @Service
@@ -18,6 +22,8 @@ import java.time.LocalDate
 class VisitForReviewService(
   private val visitForReviewRepository: VisitForReviewRepository,
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService,
+  private val timeSource: TimeSource,
+  private val visitReviewRepository: VisitReviewRepository,
 ) {
 
   fun countVisitsForReview(prisonCode: String): VisitsForReviewCountResponse = VisitsForReviewCountResponse(
@@ -27,6 +33,14 @@ class VisitForReviewService(
       fromDate = LocalDate.now(),
     ),
   )
+
+  @Transactional
+  fun acknowledgeVisitReview(prisonCode: String, visitReviewId: Long, user: User) {
+    val visitReview = visitReviewRepository.findByVisitReviewIdAndPrisonCode(visitReviewId, prisonCode)
+      ?: throw EntityNotFoundException("Visit review with id $visitReviewId and prison code $prisonCode not found")
+
+    visitReview.updateAcknowledgedDetails(timeSource.now(), user.username)
+  }
 
   fun getVisitsForReview(prisonCode: String, pageable: Pageable): PagedModel<VisitsForReviewResponse> {
     val fromDate = LocalDate.now()

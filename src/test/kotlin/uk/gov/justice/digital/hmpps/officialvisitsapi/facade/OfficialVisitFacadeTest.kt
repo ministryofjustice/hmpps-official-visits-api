@@ -371,4 +371,19 @@ class OfficialVisitFacadeTest {
 
     verify(notificationsService).getNotificationsByOfficialVisitId(officialVisitId, sort)
   }
+
+  @Test
+  fun `should delegate to service to acknowledge visits for review`() {
+    facade.acknowledgeVisitReview(MOORLAND, 1, MOORLAND_PRISON_USER)
+
+    verify(visitForReviewService).acknowledgeVisitReview(MOORLAND, 1, MOORLAND_PRISON_USER)
+  }
+
+  @Test
+  fun `should fail to acknowledge visits for review if user is not in the correct caseload`() {
+    assertThrows<CaseloadAccessException> {
+      facade.acknowledgeVisitReview(MOORLAND, 1, PENTONVILLE_PRISON_USER)
+    }
+      .message isEqualTo "Visit review cannot be acknowledged for a prison outside the user's caseload list"
+  }
 }
