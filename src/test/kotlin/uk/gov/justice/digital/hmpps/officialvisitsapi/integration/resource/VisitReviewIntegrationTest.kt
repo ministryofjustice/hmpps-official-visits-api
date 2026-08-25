@@ -147,11 +147,33 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `should acknowledge visit for review`() {
+    val matchingVisit = testAPIClient.createOfficialVisit(
+      createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+      MOORLAND_PRISON_USER,
+    )
+
+    val visitReview = createVisitReview(matchingVisit.officialVisitId)
+    val before = testAPIClient.getVisitsForReviewList()
+    with(before) {
+      content.size isEqualTo 1
+      page.totalElements isEqualTo 1
+    }
+
+    testAPIClient.acknowledgeVisitForReview(visitReview.visitReviewId, MOORLAND_PRISON_USER)
+
+    val after = testAPIClient.getVisitsForReviewList()
+    with(after) {
+      content isEqualTo emptyList()
+    }
+  }
+
   private fun createVisitReview(
     officialVisitId: Long,
     expiredTime: LocalDateTime? = null,
     issueTypes: List<IssueType> = listOf(IssueType.VISITOR_NOT_APPROVED),
-  ) {
+  ): VisitReviewEntity {
     val review = VisitReviewEntity(
       officialVisitId = officialVisitId,
       raisedTime = LocalDateTime.now(),
@@ -161,7 +183,7 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
       review.addVisitReviewDetails(LocalDateTime.now(), issueType, null)
     }
 
-    visitReviewRepository.saveAndFlush(review)
+    return visitReviewRepository.saveAndFlush(review)
   }
 
   private fun clearReviewAndVisitData() {

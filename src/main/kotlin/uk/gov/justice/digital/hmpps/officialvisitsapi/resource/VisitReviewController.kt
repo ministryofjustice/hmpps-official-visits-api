@@ -115,7 +115,6 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
     summary = "Acknowledge a visit review",
     description = "Acknowledges all currently unacknowledged and unexpired visit review details for the given visit review. Username is taken from the client token.",
   )
-  @CaseloadConflictResponse
   @ApiResponses(
     value = [
       ApiResponse(
