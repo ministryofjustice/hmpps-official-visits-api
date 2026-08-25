@@ -266,6 +266,14 @@ class OfficialVisitFacade(
     return visitForReviewService.getVisitsForReview(prisonCode, pageable)
   }
 
+  fun acknowledgeVisitReview(prisonCode: String, visitReviewId: Long, user: User) {
+    if (user is PrisonUser) {
+      checkPrisonUsersCaseloads(prisonCode, user, "Visit review cannot be acknowledged for a prison outside the user's caseload list")
+    }
+
+    visitForReviewService.acknowledgeVisitReview(prisonCode, visitReviewId, user)
+  }
+
   private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String, hiddenException: Boolean = false) {
     if (!user.hasCaseloadAccess(prisonCode)) {
       if (hiddenException) {
