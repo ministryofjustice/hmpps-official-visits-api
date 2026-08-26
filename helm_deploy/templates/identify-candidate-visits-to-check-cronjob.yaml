@@ -18,12 +18,17 @@ spec:
         spec:
           securityContext:
             runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           containers:
             - name: identify-candidate-visits-to-check-job
               image: ghcr.io/ministryofjustice/hmpps-devops-tools:<pin-a-tag-or-digest>
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
               args:
                 - /bin/sh
                 - -c
