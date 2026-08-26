@@ -17,6 +17,15 @@ generic-service:
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-official-visits-api-cert
     path: /
+    annotations:
+      # Secure the endpoints related to k8s jobs from outside the Kubernetes ingress
+      nginx.ingress.kubernetes.io/server-snippet: |
+        server_tokens off;
+        location /job-admin/ {
+          deny all;
+          return 401;
+        }
+        
 
   # Environment variables to load into the deployment
   env:
@@ -83,3 +92,5 @@ generic-service:
 
 generic-prometheus-alerts:
   targetApplication: hmpps-official-visits-api
+cron:
+  identifyCandidateVisitsToCheckJob: "0 11 * * 1-5"

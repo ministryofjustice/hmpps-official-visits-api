@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: identify-candidate-visits-to-check
+spec:
+  schedule:  "{{ .Values.cron.identifyCandidateVisitsToCheckJob }}"
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 43200
+  successfulJobsHistoryLimit: 5
+  timeZone: "Europe/London"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 345600 # 4 days
+      template:
+        spec:
+          containers:
+            - name: identify-candidate-visits-to-check-job
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools
+              args:
+                - /bin/sh
+                - -c
+                - curl --fail --retry 2 -XPOST http://hmpps-offical-visits-api/job-admin/run/IDENTIFY_CANDIDATE_VISITS_TO_CHECK
+          restartPolicy: Never
