@@ -92,5 +92,6 @@ generic-service:
 
 generic-prometheus-alerts:
   targetApplication: hmpps-official-visits-api
+
 cron:
   identifyCandidateVisitsToCheckJob: "0 11 * * 1-5"

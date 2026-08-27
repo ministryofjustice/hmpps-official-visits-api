@@ -59,7 +59,7 @@ class IdentifyCandidateVisitsToCheckJobTest {
       VisitReviewQueueEntity(
         officialVisitId = visit.officialVisitId,
         createdTime = timeSource.now(),
-        triggeringEvent = "CRONJOB",
+        triggeringEvent = "CHECK",
       ),
     )
   }

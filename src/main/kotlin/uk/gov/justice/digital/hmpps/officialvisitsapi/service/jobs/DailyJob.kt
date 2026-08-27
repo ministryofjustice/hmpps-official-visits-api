@@ -7,11 +7,11 @@ import java.time.LocalDate
 abstract class DailyJob(
   jobType: JobType,
   private val timeSource: TimeSource,
-  private val bookingsSupplier: (LocalDate) -> Collection<OfficialVisitEntity>,
-  private val bookingsConsumer: (Collection<OfficialVisitEntity>) -> Unit,
+  private val supplier: (LocalDate) -> Collection<OfficialVisitEntity>,
+  private val consumer: (Collection<OfficialVisitEntity>) -> Unit,
 ) : JobDefinition(
   jobType,
   {
-    bookingsConsumer(bookingsSupplier(timeSource.today()))
+    consumer(supplier(timeSource.today()))
   },
 )

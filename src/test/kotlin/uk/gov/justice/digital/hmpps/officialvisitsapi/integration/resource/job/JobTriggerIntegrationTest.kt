@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
@@ -47,7 +46,6 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   )
 
   @BeforeEach
-  @Transactional
   fun setupTest() {
     clearStagedVisitData()
     prisonerSearchApi().stubGetPrisonName(MOORLAND, MOORLAND_PRISONER)
@@ -77,7 +75,6 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   }
 
   @AfterEach
-  @Transactional
   fun tearDown() {
     clearStagedVisitData()
   }

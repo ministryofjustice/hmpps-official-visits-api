@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: identify-candidate-visits-to-check
 spec:
-  schedule: "{{ .Values.cron.identifyCandidateVisitsToCheckJob }}"
+  schedule: 0 11 * * 1-5
   concurrencyPolicy: Replace
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 60

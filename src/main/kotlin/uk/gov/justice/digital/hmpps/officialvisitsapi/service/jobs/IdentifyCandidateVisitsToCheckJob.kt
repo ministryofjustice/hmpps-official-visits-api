@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 
 /**
- * This job is responsible for identifying the visits that need reviewed.
+ * This job is responsible for identifying the visits that need to be reviewed.
  *
  * Visits  will be checked and flagged for review.
  */
@@ -29,7 +29,7 @@ class IdentifyCandidateVisitsToCheckJob(
         VisitReviewQueueEntity(
           officialVisitId = it.officialVisitId,
           createdTime = timeSource.now(),
-          triggeringEvent = "CRONJOB",
+          triggeringEvent = "CHECK",
         ),
       )
     }
