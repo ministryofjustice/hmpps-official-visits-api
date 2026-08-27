@@ -23,15 +23,17 @@ class ResourceSecurityTest : IntegrationTestBase() {
 
   @Test
   fun `Ensure all endpoints protected with PreAuthorize`() {
-    // need to exclude any that are forbidden in helm configuration
-    val exclusions = File("helm_deploy").walk().filter { it.name.equals("values.yaml") }.flatMap { file ->
+    val ingressPrefixes = File("helm_deploy").walk().filter { it.name.equals("values.yaml") }.flatMap { file ->
       file.readLines().map { line ->
-        line.takeIf { it.contains("location") }?.substringAfter("location ")?.substringBefore(" {")
+        line.takeIf { it.contains("location") }?.substringAfter("location ")?.substringBefore(" {")?.trim()
       }
-    }.filterNotNull().flatMap { path -> listOf("GET", "POST", "PUT", "DELETE").map { "$it $path" } }
-      .toMutableSet().also {
-        it.addAll(unprotectedDefaultMethods)
-      }
+    }.filterNotNull().toSet()
+
+    fun isExcluded(mapping: String): Boolean {
+      if (unprotectedDefaultMethods.contains(mapping)) return true
+      val path = mapping.substringAfter(" ")
+      return ingressPrefixes.any { prefix -> path.startsWith(prefix) }
+    }
 
     val beans = context.getBeansOfType(RequestMappingHandlerMapping::class.java)
     beans.forEach { (_, mapping) ->
@@ -40,7 +42,7 @@ class ResourceSecurityTest : IntegrationTestBase() {
         val annotation = method.getMethodAnnotation(PreAuthorize::class.java)
         if (classAnnotation == null && annotation == null) {
           mappingInfo.getMappings().forEach {
-            assertThat(exclusions.contains(it)).withFailMessage {
+            assertThat(isExcluded(it)).withFailMessage {
               "Found $mappingInfo of type $method with no PreAuthorize annotation"
             }.isTrue()
           }

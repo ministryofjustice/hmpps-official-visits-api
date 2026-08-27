@@ -111,6 +111,13 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .expectBody<VisitsForReviewResponseResponse>()
     .returnResult().responseBody!!
 
+  fun runJob(jobName: String) = webTestClient
+    .post()
+    .uri("/job-admin/run/$jobName")
+    .accept(MediaType.TEXT_PLAIN)
+    .exchange()
+    .expectStatus().isOk
+
   fun acknowledgeVisitForReview(visitReviewId: Long, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .put()
     .uri("/visit-review/prison/${prisonUser.caseloads.first()}/id/$visitReviewId/acknowledge")

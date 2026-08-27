@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: identify-candidate-visits-to-check
+spec:
+  schedule: 0 11 * * 1-5
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 60
+  successfulJobsHistoryLimit: 5
+  timeZone: "Europe/London"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 345600 # 4 days
+      backoffLimit: 2
+      activeDeadlineSeconds: 60
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: identify-candidate-visits-to-check-job
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools:<pin-a-tag-or-digest>
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              args:
+                - /bin/sh
+                - -c
+                - curl --fail --retry 2 --max-time 20 -XPOST http://hmpps-official-visits-api/job-admin/run/IDENTIFY_CANDIDATE_VISITS_TO_CHECK
+          restartPolicy: Never

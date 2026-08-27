@@ -117,4 +117,20 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     fromDate: LocalDate,
     toDate: LocalDate,
   ): List<OfficialVisitEntity>
+
+  @Query(
+    value = """
+        SELECT ov FROM OfficialVisitEntity ov
+        WHERE ov.visitDate >= :today
+          AND ov.visitDate < :weekFromNow
+          AND ov.visitStatusCode = 'SCHEDULED'
+          AND ov.officialVisitId NOT IN (SELECT vrq.officialVisitId FROM VisitReviewQueueEntity vrq)
+          AND ov.officialVisitId NOT IN (SELECT vr.officialVisitId FROM VisitReviewEntity vr)
+        
+        """,
+  )
+  fun findCandidateVisitsForReview(
+    today: LocalDate?,
+    weekFromNow: LocalDate?,
+  ): Collection<OfficialVisitEntity>
 }
