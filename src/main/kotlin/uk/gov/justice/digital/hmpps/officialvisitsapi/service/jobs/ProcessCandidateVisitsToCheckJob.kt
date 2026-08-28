@@ -5,9 +5,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 
 /**
- * This job is responsible for checking the visits that need to be reviewed.
+ * This job is responsible for processing the visits that need to be reviewed.
  *
- * Visits  will be checked and flagged for review.
+ * Visits  will be processed and flagged for review.
  */
 @Component
 class ProcessCandidateVisitsToCheckJob(

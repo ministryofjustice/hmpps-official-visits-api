@@ -166,7 +166,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should processing visit review be completed with new issue for review when there are issues found`() {
+    fun `should process visits when there are issues found`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
       val visit = testAPIClient.createOfficialVisit(
         createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
@@ -183,12 +183,12 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
-      visitReviewQueueRepository.findAll().size isEqualTo 0
+      visitReviewQueueRepository.findAll().size isEqualTo 1
       visitReviewRepository.findAll().size isEqualTo 1
     }
 
     @Test
-    fun `should not process candidate visits to check for visits that are more than 7 day to the future`() {
+    fun `should not process candidates for visits that are more than 7 day to the future`() {
       val visitSlot = VisitSlot(
         1,
         LocalDate.now().next(DayOfWeek.MONDAY).plusDays(7),
@@ -196,18 +196,27 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         LocalTime.of(10, 0),
         moorlandLocation.id,
       )
-      testAPIClient.createOfficialVisit(
+      val visit = testAPIClient.createOfficialVisit(
         createOfficialVisitRequest(visitSlot, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
 
+      visitReviewQueueRepository.saveAndFlush(
+        VisitReviewQueueEntity(
+          officialVisitId = visit.officialVisitId,
+          createdTime = LocalDateTime.now().minusDays(7),
+          triggeringEvent = "CHECK",
+        ),
+      )
+
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
-      visitReviewQueueRepository.findAll().size isEqualTo 0
+      visitReviewQueueRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll().size isEqualTo 0
     }
 
     @Test
-    fun `should not process candidate visits to check`() {
+    fun `should not process when no candidate for visits to check`() {
       val matchingVisit = testAPIClient.createOfficialVisit(
         createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
@@ -229,6 +238,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
       visitReviewQueueRepository.findAll().size isEqualTo 0
+      visitReviewRepository.findAll().size isEqualTo 2
     }
   }
 
