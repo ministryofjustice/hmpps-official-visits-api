@@ -95,3 +95,4 @@ generic-prometheus-alerts:
 
 cron:
   identifyCandidateVisitsToCheckJob: "0 11 * * 1-5"
+  processCandidateVisitsToCheckJob: "0 11 * * 1-5"

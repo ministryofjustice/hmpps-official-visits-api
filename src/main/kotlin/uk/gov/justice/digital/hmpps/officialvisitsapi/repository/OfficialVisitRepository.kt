@@ -133,4 +133,17 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     today: LocalDate?,
     weekFromNow: LocalDate?,
   ): Collection<OfficialVisitEntity>
+
+  @Query(
+    value = """
+        SELECT ov FROM OfficialVisitEntity ov
+        JOIN VisitReviewQueueEntity vrq ON vrq.officialVisitId = ov.officialVisitId
+        WHERE vrq.createdTime = (
+            SELECT MIN(vrq2.createdTime) FROM VisitReviewQueueEntity vrq2
+            WHERE vrq2.officialVisitId = ov.officialVisitId
+        )
+        ORDER BY vrq.createdTime ASC
+        """,
+  )
+  fun findCandidatesOrderedByQueueTime(): Collection<OfficialVisitEntity>
 }

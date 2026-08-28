@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: identify-candidate-visits-to-check
+  name: process-candidate-visits-to-check
 spec:
-  schedule:  "{{ .Values.cron.identifyCandidateVisitsToCheckJob }}"
+  schedule:  "{{ .Values.cron.processCandidateVisitsToCheckJob }}"
   concurrencyPolicy: Replace
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 60
@@ -21,7 +21,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           containers:
-            - name: identify-candidate-visits-to-check-job
+            - name: process-candidate-visits-to-check-job
               image: ghcr.io/ministryofjustice/hmpps-devops-tools
               securityContext:
                 allowPrivilegeEscalation: false
@@ -32,5 +32,5 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - curl --fail --retry 2 --max-time 20 -XPOST http://hmpps-official-visits-api/job-admin/run/IDENTIFY_CANDIDATE_VISITS_TO_CHECK
+                - curl --fail --retry 2 --max-time 20 -XPOST http://hmpps-official-visits-api/job-admin/run/PROCESS_CANDIDATE_VISITS_TO_CHECK
           restartPolicy: Never

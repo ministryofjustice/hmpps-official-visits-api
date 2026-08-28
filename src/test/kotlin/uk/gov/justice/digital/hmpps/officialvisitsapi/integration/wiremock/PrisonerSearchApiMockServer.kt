@@ -28,6 +28,7 @@ class PrisonerSearchApiMockServer : MockServer(8092) {
                   prisonerNumber = prisoner.number,
                   prisonCode = prisoner.prison,
                   bookingId = prisoner.bookingId,
+                  status = prisoner.status,
                 ),
               ),
             )
