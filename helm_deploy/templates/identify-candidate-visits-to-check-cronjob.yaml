@@ -22,7 +22,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: identify-candidate-visits-to-check-job
-              image: ghcr.io/ministryofjustice/hmpps-devops-tools:<pin-a-tag-or-digest>
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true

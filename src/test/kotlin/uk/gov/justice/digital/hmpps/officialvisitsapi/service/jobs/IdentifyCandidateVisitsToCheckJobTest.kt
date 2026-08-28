@@ -26,7 +26,7 @@ class IdentifyCandidateVisitsToCheckJobTest {
   private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, timeSource)
 
   @Test
-  fun `should call the decorated locations service when run`() {
+  fun `should call the find candidates visits service when run`() {
     val prisonVisitSlot = PrisonVisitSlotEntity(
       prisonVisitSlotId = 1,
       prisonTimeSlotId = 1,
