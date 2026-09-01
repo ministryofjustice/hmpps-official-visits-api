@@ -1,0 +1,33 @@
+prisons:
+  - code: DEFAULT
+    name: "Default prison"
+    address:
+      line1:
+      line2:
+      line3:
+      city:
+      postcode:
+    video_visit: Please join using the video link provided in your visit confirmation. Ensure you have suitable identification available if required. Contact the prison team if you experience any issues joining.
+    in_person_visit: Please refer to the prison website for travel information, parking arrangements, and visitor guidance.
+
+  - code: NMI
+    name: HMP & YOI Nottingham
+    address:
+      line1: Perry Road
+      line2: Sherwood
+      line3:
+      city: Nottingham
+      postcode: NG5 3AG
+    video_visit: Join using the visit video link sent to you. Contact the Nottingham prison team if you need assistance.
+    in_person_visit: Enter via the main visitors' entrance. Follow local visitor signage on arrival.
+
+  - code: MDI
+    name: Moorland (HMP & YOI)
+    address:
+      line1: Bawtry Road
+      line2: Hatfield Woodhouse
+      line3:
+      city: Doncaster
+      postcode: DN7 6BW
+    video_visit: Join using the visit video link sent to you. Contact the Nottingham prison team if you need assistance.
+    in_person_visit: Enter via the main visitors' entrance. Follow local visitor signage on arrival.
