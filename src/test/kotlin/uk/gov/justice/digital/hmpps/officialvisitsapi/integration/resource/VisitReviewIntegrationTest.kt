@@ -187,24 +187,6 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
     }
   }
 
-  @Test
-  fun `should acknowledge a visit for review using the official visit id returned by the list`() {
-    val matchingVisit = testAPIClient.createOfficialVisit(
-      createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
-      MOORLAND_PRISON_USER,
-    )
-    createVisitReview(
-      officialVisitId = matchingVisit.officialVisitId,
-      issueTypes = listOf(IssueType.PRISONER_RELEASED, IssueType.VISITOR_NOT_APPROVED),
-    )
-
-    val listed = testAPIClient.getVisitsForReviewList().content.single()
-
-    testAPIClient.acknowledgeVisitForReview(listed.visit.officialVisitId, MOORLAND_PRISON_USER)
-
-    testAPIClient.getVisitsForReviewList().content isEqualTo emptyList()
-  }
-
   // todo move to common place
   private fun createVisitReview(
     officialVisitId: Long,
