@@ -20,9 +20,9 @@ import java.util.UUID
 class ExpireVisitsForReviewJobTest {
 
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val visitReviewExpireService: VisitReviewExpireService = mock()
+  private val visitsForReviewService: VisitsForReviewService = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitReviewExpireService, timeSource)
+  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitsForReviewService, timeSource)
 
   @Test
   fun `should expire visits for review`() {
@@ -54,6 +54,6 @@ class ExpireVisitsForReviewJobTest {
     job.runJob()
 
     verify(officialVisitRepository).findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today)
-    verify(visitReviewExpireService).expire(visit.officialVisitId)
+    verify(visitsForReviewService).expire(visit.officialVisitId)
   }
 }

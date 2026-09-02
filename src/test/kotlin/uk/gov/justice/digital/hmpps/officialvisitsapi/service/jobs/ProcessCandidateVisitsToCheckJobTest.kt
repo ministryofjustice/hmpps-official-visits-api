@@ -20,9 +20,9 @@ import java.util.UUID
 
 class ProcessCandidateVisitsToCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val visitReviewCheckAndDequeueService: VisitReviewCheckAndDequeueService = mock()
+  private val visitsForReviewService: VisitsForReviewService = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(officialVisitRepository, visitReviewCheckAndDequeueService, timeSource)
+  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(officialVisitRepository, visitsForReviewService, timeSource)
 
   @Test
   fun `should call the find candidates visits service when run`() {
@@ -54,6 +54,6 @@ class ProcessCandidateVisitsToCheckJobTest {
     job.runJob()
 
     verify(officialVisitRepository).findCandidatesOrderedByQueueTime()
-    verify(visitReviewCheckAndDequeueService, times(1)).checkAndDequeue(visit.officialVisitId)
+    verify(visitsForReviewService, times(1)).check(visit.officialVisitId)
   }
 }

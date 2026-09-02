@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType.EXPIR
 @Component
 class ExpireVisitsForReviewJob(
   private val officialVisitRepository: OfficialVisitRepository,
-  private val visitReviewExpireService: VisitReviewExpireService,
+  private val visitsForReviewService: VisitsForReviewService,
   timeSource: TimeSource,
 ) : DailyJob(
   jobType = EXPIRE_VISITS_FOR_REVIEW,
@@ -23,7 +23,7 @@ class ExpireVisitsForReviewJob(
   },
   { visits ->
     visits.forEach {
-      visitReviewExpireService.expire(it.officialVisitId)
+      visitsForReviewService.expire(it.officialVisitId)
     }
   },
 )

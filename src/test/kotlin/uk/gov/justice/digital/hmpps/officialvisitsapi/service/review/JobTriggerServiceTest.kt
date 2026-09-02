@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobRunner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessCandidateVisitsToCheckJob
-import kotlin.run
 
 class JobTriggerServiceTest {
 

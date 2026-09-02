@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 class ProcessCandidateVisitsToCheckJob(
 
   private val officialVisitRepository: OfficialVisitRepository,
-  private val visitReviewCheckAndDequeueService: VisitReviewCheckAndDequeueService,
+  private val visitsForReviewService: VisitsForReviewService,
   timeSource: TimeSource,
 ) : DailyJob(
   jobType = JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK,
@@ -23,7 +23,7 @@ class ProcessCandidateVisitsToCheckJob(
   },
   { visits ->
     visits.forEach {
-      visitReviewCheckAndDequeueService.checkAndDequeue(it.officialVisitId)
+      visitsForReviewService.check(it.officialVisitId)
     }
   },
 
