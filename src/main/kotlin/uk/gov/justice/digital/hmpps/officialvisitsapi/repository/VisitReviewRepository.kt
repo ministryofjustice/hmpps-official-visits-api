@@ -13,10 +13,11 @@ interface VisitReviewRepository : JpaRepository<VisitReviewEntity, Long> {
     """
       SELECT vr
       FROM VisitReviewEntity vr, OfficialVisitEntity ov
-      WHERE vr.visitReviewId = :visitReviewId
-        AND ov.officialVisitId = vr.officialVisitId
+      WHERE vr.officialVisitId = :officialVisitId
+        AND ov.officialVisitId = :officialVisitId
         AND ov.prisonCode = :prisonCode
+        AND vr.expiredTime IS NULL
     """,
   )
-  fun findByVisitReviewIdAndPrisonCode(visitReviewId: Long, prisonCode: String): VisitReviewEntity?
+  fun findCurrentByOfficialVisitIdAndPrisonCode(officialVisitId: Long, prisonCode: String): VisitReviewEntity?
 }

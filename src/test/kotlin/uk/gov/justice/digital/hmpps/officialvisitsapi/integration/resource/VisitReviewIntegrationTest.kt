@@ -98,6 +98,23 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should count a visit raising several issues only once`() {
+    val visit = testAPIClient.createOfficialVisit(
+      createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+      MOORLAND_PRISON_USER,
+    )
+
+    createVisitReview(
+      visit.officialVisitId,
+      issueTypes = listOf(IssueType.PRISONER_RELEASED, IssueType.VISITOR_NOT_APPROVED),
+    )
+
+    val response = testAPIClient.getVisitsForReviewCount(MOORLAND_PRISON_USER)
+
+    response.visitsForReviewCount isEqualTo 1L
+  }
+
+  @Test
   fun `should get current visits for review with grouped issues`() {
     val matchingVisit = testAPIClient.createOfficialVisit(
       createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
@@ -155,14 +172,14 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
       MOORLAND_PRISON_USER,
     )
 
-    val visitReview = createVisitReview(matchingVisit.officialVisitId)
+    createVisitReview(matchingVisit.officialVisitId)
     val before = testAPIClient.getVisitsForReviewList()
     with(before) {
       content.size isEqualTo 1
       page.totalElements isEqualTo 1
     }
 
-    testAPIClient.acknowledgeVisitForReview(visitReview.visitReviewId, MOORLAND_PRISON_USER)
+    testAPIClient.acknowledgeVisitForReview(matchingVisit.officialVisitId, MOORLAND_PRISON_USER)
 
     val after = testAPIClient.getVisitsForReviewList()
     with(after) {

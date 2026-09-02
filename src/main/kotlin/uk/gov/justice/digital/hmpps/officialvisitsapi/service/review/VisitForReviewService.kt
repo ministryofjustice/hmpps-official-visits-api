@@ -35,9 +35,11 @@ class VisitForReviewService(
   )
 
   @Transactional
-  fun acknowledgeVisitReview(prisonCode: String, visitReviewId: Long, user: User) {
-    val visitReview = visitReviewRepository.findByVisitReviewIdAndPrisonCode(visitReviewId, prisonCode)
-      ?: throw EntityNotFoundException("Visit review with id $visitReviewId and prison code $prisonCode not found")
+  fun acknowledgeVisitReview(prisonCode: String, officialVisitId: Long, user: User) {
+    val visitReview = visitReviewRepository.findCurrentByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
+      ?: throw EntityNotFoundException(
+        "Visit review for official visit id $officialVisitId and prison code $prisonCode not found",
+      )
 
     visitReview.updateAcknowledgedDetails(timeSource.now(), user.username)
   }
