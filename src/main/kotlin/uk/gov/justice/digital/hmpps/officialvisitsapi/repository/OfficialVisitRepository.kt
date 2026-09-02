@@ -146,4 +146,18 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         """,
   )
   fun findCandidatesOrderedByQueueTime(): Collection<OfficialVisitEntity>
+
+  @Query(
+    value = """
+        SELECT DISTINCT ov FROM OfficialVisitEntity ov
+        JOIN VisitReviewEntity vr ON vr.officialVisitId = ov.officialVisitId
+        JOIN VisitReviewDetailEntity vrd ON vrd.visitReview.visitReviewId = vr.visitReviewId
+        WHERE ov.visitDate < :today
+          AND vr.expiredTime IS NULL
+          AND vrd.acknowledgedTime IS NULL
+          AND vrd.acknowledgedBy IS NULL
+        ORDER BY ov.visitDate ASC, ov.startTime ASC
+        """,
+  )
+  fun findOverdueVisitsWithUnacknowledgedReviewDetails(today: LocalDate): Collection<OfficialVisitEntity>
 }

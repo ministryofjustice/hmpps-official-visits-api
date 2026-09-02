@@ -9,7 +9,8 @@ class JobTriggerServiceTest {
   private val jobRunner: JobRunner = mock()
   private val identifyCandidateVisitsToCheckJob: IdentifyCandidateVisitsToCheckJob = mock()
   private val processCandidateVisitsToCheckJob: ProcessCandidateVisitsToCheckJob = mock()
-  private val jobTriggerService: JobTriggerService = JobTriggerService(jobRunner, identifyCandidateVisitsToCheckJob, processCandidateVisitsToCheckJob)
+  private val expireVisitsForReviewJob: ExpireVisitsForReviewJob = mock()
+  private val jobTriggerService: JobTriggerService = JobTriggerService(jobRunner, identifyCandidateVisitsToCheckJob, processCandidateVisitsToCheckJob, expireVisitsForReviewJob)
 
   @Test
   fun `should run identify candidate visits to check job when job type is IDENTIFY_CANDIDATE_VISITS_TO_CHECK`() {
@@ -21,5 +22,11 @@ class JobTriggerServiceTest {
   fun `should run process candidate visits to check job when job type is PROCESS_CANDIDATE_VISITS_TO_CHECK`() {
     jobTriggerService.run(JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK)
     verify(jobRunner).runJob(processCandidateVisitsToCheckJob)
+  }
+
+  @Test
+  fun `should run expire visits for review job when job type is EXPIRE_VISITS_FOR_REVIEW`() {
+    jobTriggerService.run(JobType.EXPIRE_VISITS_FOR_REVIEW)
+    verify(jobRunner).runJob(expireVisitsForReviewJob)
   }
 }

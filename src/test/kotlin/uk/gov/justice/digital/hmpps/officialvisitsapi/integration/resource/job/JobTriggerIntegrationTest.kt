@@ -13,8 +13,10 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER_INACTIVE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland.MONDAY_9_TO_10_VISIT_SLOT
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.VisitSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation2
@@ -239,6 +241,29 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
       visitReviewQueueRepository.findAll().size isEqualTo 0
       visitReviewRepository.findAll().size isEqualTo 2
+    }
+  }
+
+  @Nested
+  inner class VisitsReviewExpireJobTest {
+    @Test
+    fun `should expire visits for review when the visit date is in the past`() {
+      val visit = testAPIClient.createOfficialVisit(
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        MOORLAND_PRISON_USER,
+      )
+
+      val pastVisit = officialVisitRepository.findById(visit.officialVisitId).orElseThrow().apply { visitDate = LocalDate.now().minusDays(20) }
+      officialVisitRepository.saveAndFlush(pastVisit)
+
+      createVisitReview(
+        officialVisitId = visit.officialVisitId,
+        issueTypes = listOf(IssueType.VISITOR_NOT_APPROVED, IssueType.PRISONER_TRANSFERRED),
+      )
+
+      testAPIClient.runJob("EXPIRE_VISITS_FOR_REVIEW")
+      val visitReview = visitReviewRepository.findByOfficialVisitId(visit.officialVisitId)
+      visitReview[0].expiredTime isCloseTo LocalDateTime.now()
     }
   }
 
