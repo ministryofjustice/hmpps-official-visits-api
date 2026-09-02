@@ -1,8 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.times
+import org.mockito.Mockito.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
@@ -19,14 +18,15 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
-class ProcessCandidateVisitsToCheckJobTest {
+class ExpireVisitsForReviewJobTest {
+
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(officialVisitRepository, visitReviewService, timeSource)
+  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitReviewService, timeSource)
 
   @Test
-  fun `should call the find candidates visits service when run`() {
+  fun `should expire visits for review`() {
     val prisonVisitSlot = PrisonVisitSlotEntity(
       prisonVisitSlotId = 1,
       prisonTimeSlotId = 1,
@@ -49,12 +49,12 @@ class ProcessCandidateVisitsToCheckJobTest {
       createdBy = "unit test",
     )
     val today = timeSource.today()
-    whenever { officialVisitRepository.findCandidatesOrderedByQueueTime() }
+    whenever(officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today))
       .thenReturn(listOf(visit))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidatesOrderedByQueueTime()
-    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId)
+    verify(officialVisitRepository).findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today)
+    verify(visitReviewService).expire(visit.officialVisitId)
   }
 }

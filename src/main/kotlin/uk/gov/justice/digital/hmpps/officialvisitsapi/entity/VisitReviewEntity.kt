@@ -42,6 +42,13 @@ class VisitReviewEntity(
     )
   }
 
+  fun expire() {
+    if (expiredTime != null) {
+      return
+    }
+    expiredTime = LocalDateTime.now()
+  }
+
   fun visitReviewDetails() = visitReviewDetails.toList()
 
   fun updateAcknowledgedDetails(acknowledgedTime: LocalDateTime, acknowledgedBy: String) {
