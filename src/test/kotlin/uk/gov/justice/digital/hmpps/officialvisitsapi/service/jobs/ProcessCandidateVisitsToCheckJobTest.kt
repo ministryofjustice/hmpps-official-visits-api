@@ -14,15 +14,16 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
 class ProcessCandidateVisitsToCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val visitsForReviewService: VisitsForReviewService = mock()
+  private val visitReviewService: VisitReviewService = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(officialVisitRepository, visitsForReviewService, timeSource)
+  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(officialVisitRepository, visitReviewService, timeSource)
 
   @Test
   fun `should call the find candidates visits service when run`() {
@@ -54,6 +55,6 @@ class ProcessCandidateVisitsToCheckJobTest {
     job.runJob()
 
     verify(officialVisitRepository).findCandidatesOrderedByQueueTime()
-    verify(visitsForReviewService, times(1)).check(visit.officialVisitId)
+    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId)
   }
 }

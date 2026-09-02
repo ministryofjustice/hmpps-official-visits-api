@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
@@ -20,9 +21,9 @@ import java.util.UUID
 class ExpireVisitsForReviewJobTest {
 
   private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val visitsForReviewService: VisitsForReviewService = mock()
+  private val visitReviewService: VisitReviewService = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitsForReviewService, timeSource)
+  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitReviewService, timeSource)
 
   @Test
   fun `should expire visits for review`() {
@@ -54,6 +55,6 @@ class ExpireVisitsForReviewJobTest {
     job.runJob()
 
     verify(officialVisitRepository).findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today)
-    verify(visitsForReviewService).expire(visit.officialVisitId)
+    verify(visitReviewService).expire(visit.officialVisitId)
   }
 }
