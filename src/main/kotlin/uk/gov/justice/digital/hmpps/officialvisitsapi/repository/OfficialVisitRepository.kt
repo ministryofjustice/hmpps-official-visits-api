@@ -152,7 +152,7 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         SELECT DISTINCT ov FROM OfficialVisitEntity ov
         JOIN VisitReviewEntity vr ON vr.officialVisitId = ov.officialVisitId
         JOIN VisitReviewDetailEntity vrd ON vrd.visitReview.visitReviewId = vr.visitReviewId
-        WHERE ov.visitDate < :today
+        WHERE ov.visitDate < :date
           AND vr.expiredTime IS NULL
           AND vrd.acknowledgedTime IS NULL
           AND vrd.acknowledgedBy IS NULL
