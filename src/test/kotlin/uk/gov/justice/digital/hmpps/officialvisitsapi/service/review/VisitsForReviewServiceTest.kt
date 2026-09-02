@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.kotlin.any
@@ -67,7 +66,7 @@ class VisitsForReviewServiceTest {
 
     service.check(officialVisitId)
 
-    Mockito.verify(visitReviewQueueRepository, never()).delete(any())
+    verify(visitReviewQueueRepository, never()).delete(any())
   }
 
   @Test
@@ -81,8 +80,8 @@ class VisitsForReviewServiceTest {
       .isInstanceOf(RuntimeException::class.java)
       .hasMessage("check failed")
 
-    Mockito.verify(visitReviewQueueRepository, never()).findById(any())
-    Mockito.verify(visitReviewQueueRepository, never()).delete(any())
+    verify(visitReviewQueueRepository, never()).findById(any())
+    verify(visitReviewQueueRepository, never()).delete(any())
   }
 
   @Test

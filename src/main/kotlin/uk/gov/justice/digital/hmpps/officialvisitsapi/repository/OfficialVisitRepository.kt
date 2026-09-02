@@ -159,5 +159,5 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         ORDER BY ov.visitDate ASC, ov.startTime ASC
         """,
   )
-  fun findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today: LocalDate): Collection<OfficialVisitEntity>
+  fun findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(date: LocalDate): Collection<OfficialVisitEntity>
 }
