@@ -110,10 +110,10 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
     httpRequest: HttpServletRequest,
   ): PagedModel<VisitsForReviewResponse> = facade.getVisitsForReview(prisonCode, httpRequest.getLocalRequestContext().user, pageable)
 
-  @PutMapping("/prison/{prisonCode}/id/{visitReviewId}/acknowledge")
+  @PutMapping("/prison/{prisonCode}/id/{officialVisitId}/acknowledge")
   @Operation(
     summary = "Acknowledge a visit review",
-    description = "Acknowledges all currently unacknowledged and unexpired visit review details for the given visit review. Username is taken from the client token.",
+    description = "Acknowledges all currently unacknowledged details on the unexpired visit review for the given official visit. Username is taken from the client token.",
   )
   @ApiResponses(
     value = [
@@ -134,13 +134,13 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
       required = true,
     ) prisonCode: String,
     @PathVariable @Parameter(
-      name = "visitReviewId",
-      description = "The visit review ID",
+      name = "officialVisitId",
+      description = "The official visit ID",
       example = "123",
       required = true,
-    ) visitReviewId: Long,
+    ) officialVisitId: Long,
     httpRequest: HttpServletRequest,
   ) {
-    facade.acknowledgeVisitReview(prisonCode, visitReviewId, httpRequest.getLocalRequestContext().user)
+    facade.acknowledgeVisitReview(prisonCode, officialVisitId, httpRequest.getLocalRequestContext().user)
   }
 }

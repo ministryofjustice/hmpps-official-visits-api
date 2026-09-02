@@ -15,7 +15,7 @@ import java.time.LocalDate
 interface VisitForReviewRepository : ReadOnlyRepository<VisitForReviewEntity, Long> {
   @Query(
     """
-      SELECT COUNT(vfr)
+      SELECT COUNT(DISTINCT vfr.officialVisitId)
       FROM VisitForReviewEntity vfr
       WHERE vfr.prisonCode = :prisonCode
         AND vfr.visitStatusCode = :visitStatus

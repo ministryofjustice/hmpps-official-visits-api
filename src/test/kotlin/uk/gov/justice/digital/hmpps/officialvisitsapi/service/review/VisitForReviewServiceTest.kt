@@ -77,7 +77,7 @@ class VisitForReviewServiceTest {
   @Test
   fun `should acknowledge visit review`() {
     val visitReview = mock<VisitReviewEntity>()
-    whenever(visitReviewRepository.findByVisitReviewIdAndPrisonCode(1, "MDI")).thenReturn(visitReview)
+    whenever(visitReviewRepository.findCurrentByOfficialVisitIdAndPrisonCode(1, "MDI")).thenReturn(visitReview)
 
     service.acknowledgeVisitReview("MDI", 1, MOORLAND_PRISON_USER)
 
@@ -86,11 +86,11 @@ class VisitForReviewServiceTest {
 
   @Test
   fun `should throw EntityNotFoundException when visit review not found`() {
-    whenever(visitReviewRepository.findByVisitReviewIdAndPrisonCode(1, "MDI")).thenReturn(null)
+    whenever(visitReviewRepository.findCurrentByOfficialVisitIdAndPrisonCode(1, "MDI")).thenReturn(null)
 
     assertThrows<EntityNotFoundException> {
       service.acknowledgeVisitReview("MDI", 1, MOORLAND_PRISON_USER)
-    }.message isEqualTo "Visit review with id 1 and prison code MDI not found"
+    }.message isEqualTo "Visit review for official visit id 1 and prison code MDI not found"
   }
 
   private fun visitForReviewEntity(
