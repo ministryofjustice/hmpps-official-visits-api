@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType.EXPIR
  */
 @Component
 class ExpireVisitsForReviewJob(
-
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewExpireService: VisitReviewExpireService,
   timeSource: TimeSource,
@@ -20,12 +19,11 @@ class ExpireVisitsForReviewJob(
   jobType = EXPIRE_VISITS_FOR_REVIEW,
   timeSource,
   { date ->
-    officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetails(date)
+    officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(date)
   },
   { visits ->
     visits.forEach {
       visitReviewExpireService.expire(it.officialVisitId)
     }
   },
-
 )

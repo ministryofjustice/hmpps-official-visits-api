@@ -48,12 +48,12 @@ class ExpireVisitsForReviewJobTest {
       createdBy = "unit test",
     )
     val today = timeSource.today()
-    whenever(officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetails(today))
+    whenever(officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today))
       .thenReturn(listOf(visit))
 
     job.runJob()
 
-    verify(officialVisitRepository).findOverdueVisitsWithUnacknowledgedReviewDetails(today)
+    verify(officialVisitRepository).findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(today)
     verify(visitReviewExpireService).expire(visit.officialVisitId)
   }
 }

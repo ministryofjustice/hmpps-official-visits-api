@@ -1,8 +1,14 @@
-package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
+package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.review
 
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ExpireVisitsForReviewJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToCheckJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobRunner
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessCandidateVisitsToCheckJob
+import kotlin.run
 
 class JobTriggerServiceTest {
 

@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobTriggerService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.review.JobTriggerService
 
 /**
  * These endpoints are secured in the ingress rather than the app so that they can be called from
