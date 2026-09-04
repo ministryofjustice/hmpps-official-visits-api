@@ -36,7 +36,7 @@ class VisitReviewService(
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService,
 
 ) {
-  fun check(officialVisitId: Long, checkType: VisitReviewCheckType) {
+  private fun check(officialVisitId: Long, checkType: VisitReviewCheckType) {
     val officialVisit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return
     val today = LocalDate.now()
 
@@ -59,8 +59,11 @@ class VisitReviewService(
   }
 
   @Transactional
-  fun visitCheck(officialVisitId: Long) {
-    check(officialVisitId, VisitReviewCheckType.CHECK)
+  fun visitCheck(
+    officialVisitId: Long,
+    type: VisitReviewCheckType,
+  ) {
+    check(officialVisitId, type)
 
     visitReviewQueueRepository.findById(officialVisitId).ifPresent { queueEntry ->
       visitReviewQueueRepository.delete(queueEntry)

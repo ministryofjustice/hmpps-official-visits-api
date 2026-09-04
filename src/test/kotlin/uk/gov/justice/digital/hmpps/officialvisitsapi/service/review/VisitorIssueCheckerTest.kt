@@ -43,6 +43,7 @@ class VisitorIssueCheckerTest {
 
   private fun officialVisit(vararg visitors: OfficialVisitorEntity): OfficialVisitEntity {
     val visit = mock(OfficialVisitEntity::class.java)
+    whenever(visit.prisonerNumber).thenReturn(prisonerNumber)
     whenever(visit.officialVisitors()).thenReturn(visitors.toList())
     return visit
   }
@@ -53,7 +54,7 @@ class VisitorIssueCheckerTest {
     whenever(contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true))
       .thenReturn(listOf(getPrisonerContacts(contactId = 1)))
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertTrue(issues.isEmpty())
   }
@@ -64,7 +65,7 @@ class VisitorIssueCheckerTest {
     whenever(contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true))
       .thenReturn(emptyList())
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertEquals(1, issues.size)
     assertEquals(IssueType.VISITOR_NO_RELATIONSHIP, issues.single().issueType)
@@ -79,7 +80,7 @@ class VisitorIssueCheckerTest {
     whenever(contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true))
       .thenReturn(emptyList())
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertEquals(1, issues.size)
     assertEquals(IssueType.VISITOR_NO_RELATIONSHIP, issues.single().issueType)
@@ -92,7 +93,7 @@ class VisitorIssueCheckerTest {
       .thenReturn(listOf(getPrisonerContacts(contactId = 1, relationshipTypeCode = "S")))
     whenever { featureSwitches.getValue(StringFeature.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, null) } doReturn null
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertEquals(1, issues.size)
     assertEquals(IssueType.VISITOR_NOT_OFFICIAL, issues.single().issueType)
@@ -104,7 +105,7 @@ class VisitorIssueCheckerTest {
     whenever(contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true))
       .thenReturn(listOf(getPrisonerContacts(contactId = 1, isApprovedVisitor = false)))
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertEquals(1, issues.size)
     assertEquals(IssueType.VISITOR_NOT_APPROVED, issues.single().issueType)
@@ -121,7 +122,7 @@ class VisitorIssueCheckerTest {
         ),
       )
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertEquals(2, issues.size)
     val issueTypes = issues.map { it.issueType }
@@ -138,7 +139,7 @@ class VisitorIssueCheckerTest {
     whenever(contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true))
       .thenReturn(listOf(getPrisonerContacts(contactId = 2, isApprovedVisitor = false)))
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertEquals(2, issues.size)
     val issueTypes = issues.map { it.issueType }
@@ -160,7 +161,7 @@ class VisitorIssueCheckerTest {
           getPrisonerContacts(contactId = 3, relationshipTypeCode = "S"),
         ),
       )
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
     assertEquals(3, issues.size)
   }
 
@@ -170,7 +171,7 @@ class VisitorIssueCheckerTest {
     whenever(contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true))
       .thenReturn(listOf(getPrisonerContacts(contactId = 1, isApprovedVisitor = false)))
 
-    val issues = checker.checkVisitorIssues(prisonerNumber, visit)
+    val issues = checker.checkVisitorIssues(visit)
 
     assertTrue(issues.all { it.visitId == visit.officialVisitId })
   }

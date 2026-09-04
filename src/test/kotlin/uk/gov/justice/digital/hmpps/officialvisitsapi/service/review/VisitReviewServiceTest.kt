@@ -73,7 +73,7 @@ class VisitReviewServiceTest {
   fun `should be no-op when visit not found`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.empty()
 
-    service.check(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker, releaseChecker, transferChecker)
@@ -87,7 +87,7 @@ class VisitReviewServiceTest {
       whenever { officialVisit.visitStatusCode } doReturn it
       whenever(officialVisitRepository.findById(1)) doReturn Optional.of(officialVisit)
 
-      service.check(1, VisitReviewCheckType.CHECK)
+      service.visitCheck(1, VisitReviewCheckType.CHECK)
     }
 
     verify(officialVisitRepository, times(3)).findById(1)
@@ -103,7 +103,7 @@ class VisitReviewServiceTest {
 
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(officialVisit)
 
-    service.check(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker, releaseChecker, transferChecker)
@@ -118,7 +118,7 @@ class VisitReviewServiceTest {
 
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(officialVisit)
 
-    service.check(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker, releaseChecker, transferChecker)
@@ -128,7 +128,7 @@ class VisitReviewServiceTest {
   fun `should invoke CHECK checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.check(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
     verify(checker).check(scheduledVisit)
@@ -139,7 +139,7 @@ class VisitReviewServiceTest {
   fun `should invoke RECHECK checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.check(1, VisitReviewCheckType.RECHECK)
+    service.visitCheck(1, VisitReviewCheckType.RECHECK)
 
     verify(officialVisitRepository).findById(1)
     verify(checker).check(scheduledVisit)
@@ -150,7 +150,7 @@ class VisitReviewServiceTest {
   fun `should invoke UPDATE checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.check(1, VisitReviewCheckType.UPDATE)
+    service.visitCheck(1, VisitReviewCheckType.UPDATE)
 
     verify(officialVisitRepository).findById(1)
     verify(checker).check(scheduledVisit)
@@ -161,7 +161,7 @@ class VisitReviewServiceTest {
   fun `should invoke TRANSFER checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.check(1, VisitReviewCheckType.TRANSFER)
+    service.visitCheck(1, VisitReviewCheckType.TRANSFER)
 
     verify(officialVisitRepository).findById(1)
     verify(transferChecker).check(scheduledVisit)
@@ -172,7 +172,7 @@ class VisitReviewServiceTest {
   fun `should invoke RELEASE checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.check(1, VisitReviewCheckType.RELEASE)
+    service.visitCheck(1, VisitReviewCheckType.RELEASE)
 
     verify(officialVisitRepository).findById(1)
     verify(releaseChecker).check(scheduledVisit)
@@ -203,7 +203,7 @@ class VisitReviewServiceTest {
     )
     whenever(visitReviewQueueRepository.findById(officialVisitId)).thenReturn(Optional.of(queueEntry))
 
-    service.visitCheck(officialVisitId)
+    service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK)
 
     inOrder(visitReviewQueueRepository) {
       verify(visitReviewQueueRepository).findById(officialVisitId)
@@ -217,7 +217,7 @@ class VisitReviewServiceTest {
 
     whenever(visitReviewQueueRepository.findById(officialVisitId)).thenReturn(Optional.empty())
 
-    service.visitCheck(officialVisitId)
+    service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK)
 
     verify(visitReviewQueueRepository, never()).delete(any())
   }
@@ -229,7 +229,7 @@ class VisitReviewServiceTest {
     whenever(officialVisitRepository.findById((eq(officialVisitId))))
       .thenThrow(RuntimeException("check failed"))
 
-    assertThatThrownBy { service.visitCheck(officialVisitId) }
+    assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK) }
       .isInstanceOf(RuntimeException::class.java)
       .hasMessage("check failed")
 
@@ -249,7 +249,7 @@ class VisitReviewServiceTest {
     whenever(visitReviewQueueRepository.findById(officialVisitId)).thenReturn(Optional.of(queueEntry))
     whenever(visitReviewQueueRepository.delete(queueEntry)).thenThrow(RuntimeException("delete failed"))
 
-    assertThatThrownBy { service.visitCheck(officialVisitId) }
+    assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK) }
       .isInstanceOf(RuntimeException::class.java)
       .hasMessage("delete failed")
   }

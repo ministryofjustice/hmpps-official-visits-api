@@ -190,7 +190,7 @@ class VisitReviewCheckerTest {
 
       val visitorIssue1 = mock<Issue>().stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
       val visitorIssue2 = mock<Issue>().stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
-      visitorIssueChecker.stub { on { checkVisitorIssues(MOORLAND_PRISONER.number, scheduledVisitAtMoorland) } doReturn setOf(visitorIssue1, visitorIssue2) }
+      visitorIssueChecker.stub { on { checkVisitorIssues(scheduledVisitAtMoorland) } doReturn setOf(visitorIssue1, visitorIssue2) }
 
       checker.check(scheduledVisitAtMoorland)
 

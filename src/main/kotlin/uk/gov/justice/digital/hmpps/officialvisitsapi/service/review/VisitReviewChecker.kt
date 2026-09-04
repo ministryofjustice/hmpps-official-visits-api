@@ -23,10 +23,7 @@ class VisitReviewChecker(
     val currentIssues = buildSet {
       if (prisoner.isReleased()) add(IssueType.PRISONER_RELEASED)
       if (prisoner.isAtDifferentPrisonTo(officialVisit.prisonCode)) add(IssueType.PRISONER_TRANSFERRED)
-
-      visitorIssueChecker.checkVisitorIssues(officialVisit.prisonerNumber, officialVisit).forEach { issue ->
-        add(issue.issueType)
-      }
+      addAll(visitorIssueChecker.checkVisitorIssues(officialVisit).map { it.issueType })
     }
 
     if (currentIssues.isEmpty()) return

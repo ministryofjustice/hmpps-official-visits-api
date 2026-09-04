@@ -12,52 +12,58 @@ class VisitorIssueChecker(
   private val contactsService: ContactsService,
   private val featureSwitches: FeatureSwitches,
 ) {
+  private val socialPrisons = featureSwitches.getValue(StringFeature.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, null)?.split(',')?.toSet() ?: emptySet()
 
-  fun checkVisitorIssues(prisonerNumber: String, officialVisit: OfficialVisitEntity): Set<Issue> {
-    val contactsById = contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true) // is tihs right
+  fun checkVisitorIssues(officialVisit: OfficialVisitEntity): Set<Issue> {
+    val prisonerNumber = officialVisit.prisonerNumber
+    val contactsById = contactsService.getAllPrisonerContacts(prisonerNumber, approved = null, currentTerm = true)
       .associateBy { it.contactId }
 
     val visitors = officialVisit.officialVisitors().map { Visitor(it.contactId, it.firstName, it.lastName) }
 
-    val issues = mutableSetOf<Issue>()
-    var anyVisitorMissingRelationship = false
+    val issues = buildSet {
+      var anyVisitorMissingRelationship = false
+      visitors.forEach { visitor ->
+        val contact = contactsById[visitor.contactId]
+        if (contact == null) {
+          anyVisitorMissingRelationship = true
+          return@forEach
+        }
 
-    for (visitor in visitors) {
-      val contact = contactsById[visitor.contactId]
-      if (contact == null) {
-        anyVisitorMissingRelationship = true
-        continue
+        if (contact.relationshipTypeCode == "S" && !socialPrisons.contains(officialVisit.prisonCode)) {
+          add(
+            Issue(
+              officialVisit.officialVisitId,
+              IssueType.VISITOR_NOT_OFFICIAL,
+              "Visitor ${visitor.fullName()} has a social relationship with prisoner $prisonerNumber",
+            ),
+          )
+        }
+
+        if (!contact.isApprovedVisitor) {
+          add(
+            Issue(
+              officialVisit.officialVisitId,
+              IssueType.VISITOR_NOT_APPROVED,
+              "Visitor ${visitor.fullName()} is not approved to visit prisoner $prisonerNumber",
+            ),
+          )
+        }
       }
 
-      if (contact.relationshipTypeCode == "S" && !socialPrisons().contains(officialVisit.prisonCode)) {
-        issues += Issue(
-          officialVisit.officialVisitId,
-          IssueType.VISITOR_NOT_OFFICIAL,
-          "Visitor ${visitor.fullName()} has a social relationship with prisoner $prisonerNumber",
+      if (anyVisitorMissingRelationship) {
+        add(
+          Issue(
+            officialVisit.officialVisitId,
+            IssueType.VISITOR_NO_RELATIONSHIP,
+            "One or more visitors are not in a relationship with prisoner $prisonerNumber",
+          ),
         )
       }
-
-      if (!contact.isApprovedVisitor) {
-        issues += Issue(
-          officialVisit.officialVisitId,
-          IssueType.VISITOR_NOT_APPROVED,
-          "Visitor ${visitor.fullName()} is not approved to visit prisoner $prisonerNumber",
-        )
-      }
-    }
-
-    if (anyVisitorMissingRelationship) {
-      issues += Issue(
-        officialVisit.officialVisitId,
-        IssueType.VISITOR_NO_RELATIONSHIP,
-        "One or more visitors are not in a relationship with prisoner $prisonerNumber",
-      )
     }
 
     return issues
   }
-
-  private fun socialPrisons() = featureSwitches.getValue(StringFeature.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, null)?.split(',')?.toSet() ?: emptySet()
 
   data class Visitor(
     val contactId: Long?,
