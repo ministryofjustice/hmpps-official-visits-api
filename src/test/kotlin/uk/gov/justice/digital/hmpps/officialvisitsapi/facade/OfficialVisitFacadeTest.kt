@@ -45,7 +45,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitForReviewService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -61,7 +61,7 @@ class OfficialVisitFacadeTest {
   private val overlappingVisitsService: OverlappingVisitsService = mock()
   private val notificationsService: NotificationsService = mock()
   private val auditingService: AuditingService = mock()
-  private val visitForReviewService: VisitForReviewService = mock()
+  private val visitReviewService: VisitReviewService = mock()
   private val user = MOORLAND_PRISON_USER
 
   private val facade = OfficialVisitFacade(
@@ -75,7 +75,7 @@ class OfficialVisitFacadeTest {
     overlappingVisitsService,
     notificationsService,
     auditingService,
-    visitForReviewService,
+    visitReviewService,
   )
 
   @Test
@@ -171,11 +171,11 @@ class OfficialVisitFacadeTest {
 
   @Test
   fun `should delegate to service to get visits for review count`() {
-    whenever(visitForReviewService.countVisitsForReview(MOORLAND)).thenReturn(VisitsForReviewCountResponse(MOORLAND, 2))
+    whenever(visitReviewService.countVisitsForReview(MOORLAND)).thenReturn(VisitsForReviewCountResponse(MOORLAND, 2))
 
     facade.countVisitsForReview(MOORLAND, MOORLAND_PRISON_USER) isEqualTo VisitsForReviewCountResponse(MOORLAND, 2)
 
-    verify(visitForReviewService).countVisitsForReview(MOORLAND)
+    verify(visitReviewService).countVisitsForReview(MOORLAND)
   }
 
   @Test
@@ -203,11 +203,11 @@ class OfficialVisitFacadeTest {
       ),
     )
 
-    whenever(visitForReviewService.getVisitsForReview(MOORLAND, pageable)).thenReturn(result)
+    whenever(visitReviewService.getVisitsForReview(MOORLAND, pageable)).thenReturn(result)
 
     facade.getVisitsForReview(MOORLAND, MOORLAND_PRISON_USER, pageable) isEqualTo result
 
-    verify(visitForReviewService).getVisitsForReview(MOORLAND, pageable)
+    verify(visitReviewService).getVisitsForReview(MOORLAND, pageable)
   }
 
   @Test
@@ -376,7 +376,7 @@ class OfficialVisitFacadeTest {
   fun `should delegate to service to acknowledge visits for review`() {
     facade.acknowledgeVisitReview(MOORLAND, 1, MOORLAND_PRISON_USER)
 
-    verify(visitForReviewService).acknowledgeVisitReview(MOORLAND, 1, MOORLAND_PRISON_USER)
+    verify(visitReviewService).acknowledgeVisitReview(MOORLAND, 1, MOORLAND_PRISON_USER)
   }
 
   @Test

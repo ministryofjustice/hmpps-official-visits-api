@@ -15,6 +15,7 @@ class VisitReviewChecker(
   private val visitReviewRepository: VisitReviewRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
   private val timeSource: TimeSource,
+  private val visitorIssueChecker: VisitorIssueChecker,
 ) : AbstractChecker(visitReviewRepository) {
   fun check(officialVisit: OfficialVisitEntity) {
     val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) ?: return
@@ -23,7 +24,9 @@ class VisitReviewChecker(
       if (prisoner.isReleased()) add(IssueType.PRISONER_RELEASED)
       if (prisoner.isAtDifferentPrisonTo(officialVisit.prisonCode)) add(IssueType.PRISONER_TRANSFERRED)
 
-      // TODO add visitor issues here if there are any
+      visitorIssueChecker.checkVisitorIssues(officialVisit.prisonerNumber, officialVisit).forEach { issue ->
+        add(issue.issueType)
+      }
     }
 
     if (currentIssues.isEmpty()) return
