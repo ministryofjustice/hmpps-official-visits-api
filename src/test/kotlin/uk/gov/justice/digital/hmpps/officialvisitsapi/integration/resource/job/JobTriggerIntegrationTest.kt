@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER_ADDED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER_INACTIVE
@@ -165,6 +167,45 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
       visitReviewQueueRepository.findAll().size isEqualTo 1
       visitReviewRepository.findAll().size isEqualTo 0
+    }
+
+    @Test
+    fun `should processing visit review be completed with contact issues reviews when there are issues found`() {
+      val visit = testAPIClient.createOfficialVisit(
+        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        MOORLAND_PRISON_USER,
+      )
+
+      visitReviewQueueRepository.saveAndFlush(
+        VisitReviewQueueEntity(
+          officialVisitId = visit.officialVisitId,
+          createdTime = LocalDateTime.now(),
+          triggeringEvent = "CHECK",
+        ),
+      )
+
+      personalRelationshipsApi().stubAllContacts(
+        prisonerNumber = MOORLAND_PRISONER.number,
+        prisonerContacts = listOf(
+          prisonerContact(
+            prisonerNumber = MOORLAND_PRISONER.number,
+            type = "S",
+            contactId = CONTACT_MOORLAND_PRISONER.contactId,
+            prisonerContactId = CONTACT_MOORLAND_PRISONER.prisonerContactId,
+          ),
+          prisonerContact(
+            prisonerNumber = MOORLAND_PRISONER.number,
+            type = "O",
+            contactId = CONTACT_MOORLAND_PRISONER_ADDED.contactId,
+            prisonerContactId = CONTACT_MOORLAND_PRISONER_ADDED.prisonerContactId,
+          ),
+        ),
+      )
+
+      testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
+
+      visitReviewQueueRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll().size isEqualTo 1
     }
 
     @Test

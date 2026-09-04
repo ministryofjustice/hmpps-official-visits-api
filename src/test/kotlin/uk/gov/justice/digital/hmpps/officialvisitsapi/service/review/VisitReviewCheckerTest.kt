@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitorIssueChecker.Issue
 import java.time.LocalDateTime
 
 class VisitReviewCheckerTest {
@@ -29,7 +30,8 @@ class VisitReviewCheckerTest {
   private val prisonerSearchClient: PrisonerSearchClient = mock()
   private val now = LocalDateTime.now()
   private val timeSource = TimeSource { now }
-  private val checker = VisitReviewChecker(visitReviewRepository, prisonerSearchClient, timeSource)
+  private val visitorIssueChecker: VisitorIssueChecker = mock()
+  private val checker = VisitReviewChecker(visitReviewRepository, prisonerSearchClient, timeSource, visitorIssueChecker)
   private val scheduledVisitAtMoorland = mock<OfficialVisitEntity>().stub {
     on { officialVisitId } doReturn 99
     on { prisonCode } doReturn MOORLAND
@@ -176,6 +178,25 @@ class VisitReviewCheckerTest {
 
       verify(visitReviewRepository).saveAndFlush(visitReview)
       verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.PRISONER_TRANSFERRED, null)
+    }
+
+    // test for visitorIssueChecker.checkVisitorIssues call found multiple relationship issues
+    @Test
+    fun `should be multiple visitor issues when visitorIssueChecker returns multiple issues`() {
+      visitReviewDetail.stub {
+        on { issueType } doReturn IssueType.PRISONER_TRANSFERRED
+        on { acknowledgedBy } doReturn "user"
+      }
+
+      val visitorIssue1 = mock<Issue>().stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
+      val visitorIssue2 = mock<Issue>().stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
+      visitorIssueChecker.stub { on { checkVisitorIssues(scheduledVisitAtMoorland) } doReturn setOf(visitorIssue1, visitorIssue2) }
+
+      checker.check(scheduledVisitAtMoorland)
+
+      verify(visitReviewRepository).saveAndFlush(visitReview)
+      verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.VISITOR_NOT_APPROVED, null)
+      verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.VISITOR_NOT_APPROVED, null)
     }
   }
 }
