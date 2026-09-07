@@ -140,6 +140,9 @@ class SarEndpointIntegrationTest : IntegrationTestBase() {
         relationshipType isEqualTo RelationshipType.OFFICIAL
         relationshipDescription isEqualTo "Description"
         visitorAttendance isEqualTo AttendanceType.ATTENDED
+        firstName isEqualTo "John"
+        lastName isEqualTo "Doe"
+        leadVisitor isEqualTo true
       }
     }
   }

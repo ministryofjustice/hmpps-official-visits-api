@@ -10,7 +10,7 @@
     "summaryText": "String",
     "userFullName": "String",
     "userName": "String",
-    "versionNumber":"Integer"
+    "versionNumber": "Integer"
   },
   "AvailableSlotEntity": {
     "dayCode": "String",
@@ -29,13 +29,13 @@
     "startTime": "LocalTime"
   },
   "NotificationEntity": {
+    "createdBy": "String",
     "createdTime": "LocalDateTime",
     "emailAddress": "String",
     "emailStatus": "NotificationEmailStatus",
     "govNotifyNotificationId": "UUID",
     "notificationId": "long",
     "officialVisitId": "long",
-    "createdBy": "String",
     "reason": "String",
     "statusUpdatedTime": "LocalDateTime",
     "templateId": "String"
@@ -190,6 +190,48 @@
     "visitTypeCode": "String",
     "visitorTypeCode": "String"
   },
+  "VisitForReviewEntity": {
+    "acknowledgedBy": "String",
+    "acknowledgedTime": "LocalDateTime",
+    "detailRaisedTime": "LocalDateTime",
+    "dpsLocationId": "UUID",
+    "endTime": "LocalTime",
+    "expiredTime": "LocalDateTime",
+    "issueDetail": "String",
+    "issueType": "IssueType",
+    "officialVisitId": "long",
+    "prisonCode": "String",
+    "prisonerNumber": "String",
+    "raisedTime": "LocalDateTime",
+    "startTime": "LocalTime",
+    "visitDate": "LocalDate",
+    "visitReviewDetailId": "long",
+    "visitReviewId": "long",
+    "visitStatusCode": "VisitStatusType",
+    "visitTypeCode": "VisitType"
+  },
+  "VisitReviewDetailEntity": {
+    "acknowledgedBy": "String",
+    "acknowledgedTime": "LocalDateTime",
+    "issueDetail": "String",
+    "issueType": "IssueType",
+    "raisedTime": "LocalDateTime",
+    "visitReview": "VisitReviewEntity",
+    "visitReviewDetailId": "long"
+  },
+  "VisitReviewEntity": {
+    "expiredTime": "LocalDateTime",
+    "officialVisitId": "long",
+    "raisedTime": "LocalDateTime",
+    "visitReviewDetails": "List",
+    "visitReviewId": "long"
+  },
+  "VisitReviewQueueEntity": {
+    "createdTime": "LocalDateTime",
+    "officialVisitId": "long",
+    "triggeringEvent": "String",
+    "visitReviewQueueId": "long"
+  },
   "VisitorEquipmentEntity": {
     "approved": "boolean",
     "approvedBy": "String",
@@ -201,47 +243,5 @@
     "updatedBy": "String",
     "updatedTime": "LocalDateTime",
     "visitorEquipmentId": "long"
-  },
-  "VisitReviewQueueEntity": {
-    "visitReviewQueueId": "long",
-    "officialVisitId": "long",
-    "createdTime": "LocalDateTime",
-    "triggeringEvent": "String"
-  },
-  "VisitReviewEntity": {
-    "expiredTime": "LocalDateTime",
-    "officialVisitId": "long",
-    "raisedTime": "LocalDateTime",
-    "visitReviewDetails":"List",
-    "visitReviewId": "long"
-  },
-  "VisitReviewDetailEntity": {
-    "acknowledgedBy":"String",
-    "acknowledgedTime":"LocalDateTime",
-    "issueDetail":"String",
-    "issueType":"IssueType",
-    "raisedTime":"LocalDateTime",
-    "visitReview":"VisitReviewEntity",
-    "visitReviewDetailId":"long"
-  },
-  "VisitForReviewEntity": {
-    "acknowledgedBy":"String",
-    "acknowledgedTime":"LocalDateTime",
-    "detailRaisedTime":"LocalDateTime",
-    "dpsLocationId":"UUID",
-    "endTime":"LocalTime",
-    "expiredTime":"LocalDateTime",
-    "issueDetail":"String",
-    "issueType":"IssueType",
-    "officialVisitId":"long",
-    "prisonCode":"String",
-    "prisonerNumber":"String",
-    "raisedTime":"LocalDateTime",
-    "startTime":"LocalTime",
-    "visitDate":"LocalDate",
-    "visitReviewDetailId":"long",
-    "visitReviewId":"long",
-    "visitStatusCode":"VisitStatusType",
-    "visitTypeCode":"VisitType"
   }
 }

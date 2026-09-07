@@ -1,14 +1,6 @@
 <h1 class="title">Official visits</h1>
 <br>
 {{#.}}
-    <table class="summary-list">
-        <tr><td>Prisoner number</td><td>{{ optionalString prisonerNumber }}</td></tr>
-        <tr><td>Date from</td><td>{{ optionalValue (formatDate fromDate) }}</td></tr>
-        <tr><td>Date to</td><td>{{ optionalValue (formatDate toDate) }}</td></tr>
-    </table>
-
-    <br>
-    <h2>Official visits</h2>
     {{#officialVisits}}
         <br>
         <h3>Visit</h3>
@@ -24,8 +16,6 @@
             <tr><td>Attendance</td><td>{{ optionalString prisonerAttendance }}</td></tr>
             <tr><td>Completion type</td><td>{{ optionalString completionCode }}</td></tr>
             <tr><td>Completion notes</td><td>{{ optionalString completionNotes }}</td></tr>
-            <tr><td>Search type</td><td>{{ optionalString searchTypeCode }}</td></tr>
-            <tr><td>Visitor concern notes</td><td>{{ optionalString visitorConcernNotes }}</td></tr>
         </table>
 
         <h3>Visitors</h3>
@@ -33,6 +23,9 @@
         <table class="summary-list">
             <tr><td>Relationship type</td><td>{{ optionalString relationshipType }}</td></tr>
             <tr><td>Relationship description</td><td>{{ optionalString relationshipDescription }}</td></tr>
+            <tr><td>First name</td><td>{{ optionalString firstName }}</td></tr>
+            <tr><td>Last name</td><td>{{ optionalString lastName }}</td></tr>
+            <tr><td>Lead visitor</td><td>{{ leadVisitor }}</td></tr>
             <tr><td>Attendance</td><td>{{ optionalString visitorAttendance }}</td></tr>
         </table>
         {{/visitors}}
