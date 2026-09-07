@@ -88,6 +88,7 @@ class VisitReviewService(
     visitReview.updateAcknowledgedDetails(timeSource.now(), user.username)
   }
 
+  @Transactional(readOnly = true)
   fun getVisitsForReview(prisonCode: String, pageable: Pageable): PagedModel<VisitsForReviewResponse> {
     val fromDate = LocalDate.now()
     val visitIdsPage = visitForReviewRepository.findVisitIdsForReview(

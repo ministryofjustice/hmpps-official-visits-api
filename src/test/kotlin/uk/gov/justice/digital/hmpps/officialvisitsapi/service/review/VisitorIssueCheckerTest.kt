@@ -13,6 +13,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactly
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
 import uk.gov.justice.digital.hmpps.officialvisitsapi.mapping.toPrisonerContactModel
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerContact
@@ -82,8 +84,15 @@ class VisitorIssueCheckerTest {
 
     val issues = checker.checkVisitorIssues(visit)
 
-    assertEquals(1, issues.size)
-    assertEquals(IssueType.VISITOR_NO_RELATIONSHIP, issues.single().issueType)
+    issues.containsExactly(
+      listOf(
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NO_RELATIONSHIP,
+          issueDescription = "One or more visitors are not in a relationship with prisoner $prisonerNumber",
+        ),
+      ),
+    )
   }
 
   @Test
@@ -95,8 +104,15 @@ class VisitorIssueCheckerTest {
 
     val issues = checker.checkVisitorIssues(visit)
 
-    assertEquals(1, issues.size)
-    assertEquals(IssueType.VISITOR_NOT_OFFICIAL, issues.single().issueType)
+    issues.containsExactly(
+      listOf(
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NOT_OFFICIAL,
+          issueDescription = "Visitor Jane Doe has a social relationship with prisoner $prisonerNumber",
+        ),
+      ),
+    )
   }
 
   @Test
@@ -107,8 +123,15 @@ class VisitorIssueCheckerTest {
 
     val issues = checker.checkVisitorIssues(visit)
 
-    assertEquals(1, issues.size)
-    assertEquals(IssueType.VISITOR_NOT_APPROVED, issues.single().issueType)
+    issues.containsExactlyInAnyOrder(
+      listOf(
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NOT_APPROVED,
+          issueDescription = "Visitor Jane Doe is not approved to visit prisoner $prisonerNumber",
+        ),
+      ),
+    )
   }
 
   @Test
@@ -124,10 +147,20 @@ class VisitorIssueCheckerTest {
 
     val issues = checker.checkVisitorIssues(visit)
 
-    assertEquals(2, issues.size)
-    val issueTypes = issues.map { it.issueType }
-    assertTrue(issueTypes.contains(IssueType.VISITOR_NOT_OFFICIAL))
-    assertTrue(issueTypes.contains(IssueType.VISITOR_NOT_APPROVED))
+    issues.containsExactlyInAnyOrder(
+      listOf(
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NOT_OFFICIAL,
+          issueDescription = "Visitor Jane Doe has a social relationship with prisoner $prisonerNumber",
+        ),
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NOT_APPROVED,
+          issueDescription = "Visitor Jane Doe is not approved to visit prisoner $prisonerNumber",
+        ),
+      ),
+    )
   }
 
   @Test
@@ -143,8 +176,20 @@ class VisitorIssueCheckerTest {
 
     assertEquals(2, issues.size)
     val issueTypes = issues.map { it.issueType }
-    assertTrue(issueTypes.contains(IssueType.VISITOR_NO_RELATIONSHIP))
-    assertTrue(issueTypes.contains(IssueType.VISITOR_NOT_APPROVED))
+    issues.containsExactlyInAnyOrder(
+      listOf(
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NO_RELATIONSHIP,
+          issueDescription = "One or more visitors are not in a relationship with prisoner $prisonerNumber",
+        ),
+        VisitorIssueChecker.Issue(
+          visitId = visit.officialVisitId,
+          issueType = IssueType.VISITOR_NOT_APPROVED,
+          issueDescription = "Visitor Jane Doe is not approved to visit prisoner $prisonerNumber",
+        ),
+      ),
+    )
   }
 
   @Test

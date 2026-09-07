@@ -89,9 +89,12 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   inner class IdentifyCandidateVisitsToCheckJobTest {
 
     @Test
-    fun `should find the identify candidate visits to check`() {
+    fun `should identify candidate visits to check`() {
+      val sixDaysInFuture = LocalDate.now().plusDays(6)
+      val (timeSlot, visitSlot) = testAPIClient.generateVisitSlot(sixDaysInFuture)
+
       testAPIClient.createOfficialVisit(
-        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        createOfficialVisitRequest(VisitSlot(visitSlot.visitSlotId, sixDaysInFuture, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
 

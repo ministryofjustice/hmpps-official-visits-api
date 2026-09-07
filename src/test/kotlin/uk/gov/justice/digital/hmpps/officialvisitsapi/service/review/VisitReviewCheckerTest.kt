@@ -180,7 +180,6 @@ class VisitReviewCheckerTest {
       verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.PRISONER_TRANSFERRED, null)
     }
 
-    // test for visitorIssueChecker.checkVisitorIssues call found multiple relationship issues
     @Test
     fun `should be multiple visitor issues when visitorIssueChecker returns multiple issues`() {
       visitReviewDetail.stub {
