@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
 /**
@@ -24,7 +25,7 @@ class ProcessCandidateVisitsToCheckJob(
   },
   { visits ->
     visits.forEach {
-      visitReviewService.visitCheck(it.officialVisitId)
+      visitReviewService.visitCheck(it.officialVisitId, VisitReviewCheckType.CHECK)
     }
   },
 

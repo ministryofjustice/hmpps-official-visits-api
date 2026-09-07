@@ -80,13 +80,7 @@ class VisitReviewController(private val facade: OfficialVisitFacade) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Visits for review",
-        content = [
-          Content(
-            mediaType = "application/json",
-            schema = Schema(implementation = VisitsForReviewResponse::class),
-          ),
-        ],
+        description = "Paginated list of visits for review",
       ),
       ApiResponse(
         responseCode = "404",

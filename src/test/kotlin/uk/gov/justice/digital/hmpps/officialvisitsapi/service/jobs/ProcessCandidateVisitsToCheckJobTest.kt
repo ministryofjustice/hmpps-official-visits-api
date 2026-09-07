@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -55,6 +56,6 @@ class ProcessCandidateVisitsToCheckJobTest {
     job.runJob()
 
     verify(officialVisitRepository).findCandidatesOrderedByQueueTime()
-    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId)
+    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.CHECK)
   }
 }

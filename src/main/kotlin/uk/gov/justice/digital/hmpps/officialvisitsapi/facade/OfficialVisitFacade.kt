@@ -30,7 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingS
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitForReviewService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
 @Component
 class OfficialVisitFacade(
@@ -44,7 +44,7 @@ class OfficialVisitFacade(
   private val overlappingVisitsService: OverlappingVisitsService,
   private val notificationsService: NotificationsService,
   private val auditingService: AuditingService,
-  private val visitForReviewService: VisitForReviewService,
+  private val visitReviewService: VisitReviewService,
 ) {
   fun createOfficialVisit(
     prisonCode: String,
@@ -255,7 +255,7 @@ class OfficialVisitFacade(
       checkPrisonUsersCaseloads(prisonCode, user, "Visits for review count cannot be viewed for a prison outside the user's caseload list")
     }
 
-    return visitForReviewService.countVisitsForReview(prisonCode)
+    return visitReviewService.countVisitsForReview(prisonCode)
   }
 
   fun getVisitsForReview(prisonCode: String, user: User, pageable: Pageable): PagedModel<VisitsForReviewResponse> {
@@ -263,7 +263,7 @@ class OfficialVisitFacade(
       checkPrisonUsersCaseloads(prisonCode, user, "Visits for review cannot be viewed for a prison outside the user's caseload list")
     }
 
-    return visitForReviewService.getVisitsForReview(prisonCode, pageable)
+    return visitReviewService.getVisitsForReview(prisonCode, pageable)
   }
 
   fun acknowledgeVisitReview(prisonCode: String, officialVisitId: Long, user: User) {
@@ -271,7 +271,7 @@ class OfficialVisitFacade(
       checkPrisonUsersCaseloads(prisonCode, user, "Visit review cannot be acknowledged for a prison outside the user's caseload list")
     }
 
-    visitForReviewService.acknowledgeVisitReview(prisonCode, officialVisitId, user)
+    visitReviewService.acknowledgeVisitReview(prisonCode, officialVisitId, user)
   }
 
   private fun checkPrisonUsersCaseloads(prisonCode: String, user: PrisonUser, message: String, hiddenException: Boolean = false) {

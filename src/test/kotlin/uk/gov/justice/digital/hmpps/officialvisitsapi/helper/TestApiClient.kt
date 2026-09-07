@@ -5,19 +5,27 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEventResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.NotificationResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewCountResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.VisitsForReviewResponse
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.TimeSlot
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
+import java.util.UUID
 
 class TestApiClient(private val webTestClient: WebTestClient, private val jwtAuthHelper: JwtAuthorisationHelper) {
   fun createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
@@ -126,12 +134,61 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .exchange()
     .expectStatus().isOk
 
+  fun generateVisitSlot(futureVisitDate: LocalDate): Pair<TimeSlot, uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot> {
+    val timeSlot = webTestClient.post()
+      .uri("/admin/time-slot")
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(MOORLAND_PRISON_USER, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+      .bodyValue(createTimeSlotRequest(futureVisitDate))
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody<TimeSlot>()
+      .returnResult().responseBody!!
+    val createRequest = createVisitSlotRequest(moorlandLocation.id)
+
+    val visitSlot = webTestClient.post()
+      .uri("/admin/time-slot/{prisonTimeSlotId}/visit-slot", timeSlot.prisonTimeSlotId)
+      .accept(MediaType.APPLICATION_JSON)
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(setAuthorisation(MOORLAND_PRISON_USER, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+      .bodyValue(createRequest)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody<uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot>()
+      .returnResult().responseBody!!
+    return Pair(timeSlot, visitSlot)
+  }
+
   private fun setAuthorisation(prisonUser: PrisonUser, roles: List<String>): (HttpHeaders) -> Unit = run {
     jwtAuthHelper.setAuthorisationHeader(
       username = prisonUser.username,
       scope = listOf("read"),
       roles = roles,
     )
+  }
+
+  private fun createVisitSlotRequest(dpsLocationId: UUID = moorlandLocation.id): CreateVisitSlotRequest = CreateVisitSlotRequest(dpsLocationId = dpsLocationId, maxAdults = 10, maxGroups = 5, maxVideo = 2)
+
+  private fun createTimeSlotRequest(visitDate: LocalDate) = CreateTimeSlotRequest(
+    prisonCode = MOORLAND,
+    dayCode = getDayCode(visitDate),
+    startTime = LocalTime.of(10, 0),
+    endTime = LocalTime.of(11, 0),
+    effectiveDate = LocalDate.now().plusDays(1),
+    expiryDate = LocalDate.now().plusDays(365),
+  )
+
+  private fun getDayCode(date: LocalDate): DayType = when (date.dayOfWeek) {
+    DayOfWeek.MONDAY -> DayType.MON
+    DayOfWeek.TUESDAY -> DayType.TUE
+    DayOfWeek.WEDNESDAY -> DayType.WED
+    DayOfWeek.THURSDAY -> DayType.THU
+    DayOfWeek.FRIDAY -> DayType.FRI
+    DayOfWeek.SATURDAY -> DayType.SAT
+    DayOfWeek.SUNDAY -> DayType.SUN
   }
 
   data class VisitsForReviewResponseResponse(
