@@ -20,13 +20,14 @@ data class SarVisit(
   val prisonerAttendance: AttendanceType? = null,
   val staffNotes: String? = null,
   val prisonerNotes: String? = null,
-  val searchTypeCode: String? = null,
-  val visitorConcernNotes: String? = null,
   val visitors: List<SarVisitor> = emptyList(),
 )
 
 data class SarVisitor(
   val relationshipType: RelationshipType? = null,
   val relationshipDescription: String? = null,
+  val firstName: String? = null,
+  val lastName: String? = null,
+  val leadVisitor: Boolean = false,
   val visitorAttendance: AttendanceType? = null,
 )

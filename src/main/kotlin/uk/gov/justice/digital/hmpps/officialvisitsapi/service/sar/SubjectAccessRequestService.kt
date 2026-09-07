@@ -62,11 +62,9 @@ class SubjectAccessRequestService(
         endTime = visit.endTime,
         prisonCode = visit.prisonCode,
         prisonerNotes = visit.prisonerNotes,
-        searchTypeCode = visit.searchTypeCode?.name,
         staffNotes = visit.staffNotes,
         startTime = visit.startTime,
         visitDate = visit.visitDate,
-        visitorConcernNotes = visit.visitorConcernNotes,
         visitStatus = visit.visitStatusCode,
         visitType = visit.visitTypeCode,
         prisonerAttendance = prisonerVisited?.attendanceCode,
@@ -74,6 +72,9 @@ class SubjectAccessRequestService(
           SarVisitor(
             visitorAttendance = visitor.attendanceCode,
             relationshipType = visitor.relationshipTypeCode,
+            firstName = visitor.firstName,
+            lastName = visitor.lastName,
+            leadVisitor = visitor.leadVisitor,
             relationshipDescription = visitor.relationshipCode?.let { personalRelationshipsReferenceDataService.getReferenceDataByCode(getRelationShipCode(visitor.relationshipTypeCode.toString()), visitor.relationshipCode!!)?.description } ?: "No relationship",
           )
         },
