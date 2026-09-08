@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.6"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.8"
   id("org.openapi.generator") version "7.25.0"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
@@ -23,9 +23,9 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
   // OpenAPI dependencies
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.0")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
-  implementation("org.springdoc:springdoc-openapi-starter-common:3.1.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.1.1")
 
   // Postgresql dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
