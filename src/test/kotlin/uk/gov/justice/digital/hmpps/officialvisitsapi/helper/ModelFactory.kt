@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationshi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ReferenceCodeGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionTypeDetails
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.RestrictionsSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import java.time.LocalDate
 import java.time.LocalDateTime

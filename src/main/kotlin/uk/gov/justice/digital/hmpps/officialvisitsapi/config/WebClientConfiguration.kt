@@ -17,6 +17,7 @@ class WebClientConfiguration(
   @param:Value("\${api.base.url.prisoner-search}") val prisonerSearchBaseUri: String,
   @param:Value("\${api.base.url.personal-relationships}") val personalRelationshipUri: String,
   @param:Value("\${api.base.url.non-associations}") val nonAssociationsBaseUri: String,
+  @param:Value("\${api.base.url.alerts}") val alertsBaseUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
 ) {
@@ -52,4 +53,10 @@ class WebClientConfiguration(
 
   @Bean
   fun nonAssociationsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, "non-associations", nonAssociationsBaseUri, timeout)
+
+  @Bean
+  fun alertsApiHealthWebClient(builder: WebClient.Builder) = builder.healthWebClient(alertsBaseUri, healthTimeout)
+
+  @Bean
+  fun alertsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) = builder.authorisedWebClient(authorizedClientManager, "alerts", alertsBaseUri, timeout)
 }

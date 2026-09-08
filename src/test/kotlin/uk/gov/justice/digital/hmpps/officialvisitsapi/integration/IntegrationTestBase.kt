@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.TestApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.container.PostgresqlContainer
+import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.AlertsApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.LocationsInsidePrisonApiExtension
@@ -43,6 +44,7 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
   PrisonerSearchApiExtension::class,
   PersonalRelationshipsApiExtension::class,
   NonAssociationsApiExtension::class,
+  AlertsApiExtension::class,
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -121,6 +123,7 @@ abstract class IntegrationTestBase {
     prisonerSearchApi().stubHealthPing(status)
     personalRelationshipsApi().stubHealthPing(status)
     nonAssociationsApi().stubHealthPing(status)
+    alertsApi().stubHealthPing(status)
   }
 
   protected fun clearAllVisitData() {
@@ -141,6 +144,8 @@ abstract class IntegrationTestBase {
   protected fun personalRelationshipsApi() = PersonalRelationshipsApiExtension.server
 
   protected fun nonAssociationsApi() = NonAssociationsApiExtension.server
+
+  protected fun alertsApi() = AlertsApiExtension.server
 
   companion object {
     private val pgContainer = PostgresqlContainer.instance
