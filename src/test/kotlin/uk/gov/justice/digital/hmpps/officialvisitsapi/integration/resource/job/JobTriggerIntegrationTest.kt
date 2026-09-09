@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland.MONDAY_9_TO_10_VISIT_SLOT
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.VisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
@@ -195,7 +196,9 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
       visitReviewQueueRepository.findAll().size isEqualTo 1
-      visitReviewRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.PRISONER_NEW_ALERT,
+      )
     }
 
     @Test
@@ -234,7 +237,9 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
       visitReviewQueueRepository.findAll().size isEqualTo 1
-      visitReviewRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.VISITOR_NOT_OFFICIAL,
+      )
     }
 
     @Test
@@ -256,7 +261,9 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
       visitReviewQueueRepository.findAll().size isEqualTo 1
-      visitReviewRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.PRISONER_RELEASED,
+      )
     }
 
     @Test
@@ -311,6 +318,10 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
       visitReviewQueueRepository.findAll().size isEqualTo 0
       visitReviewRepository.findAll().size isEqualTo 2
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.VISITOR_NOT_APPROVED,
+        IssueType.PRISONER_TRANSFERRED,
+      )
     }
 
     private fun alert(isActive: Boolean, createdAt: LocalDateTime): Alert = Alert(
