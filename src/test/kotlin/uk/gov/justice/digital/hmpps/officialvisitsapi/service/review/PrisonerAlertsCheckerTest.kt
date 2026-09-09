@@ -8,7 +8,6 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alerts.AlertsClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.AlertCodeSummary
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import java.time.LocalDate
@@ -20,13 +19,10 @@ class PrisonerAlertsCheckerTest {
   private val alertsClient: AlertsClient = mock()
   private val checker = PrisonerAlertsChecker(alertsClient)
 
-  private val prisoner: Prisoner = mock {
-    whenever(it.prisonerNumber).thenReturn("A1234BC")
-  }
-
   private val referenceDate = LocalDateTime.of(2024, 1, 1, 12, 0)
 
   private fun officialVisit(updatedTime: LocalDateTime?, createdTime: LocalDateTime): OfficialVisitEntity = mock {
+    whenever(it.prisonerNumber).thenReturn("A1234BC")
     whenever(it.updatedTime).thenReturn(updatedTime)
     whenever(it.createdTime).thenReturn(createdTime)
   }
@@ -52,7 +48,7 @@ class PrisonerAlertsCheckerTest {
         listOf(alert(isActive = true, createdAt = referenceDate.plusMinutes(1))),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
     }
@@ -64,7 +60,7 @@ class PrisonerAlertsCheckerTest {
         listOf(alert(isActive = true, createdAt = referenceDate.plusMinutes(1))),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
     }
@@ -80,7 +76,7 @@ class PrisonerAlertsCheckerTest {
         listOf(alert(isActive = true, createdAt = referenceDate.plusDays(1))),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
     }
@@ -90,7 +86,7 @@ class PrisonerAlertsCheckerTest {
       val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
       whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(emptyList())
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isNull()
     }
@@ -102,7 +98,7 @@ class PrisonerAlertsCheckerTest {
         listOf(alert(isActive = false, createdAt = referenceDate.plusDays(1))),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isNull()
     }
@@ -114,7 +110,7 @@ class PrisonerAlertsCheckerTest {
         listOf(alert(isActive = true, createdAt = referenceDate.minusDays(1))),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isNull()
     }
@@ -126,7 +122,7 @@ class PrisonerAlertsCheckerTest {
         listOf(alert(isActive = true, createdAt = referenceDate)),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isNull()
     }
@@ -142,7 +138,7 @@ class PrisonerAlertsCheckerTest {
         ),
       )
 
-      val result = checker.checkPrisonerAlerts(officialVisit, prisoner)
+      val result = checker.checkPrisonerAlerts(officialVisit)
 
       assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
     }

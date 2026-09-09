@@ -5,3 +5,5 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.mode
 fun Prisoner.isReleased(): Boolean = status == "INACTIVE OUT"
 
 fun Prisoner.isAtDifferentPrisonTo(prisonCode: String) = !isReleased() && prisonCode != prisonId
+
+fun Prisoner.getFullName(): String = "$firstName $lastName"

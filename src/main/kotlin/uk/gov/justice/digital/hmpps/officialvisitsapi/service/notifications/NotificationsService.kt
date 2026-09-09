@@ -7,6 +7,7 @@ import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.extensions.getFullName
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
@@ -140,7 +141,7 @@ class NotificationsService(
     when (notificationType) {
       NotificationType.CREATE -> OfficialVisitCreatedEmail(
         emailAddress = emailAddress,
-        prisonerName = getFullName(prisoner),
+        prisonerName = prisoner.getFullName(),
         appointmentDate = officialVisit.visitDate,
         appointmentTime = officialVisit.startTime,
         appointmentLocation = location,
@@ -151,7 +152,7 @@ class NotificationsService(
 
       NotificationType.AMEND -> OfficialVisitUpdatedEmail(
         emailAddress = emailAddress,
-        prisonerName = getFullName(prisoner),
+        prisonerName = prisoner.getFullName(),
         appointmentDate = officialVisit.visitDate,
         appointmentTime = officialVisit.startTime,
         appointmentLocation = location,
@@ -162,7 +163,7 @@ class NotificationsService(
 
       NotificationType.CANCEL -> OfficialVisitCancelledEmail(
         emailAddress = emailAddress,
-        prisonerName = getFullName(prisoner),
+        prisonerName = prisoner.getFullName(),
         visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
         appointmentDate = officialVisit.visitDate,
         appointmentTime = officialVisit.startTime,
@@ -185,8 +186,6 @@ class NotificationsService(
     createdBy = createdBy,
     statusUpdatedTime = statusUpdatedTime,
   )
-
-  fun getFullName(prisoner: Prisoner): String = "${prisoner.firstName} ${prisoner.lastName}"
 }
 
 enum class NotificationType {

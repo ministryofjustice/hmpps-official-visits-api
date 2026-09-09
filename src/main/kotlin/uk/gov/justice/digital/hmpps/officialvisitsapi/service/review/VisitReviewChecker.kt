@@ -25,7 +25,7 @@ class VisitReviewChecker(
       if (prisoner.isReleased()) add(IssueType.PRISONER_RELEASED)
       if (prisoner.isAtDifferentPrisonTo(officialVisit.prisonCode)) add(IssueType.PRISONER_TRANSFERRED)
       addAll(visitorIssueChecker.checkVisitorIssues(officialVisit).map { it.issueType })
-      prisonerAlertsChecker.checkPrisonerAlerts(officialVisit, prisoner)?.let { add(it) }
+      prisonerAlertsChecker.checkPrisonerAlerts(officialVisit)?.let { add(it) }
     }
 
     if (currentIssues.isEmpty()) return
