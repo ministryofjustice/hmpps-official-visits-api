@@ -53,6 +53,12 @@ menu_function() {
   echo " 20 - Add a prison"
   echo " 21 - Remove a prison"
   echo ""
+  echo "Visits need review enabled prisons"
+  echo ""
+  echo " 22 - Replace with a new list"
+  echo " 23 - Add a prison"
+  echo " 24 - Remove a prison"
+  echo ""
   echo " x - Restart services for changes to take effect"
   echo ""
   echo " 0 - Exit"
@@ -77,9 +83,9 @@ show_current() {
 
   # Get feature-toggles secret values
   KUBE_SECRET=feature-toggles
-  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS FEATURE_VISIT_HISTORY_TIMELINE_PRISONS < <(
+  read -r FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS FEATURE_DPS_ENABLED_PRISONS FEATURE_TWO_MONTH_CALENDAR_ENABLED FEATURE_NOMIS_SWITCH_OFF_PRISONS FEATURE_EMAIL_NOTIFICATIONS_PRISONS FEATURE_BULK_MOVEMENT_SLIPS_PRISONS FEATURE_VISIT_HISTORY_TIMELINE_PRISONS FEATURE_VISITS_NEED_REVIEW_PRISONS < <(
     kubectl -n "$NAMESPACE" get secret "$KUBE_SECRET" -o json \
-    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS, .FEATURE_VISIT_HISTORY_TIMELINE_PRISONS | @base64d' \
+    | jq -r '.data | .FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, .FEATURE_DPS_ENABLED_PRISONS, .FEATURE_TWO_MONTH_CALENDAR_ENABLED, .FEATURE_NOMIS_SWITCH_OFF_PRISONS, .FEATURE_EMAIL_NOTIFICATIONS_PRISONS, .FEATURE_BULK_MOVEMENT_SLIPS_PRISONS, .FEATURE_VISIT_HISTORY_TIMELINE_PRISONS, .FEATURE_VISITS_NEED_REVIEW_PRISONS | @base64d' \
     | tr '\n' ' '
   )
 
@@ -103,6 +109,7 @@ show_current() {
   echo "Email notification prisons    : ${FEATURE_EMAIL_NOTIFICATIONS_PRISONS}"
   echo "Bulk movement slips prisons   : ${FEATURE_BULK_MOVEMENT_SLIPS_PRISONS}"
   echo "Visit history timeline enabled prisons : ${FEATURE_VISIT_HISTORY_TIMELINE_PRISONS}"
+  echo "Visits need review enabled prisons     : ${FEATURE_VISITS_NEED_REVIEW_PRISONS}"
 }
 
 add_dps_enabled_prison() {
@@ -322,6 +329,34 @@ remove_prison_from_visit_history_timeline_prisons() {
   kubectl -n "$2" patch secret feature-toggles -p $stringData
 }
 
+add_visits_need_review_prison() {
+  echo "Adding $3 to visits need review prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_VISITS_NEED_REVIEW_PRISONS}' | base64 -d)
+  NEW="$CURRENT,$3"
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_VISITS_NEED_REVIEW_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+add_list_visits_need_review_prisons() {
+  echo "Replace existing list with $3 for visits need review prisons in $1 namespace $2"
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_VISITS_NEED_REVIEW_PRISONS}' | base64 -d)
+  NEW=$3
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_VISITS_NEED_REVIEW_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
+remove_prison_from_visits_need_review_prisons() {
+  echo "Removing prison $3 from visits need review prisons in $1 namespace $2"
+  prison=$3
+  CURRENT=$(kubectl -n "$2" get secret feature-toggles -o jsonpath='{.data.FEATURE_VISITS_NEED_REVIEW_PRISONS}' | base64 -d)
+  NEW=$(echo ",$CURRENT," | sed "s/,$prison,/,/g; s/^,//; s/,$//")
+  echo "Applying new value : $NEW"
+  stringData="{\"stringData\":{\"FEATURE_VISITS_NEED_REVIEW_PRISONS\":\"$NEW\"}}"
+  kubectl -n "$2" patch secret feature-toggles -p $stringData
+}
+
 restart_services() {
    echo "Restarting UI service in $1 namespace $2"
    kubectl -n "$2" rollout restart deployments/hmpps-official-visits-ui
@@ -449,6 +484,22 @@ while true; do
           echo "Remove a prison from visit history timeline enabled prisons"
           read -p "Enter a prison code to remove : " prison
           remove_prison_from_visit_history_timeline_prisons "$ENV" "$NAMESPACE" "$prison"
+          ;;
+
+      22)
+          echo "Replace the list of visits need review enabled prisons"
+          read -p "Enter a comma-separated list of prisons to replace the current list : " prison_list
+          add_list_visits_need_review_prisons "$ENV" "$NAMESPACE" "$prison_list"
+          ;;
+      23)
+          echo "Add a prison to visits need review enabled prisons"
+          read -p "Enter a prison code to add : " prison
+          add_visits_need_review_prison "$ENV" "$NAMESPACE" "$prison"
+          ;;
+      24)
+          echo "Remove a prison from visits need review enabled prisons"
+          read -p "Enter a prison code to remove : " prison
+          remove_prison_from_visits_need_review_prisons "$ENV" "$NAMESPACE" "$prison"
           ;;
 
       x)  echo "Restarting services"
