@@ -178,7 +178,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should process visits and flag reviews when there are prisoner alerts found`() {
+    fun `should process visits and flag reviews when there are new active prisoner alerts found`() {
       val visit = testAPIClient.createOfficialVisit(
         createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
