@@ -7,6 +7,7 @@ import org.mockito.Mockito.mock
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.stub
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.BIRMINGHAM
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.WANDSWORTH
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo

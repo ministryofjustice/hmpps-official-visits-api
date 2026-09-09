@@ -41,6 +41,7 @@ api:
       manage-users: http://localhost:8093
       personal-relationships: http://localhost:8094
       non-associations: http://localhost:8095
+      alerts: http://localhost:8096
 
 feature:
   event:

@@ -10,8 +10,8 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.stub
 import org.mockito.kotlin.verify
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -31,7 +31,8 @@ class VisitReviewCheckerTest {
   private val now = LocalDateTime.now()
   private val timeSource = TimeSource { now }
   private val visitorIssueChecker: VisitorIssueChecker = mock()
-  private val checker = VisitReviewChecker(visitReviewRepository, prisonerSearchClient, timeSource, visitorIssueChecker)
+  private val prisonerAlertsChecker: PrisonerAlertsChecker = mock()
+  private val checker = VisitReviewChecker(visitReviewRepository, prisonerSearchClient, timeSource, visitorIssueChecker, prisonerAlertsChecker)
   private val scheduledVisitAtMoorland = mock<OfficialVisitEntity>().stub {
     on { officialVisitId } doReturn 99
     on { prisonCode } doReturn MOORLAND

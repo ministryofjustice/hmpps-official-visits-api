@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
@@ -17,6 +19,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland.MONDAY_9_TO_10_VISIT_SLOT
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.VisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
@@ -34,6 +37,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.UUID
 
 class JobTriggerIntegrationTest : IntegrationTestBase() {
 
@@ -78,6 +82,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         ),
       ),
     )
+    alertsApi().stubGetPrisonerAlertsNotFound(MOORLAND_PRISONER.number)
   }
 
   @AfterEach
@@ -125,7 +130,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     @Test
     fun `should not find identify candidate visits to check`() {
       val matchingVisit = testAPIClient.createOfficialVisit(
-        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
       val cancelledVisit = testAPIClient.createOfficialVisit(
@@ -152,9 +157,9 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   inner class ProcessCandidateVisitsToCheckJobTest {
 
     @Test
-    fun `should processing visit review be completed with no reviews when there are no issues found`() {
+    fun `should process visits and not flag reviews when there are no issues found`() {
       val visit = testAPIClient.createOfficialVisit(
-        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
 
@@ -173,9 +178,33 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should processing visit review be completed with contact issues reviews when there are issues found`() {
+    fun `should process visits and flag reviews when there are new active prisoner alerts found`() {
       val visit = testAPIClient.createOfficialVisit(
-        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        MOORLAND_PRISON_USER,
+      )
+
+      visitReviewQueueRepository.saveAndFlush(
+        VisitReviewQueueEntity(
+          officialVisitId = visit.officialVisitId,
+          createdTime = LocalDateTime.now(),
+          triggeringEvent = "CHECK",
+        ),
+      )
+      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(alert(true, LocalDateTime.now())))
+
+      testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
+
+      visitReviewQueueRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.PRISONER_NEW_ALERT,
+      )
+    }
+
+    @Test
+    fun `should process visits and flag contact issues reviews when there are contact issues found`() {
+      val visit = testAPIClient.createOfficialVisit(
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
 
@@ -208,14 +237,16 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
       visitReviewQueueRepository.findAll().size isEqualTo 1
-      visitReviewRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.VISITOR_NOT_OFFICIAL,
+      )
     }
 
     @Test
-    fun `should process visits when there are issues found`() {
+    fun `should process visits and flag issues when there are prisoner issues found`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
       val visit = testAPIClient.createOfficialVisit(
-        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
 
@@ -230,11 +261,13 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
 
       visitReviewQueueRepository.findAll().size isEqualTo 1
-      visitReviewRepository.findAll().size isEqualTo 1
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.PRISONER_RELEASED,
+      )
     }
 
     @Test
-    fun `should not process candidates for visits that are more than 7 day to the future`() {
+    fun `should process visits and do not flag issues for visits that are more than 7 day to the future`() {
       val visitSlot = VisitSlot(
         1,
         LocalDate.now().next(DayOfWeek.MONDAY).plusDays(7),
@@ -264,7 +297,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     @Test
     fun `should not process when no candidate for visits to check`() {
       val matchingVisit = testAPIClient.createOfficialVisit(
-        createOfficialVisitRequest(Moorland.MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
+        createOfficialVisitRequest(MONDAY_9_TO_10_VISIT_SLOT, listOf(officialVisitor)),
         MOORLAND_PRISON_USER,
       )
       val cancelledVisit = testAPIClient.createOfficialVisit(
@@ -285,7 +318,28 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob("PROCESS_CANDIDATE_VISITS_TO_CHECK")
       visitReviewQueueRepository.findAll().size isEqualTo 0
       visitReviewRepository.findAll().size isEqualTo 2
+      visitReviewRepository.findAll()[0].visitReviewDetails().map { it.issueType } containsExactlyInAnyOrder listOf(
+        IssueType.VISITOR_NOT_APPROVED,
+        IssueType.PRISONER_TRANSFERRED,
+      )
     }
+
+    private fun alert(isActive: Boolean, createdAt: LocalDateTime): Alert = Alert(
+      alertUuid = UUID.randomUUID(),
+      prisonNumber = "A1234BC",
+      alertCode = AlertCodeSummary(
+        alertTypeCode = "X",
+        alertTypeDescription = "Test Alert",
+        code = "X1",
+        description = "Test Alert Description",
+        canBeAdministered = true,
+      ),
+      activeFrom = LocalDate.now(),
+      isActive = isActive,
+      createdAt = createdAt,
+      createdBy = "test-user",
+      createdByDisplayName = "Test User",
+    )
   }
 
   @Nested

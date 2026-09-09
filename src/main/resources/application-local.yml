@@ -33,6 +33,7 @@ api:
       prisoner-search: https://prisoner-search-dev.prison.service.justice.gov.uk
       personal-relationships: https://personal-relationships-api-dev.hmpps.service.justice.gov.uk
       non-associations: https://non-associations-api-dev.hmpps.service.justice.gov.uk
+      alerts: https://alerts-api-dev.hmpps.service.justice.gov.uk
 
 springdoc:
   swagger-ui:

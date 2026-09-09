@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.LocationsInsidePrisonClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.PersonalRelationshipsApiClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.ContactDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
@@ -107,7 +107,7 @@ class OfficialVisitsRetrievalService(
         lastName = prisoner.lastName,
         dateOfBirth = prisoner.dateOfBirth,
         middleNames = prisoner.middleNames,
-        offenderBookId = prisoner.offenderBookId?.toLong(),
+        offenderBookId = prisoner.bookingId?.toLong(),
         cellLocation = prisoner.cellLocation,
         attendanceCode = pve.attendanceCode?.name,
         attendanceCodeDescription = getReferenceDescription(ReferenceDataGroup.ATTENDANCE, pve.attendanceCode?.name),
