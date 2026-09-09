@@ -21,6 +21,7 @@ class HealthCheckTest : IntegrationTestBase() {
       .jsonPath("components.hmppsAuth.status").isEqualTo("UP")
       .jsonPath("components.prisonerSearchApi.status").isEqualTo("UP")
       .jsonPath("components.nonAssociationsApi.status").isEqualTo("UP")
+      .jsonPath("components.alertsApi.status").isEqualTo("UP")
   }
 
   @Test
@@ -40,6 +41,7 @@ class HealthCheckTest : IntegrationTestBase() {
       .jsonPath("components.hmppsAuth.status").isEqualTo("DOWN")
       .jsonPath("components.prisonerSearchApi.status").isEqualTo("DOWN")
       .jsonPath("components.nonAssociationsApi.status").isEqualTo("DOWN")
+      .jsonPath("components.alertsApi.status").isEqualTo("DOWN")
   }
 
   @Test

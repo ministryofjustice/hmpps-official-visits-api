@@ -8,11 +8,11 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PagedPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerNumbers
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.PagePrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerSearchPrisoner
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner as SearchPrisoner
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner as SearchPrisoner
 
 class PrisonerSearchApiMockServer : MockServer(8092) {
 
@@ -45,7 +45,15 @@ class PrisonerSearchApiMockServer : MockServer(8092) {
             .withHeader("Content-Type", "application/json")
             .withBody(
               mapper.writeValueAsString(
-                PagedPrisoner(content = prisoners.toList().map { prisonerSearchPrisoner(prisonCode = prisonCode, prisonerNumber = it.number, bookingId = it.bookingId) }),
+                PagePrisoner(
+                  content = prisoners.toList().map {
+                    prisonerSearchPrisoner(
+                      prisonCode = prisonCode,
+                      prisonerNumber = it.number,
+                      bookingId = it.bookingId,
+                    )
+                  },
+                ),
               ),
             )
             .withStatus(200),
@@ -61,7 +69,11 @@ class PrisonerSearchApiMockServer : MockServer(8092) {
             .withHeader("Content-Type", "application/json")
             .withBody(
               mapper.writeValueAsString(
-                PagedPrisoner(content = prisoner.toList().map { prisonerSearchPrisoner(prisonCode = prisonCode, prisonerNumber = it.number, bookingId = it.bookingId) }),
+                PagePrisoner(
+                  content = prisoner.toList().map {
+                    prisonerSearchPrisoner(prisonCode = prisonCode, prisonerNumber = it.number, bookingId = it.bookingId)
+                  },
+                ),
               ),
             )
             .withStatus(200),

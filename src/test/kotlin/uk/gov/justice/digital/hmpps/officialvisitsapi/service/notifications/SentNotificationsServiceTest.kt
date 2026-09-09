@@ -11,8 +11,8 @@ import org.mockito.kotlin.whenever
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.SentNotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER

@@ -8,8 +8,8 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.personalrelationships.model.PageMetadata
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.PagePrisoner
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
 
 inline fun <reified T : Any> typeReference() = object : ParameterizedTypeReference<T>() {}
 
@@ -56,7 +56,7 @@ class PrisonerSearchClient(private val prisonerSearchApiWebClient: WebClient) {
         .build(prisonCode)
     }
     .retrieve()
-    .bodyToMono(typeReference<PagedPrisoner>())
+    .bodyToMono(typeReference<PagePrisoner>())
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block()?.content?.toList() ?: emptyList()
 
@@ -71,7 +71,7 @@ class PrisonerSearchClient(private val prisonerSearchApiWebClient: WebClient) {
         .build(prisonCode)
     }
     .retrieve()
-    .bodyToMono(typeReference<PagedPrisoner>())
+    .bodyToMono(typeReference<PagePrisoner>())
     .onErrorResume(WebClientResponseException.NotFound::class.java) { Mono.empty() }
     .block()?.content?.firstOrNull()?.prisonName ?: "Unknown prison name"
 }
@@ -83,30 +83,3 @@ class PrisonerValidator(val prisonerSearchClient: PrisonerSearchClient) {
   fun validatePrisonerAtPrison(prisonerNumber: String, prisonCode: String): Prisoner = prisonerSearchClient.getPrisoner(prisonerNumber)?.takeUnless { prisoner -> prisoner.prisonId != prisonCode }
     ?: throw ValidationException("Prisoner $prisonerNumber not found at prison $prisonCode")
 }
-
-// TODO: Tim generate the code from openApi
-// Ideally this model would be generated and not hard coded, however at time of writing the Open API generator did not
-// play nicely with the JSON api spec for this service
-data class Prisoner(
-  val prisonerNumber: String,
-  val prisonId: String? = null,
-  val firstName: String,
-  val lastName: String,
-  val dateOfBirth: LocalDate,
-  val bookingId: String? = null,
-  val lastPrisonId: String? = null,
-  val cellLocation: String? = null,
-  val middleNames: String? = null,
-  val offenderBookId: String? = null,
-  val locationDescription: String? = null,
-  val prisonName: String? = null,
-  val status: String? = null,
-) {
-  val fullName: String = "$firstName $lastName"
-}
-
-// TODO: Matt use generated when replace Prisoner above with generated version
-data class PagedPrisoner(
-  val content: List<Prisoner>? = null,
-  val page: PageMetadata? = null,
-)

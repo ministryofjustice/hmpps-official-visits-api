@@ -1,13 +1,13 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.ContactsService
 
-@Component
+@Service
 class VisitorIssueChecker(
   private val contactsService: ContactsService,
   private val featureSwitches: FeatureSwitches,

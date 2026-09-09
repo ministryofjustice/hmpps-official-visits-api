@@ -20,7 +20,7 @@ class VisitReviewEntity(
 
   val officialVisitId: Long,
 
-  @OneToMany(mappedBy = "visitReview", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "visitReview", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   private val visitReviewDetails: MutableList<VisitReviewDetailEntity> = mutableListOf(),
 
   val raisedTime: LocalDateTime,
