@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.Location
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.locationsinsideprison.model.NonResidentialUsageDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.PrisonCaseload
@@ -18,6 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Prisoner as HelperPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.Prisoner as ModelPrisoner
 
 val moorlandLocation = location(id = UUID.fromString("9485cf4a-750b-4d74-b594-59bacbcda247"), prisonCode = MOORLAND, locationKeySuffix = "ABCDEFG", localName = "Moorland area 1")
@@ -207,4 +210,21 @@ fun referenceCode() = listOf(
     displayOrder = 2,
     isActive = true,
   ),
+)
+
+fun activeAlertForPrisoner(prisoner: HelperPrisoner): Alert = Alert(
+  alertUuid = UUID.randomUUID(),
+  prisonNumber = prisoner.number,
+  alertCode = AlertCodeSummary(
+    alertTypeCode = "X",
+    alertTypeDescription = "Test Alert",
+    code = "X1",
+    description = "Test Alert Description",
+    canBeAdministered = true,
+  ),
+  activeFrom = LocalDate.now(),
+  isActive = true,
+  createdAt = LocalDateTime.now(),
+  createdBy = "test-user",
+  createdByDisplayName = "Test User",
 )

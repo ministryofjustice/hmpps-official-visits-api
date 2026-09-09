@@ -43,6 +43,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncVi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncAddVisitorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitorService
@@ -60,6 +62,7 @@ class SyncFacadeTest {
   private val syncOfficialVisitService: SyncOfficialVisitService = mock()
   private val syncOfficialVisitorService: SyncOfficialVisitorService = mock()
   private val outboundEventsService: OutboundEventsService = mock()
+  private val visitReviewService: VisitReviewService = mock()
 
   private val facade = SyncFacade(
     syncTimeSlotService,
@@ -67,6 +70,7 @@ class SyncFacadeTest {
     syncOfficialVisitService,
     syncOfficialVisitorService,
     outboundEventsService,
+    visitReviewService,
   )
 
   private val createdTime = LocalDateTime.now().minusDays(2)
@@ -425,6 +429,8 @@ class SyncFacadeTest {
         noms = MOORLAND_PRISONER.number,
         username = MOORLAND_PRISON_USER.username,
       )
+
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.RECHECK)
     }
 
     @Test
@@ -441,7 +447,7 @@ class SyncFacadeTest {
       }
 
       verify(syncOfficialVisitService).updateVisit(officialVisitId, request)
-      verifyNoInteractions(outboundEventsService)
+      verifyNoInteractions(outboundEventsService, visitReviewService)
     }
 
     @Test
@@ -696,6 +702,8 @@ class SyncFacadeTest {
         contactId = contactId,
         username = MOORLAND_PRISON_USER.username,
       )
+
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.RECHECK)
     }
 
     @Test
@@ -712,7 +720,7 @@ class SyncFacadeTest {
       assertThat(exception.message).isEqualTo(expectedException.message)
 
       verify(syncOfficialVisitorService).updateVisitor(officialVisitId, officialVisitorId, request)
-      verifyNoInteractions(outboundEventsService)
+      verifyNoInteractions(outboundEventsService, visitReviewService)
     }
 
     @Test

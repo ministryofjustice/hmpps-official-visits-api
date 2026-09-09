@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingS
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
 @Component
@@ -181,6 +182,8 @@ class OfficialVisitFacade(
       noms = response.prisonerNumber,
       user = user,
     )
+
+    visitReviewService.visitCheck(officialVisitId, VisitReviewCheckType.RECHECK)
   }
 
   fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
@@ -241,6 +244,8 @@ class OfficialVisitFacade(
         user = user,
       )
     }
+
+    visitReviewService.visitCheck(officialVisitId, VisitReviewCheckType.RECHECK)
   }
 
   fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(

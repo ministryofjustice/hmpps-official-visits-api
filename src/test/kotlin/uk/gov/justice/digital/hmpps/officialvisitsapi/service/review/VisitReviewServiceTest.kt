@@ -65,6 +65,7 @@ class VisitReviewServiceTest {
   )
 
   private val scheduledVisit = mock<OfficialVisitEntity>().stub {
+    on { officialVisitId } doReturn 1
     on { visitStatusCode } doReturn VisitStatusType.SCHEDULED
     on { visitDate } doReturn today()
   }
@@ -141,8 +142,13 @@ class VisitReviewServiceTest {
 
     service.visitCheck(1, VisitReviewCheckType.RECHECK)
 
-    verify(officialVisitRepository).findById(1)
-    verify(checker).check(scheduledVisit)
+    inOrder(officialVisitRepository, visitReviewRepository, checker) {
+      verify(officialVisitRepository).findById(1L)
+      verify(visitReviewRepository).deleteByOfficialVisitId(1L)
+      verify(visitReviewRepository).flush()
+      verify(checker).check(scheduledVisit)
+    }
+
     verifyNoInteractions(releaseChecker, transferChecker)
   }
 

@@ -92,6 +92,7 @@ abstract class IntegrationTestBase {
     stubEvents.reset()
     stubUser(MOORLAND_PRISON_USER)
     prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER)
+    alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER)
     testAPIClient = TestApiClient(webTestClient, jwtAuthHelper)
   }
 
