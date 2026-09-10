@@ -1,14 +1,18 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_ADDITIONAL_MOORLAND_PRISONER_ADDED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.CONTACT_MOORLAND_PRISONER_ADDED
@@ -16,6 +20,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.activeAlertForPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
@@ -23,6 +28,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isEqualTo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.moorlandLocation
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.prisonerContact
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
@@ -33,6 +39,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
@@ -43,9 +50,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEve
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
+  @Autowired
+  private lateinit var visitReviewRepository: VisitReviewRepository
+
   @MockitoBean
   private lateinit var metricsService: MetricsService
   private val location = moorlandLocation
@@ -495,6 +506,71 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
       officialVisitId = 99,
       prisonUser = MOORLAND_PRISON_USER,
     )
+  }
+
+  @Nested
+  inner class VisitsAreRecheckedForIssuesAfterUpdate {
+    @Test
+    fun `should be no issue after updating the visit type`() {
+      val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
+        prisonVisitSlotId = 1,
+        visitDate = nextMondayAt9.visitDate,
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+        dpsLocationId = location.id,
+        visitTypeCode = VisitType.IN_PERSON,
+      )
+
+      val issueId = addVisitIssues(scheduledVisit?.officialVisitId!!, IssueType.PRISONER_RELEASED)
+
+      visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!).single { it.visitReviewId == issueId }.visitReviewDetails().single { it.issueType == IssueType.PRISONER_RELEASED }
+
+      webTestClient.updateSlot(
+        MOORLAND_PRISONER.prison,
+        officialVisitId = scheduledVisit?.officialVisitId!!,
+        request = updateVisitSlotRequest,
+      )
+
+      visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!) hasSize 0
+    }
+
+    @Test
+    fun `should new issue after updating the visit type`() {
+      val issueId = addVisitIssues(scheduledVisit?.officialVisitId!!, IssueType.PRISONER_TRANSFERRED)
+
+      visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!).single { it.visitReviewId == issueId }.visitReviewDetails().single { it.issueType == IssueType.PRISONER_TRANSFERRED }
+
+      // TODO There is a question over update times on visits and the created at on alerts. This is fudged on purpose with view we need to revisit it.
+      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER).copy(createdAt = tomorrow().atStartOfDay())))
+
+      val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
+        prisonVisitSlotId = 1,
+        visitDate = nextMondayAt9.visitDate,
+        startTime = LocalTime.of(10, 0),
+        endTime = LocalTime.of(11, 0),
+        dpsLocationId = location.id,
+        visitTypeCode = VisitType.IN_PERSON,
+      )
+
+      webTestClient.updateSlot(
+        MOORLAND_PRISONER.prison,
+        officialVisitId = scheduledVisit?.officialVisitId!!,
+        request = updateVisitSlotRequest,
+      )
+
+      visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!).single().visitReviewDetails().single { it.issueType == IssueType.PRISONER_NEW_ALERT }
+    }
+
+    private fun addVisitIssues(officialVisitId: Long, issue: IssueType) = run {
+      visitReviewRepository.saveAndFlush(
+        VisitReviewEntity(
+          officialVisitId = officialVisitId,
+          raisedTime = LocalDateTime.now(),
+        ).apply {
+          addVisitReviewDetails(LocalDateTime.now(), issue, null)
+        },
+      ).visitReviewId
+    }
   }
 
   private fun WebTestClient.updateSlot(

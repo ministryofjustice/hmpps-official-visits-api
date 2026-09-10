@@ -9,8 +9,12 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.PageAlert
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Prisoner
 
 class AlertsApiMockServer : MockServer(8096) {
+  fun stubGetPrisonerAlerts(prisoner: Prisoner, vararg alerts: Alert) {
+    stubGetPrisonerAlerts(prisoner.number, alerts.toList())
+  }
 
   fun stubGetPrisonerAlerts(
     prisonerNumber: String,

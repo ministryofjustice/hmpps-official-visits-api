@@ -7,6 +7,7 @@ import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitForReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
@@ -19,8 +20,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueu
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.OfficialVisitsRetrievalService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.User
-import java.time.LocalDate
-import kotlin.collections.orEmpty
 import kotlin.jvm.optionals.getOrNull
 
 @Service
@@ -34,11 +33,10 @@ class VisitReviewService(
   private val timeSource: TimeSource,
   private val visitForReviewRepository: VisitForReviewRepository,
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService,
-
 ) {
   private fun check(officialVisitId: Long, checkType: VisitReviewCheckType) {
     val officialVisit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return
-    val today = LocalDate.now()
+    val today = timeSource.today()
 
     when {
       officialVisit.visitStatusCode != VisitStatusType.SCHEDULED -> return
@@ -49,8 +47,16 @@ class VisitReviewService(
     when (checkType) {
       VisitReviewCheckType.TRANSFER -> transferChecker.check(officialVisit)
       VisitReviewCheckType.RELEASE -> releaseChecker.check(officialVisit)
+      VisitReviewCheckType.RECHECK -> recheck(officialVisit)
       else -> checker.check(officialVisit)
     }
+  }
+
+  private fun recheck(officialVisit: OfficialVisitEntity) {
+    visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
+    visitReviewRepository.flush()
+
+    checker.check(officialVisit)
   }
 
   @Transactional
@@ -65,16 +71,15 @@ class VisitReviewService(
   ) {
     check(officialVisitId, type)
 
-    visitReviewQueueRepository.findById(officialVisitId).ifPresent { queueEntry ->
-      visitReviewQueueRepository.delete(queueEntry)
-    }
+    visitReviewQueueRepository.findById(officialVisitId).ifPresent(visitReviewQueueRepository::delete)
   }
 
+  @Transactional(readOnly = true)
   fun countVisitsForReview(prisonCode: String): VisitsForReviewCountResponse = VisitsForReviewCountResponse(
     prisonCode = prisonCode,
     visitsForReviewCount = visitForReviewRepository.countVisitsForReview(
       prisonCode = prisonCode,
-      fromDate = LocalDate.now(),
+      fromDate = timeSource.today(),
     ),
   )
 
@@ -90,7 +95,7 @@ class VisitReviewService(
 
   @Transactional(readOnly = true)
   fun getVisitsForReview(prisonCode: String, pageable: Pageable): PagedModel<VisitsForReviewResponse> {
-    val fromDate = LocalDate.now()
+    val fromDate = timeSource.today()
     val visitIdsPage = visitForReviewRepository.findVisitIdsForReview(
       prisonCode = prisonCode,
       fromDate = fromDate,

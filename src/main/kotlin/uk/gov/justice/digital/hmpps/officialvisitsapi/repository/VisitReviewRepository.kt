@@ -20,4 +20,6 @@ interface VisitReviewRepository : JpaRepository<VisitReviewEntity, Long> {
     """,
   )
   fun findCurrentByOfficialVisitIdAndPrisonCode(officialVisitId: Long, prisonCode: String): VisitReviewEntity?
+
+  fun deleteByOfficialVisitId(officialVisitId: Long)
 }

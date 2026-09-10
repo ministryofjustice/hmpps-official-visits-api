@@ -13,6 +13,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.sync.SyncOf
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncOfficialVisitorService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.sync.SyncTimeSlotService
@@ -43,6 +45,7 @@ class SyncFacade(
   val syncOfficialVisitService: SyncOfficialVisitService,
   val syncOfficialVisitorService: SyncOfficialVisitorService,
   val outboundEventsService: OutboundEventsService,
+  private val visitReviewService: VisitReviewService,
 ) {
 
   // ---------------  Time slots ----------------------
@@ -148,6 +151,8 @@ class SyncFacade(
         source = Source.NOMIS,
         username = it.updatedBy ?: "NOMIS",
       )
+
+      visitReviewService.visitCheck(it.officialVisitId, VisitReviewCheckType.RECHECK)
     }
 
   fun deleteOfficialVisit(officialVisitId: Long) {
@@ -203,6 +208,9 @@ class SyncFacade(
       source = Source.NOMIS,
       username = response.visitor.updatedBy ?: "NOMIS",
     )
+
+    visitReviewService.visitCheck(response.officialVisitId, VisitReviewCheckType.RECHECK)
+
     return response.visitor
   }
 

@@ -2,10 +2,11 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.facade
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
 import org.mockito.kotlin.atLeastOnce
+import org.mockito.kotlin.inOrder
+import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -45,6 +46,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEventsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Source
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 import java.time.LocalDate
 import java.time.LocalTime
@@ -252,15 +254,19 @@ class OfficialVisitFacadeTest {
 
     facade.updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    Mockito.verify(officialVisitUpdateService).updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    inOrder(officialVisitUpdateService, outboundEventsService, visitReviewService) {
+      verify(officialVisitUpdateService).updateVisitTypeAndSlot(1, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    Mockito.verify(outboundEventsService).send(
-      outboundEvent = OutboundEvent.VISIT_UPDATED,
-      prisonCode = MOORLAND,
-      identifier = 1,
-      noms = "A1234AA",
-      user = user,
-    )
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISIT_UPDATED,
+        prisonCode = MOORLAND,
+        identifier = 1,
+        noms = "A1234AA",
+        user = user,
+      )
+
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.RECHECK)
+    }
   }
 
   @Test
@@ -275,15 +281,17 @@ class OfficialVisitFacadeTest {
 
     facade.updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    Mockito.verify(officialVisitUpdateService).updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    verify(officialVisitUpdateService).updateComments(1, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    Mockito.verify(outboundEventsService).send(
+    verify(outboundEventsService).send(
       outboundEvent = OutboundEvent.VISIT_UPDATED,
       prisonCode = MOORLAND,
       identifier = 1,
       noms = "A1234AA",
       user = user,
     )
+
+    verifyNoInteractions(visitReviewService)
   }
 
   @Test
@@ -319,37 +327,41 @@ class OfficialVisitFacadeTest {
 
     facade.updateVisitors(1, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    Mockito.verify(officialVisitUpdateService).updateVisitors(1, MOORLAND, request, MOORLAND_PRISON_USER)
+    inOrder(officialVisitUpdateService, outboundEventsService, visitReviewService) {
+      verify(officialVisitUpdateService).updateVisitors(1, MOORLAND, request, MOORLAND_PRISON_USER)
 
-    Mockito.verify(outboundEventsService).send(
-      outboundEvent = OutboundEvent.VISITOR_UPDATED,
-      prisonCode = MOORLAND,
-      identifier = 1,
-      secondIdentifier = 3,
-      contactId = 3,
-      user = user,
-      source = Source.DPS,
-    )
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISITOR_UPDATED,
+        prisonCode = MOORLAND,
+        identifier = 1,
+        secondIdentifier = 3,
+        contactId = 3,
+        user = user,
+        source = Source.DPS,
+      )
 
-    Mockito.verify(outboundEventsService).send(
-      outboundEvent = OutboundEvent.VISITOR_DELETED,
-      prisonCode = MOORLAND,
-      identifier = 1,
-      secondIdentifier = 2,
-      contactId = 2,
-      user = user,
-      source = Source.DPS,
-    )
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISITOR_CREATED,
+        prisonCode = MOORLAND,
+        identifier = 1,
+        secondIdentifier = 1,
+        contactId = 1,
+        user = user,
+        source = Source.DPS,
+      )
 
-    Mockito.verify(outboundEventsService).send(
-      outboundEvent = OutboundEvent.VISITOR_CREATED,
-      prisonCode = MOORLAND,
-      identifier = 1,
-      secondIdentifier = 1,
-      contactId = 1,
-      user = user,
-      source = Source.DPS,
-    )
+      verify(outboundEventsService).send(
+        outboundEvent = OutboundEvent.VISITOR_DELETED,
+        prisonCode = MOORLAND,
+        identifier = 1,
+        secondIdentifier = 2,
+        contactId = 2,
+        user = user,
+        source = Source.DPS,
+      )
+
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.RECHECK)
+    }
   }
 
   @Test
@@ -360,6 +372,8 @@ class OfficialVisitFacadeTest {
       facade.updateVisitors(1, MOORLAND, request, PENTONVILLE_PRISON_USER)
     }
       .message isEqualTo "This visit cannot be updated in a prison outside the user's caseload list"
+
+    verifyNoInteractions(visitReviewService)
   }
 
   @Test
@@ -385,5 +399,7 @@ class OfficialVisitFacadeTest {
       facade.acknowledgeVisitReview(MOORLAND, 1, PENTONVILLE_PRISON_USER)
     }
       .message isEqualTo "Visit review cannot be acknowledged for a prison outside the user's caseload list"
+
+    verifyNoInteractions(visitReviewService)
   }
 }
