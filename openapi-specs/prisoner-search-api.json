@@ -2162,12 +2162,7 @@
           },
           "smoker": {
             "type": "string",
-            "description": "Smoker (V=vapes)",
-            "enum": [
-              "Y",
-              "N",
-              "V"
-            ]
+            "description": "Smoker (V=vapes)"
           },
           "personalCareNeeds": {
             "type": "array",
