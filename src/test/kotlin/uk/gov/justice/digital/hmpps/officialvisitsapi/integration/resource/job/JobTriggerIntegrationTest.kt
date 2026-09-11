@@ -97,20 +97,17 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   // ---------------------------------------------------------------------
 
   /** Creates an official visit on a pre-built [VisitSlot] (e.g. one of the fixed [Moorland] slots). */
-  private fun createVisitOnSlot(slot: VisitSlot, visitors: List<OfficialVisitor> = listOf(officialVisitor)) =
-    testAPIClient.createOfficialVisit(createOfficialVisitRequest(slot, visitors), MOORLAND_PRISON_USER)
+  private fun createVisitOnSlot(slot: VisitSlot, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.createOfficialVisit(createOfficialVisitRequest(slot, visitors), MOORLAND_PRISON_USER)
 
   /** Creates an official visit on [date], letting [testAPIClient] pick an available time slot. */
-  private fun createVisitOnDate(date: LocalDate, visitors: List<OfficialVisitor> = listOf(officialVisitor)) =
-    testAPIClient.generateVisitSlot(date).let { (timeSlot, visitSlot) ->
-      createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
-    }
+  private fun createVisitOnDate(date: LocalDate, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.generateVisitSlot(date).let { (timeSlot, visitSlot) ->
+    createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
+  }
 
   /** Creates an official visit on [date] at an explicit [startTime]/[endTime]. */
-  private fun createVisitOnDateAndTimes(date: LocalDate, startTime: LocalTime, endTime: LocalTime, visitors: List<OfficialVisitor> = listOf(officialVisitor)) =
-    testAPIClient.generateVisitSlot(date, startTime = startTime, endTime = endTime).let { (timeSlot, visitSlot) ->
-      createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
-    }
+  private fun createVisitOnDateAndTimes(date: LocalDate, startTime: LocalTime, endTime: LocalTime, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.generateVisitSlot(date, startTime = startTime, endTime = endTime).let { (timeSlot, visitSlot) ->
+    createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
+  }
 
   /** A fixed slot that sits just outside the job's [CHECK_WINDOW_SEVEN_DAYS] pickup window. */
   private fun slotBeyondCheckWindow() = VisitSlot(
