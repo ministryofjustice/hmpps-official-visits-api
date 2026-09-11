@@ -229,7 +229,7 @@
   "VisitReviewQueueEntity": {
     "createdTime": "LocalDateTime",
     "officialVisitId": "long",
-    "triggeringEvent": "String",
+    "triggeringEvent": "VisitReviewCheckType",
     "visitReviewQueueId": "long"
   },
   "VisitorEquipmentEntity": {

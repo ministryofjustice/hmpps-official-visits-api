@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.review
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ExpireVisitsForReviewJob
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToCheckJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToReCheckJob
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobRunner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessCandidateVisitsToCheckJob
@@ -11,11 +12,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessCandid
 class JobTriggerService(
   private val jobRunner: JobRunner,
   private val identifyCandidateVisitsToCheckJob: IdentifyCandidateVisitsToCheckJob,
+  private val identifyCandidateVisitsToReCheckJob: IdentifyCandidateVisitsToReCheckJob,
   private val processCandidateVisitsToCheckJob: ProcessCandidateVisitsToCheckJob,
   private val expireVisitsForReviewJob: ExpireVisitsForReviewJob,
 ) {
   fun run(job: JobType) = when (job) {
     JobType.IDENTIFY_CANDIDATE_VISITS_TO_CHECK -> jobRunner.runJob(identifyCandidateVisitsToCheckJob)
+    JobType.IDENTIFY_CANDIDATE_VISITS_TO_RECHECK -> jobRunner.runJob(identifyCandidateVisitsToReCheckJob)
     JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK -> jobRunner.runJob(processCandidateVisitsToCheckJob)
     JobType.EXPIRE_VISITS_FOR_REVIEW -> jobRunner.runJob(expireVisitsForReviewJob)
   }

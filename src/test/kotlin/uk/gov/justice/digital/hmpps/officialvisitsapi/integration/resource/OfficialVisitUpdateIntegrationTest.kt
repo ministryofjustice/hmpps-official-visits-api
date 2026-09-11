@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -39,7 +38,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisi
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.VisitorEquipment
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.CreateOfficialVisitResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitDetails
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.OutboundEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.PersonReference
@@ -54,8 +52,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
-  @Autowired
-  private lateinit var visitReviewRepository: VisitReviewRepository
 
   @MockitoBean
   private lateinit var metricsService: MetricsService
