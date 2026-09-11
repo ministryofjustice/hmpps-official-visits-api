@@ -137,15 +137,15 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   @Query(
     value = """
         SELECT ov FROM OfficialVisitEntity ov
-        JOIN VisitReviewQueueEntity vrq ON vrq.officialVisitId = ov.officialVisitId
-        WHERE vrq.createdTime = (
-            SELECT MIN(vrq2.createdTime) FROM VisitReviewQueueEntity vrq2
-            WHERE vrq2.officialVisitId = ov.officialVisitId
+        WHERE ov.visitDate = :visitDate
+          AND ov.visitStatusCode = 'SCHEDULED'
+          AND ov.officialVisitId NOT IN (
+            SELECT vrq.officialVisitId FROM VisitReviewQueueEntity vrq
+            WHERE vrq.triggeringEvent = 'RECHECK'
         )
-        ORDER BY vrq.createdTime ASC
         """,
   )
-  fun findCandidatesOrderedByQueueTime(): Collection<OfficialVisitEntity>
+  fun findCandidateVisitsForReReview(visitDate: LocalDate): Collection<OfficialVisitEntity>
 
   @Query(
     value = """

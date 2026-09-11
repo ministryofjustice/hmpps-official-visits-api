@@ -5,6 +5,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ExpireVisitsForReviewJob
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToCheckJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToReCheckJob
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobRunner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessCandidateVisitsToCheckJob
@@ -13,9 +14,10 @@ class JobTriggerServiceTest {
 
   private val jobRunner: JobRunner = mock()
   private val identifyCandidateVisitsToCheckJob: IdentifyCandidateVisitsToCheckJob = mock()
+  private val identifyCandidateVisitsToReCheckJob: IdentifyCandidateVisitsToReCheckJob = mock()
   private val processCandidateVisitsToCheckJob: ProcessCandidateVisitsToCheckJob = mock()
   private val expireVisitsForReviewJob: ExpireVisitsForReviewJob = mock()
-  private val jobTriggerService: JobTriggerService = JobTriggerService(jobRunner, identifyCandidateVisitsToCheckJob, processCandidateVisitsToCheckJob, expireVisitsForReviewJob)
+  private val jobTriggerService: JobTriggerService = JobTriggerService(jobRunner, identifyCandidateVisitsToCheckJob, identifyCandidateVisitsToReCheckJob, processCandidateVisitsToCheckJob, expireVisitsForReviewJob)
 
   @Test
   fun `should run identify candidate visits to check job when job type is IDENTIFY_CANDIDATE_VISITS_TO_CHECK`() {
@@ -27,6 +29,12 @@ class JobTriggerServiceTest {
   fun `should run process candidate visits to check job when job type is PROCESS_CANDIDATE_VISITS_TO_CHECK`() {
     jobTriggerService.run(JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK)
     verify(jobRunner).runJob(processCandidateVisitsToCheckJob)
+  }
+
+  @Test
+  fun `should run identify candidate visits to recheck job when job type is IDENTIFY_CANDIDATE_VISITS_TO_RECHECK`() {
+    jobTriggerService.run(JobType.IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+    verify(jobRunner).runJob(identifyCandidateVisitsToReCheckJob)
   }
 
   @Test

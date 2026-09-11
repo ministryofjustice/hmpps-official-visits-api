@@ -134,13 +134,13 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .exchange()
     .expectStatus().isOk
 
-  fun generateVisitSlot(futureVisitDate: LocalDate): Pair<TimeSlot, uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot> {
+  fun generateVisitSlot(futureVisitDate: LocalDate, startTime: LocalTime = LocalTime.of(10, 0), endTime: LocalTime = LocalTime.of(11, 0)): Pair<TimeSlot, uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot> {
     val timeSlot = webTestClient.post()
       .uri("/admin/time-slot")
       .accept(MediaType.APPLICATION_JSON)
       .contentType(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(MOORLAND_PRISON_USER, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-      .bodyValue(createTimeSlotRequest(futureVisitDate))
+      .bodyValue(createTimeSlotRequest(futureVisitDate, startTime, endTime))
       .exchange()
       .expectStatus()
       .isOk
@@ -172,11 +172,11 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
 
   private fun createVisitSlotRequest(dpsLocationId: UUID = moorlandLocation.id): CreateVisitSlotRequest = CreateVisitSlotRequest(dpsLocationId = dpsLocationId, maxAdults = 10, maxGroups = 5, maxVideo = 2)
 
-  private fun createTimeSlotRequest(visitDate: LocalDate) = CreateTimeSlotRequest(
+  private fun createTimeSlotRequest(visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime) = CreateTimeSlotRequest(
     prisonCode = MOORLAND,
     dayCode = getDayCode(visitDate),
-    startTime = LocalTime.of(10, 0),
-    endTime = LocalTime.of(11, 0),
+    startTime = startTime,
+    endTime = endTime,
     effectiveDate = LocalDate.now().plusDays(1),
     expiryDate = LocalDate.now().plusDays(365),
   )
