@@ -34,6 +34,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitorEquipmentRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
@@ -89,6 +91,12 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var notificationRepository: NotificationRepository
 
+  @Autowired
+  protected lateinit var visitReviewRepository: VisitReviewRepository
+
+  @Autowired
+  protected lateinit var visitReviewQueueRepository: VisitReviewQueueRepository
+
   @BeforeEach
   fun `stub default users and prisoners and reset stubbed events`() {
     stubEvents.reset()
@@ -137,6 +145,8 @@ abstract class IntegrationTestBase {
     officialVisitorRepository.deleteAll()
     officialVisitRepository.deleteAll()
     notificationRepository.deleteAll()
+    visitReviewRepository.deleteAll()
+    visitReviewQueueRepository.deleteAll()
   }
 
   protected fun prisonerSearchApi() = PrisonerSearchApiExtension.server

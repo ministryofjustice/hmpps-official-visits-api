@@ -8,22 +8,17 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 
-/**
- * This job is responsible for identifying the visits that need to be reviewed.
- *
- * Visits  will be checked and flagged for review.
- */
 @Component
-class IdentifyCandidateVisitsToCheckJob(
+class IdentifyCandidateVisitsToReCheckJob(
 
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   timeSource: TimeSource,
 ) : DailyJob<OfficialVisitEntity>(
-  jobType = JobType.IDENTIFY_CANDIDATE_VISITS_TO_CHECK,
+  jobType = JobType.IDENTIFY_CANDIDATE_VISITS_TO_RECHECK,
   timeSource,
   { date ->
-    officialVisitRepository.findCandidateVisitsForReview(date, date.plusDays(7))
+    officialVisitRepository.findCandidateVisitsForReReview(date.plusDays(2))
   },
   { visits ->
     visits.forEach {
@@ -31,10 +26,9 @@ class IdentifyCandidateVisitsToCheckJob(
         VisitReviewQueueEntity(
           officialVisitId = it.officialVisitId,
           createdTime = timeSource.now(),
-          triggeringEvent = VisitReviewCheckType.CHECK,
+          triggeringEvent = VisitReviewCheckType.RECHECK,
         ),
       )
     }
   },
-
 )

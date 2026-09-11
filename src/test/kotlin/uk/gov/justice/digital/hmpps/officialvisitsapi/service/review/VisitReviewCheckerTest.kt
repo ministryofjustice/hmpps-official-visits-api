@@ -145,6 +145,19 @@ class VisitReviewCheckerTest {
     }
 
     @Test
+    fun `should not add duplicate issue on recheck when existing issue is acknowledged`() {
+      prisoner.stub { on { status } doReturn "INACTIVE OUT" }
+      visitReviewDetail.stub {
+        on { issueType } doReturn IssueType.PRISONER_RELEASED
+        on { acknowledgedBy } doReturn "user"
+      }
+
+      checker.check(scheduledVisitAtMoorland, VisitReviewCheckType.RECHECK)
+
+      verify(visitReviewRepository, never()).saveAndFlush(any())
+    }
+
+    @Test
     fun `should be transfer issue when prisoner is transferred`() {
       prisoner.stub { on { prisonId } doReturn PENTONVILLE }
 

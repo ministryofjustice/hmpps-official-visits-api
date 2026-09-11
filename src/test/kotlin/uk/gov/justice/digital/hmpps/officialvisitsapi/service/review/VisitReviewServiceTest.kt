@@ -153,17 +153,6 @@ class VisitReviewServiceTest {
   }
 
   @Test
-  fun `should invoke UPDATE checker`() {
-    whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
-
-    service.visitCheck(1, VisitReviewCheckType.UPDATE)
-
-    verify(officialVisitRepository).findById(1)
-    verify(checker).check(scheduledVisit)
-    verifyNoInteractions(releaseChecker, transferChecker)
-  }
-
-  @Test
   fun `should invoke TRANSFER checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
@@ -205,14 +194,14 @@ class VisitReviewServiceTest {
       visitReviewQueueId = 2L,
       officialVisitId = officialVisitId,
       createdTime = LocalDateTime.now(),
-      triggeringEvent = "PROCESS",
+      triggeringEvent = VisitReviewCheckType.CHECK,
     )
-    whenever(visitReviewQueueRepository.findById(officialVisitId)).thenReturn(Optional.of(queueEntry))
+    whenever(visitReviewQueueRepository.findByOfficialVisitId(queueEntry.officialVisitId)).thenReturn(queueEntry)
 
     service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK)
 
     inOrder(visitReviewQueueRepository) {
-      verify(visitReviewQueueRepository).findById(officialVisitId)
+      verify(visitReviewQueueRepository).findByOfficialVisitId(queueEntry.officialVisitId)
       verify(visitReviewQueueRepository).delete(queueEntry)
     }
   }
@@ -250,9 +239,9 @@ class VisitReviewServiceTest {
       visitReviewQueueId = 2L,
       officialVisitId = officialVisitId,
       createdTime = LocalDateTime.now(),
-      triggeringEvent = "PROCESS",
+      triggeringEvent = VisitReviewCheckType.CHECK,
     )
-    whenever(visitReviewQueueRepository.findById(officialVisitId)).thenReturn(Optional.of(queueEntry))
+    whenever(visitReviewQueueRepository.findByOfficialVisitId(queueEntry.officialVisitId)).thenReturn(queueEntry)
     whenever(visitReviewQueueRepository.delete(queueEntry)).thenThrow(RuntimeException("delete failed"))
 
     assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK) }
