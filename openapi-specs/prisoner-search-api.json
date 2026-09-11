@@ -2162,7 +2162,7 @@
           },
           "smoker": {
             "type": "string",
-            "description": "Smoker (V=vapes)",
+            "description": "Smoker (V=vapes)"
           },
           "personalCareNeeds": {
             "type": "array",
