@@ -42,6 +42,7 @@ api:
       personal-relationships: http://localhost:8094
       non-associations: http://localhost:8095
       alerts: http://localhost:8096
+      prison-register: http://localhost:8097
 
 feature:
   event:

@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Locat
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.ManageUsersApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.NonAssociationsApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PersonalRelationshipsApiExtension
+import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonRegisterApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.PrisonerSearchApiExtension
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.AuditedEventRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRepository
@@ -45,6 +46,7 @@ import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
   PersonalRelationshipsApiExtension::class,
   NonAssociationsApiExtension::class,
   AlertsApiExtension::class,
+  PrisonRegisterApiExtension::class,
 )
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -125,6 +127,7 @@ abstract class IntegrationTestBase {
     personalRelationshipsApi().stubHealthPing(status)
     nonAssociationsApi().stubHealthPing(status)
     alertsApi().stubHealthPing(status)
+    prisonRegisterApi().stubHealthPing(status)
   }
 
   protected fun clearAllVisitData() {
@@ -147,6 +150,8 @@ abstract class IntegrationTestBase {
   protected fun nonAssociationsApi() = NonAssociationsApiExtension.server
 
   protected fun alertsApi() = AlertsApiExtension.server
+
+  protected fun prisonRegisterApi() = PrisonRegisterApiExtension.server
 
   companion object {
     private val pgContainer = PostgresqlContainer.instance

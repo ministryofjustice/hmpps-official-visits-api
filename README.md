@@ -20,7 +20,7 @@ Initialise gradle - only required the first time
 
 Clean and build, and run unit and integration tests
 ```bash
-./gradlew clean build test
+./gradlew clean build test integrationTest
 ```
 
 ## Running the application locally

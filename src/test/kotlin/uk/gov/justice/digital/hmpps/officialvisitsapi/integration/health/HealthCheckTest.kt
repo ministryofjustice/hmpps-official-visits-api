@@ -22,6 +22,7 @@ class HealthCheckTest : IntegrationTestBase() {
       .jsonPath("components.prisonerSearchApi.status").isEqualTo("UP")
       .jsonPath("components.nonAssociationsApi.status").isEqualTo("UP")
       .jsonPath("components.alertsApi.status").isEqualTo("UP")
+      .jsonPath("components.prisonRegisterApi.status").isEqualTo("UP")
   }
 
   @Test
@@ -42,6 +43,7 @@ class HealthCheckTest : IntegrationTestBase() {
       .jsonPath("components.prisonerSearchApi.status").isEqualTo("DOWN")
       .jsonPath("components.nonAssociationsApi.status").isEqualTo("DOWN")
       .jsonPath("components.alertsApi.status").isEqualTo("DOWN")
+      .jsonPath("components.prisonRegisterApi.status").isEqualTo("DOWN")
   }
 
   @Test
