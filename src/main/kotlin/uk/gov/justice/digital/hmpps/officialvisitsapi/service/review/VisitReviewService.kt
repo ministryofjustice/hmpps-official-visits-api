@@ -47,12 +47,13 @@ class VisitReviewService(
     when (checkType) {
       VisitReviewCheckType.TRANSFER -> transferChecker.check(officialVisit)
       VisitReviewCheckType.RELEASE -> releaseChecker.check(officialVisit)
-      VisitReviewCheckType.RECHECK -> recheck(officialVisit)
-      else -> checker.check(officialVisit, checkType)
+      VisitReviewCheckType.UPDATE -> update(officialVisit)
+      VisitReviewCheckType.RECHECK -> checker.check(officialVisit)
+      else -> checker.check(officialVisit)
     }
   }
 
-  private fun recheck(officialVisit: OfficialVisitEntity) {
+  private fun update(officialVisit: OfficialVisitEntity) {
     visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
     visitReviewRepository.flush()
 
@@ -133,6 +134,7 @@ class VisitReviewService(
 
 enum class VisitReviewCheckType {
   CHECK,
+  UPDATE,
   RECHECK,
   RELEASE,
   TRANSFER,

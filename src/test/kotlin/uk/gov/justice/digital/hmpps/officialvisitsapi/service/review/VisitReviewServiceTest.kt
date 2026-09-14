@@ -137,10 +137,10 @@ class VisitReviewServiceTest {
   }
 
   @Test
-  fun `should invoke RECHECK checker`() {
+  fun `should invoke update checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.visitCheck(1, VisitReviewCheckType.RECHECK)
+    service.visitCheck(1, VisitReviewCheckType.UPDATE)
 
     inOrder(officialVisitRepository, visitReviewRepository, checker) {
       verify(officialVisitRepository).findById(1L)

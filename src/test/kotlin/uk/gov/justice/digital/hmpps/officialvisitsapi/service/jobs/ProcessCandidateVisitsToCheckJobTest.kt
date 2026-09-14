@@ -54,7 +54,7 @@ class ProcessCandidateVisitsToCheckJobTest {
       visitReviewQueueId = 1,
       officialVisitId = visit.officialVisitId,
       createdTime = now(),
-      triggeringEvent = VisitReviewCheckType.RECHECK,
+      triggeringEvent = VisitReviewCheckType.UPDATE,
     )
     whenever { visitReviewQueueRepository.findCandidatesOrderedByQueueTime() }
       .thenReturn(listOf(queueEntry))
@@ -62,6 +62,6 @@ class ProcessCandidateVisitsToCheckJobTest {
     job.runJob()
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTime()
-    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.RECHECK)
+    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.UPDATE)
   }
 }

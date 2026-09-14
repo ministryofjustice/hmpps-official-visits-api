@@ -145,19 +145,6 @@ class VisitReviewCheckerTest {
     }
 
     @Test
-    fun `should not add duplicate issue on recheck when existing issue is acknowledged`() {
-      prisoner.stub { on { status } doReturn "INACTIVE OUT" }
-      visitReviewDetail.stub {
-        on { issueType } doReturn IssueType.PRISONER_RELEASED
-        on { acknowledgedBy } doReturn "user"
-      }
-
-      checker.check(scheduledVisitAtMoorland, VisitReviewCheckType.RECHECK)
-
-      verify(visitReviewRepository, never()).saveAndFlush(any())
-    }
-
-    @Test
     fun `should be transfer issue when prisoner is transferred`() {
       prisoner.stub { on { prisonId } doReturn PENTONVILLE }
 
@@ -206,6 +193,76 @@ class VisitReviewCheckerTest {
       visitorIssueChecker.stub { on { checkVisitorIssues(scheduledVisitAtMoorland) } doReturn setOf(visitorIssue1, visitorIssue2) }
 
       checker.check(scheduledVisitAtMoorland)
+
+      verify(visitReviewRepository).saveAndFlush(visitReview)
+      verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.VISITOR_NOT_APPROVED, null)
+      verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.VISITOR_NOT_APPROVED, null)
+    }
+  }
+
+  @Nested
+  inner class VisitWithPreExistingIssuesReReview {
+    private val visitReview: VisitReviewEntity = mock()
+    private val visitReviewDetail: VisitReviewDetailEntity = mock()
+
+    @BeforeEach
+    fun before() {
+      visitReviewRepository.stub { on { findByOfficialVisitId(99) } doReturn listOf(visitReview) }
+      visitReview.stub { on { visitReviewDetails() } doReturn listOf(visitReviewDetail) }
+      visitReviewDetail.stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
+      prisonerSearchClient.stub { on { getPrisoner(MOORLAND_PRISONER.number) } doReturn prisoner }
+    }
+
+    @Test
+    fun `should be no-op when no issues`() {
+      checker.recheck(scheduledVisitAtMoorland)
+      verify(visitReviewRepository, never()).saveAndFlush(any())
+    }
+
+    @Test
+    fun `should be release issue when prisoner is released`() {
+      prisoner.stub { on { status } doReturn "INACTIVE OUT" }
+      checker.recheck(scheduledVisitAtMoorland)
+
+      verify(visitReviewRepository).saveAndFlush(visitReview)
+      verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.PRISONER_RELEASED, null)
+    }
+
+    @Test
+    fun `should be no new release issue when prisoner is released and have existing release issue`() {
+      prisoner.stub { on { status } doReturn "INACTIVE OUT" }
+      visitReviewDetail.stub {
+        on { issueType } doReturn IssueType.PRISONER_RELEASED
+      }
+
+      checker.recheck(scheduledVisitAtMoorland)
+
+      verify(visitReviewRepository, never()).saveAndFlush(any())
+    }
+
+    @Test
+    fun `should be no new transfer issue when prisoner is transferred and have existing release issue`() {
+      prisoner.stub { on { prisonId } doReturn PENTONVILLE }
+      visitReviewDetail.stub {
+        on { issueType } doReturn IssueType.PRISONER_TRANSFERRED
+      }
+
+      checker.recheck(scheduledVisitAtMoorland)
+
+      verify(visitReviewRepository, never()).saveAndFlush(any())
+    }
+
+    @Test
+    fun `should be multiple visitor issues when visitorIssueChecker returns multiple issues`() {
+      visitReviewDetail.stub {
+        on { issueType } doReturn IssueType.PRISONER_TRANSFERRED
+      }
+
+      val visitorIssue1 = mock<Issue>().stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
+      val visitorIssue2 = mock<Issue>().stub { on { issueType } doReturn IssueType.VISITOR_NOT_APPROVED }
+      visitorIssueChecker.stub { on { checkVisitorIssues(scheduledVisitAtMoorland) } doReturn setOf(visitorIssue1, visitorIssue2) }
+
+      checker.recheck(scheduledVisitAtMoorland)
 
       verify(visitReviewRepository).saveAndFlush(visitReview)
       verify(visitReview).addVisitReviewDetails(timeSource.now(), IssueType.VISITOR_NOT_APPROVED, null)

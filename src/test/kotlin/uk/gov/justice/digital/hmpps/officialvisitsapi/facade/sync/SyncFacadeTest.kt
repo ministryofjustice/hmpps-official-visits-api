@@ -430,7 +430,7 @@ class SyncFacadeTest {
         username = MOORLAND_PRISON_USER.username,
       )
 
-      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.RECHECK)
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.UPDATE)
     }
 
     @Test
@@ -703,7 +703,7 @@ class SyncFacadeTest {
         username = MOORLAND_PRISON_USER.username,
       )
 
-      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.RECHECK)
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.UPDATE)
     }
 
     @Test
