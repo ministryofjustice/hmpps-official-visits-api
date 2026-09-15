@@ -51,7 +51,7 @@ class IdentifyCandidateVisitsToReCheckJobTest {
     )
     val today = timeSource.today()
     whenever { officialVisitRepository.findCandidateVisitsForReReview(today.plusDays(2)) }
-      .thenReturn(listOf(visit))
+      .thenReturn(listOf(visit.officialVisitId))
 
     job.runJob()
 

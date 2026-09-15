@@ -120,7 +120,7 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
 
   @Query(
     value = """
-        SELECT ov FROM OfficialVisitEntity ov
+        SELECT ov.officialVisitId FROM OfficialVisitEntity ov
         WHERE ov.visitDate >= :today
           AND ov.visitDate < :weekFromNow
           AND ov.visitStatusCode = 'SCHEDULED'
@@ -132,32 +132,36 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   fun findCandidateVisitsForReview(
     today: LocalDate?,
     weekFromNow: LocalDate?,
-  ): Collection<OfficialVisitEntity>
+  ): Collection<Long>
 
   @Query(
     value = """
-        SELECT ov FROM OfficialVisitEntity ov
-        WHERE ov.visitDate = :visitDate
-          AND ov.visitStatusCode = 'SCHEDULED'
-          AND ov.officialVisitId NOT IN (
-            SELECT vrq.officialVisitId FROM VisitReviewQueueEntity vrq
-            WHERE vrq.triggeringEvent = 'RECHECK'
-        )
-        """,
+    SELECT ov.officialVisitId FROM OfficialVisitEntity ov
+    WHERE ov.visitDate = :visitDate
+      AND ov.visitStatusCode = 'SCHEDULED'
+      AND NOT EXISTS (
+        SELECT 1 FROM VisitReviewQueueEntity vrq
+        WHERE vrq.officialVisitId = ov.officialVisitId
+          AND vrq.triggeringEvent = 'RECHECK'
+    )
+    """,
   )
-  fun findCandidateVisitsForReReview(visitDate: LocalDate): Collection<OfficialVisitEntity>
+  fun findCandidateVisitsForReReview(visitDate: LocalDate): Collection<Long>
 
   @Query(
     value = """
-        SELECT DISTINCT ov FROM OfficialVisitEntity ov
-        JOIN VisitReviewEntity vr ON vr.officialVisitId = ov.officialVisitId
-        JOIN VisitReviewDetailEntity vrd ON vrd.visitReview.visitReviewId = vr.visitReviewId
+        SELECT ov.officialVisitId FROM OfficialVisitEntity ov
         WHERE ov.visitDate < :date
-          AND vr.expiredTime IS NULL
-          AND vrd.acknowledgedTime IS NULL
-          AND vrd.acknowledgedBy IS NULL
+          AND EXISTS (
+            SELECT 1 FROM VisitReviewEntity vr
+            JOIN VisitReviewDetailEntity vrd ON vrd.visitReview = vr
+            WHERE vr.officialVisitId = ov.officialVisitId
+              AND vr.expiredTime IS NULL
+              AND vrd.acknowledgedTime IS NULL
+              AND vrd.acknowledgedBy IS NULL
+          )
         ORDER BY ov.visitDate ASC, ov.startTime ASC
         """,
   )
-  fun findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(date: LocalDate): Collection<OfficialVisitEntity>
+  fun findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(date: LocalDate): Collection<Long>
 }
