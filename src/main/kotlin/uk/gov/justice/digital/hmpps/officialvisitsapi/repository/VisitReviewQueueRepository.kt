@@ -11,7 +11,6 @@ interface VisitReviewQueueRepository : JpaRepository<VisitReviewQueueEntity, Lon
     """
       SELECT vrq
       FROM VisitReviewQueueEntity vrq
-      JOIN OfficialVisitEntity ov ON ov.officialVisitId = vrq.officialVisitId
       WHERE vrq.createdTime = (
           SELECT MIN(vrq2.createdTime) FROM VisitReviewQueueEntity vrq2
           WHERE vrq2.officialVisitId = vrq.officialVisitId
