@@ -5,8 +5,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.officialvisitsapi.client.alertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
@@ -19,6 +17,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.Moorland.MONDAY_9_TO_10_VISIT_SLOT
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.VisitSlot
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.activeAlertForPrisoner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isCloseTo
@@ -38,7 +37,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.UUID
 
 class JobTriggerIntegrationTest : IntegrationTestBase() {
 
@@ -178,23 +176,6 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     return visitReviewRepository.saveAndFlush(review)
   }
 
-  private fun alert(isActive: Boolean, createdAt: LocalDateTime): Alert = Alert(
-    alertUuid = UUID.randomUUID(),
-    prisonNumber = "A1234BC",
-    alertCode = AlertCodeSummary(
-      alertTypeCode = "X",
-      alertTypeDescription = "Test Alert",
-      code = "X1",
-      description = "Test Alert Description",
-      canBeAdministered = true,
-    ),
-    activeFrom = LocalDate.now(),
-    isActive = isActive,
-    createdAt = createdAt,
-    createdBy = "test-user",
-    createdByDisplayName = "Test User",
-  )
-
   @Nested
   inner class IdentifyCandidateVisitsToCheckJobTest {
 
@@ -211,7 +192,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     fun `should identify candidate visits to check multiple times`() {
       val officialVisit = createVisitOnDate(LocalDate.now().plusDays(6))
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(alert(true, LocalDateTime.now())))
+      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
 
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
 
@@ -342,7 +323,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     fun `should process visits and flag reviews when there are new active prisoner alerts found`() {
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       enqueueForReview(visit.officialVisitId)
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(alert(true, LocalDateTime.now())))
+      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
 
       testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
 
@@ -451,7 +432,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
       assertQueueSize(1)
 
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(alert(true, LocalDateTime.now())))
+      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
       testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
 
       val issues = firstReviewIssues()
@@ -479,7 +460,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
       assertQueueSize(1)
 
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(alert(true, LocalDateTime.now())))
+      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
       testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
 
       val issues = firstReviewIssues()

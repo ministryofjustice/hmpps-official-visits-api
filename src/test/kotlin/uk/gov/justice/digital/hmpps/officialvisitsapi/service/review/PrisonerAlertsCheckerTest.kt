@@ -27,10 +27,10 @@ class PrisonerAlertsCheckerTest {
     whenever(it.createdTime).thenReturn(createdTime)
   }
 
-  private fun alert(isActive: Boolean, createdAt: LocalDateTime): Alert = Alert(
+  private fun alert(isActive: Boolean, createdAt: LocalDateTime, alertCode: String = "XIT"): Alert = Alert(
     alertUuid = UUID.randomUUID(),
     prisonNumber = "A1234BC",
-    alertCode = mock<AlertCodeSummary>(),
+    alertCode = AlertCodeSummary("test-code", "test-description", alertCode, "test-type", true),
     activeFrom = LocalDate.now(),
     isActive = isActive,
     createdAt = createdAt,
@@ -120,6 +120,18 @@ class PrisonerAlertsCheckerTest {
       val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
       whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
         listOf(alert(isActive = true, createdAt = referenceDate)),
+      )
+
+      val result = checker.checkPrisonerAlerts(officialVisit)
+
+      assertThat(result).isNull()
+    }
+
+    @Test
+    fun `returns null when active alert was not one of the relevant alerts`() {
+      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
+      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+        listOf(alert(isActive = true, createdAt = referenceDate, "EBG")),
       )
 
       val result = checker.checkPrisonerAlerts(officialVisit)
