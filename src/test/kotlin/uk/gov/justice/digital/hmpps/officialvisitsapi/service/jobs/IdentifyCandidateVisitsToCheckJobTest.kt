@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
@@ -50,7 +51,7 @@ class IdentifyCandidateVisitsToCheckJobTest {
     )
     val today = timeSource.today()
     whenever { officialVisitRepository.findCandidateVisitsForReview(today, today.plusDays(7)) }
-      .thenReturn(listOf(visit))
+      .thenReturn(listOf(visit.officialVisitId))
 
     job.runJob()
 
@@ -59,7 +60,7 @@ class IdentifyCandidateVisitsToCheckJobTest {
       VisitReviewQueueEntity(
         officialVisitId = visit.officialVisitId,
         createdTime = timeSource.now(),
-        triggeringEvent = "CHECK",
+        triggeringEvent = VisitReviewCheckType.CHECK,
       ),
     )
   }

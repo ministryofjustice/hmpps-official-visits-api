@@ -10,6 +10,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOffici
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.NotificationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateCommentRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateVisitorsRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateTimeSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.admin.CreateVisitSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.AuditedEventResponse
@@ -134,13 +137,13 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .exchange()
     .expectStatus().isOk
 
-  fun generateVisitSlot(futureVisitDate: LocalDate): Pair<TimeSlot, uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot> {
+  fun generateVisitSlot(futureVisitDate: LocalDate, startTime: LocalTime = LocalTime.of(10, 0), endTime: LocalTime = LocalTime.of(11, 0)): Pair<TimeSlot, uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.admin.VisitSlot> {
     val timeSlot = webTestClient.post()
       .uri("/admin/time-slot")
       .accept(MediaType.APPLICATION_JSON)
       .contentType(MediaType.APPLICATION_JSON)
       .headers(setAuthorisation(MOORLAND_PRISON_USER, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
-      .bodyValue(createTimeSlotRequest(futureVisitDate))
+      .bodyValue(createTimeSlotRequest(futureVisitDate, startTime, endTime))
       .exchange()
       .expectStatus()
       .isOk
@@ -162,6 +165,90 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     return Pair(timeSlot, visitSlot)
   }
 
+  fun updateSlot(
+    prisonCode: String,
+    officialVisitId: Long,
+    request: OfficialVisitUpdateSlotRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = webTestClient
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/update-type-and-slot")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isOk
+
+  fun updateComments(
+    prisonCode: String,
+    officialVisitId: Long,
+    request: OfficialVisitUpdateCommentRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = webTestClient
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/update-comments")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isOk
+
+  fun updateVisitors(
+    prisonCode: String,
+    officialVisitId: Long,
+    request: OfficialVisitUpdateVisitorsRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = webTestClient
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/visitors")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().isOk
+
+  fun nonExistingVisitors(
+    prisonCode: String,
+    officialVisitId: Long,
+    request: OfficialVisitUpdateVisitorsRequest,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = webTestClient
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/visitors")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN")))
+    .exchange()
+    .expectStatus().is4xxClientError
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Request contains visitors which do not exist on official visit with id $officialVisitId")
+
+  fun notExistentOfficialVisit(
+    request: OfficialVisitUpdateSlotRequest,
+    prisonCode: String,
+    officialVisitId: Long,
+    prisonUser: PrisonUser = MOORLAND_PRISON_USER,
+  ) = webTestClient
+    .put()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId/update-type-and-slot")
+    .bodyValue(request)
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(prisonUser, roles = listOf("ROLE_OFFICIAL_VISITS_ADMIN"))).exchange()
+    .expectStatus().is4xxClientError
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Official visit with id $officialVisitId and prison code $prisonCode not found")
+
+  fun getOfficialVisitByPrisonAndId(prisonCode: String, officialVisitId: Long) = webTestClient
+    .get()
+    .uri("/official-visit/prison/$prisonCode/id/$officialVisitId")
+    .accept(MediaType.APPLICATION_JSON)
+    .headers(setAuthorisation(MOORLAND_PRISON_USER, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody<OfficialVisitDetails>()
+    .returnResult().responseBody!!
+
   private fun setAuthorisation(prisonUser: PrisonUser, roles: List<String>): (HttpHeaders) -> Unit = run {
     jwtAuthHelper.setAuthorisationHeader(
       username = prisonUser.username,
@@ -172,11 +259,11 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
 
   private fun createVisitSlotRequest(dpsLocationId: UUID = moorlandLocation.id): CreateVisitSlotRequest = CreateVisitSlotRequest(dpsLocationId = dpsLocationId, maxAdults = 10, maxGroups = 5, maxVideo = 2)
 
-  private fun createTimeSlotRequest(visitDate: LocalDate) = CreateTimeSlotRequest(
+  private fun createTimeSlotRequest(visitDate: LocalDate, startTime: LocalTime, endTime: LocalTime) = CreateTimeSlotRequest(
     prisonCode = MOORLAND,
     dayCode = getDayCode(visitDate),
-    startTime = LocalTime.of(10, 0),
-    endTime = LocalTime.of(11, 0),
+    startTime = startTime,
+    endTime = endTime,
     effectiveDate = LocalDate.now().plusDays(1),
     expiryDate = LocalDate.now().plusDays(365),
   )

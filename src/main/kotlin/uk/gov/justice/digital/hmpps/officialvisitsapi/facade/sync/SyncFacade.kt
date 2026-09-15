@@ -152,7 +152,7 @@ class SyncFacade(
         username = it.updatedBy ?: "NOMIS",
       )
 
-      visitReviewService.visitCheck(it.officialVisitId, VisitReviewCheckType.RECHECK)
+      visitReviewService.visitCheck(it.officialVisitId, VisitReviewCheckType.UPDATE)
     }
 
   fun deleteOfficialVisit(officialVisitId: Long) {
@@ -209,7 +209,7 @@ class SyncFacade(
       username = response.visitor.updatedBy ?: "NOMIS",
     )
 
-    visitReviewService.visitCheck(response.officialVisitId, VisitReviewCheckType.RECHECK)
+    visitReviewService.visitCheck(response.officialVisitId, VisitReviewCheckType.UPDATE)
 
     return response.visitor
   }

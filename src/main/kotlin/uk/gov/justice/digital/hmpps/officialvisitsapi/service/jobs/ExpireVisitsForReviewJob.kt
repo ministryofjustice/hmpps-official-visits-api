@@ -16,15 +16,15 @@ class ExpireVisitsForReviewJob(
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewService: VisitReviewService,
   timeSource: TimeSource,
-) : DailyJob(
+) : DailyJob<Long>(
   jobType = EXPIRE_VISITS_FOR_REVIEW,
   timeSource,
   { date ->
     officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(date)
   },
-  { visits ->
-    visits.forEach {
-      visitReviewService.expire(it.officialVisitId)
+  { officialVisitId ->
+    officialVisitId.forEach {
+      visitReviewService.expire(it)
     }
   },
 )

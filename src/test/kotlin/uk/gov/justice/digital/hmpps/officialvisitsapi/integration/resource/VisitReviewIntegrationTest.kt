@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
@@ -20,13 +19,9 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.IntegrationTes
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 import java.time.LocalDateTime
 
 class VisitReviewIntegrationTest : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var visitReviewRepository: VisitReviewRepository
 
   // todo move to common place
   private val officialVisitor = OfficialVisitor(

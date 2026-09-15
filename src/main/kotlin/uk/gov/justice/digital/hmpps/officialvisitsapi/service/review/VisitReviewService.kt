@@ -47,12 +47,13 @@ class VisitReviewService(
     when (checkType) {
       VisitReviewCheckType.TRANSFER -> transferChecker.check(officialVisit)
       VisitReviewCheckType.RELEASE -> releaseChecker.check(officialVisit)
-      VisitReviewCheckType.RECHECK -> recheck(officialVisit)
+      VisitReviewCheckType.UPDATE -> update(officialVisit)
+      VisitReviewCheckType.RECHECK -> checker.check(officialVisit)
       else -> checker.check(officialVisit)
     }
   }
 
-  private fun recheck(officialVisit: OfficialVisitEntity) {
+  private fun update(officialVisit: OfficialVisitEntity) {
     visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
     visitReviewRepository.flush()
 
@@ -71,7 +72,7 @@ class VisitReviewService(
   ) {
     check(officialVisitId, type)
 
-    visitReviewQueueRepository.findById(officialVisitId).ifPresent(visitReviewQueueRepository::delete)
+    visitReviewQueueRepository.findByOfficialVisitId(officialVisitId)?.let(visitReviewQueueRepository::delete)
   }
 
   @Transactional(readOnly = true)
@@ -133,8 +134,8 @@ class VisitReviewService(
 
 enum class VisitReviewCheckType {
   CHECK,
-  RECHECK,
   UPDATE,
+  RECHECK,
   RELEASE,
   TRANSFER,
 }

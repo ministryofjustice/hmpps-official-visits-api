@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
 /**
@@ -14,18 +14,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReview
 @Component
 class ProcessCandidateVisitsToCheckJob(
 
-  private val officialVisitRepository: OfficialVisitRepository,
+  private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val visitReviewService: VisitReviewService,
   timeSource: TimeSource,
-) : DailyJob(
+) : DailyJob<VisitReviewQueueEntity>(
   jobType = JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK,
   timeSource,
   { date ->
-    officialVisitRepository.findCandidatesOrderedByQueueTime()
+    visitReviewQueueRepository.findCandidatesOrderedByQueueTime()
   },
-  { visits ->
-    visits.forEach {
-      visitReviewService.visitCheck(it.officialVisitId, VisitReviewCheckType.CHECK)
+  { queueEntries ->
+    queueEntries.forEach {
+      visitReviewService.visitCheck(it.officialVisitId, it.triggeringEvent)
     }
   },
 
