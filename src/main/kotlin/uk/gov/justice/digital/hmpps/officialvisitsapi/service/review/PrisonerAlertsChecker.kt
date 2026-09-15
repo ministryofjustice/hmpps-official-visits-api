@@ -41,6 +41,7 @@ class PrisonerAlertsChecker(private val alertsClient: AlertsClient) {
       "XECV",
       "XCCI",
       "XIT",
+      "SA"
     )
   }
 
