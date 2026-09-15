@@ -85,6 +85,7 @@ val openApiModelTasks = listOf(
   "buildNonAssociationsApiModel",
   "buildPrisonerSearchApiModel",
   "buildAlertsApiModel",
+  "buildPrisonRegisterApiModel",
 )
 
 tasks {
@@ -157,7 +158,16 @@ tasks.register("buildAlertsApiModel", GenerateTask::class) {
   globalProperties.set(mapOf("models" to ""))
 }
 
-val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi", "personalrelationships", "nonassociationsapi", "prisonersearchapi", "alertsapi")
+tasks.register("buildPrisonRegisterApiModel", GenerateTask::class) {
+  generatorName.set("kotlin")
+  inputSpec.set("openapi-specs/prison-register-api.json")
+  outputDir.set("$buildDirectory/generated/prisonregisterapi")
+  modelPackage.set("uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model")
+  configOptions.set(configValues)
+  globalProperties.set(mapOf("models" to ""))
+}
+
+val generatedProjectDirs = listOf("locationsinsideprisonapi", "manageusersapi", "personalrelationships", "nonassociationsapi", "prisonersearchapi", "alertsapi", "prisonregisterapi")
 
 tasks.register("integrationTest", Test::class) {
   description = "Runs integration tests"
