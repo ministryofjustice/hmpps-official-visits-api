@@ -212,18 +212,18 @@ fun referenceCode() = listOf(
   ),
 )
 
-fun activeAlertForPrisoner(prisoner: HelperPrisoner): Alert = Alert(
+fun activeAlertForPrisoner(prisoner: HelperPrisoner, isActive: Boolean = true): Alert = Alert(
   alertUuid = UUID.randomUUID(),
   prisonNumber = prisoner.number,
   alertCode = AlertCodeSummary(
     alertTypeCode = "X",
     alertTypeDescription = "Test Alert",
-    code = "X1",
+    code = "XIT",
     description = "Test Alert Description",
     canBeAdministered = true,
   ),
   activeFrom = LocalDate.now(),
-  isActive = true,
+  isActive = isActive,
   createdAt = LocalDateTime.now(),
   createdBy = "test-user",
   createdByDisplayName = "Test User",
