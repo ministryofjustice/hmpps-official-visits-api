@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -184,6 +185,10 @@ class VisitsWithApprovalIssues(
   private val contactsService: ContactsService,
   private val featureSwitches: FeatureSwitches,
 ) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   /**
    * Identifies visits with potential approval issues. Only those with potential issues are returned.
    */
@@ -209,7 +214,7 @@ class VisitsWithApprovalIssues(
 
     return buildSet {
       visitsToPrisonerContacts.forEach { visit ->
-        if (relationships[visit.prisonerNumber].isNullOrEmpty() || relationships[visit.prisonerNumber]!!.any { it.hasIssues(prisonCode) }) {
+        if (relationships[visit.prisonerNumber].isNullOrEmpty() || relationships[visit.prisonerNumber]!!.any { it.hasIssues(visit.officialVisitId, prisonCode) }) {
           add(visit.officialVisitId)
         }
       }
@@ -218,12 +223,15 @@ class VisitsWithApprovalIssues(
 
   private data class VisitPrisonerContactDto(val officialVisitId: Long, val prisonerNumber: String, val contactId: Long)
 
-  private fun socialPrisons() = featureSwitches.getValue(StringFeature.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, null)?.split(',')?.toSet() ?: emptySet()
+  private fun socialPrisons() = (featureSwitches.getValue(StringFeature.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS, null)?.split(',')?.toSet() ?: emptySet()).also { logger.info("Social prisons: $it") }
 
-  private fun PrisonerContactRelationship.hasIssues(prisonCode: String) = this.relationships.isEmpty() ||
-    this.relationships.any {
-      it.isNotAnApprovedVisitor() || this.relationships.any { it.isSocialVisitor() && !socialPrisons().contains(prisonCode) }
-    }
+  private fun PrisonerContactRelationship.hasIssues(officialVisitId: Long, prisonCode: String) = this.relationships.isEmpty().also { if (it) logger.info("Visit $officialVisitId contains no relationships") } ||
+    this.relationships.containsAnyUnapprovedVisitors().also { if (it) logger.info("Visit $officialVisitId contains unapproved visitors") } ||
+    this.relationships.containsAnySocialVisitorsAtWhenNotAllowed(prisonCode, socialPrisons()).also { if (it) logger.info("Visit $officialVisitId contains social visitors when not allowed") }
+
+  private fun List<SummaryRelationship>.containsAnyUnapprovedVisitors() = any { it.isNotAnApprovedVisitor() }
+
+  private fun List<SummaryRelationship>.containsAnySocialVisitorsAtWhenNotAllowed(prisonCode: String, socialPrisons: Set<String>) = any { it.isSocialVisitor() && !socialPrisons.contains(prisonCode) }
 
   private fun SummaryRelationship.isNotAnApprovedVisitor() = !isApprovedVisitor
 
