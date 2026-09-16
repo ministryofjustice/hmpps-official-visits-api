@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.hasSize
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
@@ -78,14 +79,27 @@ class VisitsWithApprovalIssuesTest {
 
   @Test
   fun `should be issues for candidate visit when social visits are not allowed`() {
-    whenever { featureSwitches.getValue(StringFeature.FEATURE_ALLOW_SOCIAL_VISITORS_PRISONS) } doReturn null
     whenever { officialVisitRepository.findAllById(listOf(1)) } doReturn listOf(visit)
 
     contactsService.stub {
       on { getPrisonerContactRelationships(setOf(PrisonerContactDto(prisonerNumber, firstContactId), PrisonerContactDto(prisonerNumber, secondContactId))) } doReturn mapOf(prisonerNumber to listOf(relationship(prisonerNumber, firstContactId, relationshipType = "S"), relationship(prisonerNumber, secondContactId)))
     }
 
-    visitsWithApprovalIssues.identify(MOORLAND, listOf(visitId)) hasSize 1
+    visitsWithApprovalIssues.identify(PENTONVILLE, listOf(visitId)) hasSize 1
+
+    verify(officialVisitRepository).findAllById(listOf(visitId))
+    verify(contactsService).getPrisonerContactRelationships(setOf(PrisonerContactDto(prisonerNumber, firstContactId), PrisonerContactDto(prisonerNumber, secondContactId)))
+  }
+
+  @Test
+  fun `should not be issues for candidate visit when social visits are allowed`() {
+    whenever { officialVisitRepository.findAllById(listOf(1)) } doReturn listOf(visit)
+
+    contactsService.stub {
+      on { getPrisonerContactRelationships(setOf(PrisonerContactDto(prisonerNumber, firstContactId), PrisonerContactDto(prisonerNumber, secondContactId))) } doReturn mapOf(prisonerNumber to listOf(relationship(prisonerNumber, firstContactId, relationshipType = "S"), relationship(prisonerNumber, secondContactId)))
+    }
+
+    visitsWithApprovalIssues.identify(MOORLAND, listOf(visitId)) hasSize 0
 
     verify(officialVisitRepository).findAllById(listOf(visitId))
     verify(contactsService).getPrisonerContactRelationships(setOf(PrisonerContactDto(prisonerNumber, firstContactId), PrisonerContactDto(prisonerNumber, secondContactId)))
