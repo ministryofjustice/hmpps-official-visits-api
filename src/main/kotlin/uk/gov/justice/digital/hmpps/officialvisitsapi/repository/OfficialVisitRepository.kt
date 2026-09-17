@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -121,17 +120,29 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
 
   @Query(
     value = """
+        SELECT ov.officialVisitId FROM OfficialVisitEntity ov
+        WHERE ov.visitDate = :visitDate
+          AND ov.visitStatusCode = 'SCHEDULED'
+          AND ov.officialVisitId NOT IN (SELECT vrq.officialVisitId FROM VisitReviewQueueEntity vrq)
+          AND ov.officialVisitId NOT IN (SELECT vr.officialVisitId FROM VisitReviewEntity vr)
+        """,
+  )
+  fun findCandidateVisitsForReview(
+    visitDate: LocalDate,
+  ): Collection<Long>
+
+  @Query(
+    value = """
     SELECT ov.officialVisitId FROM OfficialVisitEntity ov
     WHERE ov.visitDate = :visitDate
       AND ov.visitStatusCode = 'SCHEDULED'
       AND NOT EXISTS (
         SELECT 1 FROM VisitReviewQueueEntity vrq
         WHERE vrq.officialVisitId = ov.officialVisitId
-          AND vrq.triggeringEvent = :triggeringEvent
     )
     """,
   )
-  fun findCandidateVisitsForReview(visitDate: LocalDate, triggeringEvent: VisitReviewCheckType = VisitReviewCheckType.CHECK): Collection<Long>
+  fun findCandidateVisitsForReReview(visitDate: LocalDate): Collection<Long>
 
   @Query(
     value = """

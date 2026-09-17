@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.job
 
-import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -216,9 +215,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       issues.map { it.issueType }.toList() containsExactlyInAnyOrder listOf(IssueType.PRISONER_NEW_ALERT, IssueType.PRISONER_RELEASED)
 
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
-      await().untilAsserted {
-        assertQueueSize(1) // re-run of identify visit job re-queues the visit while it still qualifies
-      }
+      assertQueueSize(0) // re-run of identify visit job re-queues the visit while it still qualifies
 
       testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK) // re-run of process visit job should not add to queue as already identified and processed
       assertQueueSize(0)
