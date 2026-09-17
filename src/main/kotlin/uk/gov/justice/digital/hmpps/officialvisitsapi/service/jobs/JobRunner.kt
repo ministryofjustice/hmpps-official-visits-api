@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.StandardTelemetryEvent
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.TelemetryService
@@ -8,9 +9,9 @@ import kotlin.system.measureTimeMillis
 @Component
 class JobRunner(private val telemetryService: TelemetryService) {
 
-  fun runJob(jobDefinition: JobDefinition): JobType {
+  @Async("asyncExecutor")
+  fun runJob(jobDefinition: JobDefinition) {
     run(jobDefinition)
-    return jobDefinition.jobType
   }
 
   private fun run(jobDefinition: JobDefinition) {
