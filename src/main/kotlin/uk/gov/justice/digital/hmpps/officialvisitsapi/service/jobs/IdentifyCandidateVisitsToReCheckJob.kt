@@ -17,7 +17,7 @@ class IdentifyCandidateVisitsToReCheckJob(
   jobType = JobType.IDENTIFY_CANDIDATE_VISITS_TO_RECHECK,
   timeSource,
   { date ->
-    officialVisitRepository.findCandidateVisitsForReReview(date.plusDays(2))
+    officialVisitRepository.findCandidateVisitsForReview(date.plusDays(2), VisitReviewCheckType.RECHECK)
   },
   { officialVisitId ->
     officialVisitId.forEach {

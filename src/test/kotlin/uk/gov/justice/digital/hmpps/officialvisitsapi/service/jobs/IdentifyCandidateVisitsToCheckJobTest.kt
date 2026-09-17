@@ -50,12 +50,12 @@ class IdentifyCandidateVisitsToCheckJobTest {
       createdBy = "unit test",
     )
     val today = timeSource.today()
-    whenever { officialVisitRepository.findCandidateVisitsForReview(today, today.plusDays(7)) }
+    whenever { officialVisitRepository.findCandidateVisitsForReview(today.plusDays(7)) }
       .thenReturn(listOf(visit.officialVisitId))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReview(today, today.plusDays(7))
+    verify(officialVisitRepository).findCandidateVisitsForReview(today.plusDays(7))
     verify(visitReviewQueueRepository).saveAndFlush(
       VisitReviewQueueEntity(
         officialVisitId = visit.officialVisitId,
