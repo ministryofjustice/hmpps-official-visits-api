@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.NotificationRep
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitorRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonTimeSlotRepository
+import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonVisitSlotRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisitedRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
@@ -87,6 +88,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var timeSlotRepository: PrisonTimeSlotRepository
+
+  @Autowired
+  protected lateinit var visitSlotRepository: PrisonVisitSlotRepository
 
   @Autowired
   protected lateinit var notificationRepository: NotificationRepository

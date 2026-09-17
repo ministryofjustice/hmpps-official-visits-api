@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.job
 
 import org.awaitility.Awaitility.await
-import org.hibernate.graph.internal.parse.GraphParsing.visit
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -47,6 +46,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     private const val JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK = "PROCESS_CANDIDATE_VISITS_TO_CHECK"
     private const val JOB_EXPIRE_VISITS_FOR_REVIEW = "EXPIRE_VISITS_FOR_REVIEW"
     private val createdTimeSlotIds = mutableListOf<Long>()
+    private val createdVisitSlotIds = mutableListOf<Long>()
     private const val CHECK_WINDOW_SEVEN_DAYS = 7L
 
     private const val RECHECK_TARGET_DAYS = 2L
@@ -94,8 +94,10 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   fun tearDown() {
     clearAllVisitData()
     if (createdTimeSlotIds.isNotEmpty()) {
+      visitSlotRepository.deleteAllById(createdVisitSlotIds)
       timeSlotRepository.deleteAllById(createdTimeSlotIds)
       createdTimeSlotIds.clear()
+      createdVisitSlotIds.clear()
     }
   }
 
@@ -109,12 +111,14 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   /** Creates an official visit on [date], letting [testAPIClient] pick an available time slot. */
   private fun createVisitOnDate(date: LocalDate, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.generateVisitSlot(date).let { (timeSlot, visitSlot) ->
     createdTimeSlotIds.add(visitSlot.prisonTimeSlotId)
+    createdVisitSlotIds.add(visitSlot.visitSlotId)
     createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
   }
 
   /** Creates an official visit on [date] at an explicit [startTime]/[endTime]. */
   private fun createVisitOnDateAndTimes(date: LocalDate, startTime: LocalTime, endTime: LocalTime, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.generateVisitSlot(date, startTime = startTime, endTime = endTime).let { (timeSlot, visitSlot) ->
     createdTimeSlotIds.add(visitSlot.prisonTimeSlotId)
+    createdVisitSlotIds.add(visitSlot.visitSlotId)
     createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
   }
 
