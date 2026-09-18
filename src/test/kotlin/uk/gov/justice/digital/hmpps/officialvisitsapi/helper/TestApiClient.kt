@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.helper
 
+import org.awaitility.Awaitility.await
 import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.DayType
@@ -26,11 +28,16 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.PrisonUser
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationType
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
-class TestApiClient(private val webTestClient: WebTestClient, private val jwtAuthHelper: JwtAuthorisationHelper) {
+class TestApiClient(
+  private val webTestClient: WebTestClient,
+  private val jwtAuthHelper: JwtAuthorisationHelper,
+  private val asyncExecutor: ThreadPoolTaskExecutor,
+) {
   fun createOfficialVisit(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .post()
     .uri("/official-visit/prison/${prisonUser.caseloads.first()}")
@@ -122,12 +129,18 @@ class TestApiClient(private val webTestClient: WebTestClient, private val jwtAut
     .expectBody<VisitsForReviewResponseResponse>()
     .returnResult().responseBody!!
 
-  fun runJob(jobName: String) = webTestClient
-    .post()
-    .uri("/job-admin/run/$jobName")
-    .accept(MediaType.TEXT_PLAIN)
-    .exchange()
-    .expectStatus().isOk
+  fun runJob(jobName: String) {
+    webTestClient
+      .post()
+      .uri("/job-admin/run/$jobName")
+      .accept(MediaType.TEXT_PLAIN)
+      .exchange()
+      .expectStatus().isAccepted
+
+    await().pollDelay(Duration.ofMillis(200)).atMost(Duration.ofSeconds(10)).until {
+      asyncExecutor.activeCount == 0 && asyncExecutor.threadPoolExecutor.queue.isEmpty()
+    }
+  }
 
   fun acknowledgeVisitForReview(visitReviewId: Long, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = webTestClient
     .put()

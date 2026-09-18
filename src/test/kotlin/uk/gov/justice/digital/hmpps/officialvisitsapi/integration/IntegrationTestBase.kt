@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDO
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -101,13 +102,16 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var visitReviewQueueRepository: VisitReviewQueueRepository
 
+  @Autowired
+  protected lateinit var asyncExecutor: ThreadPoolTaskExecutor
+
   @BeforeEach
   fun `stub default users and prisoners and reset stubbed events`() {
     stubEvents.reset()
     stubUser(MOORLAND_PRISON_USER)
     prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER)
     alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER)
-    testAPIClient = TestApiClient(webTestClient, jwtAuthHelper)
+    testAPIClient = TestApiClient(webTestClient, jwtAuthHelper, asyncExecutor)
   }
 
   protected fun stubUser(user: PrisonUser) {
