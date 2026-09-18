@@ -22,7 +22,7 @@ class IdentifyCandidateVisitsToCheckJob(
   jobType = JobType.IDENTIFY_CANDIDATE_VISITS_TO_CHECK,
   timeSource,
   { date ->
-    officialVisitRepository.findCandidateVisitsForReview(date, date.plusDays(7))
+    officialVisitRepository.findCandidateVisitsForReview(date.plusDays(7))
   },
   { officialVisitId ->
     officialVisitId.forEach {

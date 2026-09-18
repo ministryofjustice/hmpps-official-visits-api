@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.job
 
-import org.hibernate.graph.internal.parse.GraphParsing.visit
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -45,7 +44,8 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     private const val JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK = "IDENTIFY_CANDIDATE_VISITS_TO_RECHECK"
     private const val JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK = "PROCESS_CANDIDATE_VISITS_TO_CHECK"
     private const val JOB_EXPIRE_VISITS_FOR_REVIEW = "EXPIRE_VISITS_FOR_REVIEW"
-
+    private val createdTimeSlotIds = mutableListOf<Long>()
+    private val createdVisitSlotIds = mutableListOf<Long>()
     private const val CHECK_WINDOW_SEVEN_DAYS = 7L
 
     private const val RECHECK_TARGET_DAYS = 2L
@@ -92,6 +92,12 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   @AfterEach
   fun tearDown() {
     clearAllVisitData()
+    if (createdTimeSlotIds.isNotEmpty()) {
+      visitSlotRepository.deleteAllById(createdVisitSlotIds)
+      timeSlotRepository.deleteAllById(createdTimeSlotIds)
+      createdTimeSlotIds.clear()
+      createdVisitSlotIds.clear()
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -103,11 +109,15 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
   /** Creates an official visit on [date], letting [testAPIClient] pick an available time slot. */
   private fun createVisitOnDate(date: LocalDate, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.generateVisitSlot(date).let { (timeSlot, visitSlot) ->
+    createdTimeSlotIds.add(visitSlot.prisonTimeSlotId)
+    createdVisitSlotIds.add(visitSlot.visitSlotId)
     createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
   }
 
   /** Creates an official visit on [date] at an explicit [startTime]/[endTime]. */
   private fun createVisitOnDateAndTimes(date: LocalDate, startTime: LocalTime, endTime: LocalTime, visitors: List<OfficialVisitor> = listOf(officialVisitor)) = testAPIClient.generateVisitSlot(date, startTime = startTime, endTime = endTime).let { (timeSlot, visitSlot) ->
+    createdTimeSlotIds.add(visitSlot.prisonTimeSlotId)
+    createdVisitSlotIds.add(visitSlot.visitSlotId)
     createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
   }
 
@@ -181,7 +191,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
     @Test
     fun `should identify candidate visits to check`() {
-      createVisitOnDate(LocalDate.now().plusDays(6))
+      createVisitOnDate(LocalDate.now().plusDays(7))
 
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
 
@@ -190,7 +200,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
     @Test
     fun `should identify candidate visits to check multiple times`() {
-      val officialVisit = createVisitOnDate(LocalDate.now().plusDays(6))
+      val officialVisit = createVisitOnDate(LocalDate.now().plusDays(7))
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
 
@@ -205,7 +215,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       issues.map { it.issueType }.toList() containsExactlyInAnyOrder listOf(IssueType.PRISONER_NEW_ALERT, IssueType.PRISONER_RELEASED)
 
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
-      assertQueueSize(0) // re-run of identify visit job should not add to queue as already identified
+      assertQueueSize(0) // re-run of identify visit job re-queues the visit while it still qualifies
 
       testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK) // re-run of process visit job should not add to queue as already identified and processed
       assertQueueSize(0)
@@ -241,8 +251,9 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should not find the identify candidate visits to check for visits that are more than 7 day to the future`() {
-      createVisitOnSlot(slotBeyondCheckWindow())
+    fun `should not find the identify candidate visits to check for visits that are not in 7 days`() {
+      createVisitOnDate(LocalDate.now().plusDays(6))
+      createVisitOnDate(LocalDate.now().plusDays(8))
 
       testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
 
