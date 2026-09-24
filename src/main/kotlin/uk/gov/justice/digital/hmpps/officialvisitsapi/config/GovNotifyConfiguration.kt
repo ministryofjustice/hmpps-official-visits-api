@@ -53,7 +53,7 @@ class GovNotifyConfiguration(
       EmailTemplate(officialVisitCreatedTemplateId, OFFICIAL_VISIT_CREATED),
       EmailTemplate(officialVisitCancelledTemplateId, OFFICIAL_VISIT_CANCELLED),
       EmailTemplate(officialVisitUpdatedTemplateId, OFFICIAL_VISIT_UPDATED),
-      EmailTemplate(inPersonVisitConfirmedTemplateId, EmailType.IN_PERSON_CONFIRMED),
+      EmailTemplate(inPersonVisitConfirmedTemplateId, EmailType.IN_PERSON_VISIT_CONFIRMED),
       EmailTemplate(inPersonVisitAmendedTemplateId, EmailType.IN_PERSON_VISIT_AMENDED),
       EmailTemplate(inPersonVisitCancelledTemplateId, EmailType.IN_PERSON_VISIT_CANCELLED),
       EmailTemplate(telephoneVisitConfirmedTemplateId, EmailType.TELEPHONE_VISIT_CONFIRMED),

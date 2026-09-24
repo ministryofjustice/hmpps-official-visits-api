@@ -28,7 +28,7 @@ class GovNotifyConfigurationTest {
     templates.templateIdFor(EmailType.OFFICIAL_VISIT_CREATED) isEqualTo "created-template-id"
     templates.templateIdFor(EmailType.OFFICIAL_VISIT_CANCELLED) isEqualTo "cancelled-template-id"
     templates.templateIdFor(EmailType.OFFICIAL_VISIT_UPDATED) isEqualTo "updated-template-id"
-    templates.templateIdFor(EmailType.IN_PERSON_CONFIRMED) isEqualTo "in-person-visit-confirmed-template-id"
+    templates.templateIdFor(EmailType.IN_PERSON_VISIT_CONFIRMED) isEqualTo "in-person-visit-confirmed-template-id"
     templates.templateIdFor(EmailType.IN_PERSON_VISIT_AMENDED) isEqualTo "in-person-visit-amended-template-id"
     templates.templateIdFor(EmailType.IN_PERSON_VISIT_CANCELLED) isEqualTo "in-person-visit-cancelled-template-id"
     templates.templateIdFor(EmailType.TELEPHONE_VISIT_CONFIRMED) isEqualTo "telephone-visit-confirmed-template-id"
