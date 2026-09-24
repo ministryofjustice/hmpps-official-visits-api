@@ -130,6 +130,7 @@ class SentNotificationsService(
     EmailType.OFFICIAL_VISIT_CREATED -> "CREATE"
     EmailType.OFFICIAL_VISIT_UPDATED -> "UPDATED"
     EmailType.OFFICIAL_VISIT_CANCELLED -> "CANCELLED"
+    else -> this.name
   }
 
   private companion object {

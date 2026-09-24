@@ -168,5 +168,17 @@ notify:
     official-visit-created: 99292100-5858-4b08-8e20-101e8df708de
     official-visit-cancelled: 5354cbd9-fcfa-4d41-a8d2-d9372ee2374e
     official-visit-updated: 2f052775-8bb8-4a28-9baa-9f6a3fc22bc4
+    in-person-visit:
+      confirmed: 69446bcd-7660-4ce9-b04c-2e738fe6f611
+      amended: 43b31e7c-d82b-427a-a866-d228e491825c
+      cancelled: a62f1025-0eb3-4969-9031-6473ff8ac2fd
+    telephone-visit:
+      confirmed: 5c6bfb66-a854-46e1-b058-f70491121edd
+      amended: 2cd0163f-2b79-42e1-86b0-5474c71334be
+      cancelled: 07301067-dd5f-440e-be11-47cfc8d99ea2
+    video-visit:
+      confirmed: 147f9996-d01d-44cd-a95c-5a0bf34ffb75
+      amended: 48f5b878-9d65-4209-8ebc-fb784a7c3efe
+      cancelled: a03204fd-b029-43ab-8720-249144cff2bc
   callback:
     secret: ${NOTIFY_CALLBACK_SECRET:}
