@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
@@ -23,8 +25,9 @@ import java.util.UUID
 class IdentifyCandidateVisitsToCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
+  private val feature: FeatureSwitches = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, timeSource)
+  private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, timeSource)
 
   @Test
   fun `should call the find candidates visits service when run`() {
@@ -50,12 +53,15 @@ class IdentifyCandidateVisitsToCheckJobTest {
       createdBy = "unit test",
     )
     val today = timeSource.today()
-    whenever { officialVisitRepository.findCandidateVisitsForReview(today.plusDays(7)) }
+    val prisonCodesList = setOf(PENTONVILLE)
+    whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
+      .thenReturn(PENTONVILLE)
+    whenever { officialVisitRepository.findCandidateVisitsForReview(today.plusDays(7), prisonCodesList) }
       .thenReturn(listOf(visit.officialVisitId))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReview(today.plusDays(7))
+    verify(officialVisitRepository).findCandidateVisitsForReview(today.plusDays(7), prisonCodesList)
     verify(visitReviewQueueRepository).saveAndFlush(
       VisitReviewQueueEntity(
         officialVisitId = visit.officialVisitId,
