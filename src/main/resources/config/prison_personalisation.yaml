@@ -1,0 +1,11 @@
+prisons:
+  - code: DEFAULT
+    name: "Default prison"
+    address:
+      line1:
+      line2:
+      line3:
+      city:
+      postcode:
+    video_visit: Please join using the video link provided in your visit confirmation. Ensure you have suitable identification available if required. Contact the prison team if you experience any issues joining.
+    in_person_visit: Please refer to the prison website for travel information, parking arrangements, and visitor guidance.
