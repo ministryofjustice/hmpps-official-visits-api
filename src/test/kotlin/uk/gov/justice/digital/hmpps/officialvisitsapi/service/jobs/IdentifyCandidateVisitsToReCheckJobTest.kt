@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
@@ -23,8 +25,9 @@ import java.util.UUID
 class IdentifyCandidateVisitsToReCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
+  private val feature: FeatureSwitches = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job: IdentifyCandidateVisitsToReCheckJob = IdentifyCandidateVisitsToReCheckJob(officialVisitRepository, visitReviewQueueRepository, timeSource)
+  private val job: IdentifyCandidateVisitsToReCheckJob = IdentifyCandidateVisitsToReCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, timeSource)
 
   @Test
   fun `should add day after tomorrow candidate visits to the queue as rechecks`() {
@@ -50,12 +53,15 @@ class IdentifyCandidateVisitsToReCheckJobTest {
       createdBy = "unit test",
     )
     val today = timeSource.today()
-    whenever { officialVisitRepository.findCandidateVisitsForReReview(today.plusDays(2)) }
+    val prisonCodesList = setOf(PENTONVILLE)
+    whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
+      .thenReturn(PENTONVILLE)
+    whenever { officialVisitRepository.findCandidateVisitsForReReview(today.plusDays(2), prisonCodesList) }
       .thenReturn(listOf(visit.officialVisitId))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReReview(today.plusDays(2))
+    verify(officialVisitRepository).findCandidateVisitsForReReview(today.plusDays(2), prisonCodesList)
     verify(visitReviewQueueRepository).saveAndFlush(
       VisitReviewQueueEntity(
         officialVisitId = visit.officialVisitId,

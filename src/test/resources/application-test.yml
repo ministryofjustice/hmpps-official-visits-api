@@ -67,6 +67,11 @@ feature:
         updated: true
         deleted: true
 
+  visits:
+    need:
+      review:
+        prisons: "MDI,PVI"
+
 notify:
   callback:
     secret: "TestSecret"

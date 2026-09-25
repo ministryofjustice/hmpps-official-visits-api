@@ -125,10 +125,12 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
           AND ov.visitStatusCode = 'SCHEDULED'
           AND ov.officialVisitId NOT IN (SELECT vrq.officialVisitId FROM VisitReviewQueueEntity vrq)
           AND ov.officialVisitId NOT IN (SELECT vr.officialVisitId FROM VisitReviewEntity vr)
+          AND ov.prisonCode IN :prisonCodesList
         """,
   )
   fun findCandidateVisitsForReview(
     visitDate: LocalDate,
+    prisonCodesList: Collection<String>,
   ): Collection<Long>
 
   @Query(
@@ -140,9 +142,10 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         SELECT 1 FROM VisitReviewQueueEntity vrq
         WHERE vrq.officialVisitId = ov.officialVisitId
     )
+    AND ov.prisonCode IN :prisonCodesList
     """,
   )
-  fun findCandidateVisitsForReReview(visitDate: LocalDate): Collection<Long>
+  fun findCandidateVisitsForReReview(visitDate: LocalDate, prisonCodesList: Collection<String>): Collection<Long>
 
   @Query(
     value = """
