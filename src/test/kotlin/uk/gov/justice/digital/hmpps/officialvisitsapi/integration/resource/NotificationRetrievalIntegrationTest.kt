@@ -102,7 +102,7 @@ class NotificationRetrievalIntegrationTest : IntegrationTestBase() {
     notifications.size isEqualTo 2
     notifications.map { it.officialVisitId }.distinct() containsExactly listOf(scheduledVisit.officialVisitId)
     notifications.map { it.emailAddress } containsExactlyInAnyOrder listOf("email@address.com", "email2@address.com")
-    notifications.map { it.reason }.distinct() containsExactly listOf("OFFICIAL_VISIT_CREATED")
+    notifications.map { it.reason }.distinct() containsExactly listOf("IN_PERSON_VISIT_CONFIRMED")
   }
 
   @Test

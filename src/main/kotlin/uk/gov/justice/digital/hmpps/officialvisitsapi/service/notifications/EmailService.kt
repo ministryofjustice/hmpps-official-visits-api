@@ -33,9 +33,6 @@ class EmailTemplates(private val templates: Set<EmailTemplate>) {
 data class EmailTemplate(val templateId: TemplateId, val emailType: EmailType)
 
 enum class EmailType {
-  OFFICIAL_VISIT_CREATED,
-  OFFICIAL_VISIT_UPDATED,
-  OFFICIAL_VISIT_CANCELLED,
   IN_PERSON_VISIT_CONFIRMED,
   IN_PERSON_VISIT_AMENDED,
   IN_PERSON_VISIT_CANCELLED,
@@ -47,76 +44,340 @@ enum class EmailType {
   VIDEO_VISIT_CANCELLED,
 }
 
-class OfficialVisitCreatedEmail(
+class InPersonVisitConfirmedEmail(
   emailAddress: String,
+  prisonerNumber: String,
   prisonerName: String,
-  appointmentDate: LocalDate,
-  appointmentTime: LocalTime,
-  appointmentLocation: String,
-  videoLinkUrl: String? = null,
-  notes: String? = null,
-  userName: String,
-) : Email(emailAddress) {
-  init {
-    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
-    addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
-    addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
-    addPersonalisation("appointment_location", appointmentLocation)
-    addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
-    addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
-    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
-    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
-    addPersonalisation("user_name", userName)
-  }
-
-  override fun type(): EmailType = EmailType.OFFICIAL_VISIT_CREATED
-}
-
-class OfficialVisitUpdatedEmail(
-  emailAddress: String,
-  prisonerName: String,
-  appointmentDate: LocalDate,
-  appointmentTime: LocalTime,
-  appointmentLocation: String,
-  videoLinkUrl: String? = null,
-  notes: String? = null,
-  userName: String,
-) : Email(emailAddress) {
-  init {
-    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
-    addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
-    addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
-    addPersonalisation("appointment_location", appointmentLocation)
-    addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
-    addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
-    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
-    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
-    addPersonalisation("user_name", userName)
-  }
-
-  override fun type(): EmailType = EmailType.OFFICIAL_VISIT_UPDATED
-}
-
-class OfficialVisitCancelledEmail(
-  emailAddress: String,
-  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
   visitorNames: String,
-  appointmentDate: LocalDate,
-  appointmentTime: LocalTime,
-  appointmentLocation: String,
   notes: String? = null,
-  userName: String,
 ) : Email(emailAddress) {
   init {
+    addPersonalisation("prisoner_number", prisonerNumber)
     addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
     addPersonalisation("visitor_names", visitorNames.toTitleCase())
-    addPersonalisation("appointment_date", appointmentDate.toMediumFormatStyle())
-    addPersonalisation("appointment_time", appointmentTime.toHourMinuteStyle())
-    addPersonalisation("appointment_location", appointmentLocation)
     addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
-    addPersonalisation("user_name", userName)
   }
 
-  override fun type(): EmailType = EmailType.OFFICIAL_VISIT_CANCELLED
+  override fun type(): EmailType = EmailType.IN_PERSON_VISIT_CONFIRMED
+}
+
+class InPersonVisitAmendedEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+  }
+  override fun type(): EmailType = EmailType.IN_PERSON_VISIT_AMENDED
+}
+
+class InPersonVisitCancelledEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.IN_PERSON_VISIT_CANCELLED
+}
+
+class VideoVisitConfirmedEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+  videoLinkUrl: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
+    addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.VIDEO_VISIT_CONFIRMED
+}
+
+class VideoVisitAmendedEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+  videoLinkUrl: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
+    addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.VIDEO_VISIT_AMENDED
+}
+
+class VideoVisitCancelledEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.VIDEO_VISIT_CANCELLED
+}
+
+class TelephoneVisitConfirmedEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.TELEPHONE_VISIT_CONFIRMED
+}
+
+class TelephoneVisitAmendedEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.TELEPHONE_VISIT_AMENDED
+}
+
+class TelephoneVisitCancelledEmail(
+  emailAddress: String,
+  prisonerNumber: String,
+  prisonerName: String,
+  prisonDetails: PrisonContactDetails,
+  visitDate: LocalDate,
+  visitStartTime: LocalTime,
+  visitEndTime: LocalTime,
+  visitLocation: String,
+  visitorNames: String,
+  notes: String? = null,
+) : Email(emailAddress) {
+  init {
+    addPersonalisation("prisoner_number", prisonerNumber)
+    addPersonalisation("prisoner_name", prisonerName.toTitleCase())
+    addPersonalisation("prison_code", prisonDetails.prisonCode ?: "")
+    addPersonalisation("prison_name", prisonDetails.prisonName ?: "")
+    addPersonalisation("prison_address_line1", prisonDetails.prisonAddressLine1 ?: "")
+    addPersonalisation("prison_address_line2", prisonDetails.prisonAddressLine2 ?: "")
+    addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
+    addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
+    addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
+    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
+    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
+    addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
+    addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
+    addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
+    addPersonalisation("visit_location", visitLocation)
+    addPersonalisation("visitor_names", visitorNames.toTitleCase())
+    addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
+    addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+  }
+
+  override fun type(): EmailType = EmailType.TELEPHONE_VISIT_CANCELLED
 }

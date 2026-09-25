@@ -16,12 +16,20 @@ import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.data.domain.Sort
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregister.PrisonRegisterClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.AddressDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.ContactDetailsDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.PrisonDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.PrisonOperatorDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.PrisonTypeDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toHourMinuteStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.containsEntriesExactlyInAnyOrder
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.isBool
@@ -50,6 +58,7 @@ class NotificationsServiceTest {
   private val notificationRepository: NotificationRepository = mock()
   private val sentNotificationsService: SentNotificationsService = mock()
   private val auditingService: AuditingService = mock()
+  private val prisonRegisterClient: PrisonRegisterClient = mock()
   private val notification: NotificationEntity = mock()
 
   private val service = NotificationsService(
@@ -60,17 +69,52 @@ class NotificationsServiceTest {
     notificationRepository,
     sentNotificationsService,
     auditingService,
+    prisonRegisterClient,
   )
 
   object FakeEmail : Email("email@address") {
-    override fun type() = EmailType.OFFICIAL_VISIT_CREATED
+    override fun type() = EmailType.IN_PERSON_VISIT_CONFIRMED
   }
+
+  val prisonContactDetails = ContactDetailsDto(
+    type = ContactDetailsDto.Type.OFFICIAL_VISIT,
+    emailAddress = "test@email.com",
+    phoneNumber = "1234567890",
+    webAddress = null,
+  )
+
+  val prisonDetails = PrisonDto(
+    prisonId = MOORLAND,
+    prisonName = "Moorland (HMP)",
+    active = true,
+    male = true,
+    female = false,
+    contracted = false,
+    lthse = false,
+    types = listOf(PrisonTypeDto(code = PrisonTypeDto.Code.HMP, description = "HMPPS")),
+    categories = setOf(PrisonDto.Categories.C),
+    addresses = listOf(
+      AddressDto(
+        id = 1L,
+        addressLine1 = "Main Road",
+        addressLine2 = "Corbeth",
+        town = "Doncaster",
+        county = "South Yorkshire",
+        postcode = "DN4 5LK",
+        country = "UK",
+      ),
+    ),
+    operators = listOf(PrisonOperatorDto("HMPPS")),
+  )
 
   @Nested
   inner class SendingNotifications {
     @BeforeEach
     fun beforeEach() {
-      reset(notificationRepository, officialVisitRepository, emailService, prisonerSearchClient)
+      reset(notificationRepository, officialVisitRepository, emailService, prisonerSearchClient, prisonRegisterClient)
+
+      whenever { prisonRegisterClient.getPrisonDetails(PENTONVILLE) } doReturn prisonDetails
+      whenever { prisonRegisterClient.getPrisonContactDetails(PENTONVILLE, "OFFICIAL_VISIT") } doReturn prisonContactDetails
 
       whenever { notification.notificationId } doReturn 1
       whenever { notificationRepository.saveAndFlush(any<NotificationEntity>()) } doReturn notification
@@ -99,10 +143,11 @@ class NotificationsServiceTest {
     }
 
     @Test
-    fun `should send create email via email service for video visit`() {
+    fun `should send create email for video visit`() {
       whenever { emailService.send(any()) } doReturn Result.success(notificationId to "fake template id")
 
       val officialVisit = createAVisitEntity(1, VisitType.VIDEO)
+
       val prisoner = prisonerSearchPrisoner(
         prisonerNumber = MOORLAND_PRISONER.number,
         prisonCode = MOORLAND_PRISONER.prison,
@@ -118,8 +163,7 @@ class NotificationsServiceTest {
         request = NotificationRequest(
           notificationType = NotificationType.CREATE,
           emailAddresses = listOf("email@address"),
-          // videoLinkUrl should be shown for in video visits
-          videoLinkUrl = "create video-link-url",
+          videoLinkUrl = "should be shown",
           notes = "create email notes",
         ),
         user = MOORLAND_PRISON_USER,
@@ -127,27 +171,42 @@ class NotificationsServiceTest {
 
       val emailCaptor = argumentCaptor<Email>()
 
-      inOrder(officialVisitRepository, locationsService, prisonerSearchClient, emailService, notificationRepository) {
+      inOrder(officialVisitRepository, locationsService, prisonerSearchClient, prisonRegisterClient, emailService, notificationRepository) {
         verify(officialVisitRepository).findById(1)
         verify(locationsService).getLocationById(officialVisit.dpsLocationId)
         verify(prisonerSearchClient).getPrisoner(officialVisit.prisonerNumber)
+        verify(prisonRegisterClient).getPrisonDetails(PENTONVILLE)
+        verify(prisonRegisterClient).getPrisonContactDetails(PENTONVILLE, "OFFICIAL_VISIT")
         verify(emailService).send(emailCaptor.capture())
         verify(notificationRepository).saveAndFlush(any<NotificationEntity>())
       }
 
       val email = emailCaptor.firstValue
-      email isInstanceOf OfficialVisitCreatedEmail::class.java
+      email isInstanceOf VideoVisitConfirmedEmail::class.java
       email.emailAddress isEqualTo "email@address"
+
       email.personalisation() containsEntriesExactlyInAnyOrder mapOf(
-        "appointment_date" to officialVisit.visitDate.toMediumFormatStyle(),
-        "appointment_location" to moorlandLocation.localName,
-        "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_date" to officialVisit.visitDate.toMediumFormatStyle(),
+        "visit_location" to moorlandLocation.localName,
+        "visit_start_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_end_time" to officialVisit.endTime.toHourMinuteStyle(),
+        "prisoner_number" to prisoner.prisonerNumber,
         "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
+        "prison_code" to prisonDetails.prisonId,
+        "prison_name" to prisonDetails.prisonName,
+        "prison_address_line1" to prisonDetails.addresses[0].addressLine1,
+        "prison_address_line2" to prisonDetails.addresses[0].addressLine2,
+        "prison_town" to prisonDetails.addresses[0].town,
+        "prison_county" to prisonDetails.addresses[0].county,
+        "prison_postcode" to prisonDetails.addresses[0].postcode,
+        "prison_email" to prisonContactDetails.emailAddress,
+        "prison_telephone" to prisonContactDetails.phoneNumber,
+        "prison_website" to "",
+        "visitor_names" to "Community Manager, Prison Manager",
         "show_video_link" to "yes",
-        "video_link_url" to "create video-link-url",
+        "video_link_url" to "should be shown",
         "show_notes" to "yes",
         "notes" to "create email notes",
-        "user_name" to MOORLAND_PRISON_USER.name,
       )
     }
 
@@ -171,7 +230,6 @@ class NotificationsServiceTest {
         request = NotificationRequest(
           notificationType = NotificationType.CREATE,
           emailAddresses = listOf("email@address"),
-          // videoLinkUrl should not be shown for in person visits
           videoLinkUrl = "should-be-ignored",
           notes = "create email notes",
         ),
@@ -189,18 +247,28 @@ class NotificationsServiceTest {
       }
 
       val email = emailCaptor.firstValue
-      email isInstanceOf OfficialVisitCreatedEmail::class.java
+      email isInstanceOf InPersonVisitConfirmedEmail::class.java
       email.emailAddress isEqualTo "email@address"
       email.personalisation() containsEntriesExactlyInAnyOrder mapOf(
-        "appointment_date" to officialVisit.visitDate.toMediumFormatStyle(),
-        "appointment_location" to moorlandLocation.localName,
-        "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_date" to officialVisit.visitDate.toMediumFormatStyle(),
+        "visit_location" to moorlandLocation.localName,
+        "visit_start_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_end_time" to officialVisit.endTime.toHourMinuteStyle(),
+        "prisoner_number" to prisoner.prisonerNumber,
         "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
-        "show_video_link" to "no",
-        "video_link_url" to "",
+        "prison_code" to prisonDetails.prisonId,
+        "prison_name" to prisonDetails.prisonName,
+        "prison_address_line1" to prisonDetails.addresses[0].addressLine1,
+        "prison_address_line2" to prisonDetails.addresses[0].addressLine2,
+        "prison_town" to prisonDetails.addresses[0].town,
+        "prison_county" to prisonDetails.addresses[0].county,
+        "prison_postcode" to prisonDetails.addresses[0].postcode,
+        "prison_email" to prisonContactDetails.emailAddress,
+        "prison_telephone" to prisonContactDetails.phoneNumber,
+        "prison_website" to "",
+        "visitor_names" to "Community Manager, Prison Manager",
         "show_notes" to "yes",
         "notes" to "create email notes",
-        "user_name" to MOORLAND_PRISON_USER.name,
       )
     }
 
@@ -234,22 +302,32 @@ class NotificationsServiceTest {
       verify(emailService).send(emailCaptor.capture())
 
       val email = emailCaptor.firstValue
-      email isInstanceOf OfficialVisitUpdatedEmail::class.java
+      email isInstanceOf InPersonVisitAmendedEmail::class.java
       email.personalisation() containsEntriesExactlyInAnyOrder mapOf(
-        "appointment_date" to officialVisit.visitDate.toMediumFormatStyle(),
-        "appointment_location" to moorlandLocation.localName,
-        "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_date" to officialVisit.visitDate.toMediumFormatStyle(),
+        "visit_location" to moorlandLocation.localName,
+        "visit_start_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_end_time" to officialVisit.endTime.toHourMinuteStyle(),
+        "prisoner_number" to prisoner.prisonerNumber,
         "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
-        "show_video_link" to "no",
-        "video_link_url" to "",
+        "prison_code" to prisonDetails.prisonId,
+        "prison_name" to prisonDetails.prisonName,
+        "prison_address_line1" to prisonDetails.addresses[0].addressLine1,
+        "prison_address_line2" to prisonDetails.addresses[0].addressLine2,
+        "prison_town" to prisonDetails.addresses[0].town,
+        "prison_county" to prisonDetails.addresses[0].county,
+        "prison_postcode" to prisonDetails.addresses[0].postcode,
+        "prison_email" to prisonContactDetails.emailAddress,
+        "prison_telephone" to prisonContactDetails.phoneNumber,
+        "prison_website" to "",
+        "visitor_names" to "Community Manager, Prison Manager",
         "show_notes" to "yes",
         "notes" to "amend email notes",
-        "user_name" to MOORLAND_PRISON_USER.name,
       )
     }
 
     @Test
-    fun `should send cancel email via email service`() {
+    fun `should send cancel email via email service for in-person visit`() {
       whenever { emailService.send(any()) } doReturn Result.success(notificationId to "fake template id")
 
       val officialVisit = createAVisitEntity(1)
@@ -278,13 +356,25 @@ class NotificationsServiceTest {
       verify(emailService).send(emailCaptor.capture())
 
       val email = emailCaptor.firstValue
-      email isInstanceOf OfficialVisitCancelledEmail::class.java
+      email isInstanceOf InPersonVisitCancelledEmail::class.java
+
       email.personalisation() containsEntriesExactlyInAnyOrder mapOf(
-        "appointment_date" to officialVisit.visitDate.toMediumFormatStyle(),
-        "appointment_location" to moorlandLocation.localName,
-        "appointment_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_date" to officialVisit.visitDate.toMediumFormatStyle(),
+        "visit_location" to moorlandLocation.localName,
+        "visit_start_time" to officialVisit.startTime.toHourMinuteStyle(),
+        "visit_end_time" to officialVisit.endTime.toHourMinuteStyle(),
+        "prisoner_number" to prisoner.prisonerNumber,
         "prisoner_name" to prisoner.firstName + " " + prisoner.lastName,
-        "user_name" to MOORLAND_PRISON_USER.name,
+        "prison_code" to prisonDetails.prisonId,
+        "prison_name" to prisonDetails.prisonName,
+        "prison_address_line1" to prisonDetails.addresses[0].addressLine1,
+        "prison_address_line2" to prisonDetails.addresses[0].addressLine2,
+        "prison_town" to prisonDetails.addresses[0].town,
+        "prison_county" to prisonDetails.addresses[0].county,
+        "prison_postcode" to prisonDetails.addresses[0].postcode,
+        "prison_email" to prisonContactDetails.emailAddress,
+        "prison_telephone" to prisonContactDetails.phoneNumber,
+        "prison_website" to "",
         "visitor_names" to "Community Manager, Prison Manager",
         "show_notes" to "yes",
         "notes" to "cancel email notes",

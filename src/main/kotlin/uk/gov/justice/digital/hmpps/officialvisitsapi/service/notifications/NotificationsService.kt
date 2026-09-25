@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.extensions.getFullName
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.model.Prisoner
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregister.PrisonRegisterClient
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.ContactDetailsDto
+import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonregisterapi.model.PrisonDto
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEmailStatus
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.NotificationEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -37,18 +40,29 @@ class NotificationsService(
   private val notificationRepository: NotificationRepository,
   private val sentNotificationsService: SentNotificationsService,
   private val auditingService: AuditingService,
+  private val prisonRegisterClient: PrisonRegisterClient,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
   }
 
   fun sendNotification(officialVisitId: Long, request: NotificationRequest, user: User): NotificationResponse = run {
+    // Get the details of the visit
     val officialVisit = officialVisitRepository.findById(officialVisitId)
       .orElseThrow { EntityNotFoundException("Official visit with id $officialVisitId not found") }
 
+    // Get the location local name/description
     val location = locationsService.getLocationById(officialVisit.dpsLocationId)?.localName ?: "Unknown location"
+
+    // Get the prisoner's basic details
     val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber)
       ?: throw EntityNotFoundException("Prisoner not found ${officialVisit.prisonerNumber}")
+
+    // Get the address and main contact details for the prison
+    val prison = prisonRegisterClient.getPrisonDetails(officialVisit.prisonCode)
+
+    // Get the official visits contacts at this prison
+    val prisonContact = prisonRegisterClient.getPrisonContactDetails(officialVisit.prisonCode, "OFFICIAL_VISIT")
 
     val recipients = buildSet {
       request.emailAddresses.map { it.lowercase().trim() }.distinct().forEach { emailAddress ->
@@ -62,7 +76,8 @@ class NotificationsService(
             notes = request.notes?.trim(),
             prisoner = prisoner,
             location = location,
-            user = user,
+            prison = prison,
+            prisonContact = prisonContact,
           ),
           user,
         )?.let { notificationId -> add(NotificationRecipient(emailAddress, notificationId)) }
@@ -134,43 +149,142 @@ class NotificationsService(
     emailAddress: String,
     prisoner: Prisoner,
     location: String,
-    user: User,
+    prison: PrisonDto? = null,
+    prisonContact: ContactDetailsDto? = null,
     videoLinkUrl: String? = null,
     notes: String? = null,
   ): Email = run {
     when (notificationType) {
-      NotificationType.CREATE -> OfficialVisitCreatedEmail(
-        emailAddress = emailAddress,
-        prisonerName = prisoner.getFullName(),
-        appointmentDate = officialVisit.visitDate,
-        appointmentTime = officialVisit.startTime,
-        appointmentLocation = location,
-        videoLinkUrl = videoLinkUrl?.takeIf { officialVisit.visitTypeCode == VisitType.VIDEO },
-        notes = notes,
-        userName = user.name,
-      )
+      NotificationType.CREATE -> {
+        when (officialVisit.visitTypeCode) {
+          VisitType.IN_PERSON, VisitType.UNKNOWN -> InPersonVisitConfirmedEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
 
-      NotificationType.AMEND -> OfficialVisitUpdatedEmail(
-        emailAddress = emailAddress,
-        prisonerName = prisoner.getFullName(),
-        appointmentDate = officialVisit.visitDate,
-        appointmentTime = officialVisit.startTime,
-        appointmentLocation = location,
-        videoLinkUrl = videoLinkUrl?.takeIf { officialVisit.visitTypeCode == VisitType.VIDEO },
-        notes = notes,
-        userName = user.name,
-      )
+          VisitType.VIDEO -> VideoVisitConfirmedEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            videoLinkUrl = videoLinkUrl,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
 
-      NotificationType.CANCEL -> OfficialVisitCancelledEmail(
-        emailAddress = emailAddress,
-        prisonerName = prisoner.getFullName(),
-        visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
-        appointmentDate = officialVisit.visitDate,
-        appointmentTime = officialVisit.startTime,
-        appointmentLocation = location,
-        notes = notes,
-        userName = user.name,
-      )
+          VisitType.TELEPHONE -> TelephoneVisitConfirmedEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
+        }
+      }
+
+      NotificationType.AMEND -> {
+        when (officialVisit.visitTypeCode) {
+          VisitType.IN_PERSON, VisitType.UNKNOWN -> InPersonVisitAmendedEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
+
+          VisitType.VIDEO -> VideoVisitAmendedEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            videoLinkUrl = videoLinkUrl?.takeIf { officialVisit.visitTypeCode == VisitType.VIDEO },
+            notes = notes,
+          )
+
+          VisitType.TELEPHONE -> TelephoneVisitAmendedEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
+        }
+      }
+
+      NotificationType.CANCEL -> {
+        when (officialVisit.visitTypeCode) {
+          VisitType.IN_PERSON, VisitType.UNKNOWN -> InPersonVisitCancelledEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
+
+          VisitType.VIDEO -> VideoVisitCancelledEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
+
+          VisitType.TELEPHONE -> TelephoneVisitCancelledEmail(
+            emailAddress = emailAddress,
+            prisonerNumber = prisoner.prisonerNumber,
+            prisonerName = prisoner.getFullName(),
+            prisonDetails = fromPrisonRegisterTypes(prison, prisonContact),
+            visitDate = officialVisit.visitDate,
+            visitStartTime = officialVisit.startTime,
+            visitEndTime = officialVisit.endTime,
+            visitLocation = location,
+            visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
+            notes = notes,
+          )
+        }
+      }
     }
   }
 
@@ -186,7 +300,33 @@ class NotificationsService(
     createdBy = createdBy,
     statusUpdatedTime = statusUpdatedTime,
   )
+
+  private fun fromPrisonRegisterTypes(prison: PrisonDto?, prisonContact: ContactDetailsDto?) = PrisonContactDetails(
+    prisonCode = prison?.prisonId,
+    prisonName = prison?.prisonName,
+    prisonAddressLine1 = prison?.addresses?.first()?.addressLine1,
+    prisonAddressLine2 = prison?.addresses?.first()?.addressLine2,
+    prisonTown = prison?.addresses?.first()?.town,
+    prisonCounty = prison?.addresses?.first()?.county,
+    prisonPostcode = prison?.addresses?.first()?.postcode,
+    prisonEmail = prisonContact?.emailAddress,
+    prisonTelephone = prisonContact?.phoneNumber,
+    prisonWebsite = prisonContact?.webAddress,
+  )
 }
+
+data class PrisonContactDetails(
+  val prisonCode: String? = null,
+  val prisonName: String? = null,
+  val prisonAddressLine1: String? = null,
+  val prisonAddressLine2: String? = null,
+  val prisonTown: String? = null,
+  val prisonCounty: String? = null,
+  val prisonPostcode: String? = null,
+  val prisonEmail: String? = null,
+  val prisonTelephone: String? = null,
+  val prisonWebsite: String? = null,
+)
 
 enum class NotificationType {
   CREATE,

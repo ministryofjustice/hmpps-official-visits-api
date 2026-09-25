@@ -116,9 +116,9 @@ class SentNotificationsService(
       emailStatus = emailStatus.name,
       notificationType = normalizedNotificationType,
       notificationTypeDescription = when (emailType) {
-        EmailType.OFFICIAL_VISIT_CREATED -> "Visit Created"
-        EmailType.OFFICIAL_VISIT_UPDATED -> "Visit Updated"
-        EmailType.OFFICIAL_VISIT_CANCELLED -> "Visit Cancelled"
+        EmailType.VIDEO_VISIT_CONFIRMED, EmailType.IN_PERSON_VISIT_CONFIRMED, EmailType.TELEPHONE_VISIT_CONFIRMED -> "Visit Created"
+        EmailType.VIDEO_VISIT_AMENDED, EmailType.IN_PERSON_VISIT_AMENDED, EmailType.TELEPHONE_VISIT_AMENDED -> "Visit Updated"
+        EmailType.VIDEO_VISIT_CANCELLED, EmailType.IN_PERSON_VISIT_CANCELLED, EmailType.TELEPHONE_VISIT_CANCELLED -> "Visit Cancelled"
         else -> "Unknown"
       },
     )
@@ -127,10 +127,9 @@ class SentNotificationsService(
   private fun String.toEmailTypeOrNull(): EmailType? = runCatching { EmailType.valueOf(this) }.getOrNull()
 
   private fun EmailType.toApiNotificationType(): String = when (this) {
-    EmailType.OFFICIAL_VISIT_CREATED -> "CREATE"
-    EmailType.OFFICIAL_VISIT_UPDATED -> "UPDATED"
-    EmailType.OFFICIAL_VISIT_CANCELLED -> "CANCELLED"
-    else -> this.name
+    EmailType.VIDEO_VISIT_CONFIRMED, EmailType.IN_PERSON_VISIT_CONFIRMED, EmailType.TELEPHONE_VISIT_CONFIRMED -> "CREATE"
+    EmailType.VIDEO_VISIT_AMENDED, EmailType.IN_PERSON_VISIT_AMENDED, EmailType.TELEPHONE_VISIT_AMENDED -> "UPDATED"
+    EmailType.VIDEO_VISIT_CANCELLED, EmailType.IN_PERSON_VISIT_CANCELLED, EmailType.TELEPHONE_VISIT_CANCELLED -> "CANCELLED"
   }
 
   private companion object {

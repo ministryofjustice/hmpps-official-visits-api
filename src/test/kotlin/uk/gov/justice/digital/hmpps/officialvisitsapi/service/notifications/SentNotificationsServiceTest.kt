@@ -51,7 +51,7 @@ class SentNotificationsServiceTest {
       visitEndTime = LocalTime.of(10, 0),
       emailAddress = "user@example.com",
       emailStatus = NotificationEmailStatus.PENDING,
-      notificationType = EmailType.OFFICIAL_VISIT_CREATED.name,
+      notificationType = EmailType.VIDEO_VISIT_CONFIRMED.name,
       prisonerNumber = "G1234AB",
     )
 
@@ -182,7 +182,7 @@ class SentNotificationsServiceTest {
       visitEndTime = LocalTime.of(15, 0),
       emailAddress = "updated@example.com",
       emailStatus = NotificationEmailStatus.SENT,
-      notificationType = EmailType.OFFICIAL_VISIT_UPDATED.name,
+      notificationType = EmailType.IN_PERSON_VISIT_AMENDED.name,
       prisonerNumber = "G1234AB",
     )
 
@@ -196,7 +196,7 @@ class SentNotificationsServiceTest {
       visitEndTime = LocalTime.of(11, 30),
       emailAddress = "cancelled@example.com",
       emailStatus = NotificationEmailStatus.PERMANENT_FAILURE,
-      notificationType = EmailType.OFFICIAL_VISIT_CANCELLED.name,
+      notificationType = EmailType.IN_PERSON_VISIT_CANCELLED.name,
       prisonerNumber = "G5678CD",
     )
 
