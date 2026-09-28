@@ -87,7 +87,7 @@ class NotificationsService(
     NotificationResponse(officialVisitId, request.notificationType, recipients.toList())
   }
 
-  fun sendOfficialVisitEmail(officialVisitId: Long, email: Email, user: User): Long? = run {
+  private fun sendOfficialVisitEmail(officialVisitId: Long, email: Email, user: User): Long? = run {
     var notificationId: Long? = null
     logger.info("sending email ${email.type()} officialVisitId $officialVisitId")
     emailService.send(email)

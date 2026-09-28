@@ -121,28 +121,6 @@ class NotificationsServiceTest {
     }
 
     @Test
-    fun `should delegate to email service and save notification`() {
-      whenever { emailService.send(FakeEmail) } doReturn Result.success(notificationId to "fake template id")
-
-      service.sendOfficialVisitEmail(1L, FakeEmail, MOORLAND_PRISON_USER)
-
-      inOrder(emailService, notificationRepository) {
-        verify(emailService).send(FakeEmail)
-        verify(notificationRepository).saveAndFlush(any<NotificationEntity>())
-      }
-    }
-
-    @Test
-    fun `should delegate to email service but fail to save notification`() {
-      whenever { emailService.send(FakeEmail) } doReturn Result.failure(RuntimeException("Bang!"))
-
-      service.sendOfficialVisitEmail(1L, FakeEmail, MOORLAND_PRISON_USER)
-
-      verify(emailService).send(FakeEmail)
-      verifyNoInteractions(notificationRepository)
-    }
-
-    @Test
     fun `should send create email for video visit`() {
       whenever { emailService.send(any()) } doReturn Result.success(notificationId to "fake template id")
 
