@@ -259,9 +259,18 @@ class SentNotificationsServiceTest {
     whenever(notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
       .thenReturn(
         PageImpl(
-          listOf(updatedInPersonEntity, updatedVideoEntity, updatedTelephoneEntity, cancelledInPersonEntity, cancelledVideoEntity, cancelledTelephoneEntity),
-          PageRequest.of(0, 10), 2),
-        )
+          listOf(
+            updatedInPersonEntity,
+            updatedVideoEntity,
+            updatedTelephoneEntity,
+            cancelledInPersonEntity,
+            cancelledVideoEntity,
+            cancelledTelephoneEntity,
+          ),
+          PageRequest.of(0, 10),
+          2,
+        ),
+      )
 
     whenever(prisonerSearchClient.findByPrisonerNumbers(any(), any())).thenReturn(
       listOf(
