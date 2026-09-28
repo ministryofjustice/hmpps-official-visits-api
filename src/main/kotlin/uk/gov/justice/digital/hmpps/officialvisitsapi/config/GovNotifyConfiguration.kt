@@ -8,9 +8,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.Emai
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailTemplate
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailTemplates
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType.OFFICIAL_VISIT_CANCELLED
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType.OFFICIAL_VISIT_CREATED
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.EmailType.OFFICIAL_VISIT_UPDATED
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.GovNotifyEmailService
 import uk.gov.service.notify.NotificationClient
 import java.util.UUID
@@ -18,9 +15,6 @@ import java.util.UUID
 @Configuration
 class GovNotifyConfiguration(
   @Value($$"${notify.api.key:}") private val apiKey: String,
-  @Value($$"${notify.templates.official-visit-created:}") private val officialVisitCreatedTemplateId: String,
-  @Value($$"${notify.templates.official-visit-cancelled:}") private val officialVisitCancelledTemplateId: String,
-  @Value($$"${notify.templates.official-visit-updated:}") private val officialVisitUpdatedTemplateId: String,
   @Value($$"${notify.templates.in-person-visit.confirmed:}") private val inPersonVisitConfirmedTemplateId: String,
   @Value($$"${notify.templates.in-person-visit.amended:}") private val inPersonVisitAmendedTemplateId: String,
   @Value($$"${notify.templates.in-person-visit.cancelled:}") private val inPersonVisitCancelledTemplateId: String,
@@ -50,9 +44,6 @@ class GovNotifyConfiguration(
   @Bean
   fun emailTemplates() = EmailTemplates(
     setOf(
-      EmailTemplate(officialVisitCreatedTemplateId, OFFICIAL_VISIT_CREATED),
-      EmailTemplate(officialVisitCancelledTemplateId, OFFICIAL_VISIT_CANCELLED),
-      EmailTemplate(officialVisitUpdatedTemplateId, OFFICIAL_VISIT_UPDATED),
       EmailTemplate(inPersonVisitConfirmedTemplateId, EmailType.IN_PERSON_VISIT_CONFIRMED),
       EmailTemplate(inPersonVisitAmendedTemplateId, EmailType.IN_PERSON_VISIT_AMENDED),
       EmailTemplate(inPersonVisitCancelledTemplateId, EmailType.IN_PERSON_VISIT_CANCELLED),

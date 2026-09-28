@@ -16,12 +16,17 @@ class GovNotifyEmailServiceTest {
   private val sendEmailResponse = Mockito.mock<SendEmailResponse>()
   private val notificationId = UUID.randomUUID()
   private val notificationClient = Mockito.mock<NotificationClient>()
+
   private val service = GovNotifyEmailService(
     notificationClient,
     EmailTemplates(
-      setOf(EmailTemplate("template_id", EmailType.OFFICIAL_VISIT_CREATED)),
+      setOf(EmailTemplate("template_id", EmailType.IN_PERSON_VISIT_CONFIRMED)),
     ),
   )
+
+  object FakeEmail : Email("email@address") {
+    override fun type() = EmailType.IN_PERSON_VISIT_CONFIRMED
+  }
 
   @Test
   fun `should succeed to send of email`() {
@@ -36,9 +41,5 @@ class GovNotifyEmailServiceTest {
     whenever { notificationClient.sendEmail(any(), any(), any(), anyOrNull()) } doThrow RuntimeException("Bang!")
 
     service.send(FakeEmail).isFailure isBool true
-  }
-
-  object FakeEmail : Email("email@address") {
-    override fun type() = EmailType.OFFICIAL_VISIT_CREATED
   }
 }

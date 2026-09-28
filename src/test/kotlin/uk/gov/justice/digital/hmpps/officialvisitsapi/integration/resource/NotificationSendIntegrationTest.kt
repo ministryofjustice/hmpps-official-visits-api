@@ -97,7 +97,7 @@ class NotificationSendIntegrationTest : IntegrationTestBase() {
       officialVisitId isEqualTo scheduledVisit.officialVisitId
       emailAddress isEqualTo "email@address.com"
       templateId isEqualTo "fake_template_id"
-      reason isEqualTo "OFFICIAL_VISIT_CREATED"
+      reason isEqualTo "IN_PERSON_VISIT_CONFIRMED"
       createdTime isCloseTo now()
     }
 
