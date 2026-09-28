@@ -182,3 +182,7 @@ notify:
       cancelled: a03204fd-b029-43ab-8720-249144cff2bc
   callback:
     secret: ${NOTIFY_CALLBACK_SECRET:}
+
+prison:
+  personalisation:
+    file: /config/prison_personalisation.yaml

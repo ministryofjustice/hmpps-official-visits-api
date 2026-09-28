@@ -12,7 +12,7 @@ const val BIRMINGHAM = "BMI"
 const val WANDSWORTH = "WWI"
 const val PENTONVILLE = "PVI"
 const val MOORLAND = "MDI"
-const val SWALESIDE = "SWI"
+const val NOTTINGHAM = "NMI"
 
 private val nextMonday = LocalDate.now().next(DayOfWeek.MONDAY)
 
