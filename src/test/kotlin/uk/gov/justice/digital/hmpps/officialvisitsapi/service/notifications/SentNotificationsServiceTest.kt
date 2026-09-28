@@ -172,7 +172,7 @@ class SentNotificationsServiceTest {
   fun `should map updated and cancelled notification types`() {
     val request = NotificationSearchRequest(fromDate = null, toDate = null)
 
-    val updatedEntity = SentNotificationEntity(
+    val updatedInPersonEntity = SentNotificationEntity(
       notificationId = 200L,
       officialVisitId = 2L,
       prisonCode = "MDI",
@@ -186,22 +186,82 @@ class SentNotificationsServiceTest {
       prisonerNumber = "G1234AB",
     )
 
-    val cancelledEntity = SentNotificationEntity(
-      notificationId = 300L,
+    val updatedVideoEntity = SentNotificationEntity(
+      notificationId = 201L,
       officialVisitId = 3L,
       prisonCode = "MDI",
-      sentDateTime = LocalDateTime.of(2026, 5, 24, 11, 0),
+      sentDateTime = LocalDateTime.of(2026, 5, 23, 10, 30),
+      visitDate = LocalDate.of(2026, 6, 2),
+      visitStartTime = LocalTime.of(15, 0),
+      visitEndTime = LocalTime.of(16, 0),
+      emailAddress = "updated@example.com",
+      emailStatus = NotificationEmailStatus.SENT,
+      notificationType = EmailType.VIDEO_VISIT_AMENDED.name,
+      prisonerNumber = "G1234AB",
+    )
+
+    val updatedTelephoneEntity = SentNotificationEntity(
+      notificationId = 202L,
+      officialVisitId = 4L,
+      prisonCode = "MDI",
+      sentDateTime = LocalDateTime.of(2026, 5, 23, 11, 30),
+      visitDate = LocalDate.of(2026, 6, 2),
+      visitStartTime = LocalTime.of(16, 0),
+      visitEndTime = LocalTime.of(17, 0),
+      emailAddress = "updated@example.com",
+      emailStatus = NotificationEmailStatus.SENT,
+      notificationType = EmailType.TELEPHONE_VISIT_AMENDED.name,
+      prisonerNumber = "G1234AB",
+    )
+
+    val cancelledInPersonEntity = SentNotificationEntity(
+      notificationId = 300L,
+      officialVisitId = 5L,
+      prisonCode = "MDI",
+      sentDateTime = LocalDateTime.of(2026, 5, 24, 12, 0),
       visitDate = LocalDate.of(2026, 6, 3),
-      visitStartTime = LocalTime.of(10, 30),
-      visitEndTime = LocalTime.of(11, 30),
+      visitStartTime = LocalTime.of(9, 30),
+      visitEndTime = LocalTime.of(10, 30),
       emailAddress = "cancelled@example.com",
-      emailStatus = NotificationEmailStatus.PERMANENT_FAILURE,
+      emailStatus = NotificationEmailStatus.SENT,
       notificationType = EmailType.IN_PERSON_VISIT_CANCELLED.name,
       prisonerNumber = "G5678CD",
     )
 
+    val cancelledVideoEntity = SentNotificationEntity(
+      notificationId = 301L,
+      officialVisitId = 6L,
+      prisonCode = "MDI",
+      sentDateTime = LocalDateTime.of(2026, 5, 24, 12, 30),
+      visitDate = LocalDate.of(2026, 6, 2),
+      visitStartTime = LocalTime.of(10, 30),
+      visitEndTime = LocalTime.of(11, 30),
+      emailAddress = "updated@example.com",
+      emailStatus = NotificationEmailStatus.SENT,
+      notificationType = EmailType.IN_PERSON_VISIT_CANCELLED.name,
+      prisonerNumber = "G5678CD",
+    )
+
+    val cancelledTelephoneEntity = SentNotificationEntity(
+      notificationId = 302L,
+      officialVisitId = 7L,
+      prisonCode = "MDI",
+      sentDateTime = LocalDateTime.of(2026, 5, 23, 13, 0),
+      visitDate = LocalDate.of(2026, 6, 2),
+      visitStartTime = LocalTime.of(11, 30),
+      visitEndTime = LocalTime.of(12, 30),
+      emailAddress = "updated@example.com",
+      emailStatus = NotificationEmailStatus.PERMANENT_FAILURE,
+      notificationType = EmailType.TELEPHONE_VISIT_CANCELLED.name,
+      prisonerNumber = "G5678CD",
+    )
+
     whenever(notificationSearchRepository.findByPrisonCodeOrderBySentDateTimeDesc(any(), any()))
-      .thenReturn(PageImpl(listOf(updatedEntity, cancelledEntity), PageRequest.of(0, 10), 2))
+      .thenReturn(
+        PageImpl(
+          listOf(updatedInPersonEntity, updatedVideoEntity, updatedTelephoneEntity, cancelledInPersonEntity, cancelledVideoEntity, cancelledTelephoneEntity),
+          PageRequest.of(0, 10), 2),
+        )
 
     whenever(prisonerSearchClient.findByPrisonerNumbers(any(), any())).thenReturn(
       listOf(
@@ -220,12 +280,30 @@ class SentNotificationsServiceTest {
       ),
     )
 
-    val result =
-      service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
+    val result = service.searchSentNotifications(prisonCode = "MDI", request, page = 0, size = 10, user = MOORLAND_PRISON_USER)
 
     result.content[0].notificationType isEqualTo "UPDATED"
     result.content[0].notificationTypeDescription isEqualTo "Visit Updated"
-    result.content[1].notificationType isEqualTo "CANCELLED"
-    result.content[1].notificationTypeDescription isEqualTo "Visit Cancelled"
+    result.content[0].emailStatus isEqualTo "SENT"
+
+    result.content[1].notificationType isEqualTo "UPDATED"
+    result.content[1].notificationTypeDescription isEqualTo "Visit Updated"
+    result.content[1].emailStatus isEqualTo "SENT"
+
+    result.content[2].notificationType isEqualTo "UPDATED"
+    result.content[2].notificationTypeDescription isEqualTo "Visit Updated"
+    result.content[2].emailStatus isEqualTo "SENT"
+
+    result.content[3].notificationType isEqualTo "CANCELLED"
+    result.content[3].notificationTypeDescription isEqualTo "Visit Cancelled"
+    result.content[3].emailStatus isEqualTo "SENT"
+
+    result.content[4].notificationType isEqualTo "CANCELLED"
+    result.content[4].notificationTypeDescription isEqualTo "Visit Cancelled"
+    result.content[4].emailStatus isEqualTo "SENT"
+
+    result.content[5].notificationType isEqualTo "CANCELLED"
+    result.content[5].notificationTypeDescription isEqualTo "Visit Cancelled"
+    result.content[5].emailStatus isEqualTo "PERMANENT_FAILURE"
   }
 }
