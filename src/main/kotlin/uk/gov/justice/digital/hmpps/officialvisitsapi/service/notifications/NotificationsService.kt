@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
@@ -41,6 +42,9 @@ class NotificationsService(
   private val sentNotificationsService: SentNotificationsService,
   private val auditingService: AuditingService,
   private val prisonRegisterClient: PrisonRegisterClient,
+  @Value($$"${notify.joining-instructions.video}") val videoJoiningInstructions: String? = null,
+  @Value($$"${notify.joining-instructions.in-person}") val inPersonJoiningInstructions: String? = null,
+  @Value($$"${notify.joining-instructions.telephone}") val telephoneJoiningInstructions: String? = null,
 ) {
   companion object {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -168,6 +172,7 @@ class NotificationsService(
             visitLocation = location,
             visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
             notes = notes,
+            joiningInstructions = inPersonJoiningInstructions,
           )
 
           VisitType.VIDEO -> VideoVisitConfirmedEmail(
@@ -182,6 +187,7 @@ class NotificationsService(
             videoLinkUrl = videoLinkUrl,
             visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
             notes = notes,
+            joiningInstructions = videoJoiningInstructions,
           )
 
           VisitType.TELEPHONE -> TelephoneVisitConfirmedEmail(
@@ -195,6 +201,7 @@ class NotificationsService(
             visitLocation = location,
             visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
             notes = notes,
+            joiningInstructions = telephoneJoiningInstructions,
           )
         }
       }
@@ -212,6 +219,7 @@ class NotificationsService(
             visitLocation = location,
             visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
             notes = notes,
+            joiningInstructions = inPersonJoiningInstructions,
           )
 
           VisitType.VIDEO -> VideoVisitAmendedEmail(
@@ -226,6 +234,7 @@ class NotificationsService(
             visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
             videoLinkUrl = videoLinkUrl?.takeIf { officialVisit.visitTypeCode == VisitType.VIDEO },
             notes = notes,
+            joiningInstructions = videoJoiningInstructions,
           )
 
           VisitType.TELEPHONE -> TelephoneVisitAmendedEmail(
@@ -239,6 +248,7 @@ class NotificationsService(
             visitLocation = location,
             visitorNames = officialVisit.officialVisitors().joinToString(", ") { it.fullName() },
             notes = notes,
+            joiningInstructions = telephoneJoiningInstructions,
           )
         }
       }
