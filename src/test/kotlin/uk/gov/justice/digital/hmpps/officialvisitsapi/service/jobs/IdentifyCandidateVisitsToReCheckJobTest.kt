@@ -7,19 +7,18 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.tomorrow
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
@@ -27,9 +26,8 @@ class IdentifyCandidateVisitsToReCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val feature: FeatureSwitches = mock()
-  private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val prisonJobProcessor = PrisonJobProcessor()
-  private val job: IdentifyCandidateVisitsToReCheckJob = IdentifyCandidateVisitsToReCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, prisonJobProcessor, timeSource)
+  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
+  private val job: IdentifyCandidateVisitsToReCheckJob = IdentifyCandidateVisitsToReCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
 
   @Test
   fun `should add day after tomorrow candidate visits to the queue as rechecks for each prison`() {
@@ -54,7 +52,7 @@ class IdentifyCandidateVisitsToReCheckJobTest {
       visitTypeCode = VisitType.IN_PERSON,
       createdBy = "unit test",
     )
-    val today = timeSource.today()
+    val today = today()
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn(PENTONVILLE)
     whenever { officialVisitRepository.findCandidateVisitsForReReviewForPrison(today.plusDays(2), PENTONVILLE) }
@@ -74,7 +72,7 @@ class IdentifyCandidateVisitsToReCheckJobTest {
   fun `should process multiple prisons with separate transactions`() {
     val prisonCode1 = "MDI"
     val prisonCode2 = "LEI"
-    val today = timeSource.today()
+    val today = today()
     val visitId1 = 1L
     val visitId2 = 2L
 

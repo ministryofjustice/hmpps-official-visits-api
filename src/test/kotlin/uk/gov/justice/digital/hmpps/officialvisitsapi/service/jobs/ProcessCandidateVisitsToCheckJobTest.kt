@@ -7,7 +7,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
@@ -19,7 +18,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
 
@@ -27,9 +25,8 @@ class ProcessCandidateVisitsToCheckJobTest {
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val features: FeatureSwitches = mock()
-  private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val prisonJobProcessor = PrisonJobProcessor()
-  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(visitReviewQueueRepository, visitReviewService, features, prisonJobProcessor, timeSource)
+  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
+  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(visitReviewQueueRepository, visitReviewService, features, transactionalPrisonJobProcessor)
 
   @Test
   fun `should call the find candidates visits service when run for each prison`() {

@@ -9,27 +9,24 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
-import java.time.LocalDateTime
 
 class IdentifyCandidateVisitsToCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val feature: FeatureSwitches = mock()
-  private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val prisonJobProcessor = PrisonJobProcessor()
-  private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, prisonJobProcessor, timeSource)
+  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
+  private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
 
   @Test
   fun `should call the find candidates visits service when run for each prison`() {
     val visitId1 = 1L
-    val today = timeSource.today()
+    val today = today()
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn(PENTONVILLE)
     whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), PENTONVILLE) }
@@ -49,7 +46,7 @@ class IdentifyCandidateVisitsToCheckJobTest {
   fun `should process multiple prisons with separate transactions`() {
     val prisonCode1 = "MDI"
     val prisonCode2 = "LEI"
-    val today = timeSource.today()
+    val today = today()
     val visitId1 = 1L
     val visitId2 = 2L
 

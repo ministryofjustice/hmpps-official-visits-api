@@ -6,26 +6,23 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.now
+import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
-import java.time.LocalDateTime
 
 class ExpireVisitsForReviewJobTest {
 
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val features: FeatureSwitches = mock()
-  private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val prisonJobProcessor = PrisonJobProcessor()
-  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitReviewService, features, prisonJobProcessor, timeSource)
+  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
+  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitReviewService, features, transactionalPrisonJobProcessor)
 
   @Test
   fun `should expire visits for review for each prison`() {
     val visitId1 = 1L
-    val today = timeSource.today()
+    val today = today()
     whenever(features.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null))
       .thenReturn(PENTONVILLE)
     whenever(officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetailsBeforeForPrison(today, PENTONVILLE))
@@ -41,7 +38,7 @@ class ExpireVisitsForReviewJobTest {
   fun `should process multiple prisons with separate transactions`() {
     val prisonCode1 = "MDI"
     val prisonCode2 = "LEI"
-    val today = timeSource.today()
+    val today = today()
     val visitId1 = 1L
     val visitId2 = 2L
 
