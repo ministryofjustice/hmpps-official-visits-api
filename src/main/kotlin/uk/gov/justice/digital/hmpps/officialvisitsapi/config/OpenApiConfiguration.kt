@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.config
 
-import io.swagger.v3.core.util.PrimitiveType
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
@@ -9,7 +8,6 @@ import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
-import jakarta.annotation.PostConstruct
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.info.BuildProperties
@@ -103,10 +101,5 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
     }
 
     operation
-  }
-
-  @PostConstruct
-  fun enableLocalTimePrimitiveType() {
-    PrimitiveType.enablePartialTime()
   }
 }
