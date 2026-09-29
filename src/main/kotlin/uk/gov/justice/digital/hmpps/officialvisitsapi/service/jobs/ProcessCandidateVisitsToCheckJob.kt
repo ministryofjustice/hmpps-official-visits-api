@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
@@ -7,11 +8,14 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEnt
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
+private val log = LoggerFactory.getLogger(ProcessCandidateVisitsToCheckJob::class.java)
+
 /**
  * This job is responsible for processing the visits that need to be reviewed.
  *
  * Visits will be processed and flagged for review.
- * Processing is done per-prison, with each prison's visits handled in a separate transaction.
+ * Processing is done per-prison, but each queued visit is handled in its own transaction so
+ * a failure in one visit does not roll back the successful ones from the same prison batch.
  */
 @Component
 class ProcessCandidateVisitsToCheckJob(
@@ -31,7 +35,17 @@ class ProcessCandidateVisitsToCheckJob(
   },
   { queueEntries, prisonCode ->
     queueEntries.forEach { queueEntry ->
-      visitReviewService.visitCheck(queueEntry.officialVisitId, queueEntry.triggeringEvent)
+      try {
+        visitReviewService.visitCheckInNewTransaction(queueEntry.officialVisitId, queueEntry.triggeringEvent)
+      } catch (exception: Exception) {
+        log.error(
+          "Failed to process visit review queue item for officialVisitId={} and prisonCode={} and event={}",
+          queueEntry.officialVisitId,
+          prisonCode,
+          queueEntry.triggeringEvent,
+          exception,
+        )
+      }
     }
   },
 

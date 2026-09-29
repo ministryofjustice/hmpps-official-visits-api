@@ -68,7 +68,7 @@ class ProcessCandidateVisitsToCheckJobTest {
     job.runJob()
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(PENTONVILLE)
-    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.UPDATE)
+    verify(visitReviewService, times(1)).visitCheckInNewTransaction(visit.officialVisitId, VisitReviewCheckType.UPDATE)
   }
 
   @Test
@@ -99,7 +99,7 @@ class ProcessCandidateVisitsToCheckJobTest {
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode1)
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode2)
-    verify(visitReviewService).visitCheck(1L, VisitReviewCheckType.CHECK)
-    verify(visitReviewService).visitCheck(2L, VisitReviewCheckType.RECHECK)
+    verify(visitReviewService).visitCheckInNewTransaction(1L, VisitReviewCheckType.CHECK)
+    verify(visitReviewService).visitCheckInNewTransaction(2L, VisitReviewCheckType.RECHECK)
   }
 }
