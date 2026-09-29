@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -73,6 +74,14 @@ class VisitReviewService(
     check(officialVisitId, type)
 
     visitReviewQueueRepository.findByOfficialVisitId(officialVisitId)?.let(visitReviewQueueRepository::delete)
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  fun visitCheckInNewTransaction(
+    officialVisitId: Long,
+    type: VisitReviewCheckType,
+  ) {
+    visitCheck(officialVisitId, type)
   }
 
   @Transactional(readOnly = true)

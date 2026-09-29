@@ -125,12 +125,12 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
           AND ov.visitStatusCode = 'SCHEDULED'
           AND ov.officialVisitId NOT IN (SELECT vrq.officialVisitId FROM VisitReviewQueueEntity vrq)
           AND ov.officialVisitId NOT IN (SELECT vr.officialVisitId FROM VisitReviewEntity vr)
-          AND ov.prisonCode IN :prisonCodesList
+          AND ov.prisonCode = :prisonCode
         """,
   )
-  fun findCandidateVisitsForReview(
+  fun findCandidateVisitsForReviewForPrison(
     visitDate: LocalDate,
-    prisonCodesList: Collection<String>,
+    prisonCode: String,
   ): Collection<Long>
 
   @Query(
@@ -142,15 +142,19 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         SELECT 1 FROM VisitReviewQueueEntity vrq
         WHERE vrq.officialVisitId = ov.officialVisitId
     )
-    AND ov.prisonCode IN :prisonCodesList
+    AND ov.prisonCode = :prisonCode
     """,
   )
-  fun findCandidateVisitsForReReview(visitDate: LocalDate, prisonCodesList: Collection<String>): Collection<Long>
+  fun findCandidateVisitsForReReviewForPrison(
+    visitDate: LocalDate,
+    prisonCode: String,
+  ): Collection<Long>
 
   @Query(
     value = """
         SELECT ov.officialVisitId FROM OfficialVisitEntity ov
         WHERE ov.visitDate < :date
+          AND ov.prisonCode = :prisonCode
           AND EXISTS (
             SELECT 1 FROM VisitReviewEntity vr
             JOIN VisitReviewDetailEntity vrd ON vrd.visitReview = vr
@@ -162,5 +166,8 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         ORDER BY ov.visitDate ASC, ov.startTime ASC
         """,
   )
-  fun findOverdueVisitsWithUnacknowledgedReviewDetailsBefore(date: LocalDate): Collection<Long>
+  fun findOverdueVisitsWithUnacknowledgedReviewDetailsBeforeForPrison(
+    date: LocalDate,
+    prisonCode: String,
+  ): Collection<Long>
 }
