@@ -179,3 +179,7 @@ notify:
       cancelled: a03204fd-b029-43ab-8720-249144cff2bc
   callback:
     secret: ${NOTIFY_CALLBACK_SECRET:}
+  joining-instructions:
+    in-person: "Please arrive at the prison at least 30 minutes before your visit time to allow for security checks and movement to the visit locations."
+    video: "Please join the video conference at the date and time specified from a computer or phone, using the link provided. Ensure you are in a quiet and private location, and that only the arranged visitors are present. Photo IDs will be checked for all participants."
+    telephone: "You will receive a call from the prison to the telephone number agreed at the start time of the visit. Please be available on this number and in a position to accept the call somewhere quiet and private."

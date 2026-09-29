@@ -45,6 +45,7 @@ class OfficialVisitCreatedEmailTest {
       visitLocation = visitLocation,
       visitorNames = visitorNames,
       notes = notes,
+      joiningInstructions = "test instructions",
     )
 
     assertThat(email.emailAddress).isEqualTo(emailAddress)
@@ -71,6 +72,7 @@ class OfficialVisitCreatedEmailTest {
         "visitor_names" to visitorNames,
         "show_notes" to "yes",
         "notes" to notes,
+        "in_person_joining_instructions" to "test instructions",
       ),
     )
   }
@@ -92,6 +94,7 @@ class OfficialVisitCreatedEmailTest {
       visitorNames = visitorNames,
       notes = notes,
       videoLinkUrl = videoLinkUrl,
+      joiningInstructions = "test instructions",
     )
 
     assertThat(email.emailAddress).isEqualTo(emailAddress)
@@ -120,6 +123,7 @@ class OfficialVisitCreatedEmailTest {
         "video_link_url" to videoLinkUrl,
         "show_notes" to "no",
         "notes" to "",
+        "video_joining_instructions" to "test instructions",
       ),
     )
   }

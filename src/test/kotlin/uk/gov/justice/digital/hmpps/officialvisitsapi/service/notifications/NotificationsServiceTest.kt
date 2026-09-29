@@ -70,11 +70,10 @@ class NotificationsServiceTest {
     sentNotificationsService,
     auditingService,
     prisonRegisterClient,
+    "video instructions",
+    "in person instructions",
+    "telephone instructions",
   )
-
-  object FakeEmail : Email("email@address") {
-    override fun type() = EmailType.IN_PERSON_VISIT_CONFIRMED
-  }
 
   val prisonContactDetails = ContactDetailsDto(
     type = ContactDetailsDto.Type.OFFICIAL_VISIT,
@@ -185,6 +184,7 @@ class NotificationsServiceTest {
         "video_link_url" to "should be shown",
         "show_notes" to "yes",
         "notes" to "create email notes",
+        "video_joining_instructions" to service.videoJoiningInstructions,
       )
     }
 
@@ -247,6 +247,7 @@ class NotificationsServiceTest {
         "visitor_names" to "Community Manager, Prison Manager",
         "show_notes" to "yes",
         "notes" to "create email notes",
+        "in_person_joining_instructions" to service.inPersonJoiningInstructions,
       )
     }
 
@@ -301,6 +302,7 @@ class NotificationsServiceTest {
         "visitor_names" to "Community Manager, Prison Manager",
         "show_notes" to "yes",
         "notes" to "amend email notes",
+        "in_person_joining_instructions" to service.inPersonJoiningInstructions,
       )
     }
 

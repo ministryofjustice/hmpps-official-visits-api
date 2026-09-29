@@ -55,6 +55,7 @@ class InPersonVisitConfirmedEmail(
   visitLocation: String,
   visitorNames: String,
   notes: String? = null,
+  joiningInstructions: String? = null,
 ) : Email(emailAddress) {
   init {
     addPersonalisation("prisoner_number", prisonerNumber)
@@ -76,6 +77,7 @@ class InPersonVisitConfirmedEmail(
     addPersonalisation("visitor_names", visitorNames.toTitleCase())
     addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("in_person_joining_instructions", joiningInstructions?.takeIf { it.isNotBlank() } ?: "")
   }
 
   override fun type(): EmailType = EmailType.IN_PERSON_VISIT_CONFIRMED
@@ -92,6 +94,7 @@ class InPersonVisitAmendedEmail(
   visitLocation: String,
   visitorNames: String,
   notes: String? = null,
+  joiningInstructions: String? = null,
 ) : Email(emailAddress) {
   init {
     addPersonalisation("prisoner_number", prisonerNumber)
@@ -113,6 +116,7 @@ class InPersonVisitAmendedEmail(
     addPersonalisation("visitor_names", visitorNames.toTitleCase())
     addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("in_person_joining_instructions", joiningInstructions?.takeIf { it.isNotBlank() } ?: "")
   }
   override fun type(): EmailType = EmailType.IN_PERSON_VISIT_AMENDED
 }
@@ -166,6 +170,7 @@ class VideoVisitConfirmedEmail(
   visitorNames: String,
   notes: String? = null,
   videoLinkUrl: String? = null,
+  joiningInstructions: String? = null,
 ) : Email(emailAddress) {
   init {
     addPersonalisation("prisoner_number", prisonerNumber)
@@ -189,6 +194,7 @@ class VideoVisitConfirmedEmail(
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
     addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
     addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("video_joining_instructions", joiningInstructions?.takeIf { it.isNotBlank() } ?: "")
   }
 
   override fun type(): EmailType = EmailType.VIDEO_VISIT_CONFIRMED
@@ -206,6 +212,7 @@ class VideoVisitAmendedEmail(
   visitorNames: String,
   notes: String? = null,
   videoLinkUrl: String? = null,
+  joiningInstructions: String? = null,
 ) : Email(emailAddress) {
   init {
     addPersonalisation("prisoner_number", prisonerNumber)
@@ -229,6 +236,7 @@ class VideoVisitAmendedEmail(
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
     addPersonalisation("show_video_link", "yes".takeIf { videoLinkUrl?.isNotBlank() == true } ?: "no")
     addPersonalisation("video_link_url", videoLinkUrl?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("video_joining_instructions", joiningInstructions?.takeIf { it.isNotBlank() } ?: "")
   }
 
   override fun type(): EmailType = EmailType.VIDEO_VISIT_AMENDED
@@ -282,6 +290,7 @@ class TelephoneVisitConfirmedEmail(
   visitLocation: String,
   visitorNames: String,
   notes: String? = null,
+  joiningInstructions: String? = null,
 ) : Email(emailAddress) {
   init {
     addPersonalisation("prisoner_number", prisonerNumber)
@@ -303,6 +312,7 @@ class TelephoneVisitConfirmedEmail(
     addPersonalisation("visitor_names", visitorNames.toTitleCase())
     addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("telephone_joining_instructions", joiningInstructions?.takeIf { it.isNotBlank() } ?: "")
   }
 
   override fun type(): EmailType = EmailType.TELEPHONE_VISIT_CONFIRMED
@@ -319,6 +329,7 @@ class TelephoneVisitAmendedEmail(
   visitLocation: String,
   visitorNames: String,
   notes: String? = null,
+  joiningInstructions: String? = null,
 ) : Email(emailAddress) {
   init {
     addPersonalisation("prisoner_number", prisonerNumber)
@@ -340,6 +351,7 @@ class TelephoneVisitAmendedEmail(
     addPersonalisation("visitor_names", visitorNames.toTitleCase())
     addPersonalisation("show_notes", "yes".takeIf { notes?.isNotBlank() == true } ?: "no")
     addPersonalisation("notes", notes?.takeIf { it.isNotBlank() } ?: "")
+    addPersonalisation("telephone_joining_instructions", joiningInstructions?.takeIf { it.isNotBlank() } ?: "")
   }
 
   override fun type(): EmailType = EmailType.TELEPHONE_VISIT_AMENDED
