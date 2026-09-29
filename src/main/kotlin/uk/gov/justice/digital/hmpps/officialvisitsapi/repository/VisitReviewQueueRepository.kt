@@ -11,14 +11,18 @@ interface VisitReviewQueueRepository : JpaRepository<VisitReviewQueueEntity, Lon
     """
       SELECT vrq
       FROM VisitReviewQueueEntity vrq
-      WHERE vrq.createdTime = (
-          SELECT MIN(vrq2.createdTime) FROM VisitReviewQueueEntity vrq2
-          WHERE vrq2.officialVisitId = vrq.officialVisitId
-      )
+      JOIN OfficialVisitEntity ov ON ov.officialVisitId = vrq.officialVisitId
+      WHERE ov.prisonCode = :prisonCode
+        AND vrq.createdTime = (
+            SELECT MIN(vrq2.createdTime) FROM VisitReviewQueueEntity vrq2
+            WHERE vrq2.officialVisitId = vrq.officialVisitId
+        )
       ORDER BY vrq.createdTime ASC
     """,
   )
-  fun findCandidatesOrderedByQueueTime(): Collection<VisitReviewQueueEntity>
+  fun findCandidatesOrderedByQueueTimeForPrison(
+    prisonCode: String,
+  ): Collection<VisitReviewQueueEntity>
 
   fun findByOfficialVisitId(officialVisitId: Long): VisitReviewQueueEntity?
 }

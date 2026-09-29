@@ -5,6 +5,8 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
+import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
@@ -24,11 +26,13 @@ import java.util.UUID
 class ProcessCandidateVisitsToCheckJobTest {
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
+  private val features: FeatureSwitches = mock()
   private val timeSource: TimeSource = TimeSource { LocalDateTime.now() }
-  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(visitReviewQueueRepository, visitReviewService, timeSource)
+  private val prisonJobProcessor = PrisonJobProcessor()
+  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(visitReviewQueueRepository, visitReviewService, features, prisonJobProcessor, timeSource)
 
   @Test
-  fun `should call the find candidates visits service when run`() {
+  fun `should call the find candidates visits service when run for each prison`() {
     val prisonVisitSlot = PrisonVisitSlotEntity(
       prisonVisitSlotId = 1,
       prisonTimeSlotId = 1,
@@ -56,12 +60,46 @@ class ProcessCandidateVisitsToCheckJobTest {
       createdTime = now(),
       triggeringEvent = VisitReviewCheckType.UPDATE,
     )
-    whenever { visitReviewQueueRepository.findCandidatesOrderedByQueueTime() }
+    whenever { features.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
+      .thenReturn(PENTONVILLE)
+    whenever { visitReviewQueueRepository.findCandidatesOrderedByQueueTimeForPrison(PENTONVILLE) }
       .thenReturn(listOf(queueEntry))
 
     job.runJob()
 
-    verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTime()
+    verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(PENTONVILLE)
     verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.UPDATE)
+  }
+
+  @Test
+  fun `should process multiple prisons with separate transactions`() {
+    val prisonCode1 = "MDI"
+    val prisonCode2 = "LEI"
+    val queueEntry1 = VisitReviewQueueEntity(
+      visitReviewQueueId = 1,
+      officialVisitId = 1L,
+      createdTime = now(),
+      triggeringEvent = VisitReviewCheckType.CHECK,
+    )
+    val queueEntry2 = VisitReviewQueueEntity(
+      visitReviewQueueId = 2,
+      officialVisitId = 2L,
+      createdTime = now(),
+      triggeringEvent = VisitReviewCheckType.RECHECK,
+    )
+
+    whenever { features.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
+      .thenReturn("$prisonCode1,$prisonCode2")
+    whenever { visitReviewQueueRepository.findCandidatesOrderedByQueueTimeForPrison(prisonCode1) }
+      .thenReturn(listOf(queueEntry1))
+    whenever { visitReviewQueueRepository.findCandidatesOrderedByQueueTimeForPrison(prisonCode2) }
+      .thenReturn(listOf(queueEntry2))
+
+    job.runJob()
+
+    verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode1)
+    verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode2)
+    verify(visitReviewService).visitCheck(1L, VisitReviewCheckType.CHECK)
+    verify(visitReviewService).visitCheck(2L, VisitReviewCheckType.RECHECK)
   }
 }
