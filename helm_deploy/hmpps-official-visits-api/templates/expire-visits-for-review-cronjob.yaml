@@ -32,5 +32,5 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - curl --fail --retry 2 --max-time 20 -XPOST http://hmpps-official-visits-api/job-admin/run/EXPIRE_VISITS_FOR_REVIEW
+                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/EXPIRE_VISITS_FOR_REVIEW
           restartPolicy: Never
