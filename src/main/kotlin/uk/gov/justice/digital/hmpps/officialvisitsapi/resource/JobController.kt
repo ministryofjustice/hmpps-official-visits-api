@@ -30,7 +30,7 @@ class JobController(private val jobTriggerService: JobTriggerService) {
   @Operation(summary = "Endpoint to trigger a job, perhaps from a cron schedule.")
   @PostMapping(path = ["/run/{jobName}"])
   @ResponseStatus(HttpStatus.ACCEPTED)
-  fun runJob(@PathVariable("jobName") jobName: JobType): String {
+  fun runJob(@PathVariable jobName: JobType): String {
     log.info("Triggering async job {}", jobName.name)
     jobTriggerService.run(jobName)
     return jobName.resultMessage
