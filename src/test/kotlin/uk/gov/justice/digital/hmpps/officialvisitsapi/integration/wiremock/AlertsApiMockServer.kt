@@ -40,7 +40,7 @@ class AlertsApiMockServer : MockServer(8096) {
     )
   }
 
-  private fun getAlertsFor(prisonerNumber: String) = get(urlPathEqualTo("/prisoner/$prisonerNumber/alerts"))
+  private fun getAlertsFor(prisonerNumber: String) = get(urlPathEqualTo("/prisoners/$prisonerNumber/alerts"))
 }
 
 class AlertsApiExtension :
