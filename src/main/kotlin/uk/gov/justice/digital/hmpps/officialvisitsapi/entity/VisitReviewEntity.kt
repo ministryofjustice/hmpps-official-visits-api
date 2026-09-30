@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "visit_review")
-class VisitReviewEntity(
+open class VisitReviewEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val visitReviewId: Long = 0,

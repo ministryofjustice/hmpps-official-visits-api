@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PagedModel
@@ -35,52 +36,75 @@ class VisitReviewService(
   private val visitForReviewRepository: VisitForReviewRepository,
   private val officialVisitsRetrievalService: OfficialVisitsRetrievalService,
 ) {
+  companion object {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   private fun check(officialVisitId: Long, checkType: VisitReviewCheckType) {
     val officialVisit = officialVisitRepository.findById(officialVisitId).getOrNull() ?: return
     val today = timeSource.today()
 
+    logger.info("Checking visit ID ${officialVisit.officialVisitId} Prison ${officialVisit.prisonCode} Date ${officialVisit.visitDate} Prisoner ${officialVisit.prisonerNumber} time source $today")
+
     when {
-      officialVisit.visitStatusCode != VisitStatusType.SCHEDULED -> return
-      officialVisit.visitDate < today -> return
-      officialVisit.visitDate > today.plusDays(7) -> return
+      officialVisit.visitStatusCode != VisitStatusType.SCHEDULED -> {
+        logger.info("Visit is not scheduled state ${officialVisit.visitStatusCode}")
+        return
+      }
+      officialVisit.visitDate < today -> {
+        logger.info("Visit was scheduled in the past ${officialVisit.visitDate}")
+        return
+      }
+      officialVisit.visitDate > today.plusDays(7) -> {
+        logger.info("Visit date is beyond 7 days from now - not checking or raising issues, visit date ${officialVisit.visitDate}, 7-days from now ${today.plusDays(7)}")
+        return
+      }
     }
 
     when (checkType) {
-      VisitReviewCheckType.TRANSFER -> transferChecker.check(officialVisit)
-      VisitReviewCheckType.RELEASE -> releaseChecker.check(officialVisit)
-      VisitReviewCheckType.UPDATE -> update(officialVisit)
-      VisitReviewCheckType.RECHECK -> checker.check(officialVisit)
-      else -> checker.check(officialVisit)
+      VisitReviewCheckType.TRANSFER -> {
+        logger.info("Check type is TRANSFER")
+        transferChecker.check(officialVisit)
+      }
+      VisitReviewCheckType.RELEASE -> {
+        logger.info("Check type is RELEASE")
+        releaseChecker.check(officialVisit)
+      }
+      VisitReviewCheckType.UPDATE -> {
+        logger.info("Check type is UPDATE")
+        update(officialVisit)
+      }
+      VisitReviewCheckType.RECHECK, VisitReviewCheckType.CHECK -> {
+        logger.info("Check type is $checkType")
+        checker.check(officialVisit)
+      }
     }
   }
 
   private fun update(officialVisit: OfficialVisitEntity) {
+    logger.info("UPDATE check - removing any review items for ${officialVisit.officialVisitId}")
     visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
     visitReviewRepository.flush()
 
+    logger.info("UPDATE check - calling the standard check for ${officialVisit.officialVisitId}")
     checker.check(officialVisit)
   }
 
   @Transactional
   fun expire(officialVisitId: Long) {
+    logger.info("EXPIRING official visit ID $officialVisitId - date must have passed now")
     visitReviewRepository.findByOfficialVisitId(officialVisitId).forEach(VisitReviewEntity::expire)
   }
 
   @Transactional
-  fun visitCheck(
-    officialVisitId: Long,
-    type: VisitReviewCheckType,
-  ) {
+  fun visitCheck(officialVisitId: Long, type: VisitReviewCheckType) {
     check(officialVisitId, type)
-
     visitReviewQueueRepository.findByOfficialVisitId(officialVisitId)?.let(visitReviewQueueRepository::delete)
   }
 
+  // TODO: Don't think this is necessary
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  fun visitCheckInNewTransaction(
-    officialVisitId: Long,
-    type: VisitReviewCheckType,
-  ) {
+  fun visitCheckInNewTransaction(officialVisitId: Long, type: VisitReviewCheckType) {
     visitCheck(officialVisitId, type)
   }
 
@@ -99,7 +123,6 @@ class VisitReviewService(
       ?: throw EntityNotFoundException(
         "Visit review for official visit id $officialVisitId and prison code $prisonCode not found",
       )
-
     visitReview.updateAcknowledgedDetails(timeSource.now(), user.username)
   }
 

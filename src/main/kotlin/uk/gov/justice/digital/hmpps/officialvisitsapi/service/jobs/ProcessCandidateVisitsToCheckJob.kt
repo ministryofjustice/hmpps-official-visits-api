@@ -18,7 +18,6 @@ private val log = LoggerFactory.getLogger(ProcessCandidateVisitsToCheckJob::clas
  */
 @Component
 class ProcessCandidateVisitsToCheckJob(
-
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val visitReviewService: VisitReviewService,
   features: FeatureSwitches,
@@ -45,5 +44,4 @@ class ProcessCandidateVisitsToCheckJob(
       }
     }
   },
-
 )
