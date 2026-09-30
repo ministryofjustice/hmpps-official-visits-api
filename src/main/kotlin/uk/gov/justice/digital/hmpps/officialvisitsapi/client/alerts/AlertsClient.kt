@@ -20,7 +20,7 @@ class AlertsClient(private val alertsApiWebClient: WebClient) {
 
   fun getPrisonerAlerts(prisonerNumber: String): List<Alert> = alertsApiWebClient
     .get()
-    .uri("/prisoner/{prisonerNumber}/alerts", prisonerNumber)
+    .uri("/prisoners/{prisonerNumber}/alerts", prisonerNumber)
     .retrieve()
     .bodyToMono<PageAlert>()
     .doOnError { error -> log.info("Error looking up prisoner alerts by prisoner number $prisonerNumber in prisoner alerts client", error) }
