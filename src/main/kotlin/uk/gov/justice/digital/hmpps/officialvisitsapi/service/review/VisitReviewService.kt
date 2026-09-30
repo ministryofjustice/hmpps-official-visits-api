@@ -28,8 +28,6 @@ import kotlin.jvm.optionals.getOrNull
 class VisitReviewService(
   private val officialVisitRepository: OfficialVisitRepository,
   private val checker: VisitReviewChecker,
-  private val releaseChecker: VisitReviewReleaseChecker,
-  private val transferChecker: VisitReviewTransferChecker,
   private val visitReviewRepository: VisitReviewRepository,
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val timeSource: TimeSource,
@@ -62,14 +60,6 @@ class VisitReviewService(
     }
 
     when (checkType) {
-      VisitReviewCheckType.TRANSFER -> {
-        logger.info("Check type is TRANSFER")
-        transferChecker.check(officialVisit)
-      }
-      VisitReviewCheckType.RELEASE -> {
-        logger.info("Check type is RELEASE")
-        releaseChecker.check(officialVisit)
-      }
       VisitReviewCheckType.UPDATE -> {
         logger.info("Check type is UPDATE")
         update(officialVisit)
@@ -168,6 +158,4 @@ enum class VisitReviewCheckType {
   CHECK,
   UPDATE,
   RECHECK,
-  RELEASE,
-  TRANSFER,
 }

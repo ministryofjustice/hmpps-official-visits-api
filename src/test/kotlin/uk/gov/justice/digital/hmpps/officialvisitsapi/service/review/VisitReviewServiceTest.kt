@@ -43,8 +43,6 @@ import java.util.UUID
 class VisitReviewServiceTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val checker: VisitReviewChecker = mock()
-  private val releaseChecker: VisitReviewReleaseChecker = mock()
-  private val transferChecker: VisitReviewTransferChecker = mock()
   private val visitReviewRepository: VisitReviewRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val now = LocalDateTime.now()
@@ -55,8 +53,6 @@ class VisitReviewServiceTest {
   private val service = VisitReviewService(
     officialVisitRepository,
     checker,
-    releaseChecker,
-    transferChecker,
     visitReviewRepository,
     visitReviewQueueRepository,
     timeSource,
@@ -77,7 +73,7 @@ class VisitReviewServiceTest {
     service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
-    verifyNoInteractions(checker, releaseChecker, transferChecker)
+    verifyNoInteractions(checker)
   }
 
   @Test
@@ -92,7 +88,7 @@ class VisitReviewServiceTest {
     }
 
     verify(officialVisitRepository, times(3)).findById(1)
-    verifyNoInteractions(checker, releaseChecker, transferChecker)
+    verifyNoInteractions(checker)
   }
 
   @Test
@@ -107,7 +103,7 @@ class VisitReviewServiceTest {
     service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
-    verifyNoInteractions(checker, releaseChecker, transferChecker)
+    verifyNoInteractions(checker)
   }
 
   @Test
@@ -122,7 +118,7 @@ class VisitReviewServiceTest {
     service.visitCheck(1, VisitReviewCheckType.CHECK)
 
     verify(officialVisitRepository).findById(1)
-    verifyNoInteractions(checker, releaseChecker, transferChecker)
+    verifyNoInteractions(checker)
   }
 
   @Test
@@ -133,7 +129,6 @@ class VisitReviewServiceTest {
 
     verify(officialVisitRepository).findById(1)
     verify(checker).check(scheduledVisit)
-    verifyNoInteractions(releaseChecker, transferChecker)
   }
 
   @Test
@@ -148,30 +143,6 @@ class VisitReviewServiceTest {
       verify(visitReviewRepository).flush()
       verify(checker).check(scheduledVisit)
     }
-
-    verifyNoInteractions(releaseChecker, transferChecker)
-  }
-
-  @Test
-  fun `should invoke TRANSFER checker`() {
-    whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
-
-    service.visitCheck(1, VisitReviewCheckType.TRANSFER)
-
-    verify(officialVisitRepository).findById(1)
-    verify(transferChecker).check(scheduledVisit)
-    verifyNoInteractions(checker, releaseChecker)
-  }
-
-  @Test
-  fun `should invoke RELEASE checker`() {
-    whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
-
-    service.visitCheck(1, VisitReviewCheckType.RELEASE)
-
-    verify(officialVisitRepository).findById(1)
-    verify(releaseChecker).check(scheduledVisit)
-    verifyNoInteractions(checker, transferChecker)
   }
 
   @Test
