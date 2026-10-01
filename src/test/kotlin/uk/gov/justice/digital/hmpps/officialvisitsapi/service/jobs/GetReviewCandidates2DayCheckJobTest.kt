@@ -26,8 +26,8 @@ class GetReviewCandidates2DayCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val feature: FeatureSwitches = mock()
-  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job: GetReviewCandidates2DayCheckJob = GetReviewCandidates2DayCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
+  private val prisonProcessor = PrisonProcessor()
+  private val job: GetReviewCandidates2DayCheckJob = GetReviewCandidates2DayCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, prisonProcessor)
 
   @Test
   fun `should add day after tomorrow candidate visits to the queue as rechecks for each prison`() {

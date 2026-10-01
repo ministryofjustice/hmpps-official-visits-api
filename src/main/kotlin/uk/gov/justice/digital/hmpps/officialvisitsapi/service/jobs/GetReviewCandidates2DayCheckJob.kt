@@ -18,11 +18,11 @@ class GetReviewCandidates2DayCheckJob(
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val featureSwitches: FeatureSwitches,
-  private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
+  private val prisonProcessor: PrisonProcessor,
 ) : VisitReviewJob<Long>(
   jobType = JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK,
   featureSwitches,
-  transactionalPrisonJobProcessor,
+  prisonProcessor,
   { prisonCode ->
     officialVisitRepository.findScheduledVisitsForPrisonOnDate(LocalDate.now().plusDays(2), prisonCode)
   },

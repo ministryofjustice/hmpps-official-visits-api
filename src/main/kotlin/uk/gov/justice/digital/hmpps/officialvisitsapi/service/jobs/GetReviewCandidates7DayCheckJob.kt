@@ -17,11 +17,11 @@ class GetReviewCandidates7DayCheckJob(
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val featureSwitches: FeatureSwitches,
-  private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
+  private val prisonProcessor: PrisonProcessor,
 ) : VisitReviewJob<Long>(
   jobType = JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK,
   featureSwitches,
-  transactionalPrisonJobProcessor,
+  prisonProcessor,
   { prisonCode ->
     officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(LocalDate.now().plusDays(7), prisonCode)
   },

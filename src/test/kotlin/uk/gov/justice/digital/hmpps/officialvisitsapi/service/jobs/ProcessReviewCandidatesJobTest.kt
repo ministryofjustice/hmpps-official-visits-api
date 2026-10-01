@@ -25,13 +25,13 @@ class ProcessReviewCandidatesJobTest {
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val features: FeatureSwitches = mock()
-  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
+  private val prisonProcessor = PrisonProcessor()
 
   private val job: ProcessReviewCandidatesJob = ProcessReviewCandidatesJob(
     visitReviewQueueRepository,
     visitReviewService,
     features,
-    transactionalPrisonJobProcessor,
+    prisonProcessor,
   )
 
   @Test
@@ -71,7 +71,7 @@ class ProcessReviewCandidatesJobTest {
     job.runJob()
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(PENTONVILLE)
-    verify(visitReviewService, times(1)).visitCheckInNewTransaction(visit.officialVisitId, VisitReviewCheckType.CHECK_ON_UPDATE)
+    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.CHECK_ON_UPDATE)
   }
 
   @Test
@@ -102,7 +102,7 @@ class ProcessReviewCandidatesJobTest {
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode1)
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode2)
-    verify(visitReviewService).visitCheckInNewTransaction(1L, VisitReviewCheckType.CHECK_7_DAYS)
-    verify(visitReviewService).visitCheckInNewTransaction(2L, VisitReviewCheckType.CHECK_2_DAYS)
+    verify(visitReviewService).visitCheck(1L, VisitReviewCheckType.CHECK_7_DAYS)
+    verify(visitReviewService).visitCheck(2L, VisitReviewCheckType.CHECK_2_DAYS)
   }
 }

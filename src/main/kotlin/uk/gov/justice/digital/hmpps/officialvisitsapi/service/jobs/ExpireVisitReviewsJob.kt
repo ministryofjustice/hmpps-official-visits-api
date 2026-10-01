@@ -15,11 +15,11 @@ class ExpireVisitReviewsJob(
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewService: VisitReviewService,
   private val featureSwitches: FeatureSwitches,
-  private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
+  private val prisonProcessor: PrisonProcessor,
 ) : VisitReviewJob<Long>(
   jobType = EXPIRE_VISIT_REVIEWS,
   featureSwitches,
-  transactionalPrisonJobProcessor,
+  prisonProcessor,
   { prisonCode ->
     officialVisitRepository.findOverdueVisitsWithUnacknowledgedReviewDetailsBeforeForPrison(LocalDate.now(), prisonCode)
   },

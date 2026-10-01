@@ -16,8 +16,8 @@ class ExpireVisitReviewsJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val features: FeatureSwitches = mock()
-  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job = ExpireVisitReviewsJob(officialVisitRepository, visitReviewService, features, transactionalPrisonJobProcessor)
+  private val prisonProcessor = PrisonProcessor()
+  private val job = ExpireVisitReviewsJob(officialVisitRepository, visitReviewService, features, prisonProcessor)
 
   @Test
   fun `should expire visits for review for each prison`() {

@@ -17,18 +17,18 @@ class ProcessReviewCandidatesJob(
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val visitReviewService: VisitReviewService,
   private val featureSwitches: FeatureSwitches,
-  private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
+  private val prisonProcessor: PrisonProcessor,
 ) : VisitReviewJob<VisitReviewQueueEntity>(
   jobType = JobType.PROCESS_REVIEW_CANDIDATES,
   featureSwitches = featureSwitches,
-  transactionalPrisonJobProcessor,
+  prisonProcessor,
   { prisonCode ->
     visitReviewQueueRepository.findCandidatesOrderedByQueueTimeForPrison(prisonCode)
   },
   { queueEntries, prisonCode ->
     queueEntries.forEach { queueEntry ->
       try {
-        visitReviewService.visitCheckInNewTransaction(queueEntry.officialVisitId, queueEntry.triggeringEvent)
+        visitReviewService.visitCheck(queueEntry.officialVisitId, queueEntry.triggeringEvent)
       } catch (exception: Exception) {
         log.error(
           "Failed to process visit review queue item for officialVisitId={} and prisonCode={} and event={}",

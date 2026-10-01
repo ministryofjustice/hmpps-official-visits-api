@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 abstract class VisitReviewJob<T>(
   jobType: JobType,
   private val featureSwitches: FeatureSwitches,
-  private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
+  private val prisonProcessor: PrisonProcessor,
   private val supplier: (String) -> Collection<T>,
   private val consumer: (Collection<T>, String) -> Unit,
 ) : JobDefinition(
@@ -25,9 +25,8 @@ abstract class VisitReviewJob<T>(
       ?: emptySet()
 
     // Process each prison configured for reviews
-    // Transactions are performed by the PrisonJobProcessor bean to ensure Spring proxies apply @Transactional
     featureEnabledPrisonCodes.forEach { prisonCode ->
-      transactionalPrisonJobProcessor.processForPrison(prisonCode, supplier, consumer)
+      prisonProcessor.processForPrison(prisonCode, supplier, consumer)
     }
   },
 )

@@ -1,15 +1,12 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs
 
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 
 /**
- * Helper component that performs per-prison processing inside a transactional boundary.
- * This is a separate component so that @Transactional will be applied by Spring proxies.
+ * Helper component that performs per-prison processing.
  */
 @Component
-class TransactionalPrisonJobProcessor {
-  @Transactional
+class PrisonProcessor {
   fun <T> processForPrison(
     prisonCode: String,
     supplier: (String) -> Collection<T>,
