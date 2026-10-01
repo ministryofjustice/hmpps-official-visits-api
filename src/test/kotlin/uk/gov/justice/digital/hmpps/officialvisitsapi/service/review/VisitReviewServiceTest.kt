@@ -70,7 +70,7 @@ class VisitReviewServiceTest {
   fun `should be no-op when visit not found`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.empty()
 
-    service.visitCheck(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK_7_DAYS)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker)
@@ -84,7 +84,7 @@ class VisitReviewServiceTest {
       whenever { officialVisit.visitStatusCode } doReturn it
       whenever(officialVisitRepository.findById(1)) doReturn Optional.of(officialVisit)
 
-      service.visitCheck(1, VisitReviewCheckType.CHECK)
+      service.visitCheck(1, VisitReviewCheckType.CHECK_7_DAYS)
     }
 
     verify(officialVisitRepository, times(3)).findById(1)
@@ -100,7 +100,7 @@ class VisitReviewServiceTest {
 
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(officialVisit)
 
-    service.visitCheck(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK_7_DAYS)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker)
@@ -115,7 +115,7 @@ class VisitReviewServiceTest {
 
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(officialVisit)
 
-    service.visitCheck(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK_7_DAYS)
 
     verify(officialVisitRepository).findById(1)
     verifyNoInteractions(checker)
@@ -125,7 +125,7 @@ class VisitReviewServiceTest {
   fun `should invoke CHECK checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.visitCheck(1, VisitReviewCheckType.CHECK)
+    service.visitCheck(1, VisitReviewCheckType.CHECK_7_DAYS)
 
     verify(officialVisitRepository).findById(1)
     verify(checker).check(scheduledVisit)
@@ -135,7 +135,7 @@ class VisitReviewServiceTest {
   fun `should invoke update checker`() {
     whenever(officialVisitRepository.findById(1)) doReturn Optional.of(scheduledVisit)
 
-    service.visitCheck(1, VisitReviewCheckType.UPDATE)
+    service.visitCheck(1, VisitReviewCheckType.CHECK_ON_UPDATE)
 
     inOrder(officialVisitRepository, visitReviewRepository, checker) {
       verify(officialVisitRepository).findById(1L)
@@ -165,11 +165,11 @@ class VisitReviewServiceTest {
       visitReviewQueueId = 2L,
       officialVisitId = officialVisitId,
       createdTime = LocalDateTime.now(),
-      triggeringEvent = VisitReviewCheckType.CHECK,
+      triggeringEvent = VisitReviewCheckType.CHECK_7_DAYS,
     )
     whenever(visitReviewQueueRepository.findByOfficialVisitId(queueEntry.officialVisitId)).thenReturn(queueEntry)
 
-    service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK)
+    service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK_7_DAYS)
 
     inOrder(visitReviewQueueRepository) {
       verify(visitReviewQueueRepository).findByOfficialVisitId(queueEntry.officialVisitId)
@@ -183,7 +183,7 @@ class VisitReviewServiceTest {
 
     whenever(visitReviewQueueRepository.findById(officialVisitId)).thenReturn(Optional.empty())
 
-    service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK)
+    service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK_7_DAYS)
 
     verify(visitReviewQueueRepository, never()).delete(any())
   }
@@ -195,7 +195,7 @@ class VisitReviewServiceTest {
     whenever(officialVisitRepository.findById((eq(officialVisitId))))
       .thenThrow(RuntimeException("check failed"))
 
-    assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK) }
+    assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK_7_DAYS) }
       .isInstanceOf(RuntimeException::class.java)
       .hasMessage("check failed")
 
@@ -210,12 +210,12 @@ class VisitReviewServiceTest {
       visitReviewQueueId = 2L,
       officialVisitId = officialVisitId,
       createdTime = LocalDateTime.now(),
-      triggeringEvent = VisitReviewCheckType.CHECK,
+      triggeringEvent = VisitReviewCheckType.CHECK_7_DAYS,
     )
     whenever(visitReviewQueueRepository.findByOfficialVisitId(queueEntry.officialVisitId)).thenReturn(queueEntry)
     whenever(visitReviewQueueRepository.delete(queueEntry)).thenThrow(RuntimeException("delete failed"))
 
-    assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK) }
+    assertThatThrownBy { service.visitCheck(officialVisitId, VisitReviewCheckType.CHECK_7_DAYS) }
       .isInstanceOf(RuntimeException::class.java)
       .hasMessage("delete failed")
   }

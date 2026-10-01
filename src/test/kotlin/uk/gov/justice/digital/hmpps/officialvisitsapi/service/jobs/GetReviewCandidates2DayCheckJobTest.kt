@@ -22,12 +22,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReview
 import java.time.LocalTime
 import java.util.UUID
 
-class IdentifyCandidateVisitsToReCheckJobTest {
+class GetReviewCandidates2DayCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val feature: FeatureSwitches = mock()
   private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job: IdentifyCandidateVisitsToReCheckJob = IdentifyCandidateVisitsToReCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
+  private val job: GetReviewCandidates2DayCheckJob = GetReviewCandidates2DayCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
 
   @Test
   fun `should add day after tomorrow candidate visits to the queue as rechecks for each prison`() {
@@ -63,7 +63,7 @@ class IdentifyCandidateVisitsToReCheckJobTest {
     verify(officialVisitRepository).findCandidateVisitsForReReviewForPrison(today.plusDays(2), PENTONVILLE)
     verify(visitReviewQueueRepository).saveAndFlush(
       org.mockito.kotlin.check {
-        it.officialVisitId == visit.officialVisitId && it.triggeringEvent == VisitReviewCheckType.RECHECK
+        it.officialVisitId == visit.officialVisitId && it.triggeringEvent == VisitReviewCheckType.CHECK_2_DAYS
       },
     )
   }

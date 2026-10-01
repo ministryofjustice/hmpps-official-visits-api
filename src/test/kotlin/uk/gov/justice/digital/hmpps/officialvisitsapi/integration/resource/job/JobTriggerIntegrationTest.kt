@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitUpdateSlotRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitor
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -40,15 +41,10 @@ import java.time.LocalTime
 class JobTriggerIntegrationTest : IntegrationTestBase() {
 
   private companion object {
-    private const val JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK = "IDENTIFY_CANDIDATE_VISITS_TO_CHECK"
-    private const val JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK = "IDENTIFY_CANDIDATE_VISITS_TO_RECHECK"
-    private const val JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK = "PROCESS_CANDIDATE_VISITS_TO_CHECK"
-    private const val JOB_EXPIRE_VISITS_FOR_REVIEW = "EXPIRE_VISITS_FOR_REVIEW"
     private val createdTimeSlotIds = mutableListOf<Long>()
     private val createdVisitSlotIds = mutableListOf<Long>()
-    private const val CHECK_WINDOW_SEVEN_DAYS = 7L
-
-    private const val RECHECK_TARGET_DAYS = 2L
+    private const val SEVEN_DAYS = 7L
+    private const val TWO_DAYS = 2L
   }
 
   private val officialVisitor = OfficialVisitor(
@@ -121,10 +117,10 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     createVisitOnSlot(VisitSlot(visitSlot.visitSlotId, date, timeSlot.startTime, timeSlot.endTime, moorlandLocation.id), visitors)
   }
 
-  /** A fixed slot that sits just outside the job's [CHECK_WINDOW_SEVEN_DAYS] pickup window. */
+  /** A fixed slot that sits just outside the job's [SEVEN_DAYS] pickup window. */
   private fun slotBeyondCheckWindow() = VisitSlot(
     1,
-    LocalDate.now().next(DayOfWeek.MONDAY).plusDays(CHECK_WINDOW_SEVEN_DAYS),
+    LocalDate.now().next(DayOfWeek.MONDAY).plusDays(SEVEN_DAYS),
     LocalTime.of(9, 0),
     LocalTime.of(10, 0),
     moorlandLocation.id,
@@ -147,7 +143,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   /** Puts a visit straight onto the review queue, bypassing the identify job. */
   private fun enqueueForReview(
     visitId: Long,
-    triggeringEvent: VisitReviewCheckType = VisitReviewCheckType.CHECK,
+    triggeringEvent: VisitReviewCheckType = VisitReviewCheckType.CHECK_7_DAYS,
     createdTime: LocalDateTime = LocalDateTime.now(),
   ) {
     visitReviewQueueRepository.saveAndFlush(
@@ -187,44 +183,49 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
   }
 
   @Nested
-  inner class IdentifyCandidateVisitsToCheckJobTest {
+  inner class GetReviewCandidates7DayCheckTest {
 
     @Test
-    fun `should identify candidate visits to check`() {
+    fun `should identify candidate visits to check in 7 days time`() {
       createVisitOnDate(LocalDate.now().plusDays(7))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK.name)
 
       assertQueueSize(1)
     }
 
     @Test
-    fun `should identify candidate visits to check multiple times`() {
+    fun `should identify candidate visits to check in 7 days time multiple times`() {
       val officialVisit = createVisitOnDate(LocalDate.now().plusDays(7))
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK.name)
 
       assertQueueSize(1)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
+
       assertQueueSize(0)
+
       val issues = firstReviewIssues()
       issues.size isEqualTo 2
       issues.map { it.issueType }.toList() containsExactlyInAnyOrder listOf(IssueType.PRISONER_NEW_ALERT, IssueType.PRISONER_RELEASED)
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
-      assertQueueSize(0) // re-run of identify visit job re-queues the visit while it still qualifies
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK.name)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK) // re-run of process visit job should not add to queue as already identified and processed
       assertQueueSize(0)
+
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
+
+      assertQueueSize(0)
+
       val issues2 = firstReviewIssues()
       issues2.size isEqualTo 2
       issues2.map { it.issueType }.toList() containsExactlyInAnyOrder listOf(IssueType.PRISONER_NEW_ALERT, IssueType.PRISONER_RELEASED)
 
-      // change the visit date to two days in the future
-      val twoDaysInFuture = LocalDate.now().plusDays(RECHECK_TARGET_DAYS)
+      // Update the visit date to two days in the future
+      val twoDaysInFuture = LocalDate.now().plusDays(TWO_DAYS)
       val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
         prisonVisitSlotId = 1,
         visitDate = twoDaysInFuture,
@@ -239,29 +240,35 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         officialVisitId = officialVisit.officialVisitId,
         request = updateVisitSlotRequest,
       )
-      // TODO : fix this test - this test is asserting only one alert, but the update should add two issues. This is because of the issue with the alert check - the alert check is using updated visit time against alert time
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK) // re-run of identify visit job should add to queue as already processed but has unacknowledged issues
+
+      // This test is asserting one issue, when the visit had 2 issues previously.
+      // The alert check is using the visit.lastUpdatedTime or visit.createdTime and
+      // since the visit was update after the alert was added, it does not raise it.
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
+
       assertQueueSize(1)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
+
       assertQueueSize(0)
+
       val issues3 = firstReviewIssues()
       issues3.size isEqualTo 1
       issues3[0].issueType isEqualTo IssueType.PRISONER_RELEASED
     }
 
     @Test
-    fun `should not find the identify candidate visits to check for visits that are not in 7 days`() {
+    fun `should not find candidates visits that are not scheduled for 7 days time`() {
       createVisitOnDate(LocalDate.now().plusDays(6))
       createVisitOnDate(LocalDate.now().plusDays(8))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK.name)
 
       assertQueueSize(0)
     }
 
     @Test
-    fun `should not find identify candidate visits to check`() {
+    fun `should not find candidate visits if they are cancelled`() {
       val matchingVisit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       val cancelledVisit = createVisitOnSlot(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT)
       markVisitStatus(cancelledVisit.officialVisitId, VisitStatusType.CANCELLED)
@@ -270,82 +277,88 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         officialVisitId = matchingVisit.officialVisitId,
         issueTypes = listOf(IssueType.VISITOR_NOT_APPROVED, IssueType.PRISONER_TRANSFERRED),
       )
+
       createVisitReview(cancelledVisit.officialVisitId)
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK.name)
 
       assertQueueSize(0)
     }
   }
 
   @Nested
-  inner class IdentifyCandidateVisitsToReCheckJobTest {
+  inner class GetReviewCandidates2DayCheckTest {
 
     @Test
-    fun `should identify visits to recheck when it is scheduled for day after tomorrow`() {
-      createVisitOnDate(LocalDate.now().plusDays(RECHECK_TARGET_DAYS))
+    fun `should find candidates when they are scheduled for the day after tomorrow`() {
+      createVisitOnDate(LocalDate.now().plusDays(TWO_DAYS))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
 
       assertQueueSize(1)
     }
 
     @Test
-    fun `should not identify visits to recheck for visits that are less than 2 days or more than 2 day to the future`() {
-      createVisitOnDate(LocalDate.now().plusDays(RECHECK_TARGET_DAYS + 1))
-      createVisitOnDate(LocalDate.now().plusDays(RECHECK_TARGET_DAYS - 1))
+    fun `should not find candidates when scheduled for less than 2 days, or or more than 2 days in the future`() {
+      createVisitOnDate(LocalDate.now().plusDays(TWO_DAYS + 1))
+      createVisitOnDate(LocalDate.now().plusDays(TWO_DAYS - 1))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
 
       assertQueueSize(0)
     }
 
     @Test
-    fun `should identify visits to recheck when visit is not cancelled or completed`() {
-      val twoDaysInFuture = LocalDate.now().plusDays(RECHECK_TARGET_DAYS)
+    fun `should find candidates when they are cancelled or completed`() {
+      val twoDaysInFuture = LocalDate.now().plusDays(TWO_DAYS)
 
-      val cancelledVisit = createVisitOnDateAndTimes(twoDaysInFuture, LocalTime.of(9, 0), LocalTime.of(10, 0))
+      val cancelledVisit = createVisitOnDateAndTimes(
+        twoDaysInFuture,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+      )
       markVisitStatus(cancelledVisit.officialVisitId, VisitStatusType.CANCELLED)
 
       val completedVisit = createVisitOnDate(twoDaysInFuture)
       markVisitStatus(completedVisit.officialVisitId, VisitStatusType.COMPLETED)
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
 
       assertQueueSize(0)
     }
   }
 
   @Nested
-  inner class ProcessCandidateVisitsToCheckJobTest {
+  inner class ProcessReviewCandidatesTest {
 
     @Test
-    fun `should process visits and not flag reviews when there are no issues found`() {
+    fun `should process review candidates with no issues`() {
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       enqueueForReview(visit.officialVisitId)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       assertQueueSize(0)
       reviewListContent() isEqualTo emptyList()
     }
 
     @Test
-    fun `should process visits and flag reviews when there are new active prisoner alerts found`() {
+    fun `should process review candidates with new active prisoner alerts found`() {
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       enqueueForReview(visit.officialVisitId)
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       assertQueueSize(0)
+
       val issues = firstReviewIssues()
       issues.size isEqualTo 1
       issues[0].issueType isEqualTo IssueType.PRISONER_NEW_ALERT
     }
 
     @Test
-    fun `should process visits and flag contact issues reviews when there are contact issues found`() {
+    fun `should process review candidates with visitor-related issues`() {
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       enqueueForReview(visit.officialVisitId)
 
@@ -367,51 +380,58 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         ),
       )
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       assertQueueSize(0)
+
       val issues = firstReviewIssues()
       issues.size isEqualTo 1
       issues[0].issueType isEqualTo IssueType.VISITOR_NOT_OFFICIAL
     }
 
     @Test
-    fun `should process visits and flag issues when there are prisoner issues found`() {
+    fun `should process review candidates with prisoner issues found`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       enqueueForReview(visit.officialVisitId)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       assertQueueSize(0)
+
       val issues = firstReviewIssues()
       issues.size isEqualTo 1
       issues[0].issueType isEqualTo IssueType.PRISONER_RELEASED
     }
 
     @Test
-    fun `should process visits and do not flag issues for visits that are more than 7 day to the future`() {
+    fun `should not process visits that are scheduled more than 7 days in the future`() {
       val visit = createVisitOnSlot(slotBeyondCheckWindow())
-      enqueueForReview(visit.officialVisitId, createdTime = LocalDateTime.now().minusDays(CHECK_WINDOW_SEVEN_DAYS))
+      enqueueForReview(visit.officialVisitId, createdTime = LocalDateTime.now().minusDays(SEVEN_DAYS))
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       assertQueueSize(0)
       reviewListContent() isEqualTo emptyList()
     }
 
     @Test
-    fun `should identify and flag issues for multiple visits scheduled for day after tomorrow`() {
+    fun `should process multiple review candidates with issues`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
-      val twoDaysInFuture = LocalDate.now().plusDays(RECHECK_TARGET_DAYS)
+      val twoDaysInFuture = LocalDate.now().plusDays(TWO_DAYS)
 
-      createVisitOnDateAndTimes(twoDaysInFuture, LocalTime.of(9, 0), LocalTime.of(10, 0))
+      // Create 2 visits
+      createVisitOnDateAndTimes(
+        twoDaysInFuture,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+      )
       createVisitOnDate(twoDaysInFuture)
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(2)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
       assertQueueSize(0)
 
       val reviews = reviewListContent()
@@ -422,16 +442,22 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should identify and flag issues for visits with previous acknowledged issues`() {
+    fun `should process candidates with previously acknowledged issues`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
-      val twoDaysInFuture = LocalDate.now().plusDays(RECHECK_TARGET_DAYS)
-      val matchingVisit = createVisitOnDateAndTimes(twoDaysInFuture, LocalTime.of(9, 0), LocalTime.of(10, 0))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      val twoDaysInFuture = LocalDate.now().plusDays(TWO_DAYS)
+      val matchingVisit = createVisitOnDateAndTimes(
+        twoDaysInFuture,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+      )
+
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(1)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
       assertQueueSize(0)
+
       firstReviewIssues().let { issues ->
         issues.size isEqualTo 1
         issues[0].issueType isEqualTo IssueType.PRISONER_RELEASED
@@ -440,11 +466,11 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.acknowledgeVisitForReview(matchingVisit.officialVisitId, MOORLAND_PRISON_USER)
       reviewListContent() isEqualTo emptyList()
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(1)
 
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       val issues = firstReviewIssues()
       issues.size isEqualTo 2
@@ -453,59 +479,40 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should identify and flag issues for visits with previously unacknowledged issues with new issues`() {
+    fun `should process candidates to flag issues even if prior unacknowledged issues exist`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
-      val twoDaysInFuture = LocalDate.now().plusDays(RECHECK_TARGET_DAYS)
+      val twoDaysInFuture = LocalDate.now().plusDays(TWO_DAYS)
       createVisitOnDateAndTimes(twoDaysInFuture, LocalTime.of(9, 0), LocalTime.of(10, 0))
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(1)
 
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
+
       assertQueueSize(0)
       firstReviewIssues().let { issues ->
         issues.size isEqualTo 1
         issues[0].issueType isEqualTo IssueType.PRISONER_RELEASED
       }
 
-      testAPIClient.runJob(JOB_IDENTIFY_CANDIDATE_VISITS_TO_RECHECK)
+      testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(1)
 
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
+
+      testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       val issues = firstReviewIssues()
       issues.size isEqualTo 2
       issues[0].issueType isEqualTo IssueType.PRISONER_RELEASED
       issues[1].issueType isEqualTo IssueType.PRISONER_NEW_ALERT
     }
-
-    @Test
-    fun `should not process when no candidate for visits to check`() {
-      val matchingVisit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
-      val cancelledVisit = createVisitOnSlot(Moorland.WEDNESDAY_9_TO_10_VISIT_SLOT)
-      markVisitStatus(cancelledVisit.officialVisitId, VisitStatusType.CANCELLED)
-
-      createVisitReview(
-        officialVisitId = matchingVisit.officialVisitId,
-        issueTypes = listOf(IssueType.VISITOR_NOT_APPROVED, IssueType.PRISONER_TRANSFERRED),
-      )
-      createVisitReview(cancelledVisit.officialVisitId)
-
-      testAPIClient.runJob(JOB_PROCESS_CANDIDATE_VISITS_TO_CHECK)
-
-      assertQueueSize(0)
-      val issues = firstReviewIssues()
-      issues.size isEqualTo 2
-      issues[0].issueType isEqualTo IssueType.VISITOR_NOT_APPROVED
-      issues[1].issueType isEqualTo IssueType.PRISONER_TRANSFERRED
-    }
   }
 
   @Nested
-  inner class VisitsReviewExpireJobTest {
+  inner class ExpireReviewsJobTest {
     @Test
-    fun `should expire visits for review when the visit date is in the past`() {
+    fun `should expire reviews when the visit date is in the past`() {
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       setVisitDate(visit.officialVisitId, LocalDate.now().minusDays(20))
 
@@ -514,7 +521,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         issueTypes = listOf(IssueType.VISITOR_NOT_APPROVED, IssueType.PRISONER_TRANSFERRED),
       )
 
-      testAPIClient.runJob(JOB_EXPIRE_VISITS_FOR_REVIEW)
+      testAPIClient.runJob(JobType.EXPIRE_VISIT_REVIEWS.name)
 
       val visitReview = visitReviewRepository.findByOfficialVisitId(visit.officialVisitId)
       visitReview[0].expiredTime isCloseTo LocalDateTime.now()

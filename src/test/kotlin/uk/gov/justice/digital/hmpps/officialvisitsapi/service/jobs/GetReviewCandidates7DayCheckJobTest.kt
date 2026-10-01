@@ -16,12 +16,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 
-class IdentifyCandidateVisitsToCheckJobTest {
+class GetReviewCandidates7DayCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val feature: FeatureSwitches = mock()
   private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
+  private val job: GetReviewCandidates7DayCheckJob = GetReviewCandidates7DayCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
 
   @Test
   fun `should call the find candidates visits service when run for each prison`() {
@@ -37,7 +37,7 @@ class IdentifyCandidateVisitsToCheckJobTest {
     verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), PENTONVILLE)
     verify(visitReviewQueueRepository).saveAndFlush(
       check {
-        it.officialVisitId == visitId1 && it.triggeringEvent == VisitReviewCheckType.CHECK
+        it.officialVisitId == visitId1 && it.triggeringEvent == VisitReviewCheckType.CHECK_7_DAYS
       },
     )
   }

@@ -10,21 +10,17 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * This job is responsible for identifying the visits that need to be reviewed.
- *
- * Visits will be checked and flagged for review.
- * Processing is done per-prison, with each prison's visits handled in a separate transaction.
+ * This job is responsible for identifying any visits occurring in 7 days time, as candidates to review.
  */
 @Component
-class IdentifyCandidateVisitsToCheckJob(
-
+class GetReviewCandidates7DayCheckJob(
   private val officialVisitRepository: OfficialVisitRepository,
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
-  features: FeatureSwitches,
-  transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
-) : PrisonAwareDailyJob<Long>(
-  jobType = JobType.IDENTIFY_CANDIDATE_VISITS_TO_CHECK,
-  features,
+  private val featureSwitches: FeatureSwitches,
+  private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
+) : VisitReviewJob<Long>(
+  jobType = JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK,
+  featureSwitches,
   transactionalPrisonJobProcessor,
   { prisonCode ->
     officialVisitRepository.findCandidateVisitsForReviewForPrison(LocalDate.now().plusDays(7), prisonCode)
@@ -35,7 +31,7 @@ class IdentifyCandidateVisitsToCheckJob(
         VisitReviewQueueEntity(
           officialVisitId = visitId,
           createdTime = LocalDateTime.now(),
-          triggeringEvent = VisitReviewCheckType.CHECK,
+          triggeringEvent = VisitReviewCheckType.CHECK_7_DAYS,
         ),
       )
     }

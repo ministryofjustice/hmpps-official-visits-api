@@ -60,11 +60,11 @@ class VisitReviewService(
     }
 
     when (checkType) {
-      VisitReviewCheckType.UPDATE -> {
-        logger.info("Check type is UPDATE")
+      VisitReviewCheckType.CHECK_ON_UPDATE -> {
+        logger.info("Check type is CHECK_ON_UPDATE")
         update(officialVisit)
       }
-      VisitReviewCheckType.RECHECK, VisitReviewCheckType.CHECK -> {
+      VisitReviewCheckType.CHECK_2_DAYS, VisitReviewCheckType.CHECK_7_DAYS -> {
         logger.info("Check type is $checkType")
         checker.check(officialVisit)
       }
@@ -155,7 +155,7 @@ class VisitReviewService(
 }
 
 enum class VisitReviewCheckType {
-  CHECK,
-  UPDATE,
-  RECHECK,
+  CHECK_7_DAYS,
+  CHECK_ON_UPDATE,
+  CHECK_2_DAYS,
 }

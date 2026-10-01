@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: expire-visits-for-review
+  name: process-review-candidates
 spec:
-  schedule:  "{{ .Values.cron.expireVisitsForReviewJob }}"
+  schedule:  "{{ .Values.cron.processReviewCandidatesJob }}"
   concurrencyPolicy: Replace
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 60
@@ -13,7 +13,7 @@ spec:
     spec:
       ttlSecondsAfterFinished: 345600 # 4 days
       backoffLimit: 2
-      activeDeadlineSeconds: 60
+      activeDeadlineSeconds: 2400
       template:
         spec:
           securityContext:
@@ -21,7 +21,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           containers:
-            - name: expire-visits-for-review-job
+            - name: process-review-candidates-job
               image: ghcr.io/ministryofjustice/hmpps-devops-tools
               securityContext:
                 allowPrivilegeEscalation: false
@@ -32,5 +32,5 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/EXPIRE_VISITS_FOR_REVIEW
+                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/PROCESS_REVIEW_CANDIDATES
           restartPolicy: Never

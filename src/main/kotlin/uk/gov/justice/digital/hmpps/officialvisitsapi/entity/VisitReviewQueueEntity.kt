@@ -23,7 +23,7 @@ open class VisitReviewQueueEntity(
   val createdTime: LocalDateTime,
 
   @Enumerated(EnumType.STRING)
-  val triggeringEvent: VisitReviewCheckType = VisitReviewCheckType.CHECK,
+  val triggeringEvent: VisitReviewCheckType = VisitReviewCheckType.CHECK_7_DAYS,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

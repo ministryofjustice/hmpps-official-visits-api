@@ -4,13 +4,11 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 
 /**
- * Base class for daily jobs that process visits on a per-prison basis.
- * Each prison's processing runs in its own transaction, providing better isolation
- * and reducing the chance of long-running transactions.
- *
+ * Base class for jobs which are related to the visits for review feature.
+ * The visit review feature switches determine which prisons, if any, the job will run for.
  * @param T The type of data supplied for processing (e.g., Long for visit IDs, VisitReviewQueueEntity)
  */
-abstract class PrisonAwareDailyJob<T>(
+abstract class VisitReviewJob<T>(
   jobType: JobType,
   private val featureSwitches: FeatureSwitches,
   private val transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
@@ -26,7 +24,7 @@ abstract class PrisonAwareDailyJob<T>(
       ?.toSet()
       ?: emptySet()
 
-    // Process each prison in its own transaction
+    // Process each prison configured for reviews
     // Transactions are performed by the PrisonJobProcessor bean to ensure Spring proxies apply @Transactional
     featureEnabledPrisonCodes.forEach { prisonCode ->
       transactionalPrisonJobProcessor.processForPrison(prisonCode, supplier, consumer)

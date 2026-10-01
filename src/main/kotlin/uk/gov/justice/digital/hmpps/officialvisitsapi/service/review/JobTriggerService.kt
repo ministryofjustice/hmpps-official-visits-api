@@ -1,25 +1,25 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.review
 
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ExpireVisitsForReviewJob
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToCheckJob
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.IdentifyCandidateVisitsToReCheckJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ExpireVisitReviewsJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.GetReviewCandidates2DayCheckJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.GetReviewCandidates7DayCheckJob
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobRunner
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessCandidateVisitsToCheckJob
+import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.ProcessReviewCandidatesJob
 
 @Service
 class JobTriggerService(
   private val jobRunner: JobRunner,
-  private val identifyCandidateVisitsToCheckJob: IdentifyCandidateVisitsToCheckJob,
-  private val identifyCandidateVisitsToReCheckJob: IdentifyCandidateVisitsToReCheckJob,
-  private val processCandidateVisitsToCheckJob: ProcessCandidateVisitsToCheckJob,
-  private val expireVisitsForReviewJob: ExpireVisitsForReviewJob,
+  private val getReviewCandidates7DayCheckJob: GetReviewCandidates7DayCheckJob,
+  private val getReviewCandidates2DayCheckJob: GetReviewCandidates2DayCheckJob,
+  private val processReviewCandidatesJob: ProcessReviewCandidatesJob,
+  private val expireVisitReviewsJob: ExpireVisitReviewsJob,
 ) {
   fun run(job: JobType) = when (job) {
-    JobType.IDENTIFY_CANDIDATE_VISITS_TO_CHECK -> jobRunner.runJob(identifyCandidateVisitsToCheckJob)
-    JobType.IDENTIFY_CANDIDATE_VISITS_TO_RECHECK -> jobRunner.runJob(identifyCandidateVisitsToReCheckJob)
-    JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK -> jobRunner.runJob(processCandidateVisitsToCheckJob)
-    JobType.EXPIRE_VISITS_FOR_REVIEW -> jobRunner.runJob(expireVisitsForReviewJob)
+    JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK -> jobRunner.runJob(getReviewCandidates7DayCheckJob)
+    JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK -> jobRunner.runJob(getReviewCandidates2DayCheckJob)
+    JobType.PROCESS_REVIEW_CANDIDATES -> jobRunner.runJob(processReviewCandidatesJob)
+    JobType.EXPIRE_VISIT_REVIEWS -> jobRunner.runJob(expireVisitReviewsJob)
   }
 }

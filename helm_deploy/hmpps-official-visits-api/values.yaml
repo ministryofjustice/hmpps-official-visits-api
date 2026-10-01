@@ -95,7 +95,7 @@ generic-prometheus-alerts:
   targetApplication: hmpps-official-visits-api
 
 cron:
-  identifyCandidateVisitsToCheckJob: "0 11 * * 1-5" # this is to run at 11am every weekday
-  identifyCandidateVisitsToReCheckJob: "0 8 * * *" # this is to run at 8am every day
-  processCandidateVisitsToCheckJob: "0 8-18 * * 1-5" # this will run at 8am, 9am, 10am, 11am, 12pm, 1pm, 2pm, 3pm, 4pm, 5pm and 6pm every weekday
-  expireVisitsForReviewJob: "0 8,18 * * 1-5" # this is to run at 8am and 6pm every weekday
+  getReviewCandidates7DayCheckJob: "0 8,18 * * *" # 8am and 6pm daily - candidates 7 days away
+  getReviewCandidates2DayCheckJob: "30 8,18 * * *" # 8.30am and 6.30pm daily - candidates 2 days away
+  processReviewCandidatesJob: "0 9,14,19 * * *" # 9am, 2pm and 7pm daily - check visits
+  expireVisitReviewsJob: "45 9,12,15,17 * * 1-5" # 9.45am, 12.45pm, 3:45pm, 5:45pm weekdays
