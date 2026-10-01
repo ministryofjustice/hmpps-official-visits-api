@@ -46,17 +46,13 @@ class PrisonerAlertsChecker(private val alertsClient: AlertsClient) {
   }
 
   fun checkPrisonerAlerts(officialVisit: OfficialVisitEntity): IssueType? {
-    /**
-     * Due to the timing of how this being called (via periodic job) we can miss alerts that have been created
-     * between the visit creation and visit update times. However, if you have updated the visit, the user will
-     * have seen the in-service update journey warnings showing the new alert.
-     * For example a visit is created when there are no active alerts, an alert is created and the visit is
-     * subsequently updated, and then the scheduled job to check for issues runs. This will not be raised as an issue.
-     */
-    val referenceDate = officialVisit.updatedTime ?: officialVisit.createdTime
-
     val hasNewAlert = alertsClient.getPrisonerAlerts(officialVisit.prisonerNumber)
-      .any { RELEVANT_ALERTS.contains(it.alertCode.code) && it.isActive && it.createdAt.isAfter(referenceDate) }
+      .any {
+        RELEVANT_ALERTS.contains(it.alertCode.code) &&
+          it.isActive &&
+          it.activeFrom <= officialVisit.visitDate &&
+          it.activeTo?.let { activeTo -> activeTo >= officialVisit.visitDate } == true
+      }
 
     return IssueType.PRISONER_NEW_ALERT.takeIf { hasNewAlert }
   }

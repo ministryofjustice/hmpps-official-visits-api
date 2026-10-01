@@ -48,6 +48,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEve
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitMetricInfo
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.VisitorMetricInfo
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -536,8 +537,16 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
       visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!).single { it.visitReviewId == issueId }.visitReviewDetails().single { it.issueType == IssueType.PRISONER_TRANSFERRED }
 
-      // The review check uses the visit updated datetime in preference to the visit created datetime
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER).copy(createdAt = tomorrow().atStartOfDay())))
+      alertsApi().stubGetPrisonerAlerts(
+        MOORLAND_PRISONER.number,
+        listOf(
+          activeAlertForPrisoner(
+            MOORLAND_PRISONER,
+            activeFrom = LocalDate.now().minusDays(1),
+            activeTo = LocalDate.now().plusDays(7),
+          ).copy(createdAt = tomorrow().atStartOfDay()),
+        ),
+      )
 
       val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
         prisonVisitSlotId = 1,

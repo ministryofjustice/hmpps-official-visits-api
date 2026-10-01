@@ -44,7 +44,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     private val createdTimeSlotIds = mutableListOf<Long>()
     private val createdVisitSlotIds = mutableListOf<Long>()
     private const val SEVEN_DAYS = 7L
-    private const val TWO_DAYS = 2L
+        private const val TWO_DAYS = 2L
   }
 
   private val officialVisitor = OfficialVisitor(
@@ -198,7 +198,16 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     fun `should identify candidate visits to check in 7 days time multiple times`() {
       val officialVisit = createVisitOnDate(LocalDate.now().plusDays(7))
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
+      alertsApi().stubGetPrisonerAlerts(
+        MOORLAND_PRISONER.number,
+        listOf(
+          activeAlertForPrisoner(
+            MOORLAND_PRISONER,
+            activeFrom = LocalDate.now().minusDays(1),
+            activeTo = LocalDate.now().plusDays(8),
+          ),
+        ),
+      )
 
       testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_7_DAY_CHECK.name)
 
@@ -241,9 +250,6 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         request = updateVisitSlotRequest,
       )
 
-      // This test is asserting one issue, when the visit had 2 issues previously.
-      // The alert check is using the visit.lastUpdatedTime or visit.createdTime and
-      // since the visit was update after the alert was added, it does not raise it.
       testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
 
       assertQueueSize(1)
@@ -253,8 +259,9 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       assertQueueSize(0)
 
       val issues3 = firstReviewIssues()
-      issues3.size isEqualTo 1
+      issues3.size isEqualTo 2
       issues3[0].issueType isEqualTo IssueType.PRISONER_RELEASED
+      issues3[1].issueType isEqualTo IssueType.PRISONER_NEW_ALERT
     }
 
     @Test
@@ -346,7 +353,17 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     fun `should process review candidates with new active prisoner alerts found`() {
       val visit = createVisitOnSlot(MONDAY_9_TO_10_VISIT_SLOT)
       enqueueForReview(visit.officialVisitId)
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
+      val today = LocalDate.now()
+      alertsApi().stubGetPrisonerAlerts(
+        MOORLAND_PRISONER.number,
+        listOf(
+          activeAlertForPrisoner(
+            MOORLAND_PRISONER,
+            activeFrom = today.minusDays(1),
+            activeTo = today.plusDays(7),
+          ),
+        ),
+      )
 
       testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
@@ -444,6 +461,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     @Test
     fun `should process candidates with previously acknowledged issues`() {
       prisonerSearchApi().stubGetPrisoner(MOORLAND_PRISONER_INACTIVE)
+      val today = LocalDate.now()
 
       val twoDaysInFuture = LocalDate.now().plusDays(TWO_DAYS)
       val matchingVisit = createVisitOnDateAndTimes(
@@ -469,7 +487,16 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(1)
 
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
+      alertsApi().stubGetPrisonerAlerts(
+        MOORLAND_PRISONER.number,
+        listOf(
+          activeAlertForPrisoner(
+            MOORLAND_PRISONER,
+            activeFrom = today.minusDays(1),
+            activeTo = today.plusDays(7),
+          ),
+        ),
+      )
       testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 
       val issues = firstReviewIssues()
@@ -498,7 +525,17 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
       assertQueueSize(1)
 
-      alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
+      val today = LocalDate.now()
+      alertsApi().stubGetPrisonerAlerts(
+        MOORLAND_PRISONER.number,
+        listOf(
+          activeAlertForPrisoner(
+            MOORLAND_PRISONER,
+            activeFrom = today.minusDays(1),
+            activeTo = LocalDate.now().plusDays(7),
+          ),
+        ),
+      )
 
       testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
 

@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.review
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -19,140 +18,166 @@ class PrisonerAlertsCheckerTest {
   private val alertsClient: AlertsClient = mock()
   private val checker = PrisonerAlertsChecker(alertsClient)
 
-  private val referenceDate = LocalDateTime.of(2024, 1, 1, 12, 0)
+  private val today = LocalDateTime.now()
 
-  private fun officialVisit(updatedTime: LocalDateTime?, createdTime: LocalDateTime): OfficialVisitEntity = mock {
+  private fun officialVisit(visitDate: LocalDate?, createdTime: LocalDateTime): OfficialVisitEntity = mock {
     whenever(it.prisonerNumber).thenReturn("A1234BC")
-    whenever(it.updatedTime).thenReturn(updatedTime)
+    whenever(it.visitDate).thenReturn(visitDate)
     whenever(it.createdTime).thenReturn(createdTime)
   }
 
-  private fun alert(isActive: Boolean, createdAt: LocalDateTime, alertCode: String = "XIT"): Alert = Alert(
+  private fun alert(
+    isActive: Boolean,
+    createdAt: LocalDateTime,
+    alertCode: String = "XIT",
+    activeFrom: LocalDate,
+    activeTo: LocalDate,
+  ): Alert = Alert(
     alertUuid = UUID.randomUUID(),
     prisonNumber = "A1234BC",
     alertCode = AlertCodeSummary("test-code", "test-description", alertCode, "test-type", true),
-    activeFrom = LocalDate.now(),
+    activeFrom = activeFrom,
     isActive = isActive,
+    activeTo = activeTo,
     createdAt = createdAt,
     createdBy = "test-user",
     createdByDisplayName = "Test User",
   )
 
-  @Nested
-  inner class ReferenceDateSelection {
+  @Test
+  fun `returns PRISONER_NEW_ALERT when the alert is active before the visit date and remains active on the visit date`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now().minusDays(1))
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = true,
+          createdAt = today.plusDays(1),
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = LocalDate.now().plusDays(7),
+        ),
+      ),
+    )
 
-    @Test
-    fun `uses updatedTime as reference date when present`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate.minusDays(5))
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = true, createdAt = referenceDate.plusMinutes(1))),
-      )
+    val result = checker.checkPrisonerAlerts(officialVisit)
 
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
-    }
-
-    @Test
-    fun `falls back to createdTime when updatedTime is null`() {
-      val officialVisit = officialVisit(updatedTime = null, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = true, createdAt = referenceDate.plusMinutes(1))),
-      )
-
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
-    }
+    assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
   }
 
-  @Nested
-  inner class AlertEvaluation {
+  @Test
+  fun `returns null when no alerts exist`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now().minusDays(1))
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(emptyList())
 
-    @Test
-    fun `returns PRISONER_NEW_ALERT when an active alert was created after the reference date`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = true, createdAt = referenceDate.plusDays(1))),
-      )
+    val result = checker.checkPrisonerAlerts(officialVisit)
 
-      val result = checker.checkPrisonerAlerts(officialVisit)
+    assertThat(result).isNull()
+  }
 
-      assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
-    }
-
-    @Test
-    fun `returns null when no alerts exist`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(emptyList())
-
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `returns null when alerts exist but none are active`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = false, createdAt = referenceDate.plusDays(1))),
-      )
-
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `returns null when active alert was created before the reference date`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = true, createdAt = referenceDate.minusDays(1))),
-      )
-
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `returns null when active alert was created exactly at the reference date`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = true, createdAt = referenceDate)),
-      )
-
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `returns null when active alert was not one of the relevant alerts`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(alert(isActive = true, createdAt = referenceDate, "EBG")),
-      )
-
-      val result = checker.checkPrisonerAlerts(officialVisit)
-
-      assertThat(result).isNull()
-    }
-
-    @Test
-    fun `returns PRISONER_NEW_ALERT when at least one of several alerts qualifies`() {
-      val officialVisit = officialVisit(updatedTime = referenceDate, createdTime = referenceDate)
-      whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
-        listOf(
-          alert(isActive = false, createdAt = referenceDate.plusDays(1)),
-          alert(isActive = true, createdAt = referenceDate.minusDays(1)),
-          alert(isActive = true, createdAt = referenceDate.plusHours(1)),
+  @Test
+  fun `returns null when alerts exist but none are active`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now().minusDays(1))
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = false,
+          createdAt = LocalDateTime.now().plusDays(1),
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = LocalDate.now().plusDays(7),
         ),
-      )
+      ),
+    )
 
-      val result = checker.checkPrisonerAlerts(officialVisit)
+    val result = checker.checkPrisonerAlerts(officialVisit)
 
-      assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
-    }
+    assertThat(result).isNull()
+  }
+
+  @Test
+  fun `returns PRISONER_NEW_ALERT when the alert starts on the visit date`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now())
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = true,
+          createdAt = today.minusDays(1),
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now().plusDays(7),
+        ),
+      ),
+    )
+
+    val result = checker.checkPrisonerAlerts(officialVisit)
+
+    assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
+  }
+
+  @Test
+  fun `returns PRISONER_NEW_ALERT when the alert ends on the visit date`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now())
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = true,
+          createdAt = today,
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = LocalDate.now(),
+        ),
+      ),
+    )
+
+    val result = checker.checkPrisonerAlerts(officialVisit)
+
+    assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
+  }
+
+  @Test
+  fun `returns null when active alert was not one of the relevant alerts`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now())
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = true,
+          createdAt = today,
+          "EBG",
+          LocalDate.now().minusDays(2),
+          LocalDate.now().plusDays(7),
+        ),
+      ),
+    )
+
+    val result = checker.checkPrisonerAlerts(officialVisit)
+
+    assertThat(result).isNull()
+  }
+
+  @Test
+  fun `returns PRISONER_NEW_ALERT when at least one of several alerts qualifies`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now())
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = false,
+          createdAt = today.plusDays(1),
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = LocalDate.now().plusDays(7),
+        ),
+        alert(
+          isActive = true,
+          createdAt = today.minusDays(1),
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = LocalDate.now().plusDays(7),
+        ),
+        alert(
+          isActive = true,
+          createdAt = today.plusHours(1),
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = LocalDate.now().plusDays(7),
+        ),
+      ),
+    )
+
+    val result = checker.checkPrisonerAlerts(officialVisit)
+
+    assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
   }
 }
