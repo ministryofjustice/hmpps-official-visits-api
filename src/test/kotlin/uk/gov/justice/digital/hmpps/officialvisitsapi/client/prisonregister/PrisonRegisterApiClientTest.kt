@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.integration.wiremock.Priso
 
 class PrisonRegisterApiClientTest {
   private val prisonId = "MDI"
-  private val department = "SOCIAL_VISIT"
+  private val department = "OFFICIAL_VISIT"
 
   private val server = PrisonRegisterApiMockServer().also { it.start() }
   private val client = PrisonRegisterClient(WebClient.create("http://localhost:${server.port()}"))
@@ -59,8 +59,7 @@ class PrisonRegisterApiClientTest {
   @Test
   fun `should return the contact details for the official visits department at a prison`() {
     val departmentContact = ContactDetailsDto(
-      // TODO: There is no contact type for OFFICIAL_VISIT as yet - needs a change to the prison register
-      type = ContactDetailsDto.Type.SOCIAL_VISIT,
+      type = ContactDetailsDto.Type.OFFICIAL_VISIT,
       emailAddress = "test@official-visit.com",
       phoneNumber = "1111111111",
       webAddress = "test.com",
