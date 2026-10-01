@@ -1,32 +1,16 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound
 
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoInteractions
-import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.FeatureSwitches
-import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
-import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.OfficialVisitFacade
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.PENTONVILLE_PRISONER
-import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.createAVisitEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitCompletionType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
-import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
-import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.UserService
-import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.DAYS_TO_LOOK_AHEAD
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.inbound.handlers.PrisonerReleasedEventHandler
-import java.time.LocalDate
+
+/**
+ * These tests just log output of the received messages.
+ * Built to be extended if and when any action is taken automatically on release.
+ */
 
 class PrisonerReleasedEventHandlerTest {
-  private val featureSwitches: FeatureSwitches = mock()
-  private val officialVisitRepository: OfficialVisitRepository = mock()
-  private val officialVisitFacade: OfficialVisitFacade = mock()
-
   val permanentReleaseEvent = PrisonerReleasedEvent(
     additionalInformation = ReleaseInformation(
       nomsNumber = PENTONVILLE_PRISONER.number,
@@ -51,88 +35,20 @@ class PrisonerReleasedEventHandlerTest {
     ),
   )
 
-  private val handler = PrisonerReleasedEventHandler(featureSwitches, officialVisitRepository, officialVisitFacade)
-
-  @BeforeEach
-  fun setup() {
-    whenever(
-      officialVisitRepository.findAllPrisonerVisitsForReleaseCancel(
-        prisonerNumber = PENTONVILLE_PRISONER.number,
-        prisonCode = PENTONVILLE,
-        visitStatusCode = VisitStatusType.SCHEDULED,
-        currentTerm = true,
-        fromDate = LocalDate.now().plusDays(1),
-        toDate = LocalDate.now().plusDays(DAYS_TO_LOOK_AHEAD),
-      ),
-    ).thenReturn(
-      listOf(
-        createAVisitEntity(1L),
-        createAVisitEntity(2L),
-      ),
-    )
-
-    whenever(featureSwitches.getValue(StringFeature.FEATURE_DPS_ENABLED_PRISONS)).thenReturn(PENTONVILLE)
-  }
+  private val handler = PrisonerReleasedEventHandler()
 
   @Test
-  @Disabled
-  fun `should cancel visits for a permanent release event when enabled for DPS official visits`() {
-    // This test is temporarily disabled - but please leave in place - it is replaced by the test below
+  fun `should handle and ignore a permanent release event`() {
     handler.handle(permanentReleaseEvent)
-
-    verify(officialVisitRepository).findAllPrisonerVisitsForReleaseCancel(
-      prisonerNumber = PENTONVILLE_PRISONER.number,
-      prisonCode = PENTONVILLE,
-      visitStatusCode = VisitStatusType.SCHEDULED,
-      currentTerm = true,
-      fromDate = LocalDate.now().plusDays(1),
-      toDate = LocalDate.now().plusDays(DAYS_TO_LOOK_AHEAD),
-    )
-
-    verify(officialVisitFacade).cancelOfficialVisit(
-      prisonCode = PENTONVILLE,
-      officialVisitId = 1L,
-      OfficialVisitCancellationRequest(
-        cancellationReason = VisitCompletionType.STAFF_CANCELLED,
-        cancellationNotes = "Automatically cancelled due to release",
-      ),
-      user = UserService.getServiceAsUser(),
-    )
-
-    verify(officialVisitFacade).cancelOfficialVisit(
-      prisonCode = PENTONVILLE,
-      officialVisitId = 2L,
-      OfficialVisitCancellationRequest(
-        cancellationReason = VisitCompletionType.STAFF_CANCELLED,
-        cancellationNotes = "Automatically cancelled due to release",
-      ),
-      user = UserService.getServiceAsUser(),
-    )
   }
 
   @Test
-  fun `should not cancel visits for any release event - temporary test`() {
-    // Temporary replacement test for the above - until we decide what to do with the release event
-    handler.handle(permanentReleaseEvent)
-    verifyNoInteractions(officialVisitFacade)
-  }
-
-  @Test
-  fun `should not attempt to cancel visits if the prison is not enabled for DPS visits`() {
-    whenever(featureSwitches.getValue(StringFeature.FEATURE_DPS_ENABLED_PRISONS)).thenReturn("")
-    handler.handle(permanentReleaseEvent)
-    verifyNoInteractions(officialVisitFacade)
-  }
-
-  @Test
-  fun `should not attempt to cancel visits for transfers`() {
+  fun `should handle and ignore a transfer event`() {
     handler.handle(transferEvent)
-    verifyNoInteractions(officialVisitFacade)
   }
 
   @Test
-  fun `should not attempt to cancel visits if the release is temporary`() {
+  fun `should handle and ignore a temporary release event`() {
     handler.handle(temporaryReleaseEvent)
-    verifyNoInteractions(officialVisitFacade)
   }
 }
