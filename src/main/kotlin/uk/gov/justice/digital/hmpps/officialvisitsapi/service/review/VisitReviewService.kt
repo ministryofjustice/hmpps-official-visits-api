@@ -54,7 +54,7 @@ class VisitReviewService(
         return
       }
       officialVisit.visitDate > today.plusDays(7) -> {
-        logger.info("Visit date is beyond 7 days from now - not checking or raising issues, visit date ${officialVisit.visitDate}, 7-days from now ${today.plusDays(7)}")
+        logger.info("Visit date is beyond 7 days from now - not checking - visit date ${officialVisit.visitDate}, 7-days from now ${today.plusDays(7)}")
         return
       }
     }

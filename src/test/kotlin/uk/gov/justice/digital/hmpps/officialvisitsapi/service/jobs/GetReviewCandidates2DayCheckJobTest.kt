@@ -55,12 +55,12 @@ class GetReviewCandidates2DayCheckJobTest {
     val today = today()
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn(PENTONVILLE)
-    whenever { officialVisitRepository.findCandidateVisitsForReReviewForPrison(today.plusDays(2), PENTONVILLE) }
+    whenever { officialVisitRepository.findScheduledVisitsForPrisonOnDate(today.plusDays(2), PENTONVILLE) }
       .thenReturn(listOf(visit.officialVisitId))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReReviewForPrison(today.plusDays(2), PENTONVILLE)
+    verify(officialVisitRepository).findScheduledVisitsForPrisonOnDate(today.plusDays(2), PENTONVILLE)
     verify(visitReviewQueueRepository).saveAndFlush(
       org.mockito.kotlin.check {
         it.officialVisitId == visit.officialVisitId && it.triggeringEvent == VisitReviewCheckType.CHECK_2_DAYS
@@ -78,15 +78,15 @@ class GetReviewCandidates2DayCheckJobTest {
 
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn("$prisonCode1,$prisonCode2")
-    whenever { officialVisitRepository.findCandidateVisitsForReReviewForPrison(today.plusDays(2), prisonCode1) }
+    whenever { officialVisitRepository.findScheduledVisitsForPrisonOnDate(today.plusDays(2), prisonCode1) }
       .thenReturn(listOf(visitId1))
-    whenever { officialVisitRepository.findCandidateVisitsForReReviewForPrison(today.plusDays(2), prisonCode2) }
+    whenever { officialVisitRepository.findScheduledVisitsForPrisonOnDate(today.plusDays(2), prisonCode2) }
       .thenReturn(listOf(visitId2))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReReviewForPrison(today.plusDays(2), prisonCode1)
-    verify(officialVisitRepository).findCandidateVisitsForReReviewForPrison(today.plusDays(2), prisonCode2)
+    verify(officialVisitRepository).findScheduledVisitsForPrisonOnDate(today.plusDays(2), prisonCode1)
+    verify(officialVisitRepository).findScheduledVisitsForPrisonOnDate(today.plusDays(2), prisonCode2)
     val captor = org.mockito.kotlin.argumentCaptor<VisitReviewQueueEntity>()
     org.mockito.kotlin.verify(visitReviewQueueRepository, org.mockito.kotlin.times(2)).saveAndFlush(captor.capture())
     val savedIds = captor.allValues.map { it.officialVisitId }

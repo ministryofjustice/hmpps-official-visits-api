@@ -23,7 +23,7 @@ class GetReviewCandidates7DayCheckJob(
   featureSwitches,
   transactionalPrisonJobProcessor,
   { prisonCode ->
-    officialVisitRepository.findCandidateVisitsForReviewForPrison(LocalDate.now().plusDays(7), prisonCode)
+    officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(LocalDate.now().plusDays(7), prisonCode)
   },
   { visitIds, _ ->
     visitIds.forEach { visitId ->

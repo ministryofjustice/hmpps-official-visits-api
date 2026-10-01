@@ -29,12 +29,12 @@ class GetReviewCandidates7DayCheckJobTest {
     val today = today()
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn(PENTONVILLE)
-    whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), PENTONVILLE) }
+    whenever { officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), PENTONVILLE) }
       .thenReturn(listOf(visitId1))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), PENTONVILLE)
+    verify(officialVisitRepository).findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), PENTONVILLE)
     verify(visitReviewQueueRepository).saveAndFlush(
       check {
         it.officialVisitId == visitId1 && it.triggeringEvent == VisitReviewCheckType.CHECK_7_DAYS
@@ -52,15 +52,15 @@ class GetReviewCandidates7DayCheckJobTest {
 
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn("$prisonCode1,$prisonCode2")
-    whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode1) }
+    whenever { officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode1) }
       .thenReturn(listOf(visitId1))
-    whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode2) }
+    whenever { officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode2) }
       .thenReturn(listOf(visitId2))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode1)
-    verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode2)
+    verify(officialVisitRepository).findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode1)
+    verify(officialVisitRepository).findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode2)
 
     val captor = argumentCaptor<VisitReviewQueueEntity>()
     verify(visitReviewQueueRepository, org.mockito.kotlin.times(2)).saveAndFlush(captor.capture())

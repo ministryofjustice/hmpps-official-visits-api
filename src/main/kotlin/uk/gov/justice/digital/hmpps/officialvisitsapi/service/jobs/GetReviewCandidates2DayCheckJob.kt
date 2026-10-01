@@ -24,7 +24,7 @@ class GetReviewCandidates2DayCheckJob(
   featureSwitches,
   transactionalPrisonJobProcessor,
   { prisonCode ->
-    officialVisitRepository.findCandidateVisitsForReReviewForPrison(LocalDate.now().plusDays(2), prisonCode)
+    officialVisitRepository.findScheduledVisitsForPrisonOnDate(LocalDate.now().plusDays(2), prisonCode)
   },
   { visitIds, _ ->
     visitIds.forEach { visitId ->
