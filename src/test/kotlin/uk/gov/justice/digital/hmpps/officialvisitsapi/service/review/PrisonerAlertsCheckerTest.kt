@@ -149,8 +149,6 @@ class PrisonerAlertsCheckerTest {
     assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
   }
 
-
-
   @Test
   fun `returns null when active alert was not one of the relevant alerts`() {
     val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now())

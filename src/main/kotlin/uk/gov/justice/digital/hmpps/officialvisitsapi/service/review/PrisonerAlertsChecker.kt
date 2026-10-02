@@ -51,7 +51,7 @@ class PrisonerAlertsChecker(private val alertsClient: AlertsClient) {
         RELEVANT_ALERTS.contains(it.alertCode.code) &&
           it.isActive &&
           it.activeFrom <= officialVisit.visitDate &&
-                (it.activeTo == null || it.activeTo >= officialVisit.visitDate)
+          (it.activeTo == null || it.activeTo >= officialVisit.visitDate)
       }
 
     return IssueType.PRISONER_NEW_ALERT.takeIf { hasNewAlert }
