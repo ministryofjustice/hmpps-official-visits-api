@@ -44,7 +44,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
     private val createdTimeSlotIds = mutableListOf<Long>()
     private val createdVisitSlotIds = mutableListOf<Long>()
     private const val SEVEN_DAYS = 7L
-        private const val TWO_DAYS = 2L
+    private const val TWO_DAYS = 2L
   }
 
   private val officialVisitor = OfficialVisitor(
