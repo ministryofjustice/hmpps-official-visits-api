@@ -31,7 +31,7 @@ class PrisonerAlertsCheckerTest {
     createdAt: LocalDateTime,
     alertCode: String = "XIT",
     activeFrom: LocalDate,
-    activeTo: LocalDate,
+    activeTo: LocalDate?,
   ): Alert = Alert(
     alertUuid = UUID.randomUUID(),
     prisonNumber = "A1234BC",
@@ -129,6 +129,27 @@ class PrisonerAlertsCheckerTest {
 
     assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
   }
+
+  @Test
+  fun `returns PRISONER_NEW_ALERT when the alert has no end date`() {
+    val officialVisit = officialVisit(visitDate = LocalDate.now(), createdTime = LocalDateTime.now())
+    whenever(alertsClient.getPrisonerAlerts("A1234BC")).thenReturn(
+      listOf(
+        alert(
+          isActive = true,
+          createdAt = today,
+          activeFrom = LocalDate.now().minusDays(2),
+          activeTo = null,
+        ),
+      ),
+    )
+
+    val result = checker.checkPrisonerAlerts(officialVisit)
+
+    assertThat(result).isEqualTo(IssueType.PRISONER_NEW_ALERT)
+  }
+
+
 
   @Test
   fun `returns null when active alert was not one of the relevant alerts`() {
