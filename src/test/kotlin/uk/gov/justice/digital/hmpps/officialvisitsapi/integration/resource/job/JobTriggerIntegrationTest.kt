@@ -241,8 +241,6 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
         request = updateVisitSlotRequest,
       )
 
-      // This test is asserting one issue, when the visit had 2 issues previously.
-      // The alert check is using the visit.lastUpdatedTime or visit.createdTime and
       // since the visit was update after the alert was added, it does not raise it.
       testAPIClient.runJob(JobType.GET_REVIEW_CANDIDATES_2_DAY_CHECK.name)
 
@@ -253,8 +251,8 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       assertQueueSize(0)
 
       val issues3 = firstReviewIssues()
-      issues3.size isEqualTo 1
-      issues3[0].issueType isEqualTo IssueType.PRISONER_RELEASED
+      issues3.size isEqualTo 2
+      issues3.map { it.issueType }.toList() containsExactlyInAnyOrder listOf(IssueType.PRISONER_NEW_ALERT, IssueType.PRISONER_RELEASED)
     }
 
     @Test

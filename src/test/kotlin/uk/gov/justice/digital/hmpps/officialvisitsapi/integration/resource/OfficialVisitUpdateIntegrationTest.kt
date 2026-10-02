@@ -536,7 +536,6 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
 
       visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!).single { it.visitReviewId == issueId }.visitReviewDetails().single { it.issueType == IssueType.PRISONER_TRANSFERRED }
 
-      // The review check uses the visit updated datetime in preference to the visit created datetime
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER).copy(createdAt = tomorrow().atStartOfDay())))
 
       val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(
