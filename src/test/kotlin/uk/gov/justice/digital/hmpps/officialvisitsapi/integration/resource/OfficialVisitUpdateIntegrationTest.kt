@@ -531,12 +531,12 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should new issue after updating the visit type`() {
+    fun `should be a new alert issue after updating the visit type`() {
       val issueId = addVisitIssues(scheduledVisit?.officialVisitId!!, IssueType.PRISONER_TRANSFERRED)
 
       visitReviewRepository.findByOfficialVisitId(scheduledVisit?.officialVisitId!!).single { it.visitReviewId == issueId }.visitReviewDetails().single { it.issueType == IssueType.PRISONER_TRANSFERRED }
 
-      // TODO There is a question over update times on visits and the created at on alerts. This is fudged on purpose with view we need to revisit it.
+      // The review check uses the visit updated datetime in preference to the visit created datetime
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER).copy(createdAt = tomorrow().atStartOfDay())))
 
       val updateVisitSlotRequest = OfficialVisitUpdateSlotRequest(

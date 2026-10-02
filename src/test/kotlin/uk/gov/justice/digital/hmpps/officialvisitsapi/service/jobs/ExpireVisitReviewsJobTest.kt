@@ -11,13 +11,13 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.today
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
-class ExpireVisitsForReviewJobTest {
+class ExpireVisitReviewsJobTest {
 
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val features: FeatureSwitches = mock()
-  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job = ExpireVisitsForReviewJob(officialVisitRepository, visitReviewService, features, transactionalPrisonJobProcessor)
+  private val prisonProcessor = PrisonProcessor()
+  private val job = ExpireVisitReviewsJob(officialVisitRepository, visitReviewService, features, prisonProcessor)
 
   @Test
   fun `should expire visits for review for each prison`() {

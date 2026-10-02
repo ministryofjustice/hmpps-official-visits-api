@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: identify-candidate-visits-to-recheck
+  name: expire-visit-reviews
 spec:
-  schedule:  "{{ .Values.cron.identifyCandidateVisitsToReCheckJob }}"
+  schedule:  "{{ .Values.cron.expireVisitReviewsJob }}"
   concurrencyPolicy: Replace
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 60
@@ -13,7 +13,7 @@ spec:
     spec:
       ttlSecondsAfterFinished: 345600 # 4 days
       backoffLimit: 2
-      activeDeadlineSeconds: 60
+      activeDeadlineSeconds: 600
       template:
         spec:
           securityContext:
@@ -21,7 +21,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           containers:
-            - name: identify-candidate-visits-to-recheck-job
+            - name: expire-visit-reviews-job
               image: ghcr.io/ministryofjustice/hmpps-devops-tools
               securityContext:
                 allowPrivilegeEscalation: false
@@ -32,5 +32,5 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/IDENTIFY_CANDIDATE_VISITS_TO_RECHECK
+                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/EXPIRE_VISIT_REVIEWS
           restartPolicy: Never

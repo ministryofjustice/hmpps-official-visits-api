@@ -6,7 +6,6 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
@@ -54,17 +53,17 @@ class VisitReviewService(
         return
       }
       officialVisit.visitDate > today.plusDays(7) -> {
-        logger.info("Visit date is beyond 7 days from now - not checking or raising issues, visit date ${officialVisit.visitDate}, 7-days from now ${today.plusDays(7)}")
+        logger.info("Visit date is beyond 7 days from now - not checking - visit date ${officialVisit.visitDate}, 7-days from now ${today.plusDays(7)}")
         return
       }
     }
 
     when (checkType) {
-      VisitReviewCheckType.UPDATE -> {
-        logger.info("Check type is UPDATE")
+      VisitReviewCheckType.CHECK_ON_UPDATE -> {
+        logger.info("Check type is CHECK_ON_UPDATE")
         update(officialVisit)
       }
-      VisitReviewCheckType.RECHECK, VisitReviewCheckType.CHECK -> {
+      VisitReviewCheckType.CHECK_2_DAYS, VisitReviewCheckType.CHECK_7_DAYS -> {
         logger.info("Check type is $checkType")
         checker.check(officialVisit)
       }
@@ -90,12 +89,6 @@ class VisitReviewService(
   fun visitCheck(officialVisitId: Long, type: VisitReviewCheckType) {
     check(officialVisitId, type)
     visitReviewQueueRepository.findByOfficialVisitId(officialVisitId)?.let(visitReviewQueueRepository::delete)
-  }
-
-  // TODO: Don't think this is necessary
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  fun visitCheckInNewTransaction(officialVisitId: Long, type: VisitReviewCheckType) {
-    visitCheck(officialVisitId, type)
   }
 
   @Transactional(readOnly = true)
@@ -155,7 +148,7 @@ class VisitReviewService(
 }
 
 enum class VisitReviewCheckType {
-  CHECK,
-  UPDATE,
-  RECHECK,
+  CHECK_7_DAYS,
+  CHECK_ON_UPDATE,
+  CHECK_2_DAYS,
 }

@@ -23,7 +23,6 @@ import java.time.LocalDateTime
 
 class VisitReviewIntegrationTest : IntegrationTestBase() {
 
-  // todo move to common place
   private val officialVisitor = OfficialVisitor(
     visitorTypeCode = VisitorType.CONTACT,
     relationshipCode = "POM",
@@ -182,7 +181,6 @@ class VisitReviewIntegrationTest : IntegrationTestBase() {
     }
   }
 
-  // todo move to common place
   private fun createVisitReview(
     officialVisitId: Long,
     expiredTime: LocalDateTime? = null,

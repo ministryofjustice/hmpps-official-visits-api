@@ -21,12 +21,18 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReview
 import java.time.LocalTime
 import java.util.UUID
 
-class ProcessCandidateVisitsToCheckJobTest {
+class ProcessReviewCandidatesJobTest {
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val visitReviewService: VisitReviewService = mock()
   private val features: FeatureSwitches = mock()
-  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job: ProcessCandidateVisitsToCheckJob = ProcessCandidateVisitsToCheckJob(visitReviewQueueRepository, visitReviewService, features, transactionalPrisonJobProcessor)
+  private val prisonProcessor = PrisonProcessor()
+
+  private val job: ProcessReviewCandidatesJob = ProcessReviewCandidatesJob(
+    visitReviewQueueRepository,
+    visitReviewService,
+    features,
+    prisonProcessor,
+  )
 
   @Test
   fun `should call the find candidates visits service when run for each prison`() {
@@ -55,7 +61,7 @@ class ProcessCandidateVisitsToCheckJobTest {
       visitReviewQueueId = 1,
       officialVisitId = visit.officialVisitId,
       createdTime = now(),
-      triggeringEvent = VisitReviewCheckType.UPDATE,
+      triggeringEvent = VisitReviewCheckType.CHECK_ON_UPDATE,
     )
     whenever { features.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn(PENTONVILLE)
@@ -65,7 +71,7 @@ class ProcessCandidateVisitsToCheckJobTest {
     job.runJob()
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(PENTONVILLE)
-    verify(visitReviewService, times(1)).visitCheckInNewTransaction(visit.officialVisitId, VisitReviewCheckType.UPDATE)
+    verify(visitReviewService, times(1)).visitCheck(visit.officialVisitId, VisitReviewCheckType.CHECK_ON_UPDATE)
   }
 
   @Test
@@ -76,13 +82,13 @@ class ProcessCandidateVisitsToCheckJobTest {
       visitReviewQueueId = 1,
       officialVisitId = 1L,
       createdTime = now(),
-      triggeringEvent = VisitReviewCheckType.CHECK,
+      triggeringEvent = VisitReviewCheckType.CHECK_7_DAYS,
     )
     val queueEntry2 = VisitReviewQueueEntity(
       visitReviewQueueId = 2,
       officialVisitId = 2L,
       createdTime = now(),
-      triggeringEvent = VisitReviewCheckType.RECHECK,
+      triggeringEvent = VisitReviewCheckType.CHECK_2_DAYS,
     )
 
     whenever { features.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
@@ -96,7 +102,7 @@ class ProcessCandidateVisitsToCheckJobTest {
 
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode1)
     verify(visitReviewQueueRepository).findCandidatesOrderedByQueueTimeForPrison(prisonCode2)
-    verify(visitReviewService).visitCheckInNewTransaction(1L, VisitReviewCheckType.CHECK)
-    verify(visitReviewService).visitCheckInNewTransaction(2L, VisitReviewCheckType.RECHECK)
+    verify(visitReviewService).visitCheck(1L, VisitReviewCheckType.CHECK_7_DAYS)
+    verify(visitReviewService).visitCheck(2L, VisitReviewCheckType.CHECK_2_DAYS)
   }
 }

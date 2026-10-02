@@ -14,8 +14,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.JobType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.jobs.review.JobTriggerService
 
 /**
- * These endpoints are secured in the ingress rather than the app so that they can be called from
- * within the namespace without requiring authentication
+ * These endpoints are secured in the ingress so can only be called from
+ * within the Cloud platform namespace without requiring authentication
  */
 
 @Tag(name = "Job Controller")
@@ -27,7 +27,7 @@ class JobController(private val jobTriggerService: JobTriggerService) {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 
-  @Operation(summary = "Endpoint to trigger a job, perhaps from a cron schedule.")
+  @Operation(summary = "Endpoint to trigger an an asynchronous job. For example, from a crontab schedule.")
   @PostMapping(path = ["/run/{jobName}"])
   @ResponseStatus(HttpStatus.ACCEPTED)
   fun runJob(@PathVariable jobName: JobType): String {

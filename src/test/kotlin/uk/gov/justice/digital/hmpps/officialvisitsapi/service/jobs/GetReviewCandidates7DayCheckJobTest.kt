@@ -16,12 +16,12 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.OfficialVisitRe
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 
-class IdentifyCandidateVisitsToCheckJobTest {
+class GetReviewCandidates7DayCheckJobTest {
   private val officialVisitRepository: OfficialVisitRepository = mock()
   private val visitReviewQueueRepository: VisitReviewQueueRepository = mock()
   private val feature: FeatureSwitches = mock()
-  private val transactionalPrisonJobProcessor = TransactionalPrisonJobProcessor()
-  private val job: IdentifyCandidateVisitsToCheckJob = IdentifyCandidateVisitsToCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, transactionalPrisonJobProcessor)
+  private val prisonProcessor = PrisonProcessor()
+  private val job: GetReviewCandidates7DayCheckJob = GetReviewCandidates7DayCheckJob(officialVisitRepository, visitReviewQueueRepository, feature, prisonProcessor)
 
   @Test
   fun `should call the find candidates visits service when run for each prison`() {
@@ -29,15 +29,15 @@ class IdentifyCandidateVisitsToCheckJobTest {
     val today = today()
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn(PENTONVILLE)
-    whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), PENTONVILLE) }
+    whenever { officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), PENTONVILLE) }
       .thenReturn(listOf(visitId1))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), PENTONVILLE)
+    verify(officialVisitRepository).findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), PENTONVILLE)
     verify(visitReviewQueueRepository).saveAndFlush(
       check {
-        it.officialVisitId == visitId1 && it.triggeringEvent == VisitReviewCheckType.CHECK
+        it.officialVisitId == visitId1 && it.triggeringEvent == VisitReviewCheckType.CHECK_7_DAYS
       },
     )
   }
@@ -52,15 +52,15 @@ class IdentifyCandidateVisitsToCheckJobTest {
 
     whenever { feature.getValue(StringFeature.FEATURE_VISITS_NEED_REVIEW_PRISONS, null) }
       .thenReturn("$prisonCode1,$prisonCode2")
-    whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode1) }
+    whenever { officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode1) }
       .thenReturn(listOf(visitId1))
-    whenever { officialVisitRepository.findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode2) }
+    whenever { officialVisitRepository.findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode2) }
       .thenReturn(listOf(visitId2))
 
     job.runJob()
 
-    verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode1)
-    verify(officialVisitRepository).findCandidateVisitsForReviewForPrison(today.plusDays(7), prisonCode2)
+    verify(officialVisitRepository).findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode1)
+    verify(officialVisitRepository).findScheduledUnreviewedVisitsForPrisonOnDate(today.plusDays(7), prisonCode2)
 
     val captor = argumentCaptor<VisitReviewQueueEntity>()
     verify(visitReviewQueueRepository, org.mockito.kotlin.times(2)).saveAndFlush(captor.capture())

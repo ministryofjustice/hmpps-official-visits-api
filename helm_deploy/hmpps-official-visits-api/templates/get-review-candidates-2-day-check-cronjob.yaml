@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: process-candidate-visits-to-check
+  name: get-review-candidates-2-day-check
 spec:
-  schedule:  "{{ .Values.cron.processCandidateVisitsToCheckJob }}"
+  schedule:  "{{ .Values.cron.getReviewCandidates2DayCheckJob }}"
   concurrencyPolicy: Replace
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 60
@@ -13,7 +13,7 @@ spec:
     spec:
       ttlSecondsAfterFinished: 345600 # 4 days
       backoffLimit: 2
-      activeDeadlineSeconds: 60
+      activeDeadlineSeconds: 2400
       template:
         spec:
           securityContext:
@@ -21,7 +21,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           containers:
-            - name: process-candidate-visits-to-check-job
+            - name: get-review-candidates-2-day-check-job
               image: ghcr.io/ministryofjustice/hmpps-devops-tools
               securityContext:
                 allowPrivilegeEscalation: false
@@ -32,5 +32,5 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/PROCESS_CANDIDATE_VISITS_TO_CHECK
+                - curl --fail --retry 2 -XPOST http://hmpps-official-visits-api/job-admin/run/GET_REVIEW_CANDIDATES_2_DAY_CHECK
           restartPolicy: Never

@@ -7,32 +7,28 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewQueueEnt
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewQueueRepository
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
 
-private val log = LoggerFactory.getLogger(ProcessCandidateVisitsToCheckJob::class.java)
+private val log = LoggerFactory.getLogger(ProcessReviewCandidatesJob::class.java)
 
 /**
- * This job is responsible for processing the visits that need to be reviewed.
- *
- * Visits will be processed and flagged for review.
- * Processing is done per-prison, but each queued visit is handled in its own transaction so
- * a failure in one visit does not roll back the successful ones from the same prison batch.
+ * This job is responsible for checking whether candidates visits have any issues to be reviewed.
  */
 @Component
-class ProcessCandidateVisitsToCheckJob(
+class ProcessReviewCandidatesJob(
   private val visitReviewQueueRepository: VisitReviewQueueRepository,
   private val visitReviewService: VisitReviewService,
-  features: FeatureSwitches,
-  transactionalPrisonJobProcessor: TransactionalPrisonJobProcessor,
-) : PrisonAwareDailyJob<VisitReviewQueueEntity>(
-  jobType = JobType.PROCESS_CANDIDATE_VISITS_TO_CHECK,
-  features,
-  transactionalPrisonJobProcessor,
+  private val featureSwitches: FeatureSwitches,
+  private val prisonProcessor: PrisonProcessor,
+) : VisitReviewJob<VisitReviewQueueEntity>(
+  jobType = JobType.PROCESS_REVIEW_CANDIDATES,
+  featureSwitches = featureSwitches,
+  prisonProcessor,
   { prisonCode ->
     visitReviewQueueRepository.findCandidatesOrderedByQueueTimeForPrison(prisonCode)
   },
   { queueEntries, prisonCode ->
     queueEntries.forEach { queueEntry ->
       try {
-        visitReviewService.visitCheckInNewTransaction(queueEntry.officialVisitId, queueEntry.triggeringEvent)
+        visitReviewService.visitCheck(queueEntry.officialVisitId, queueEntry.triggeringEvent)
       } catch (exception: Exception) {
         log.error(
           "Failed to process visit review queue item for officialVisitId={} and prisonCode={} and event={}",

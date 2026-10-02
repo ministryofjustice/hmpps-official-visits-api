@@ -183,7 +183,7 @@ class OfficialVisitFacade(
       user = user,
     )
 
-    visitReviewService.visitCheck(officialVisitId, VisitReviewCheckType.UPDATE)
+    visitReviewService.visitCheck(officialVisitId, VisitReviewCheckType.CHECK_ON_UPDATE)
   }
 
   fun updateComments(officialVisitId: Long, prisonCode: String, request: OfficialVisitUpdateCommentRequest, user: User) {
@@ -245,7 +245,7 @@ class OfficialVisitFacade(
       )
     }
 
-    visitReviewService.visitCheck(officialVisitId, VisitReviewCheckType.UPDATE)
+    visitReviewService.visitCheck(officialVisitId, VisitReviewCheckType.CHECK_ON_UPDATE)
   }
 
   fun getNotificationsByOfficialVisitId(officialVisitId: Long, sort: Sort): List<OfficialVisitNotification> = notificationsService.getNotificationsByOfficialVisitId(

@@ -265,7 +265,7 @@ class OfficialVisitFacadeTest {
         user = user,
       )
 
-      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.UPDATE)
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.CHECK_ON_UPDATE)
     }
   }
 
@@ -360,7 +360,7 @@ class OfficialVisitFacadeTest {
         source = Source.DPS,
       )
 
-      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.UPDATE)
+      verify(visitReviewService).visitCheck(1, VisitReviewCheckType.CHECK_ON_UPDATE)
     }
   }
 
