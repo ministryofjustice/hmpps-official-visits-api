@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.10"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.11"
   id("org.openapi.generator") version "7.25.0"
   kotlin("plugin.spring") version "2.4.20"
   kotlin("plugin.jpa") version "2.4.20"
@@ -32,7 +32,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql:42.7.13")
 
   // Open telemetry dependencies
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.31.1")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.32.0")
 
   // Gov Notify client
   implementation("uk.gov.service.notify:notifications-java-client:6.2.1-RELEASE")
@@ -46,7 +46,7 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
 
   // SAR test library
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.3")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.4")
 
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
 
