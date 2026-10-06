@@ -480,8 +480,7 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
       val issues = testAPIClient.getVisitsForReviewList().content[0].issues
 
       // The previous PRISONER_RELEASED issue has been acknowledged so only reports the new PRISONER_NEW_ALERT issue
-      issues.size isEqualTo 1
-      issues[0].issueType isEqualTo IssueType.PRISONER_NEW_ALERT
+      issues.single().issueType isEqualTo IssueType.PRISONER_NEW_ALERT
     }
 
     @Test
