@@ -8,7 +8,6 @@ import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitForReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
@@ -45,46 +44,50 @@ class VisitReviewService(
 
     when {
       officialVisit.visitStatusCode != VisitStatusType.SCHEDULED -> {
-        logger.info("Visit is not scheduled state ${officialVisit.visitStatusCode}")
         return
       }
       officialVisit.visitDate < today -> {
-        logger.info("Visit was scheduled in the past ${officialVisit.visitDate}")
         return
       }
       officialVisit.visitDate > today.plusDays(7) -> {
-        logger.info("Visit date is beyond 7 days from now - not checking - visit date ${officialVisit.visitDate}, 7-days from now ${today.plusDays(7)}")
         return
       }
     }
 
+    logger.info("Visit eligible for review checks - ID ${officialVisit.officialVisitId} visit date ${officialVisit.visitDate} status ${officialVisit.visitStatusCode}")
+
+    /**
+     * The 7 and 2 day checks currently do the same checks today.
+     * They are separate because they may evolve differently, depending on user feedback.
+     * The question - should the 2-day check re-raise previously acknowledged issues?
+     */
+
     when (checkType) {
       VisitReviewCheckType.CHECK_ON_UPDATE -> {
-        logger.info("Check type is CHECK_ON_UPDATE")
-        update(officialVisit)
+        // Remove and replace existing review
+        visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
+        visitReviewRepository.flush()
+        checker.check(officialVisit)
       }
       VisitReviewCheckType.CHECK_2_DAYS, VisitReviewCheckType.CHECK_7_DAYS -> {
-        logger.info("Check type is $checkType")
+        // Retain any existing review and acknowledgement detail, if they exist
         checker.check(officialVisit)
       }
     }
   }
 
-  private fun update(officialVisit: OfficialVisitEntity) {
-    logger.info("UPDATE check - removing any review items for ${officialVisit.officialVisitId}")
-    visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
-    visitReviewRepository.flush()
-
-    logger.info("UPDATE check - calling the standard check for ${officialVisit.officialVisitId}")
-    checker.check(officialVisit)
-  }
-
+  /**
+   * Called by the review expiry job - to expire any issues after the visit date has passed.
+   */
   @Transactional
   fun expire(officialVisitId: Long) {
-    logger.info("EXPIRING official visit ID $officialVisitId - date must have passed now")
     visitReviewRepository.findByOfficialVisitId(officialVisitId).forEach(VisitReviewEntity::expire)
   }
 
+  /**
+   * Called by the process-visit-reviews job - to check visit candidates for potential issues.
+   * After checking, it removes the visit candidate from the visit_review_queue table.
+   */
   @Transactional
   fun visitCheck(officialVisitId: Long, type: VisitReviewCheckType) {
     check(officialVisitId, type)
