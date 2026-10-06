@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.mode
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.TimeSource
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.IssueType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
-import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewDetailEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitReviewEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.VisitReviewRepository
 
@@ -25,78 +24,72 @@ class VisitReviewChecker(
     private val logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun check(officialVisit: OfficialVisitEntity) = processVisit(officialVisit, alreadyRaised = this::hasExistingUnAcknowledgedIssues)
-
-  fun recheck(officialVisit: OfficialVisitEntity) = processVisit(officialVisit, alreadyRaised = this::hasExistingIssues)
-
-  private fun processVisit(
-    officialVisit: OfficialVisitEntity,
-    alreadyRaised: (VisitReviewDetailEntity, IssueType) -> Boolean,
-  ) {
+  fun check(officialVisit: OfficialVisitEntity) {
+    // Get the prisoner details - abandon the check if not found
     val prisoner = prisonerSearchClient.getPrisoner(officialVisit.prisonerNumber) ?: return
-    val currentIssues = detectIssues(officialVisit, prisoner)
-    if (currentIssues.isEmpty()) {
-      logger.info("processVisit: No issues detected for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
+
+    // Identify any new issues for this visit as it stands now
+    val newIssues = detectIssues(officialVisit, prisoner)
+
+    // If there are no issues found remove previously recorded issues, as now outdated
+    if (newIssues.isEmpty()) {
+      visitReviewRepository.deleteByOfficialVisitId(officialVisit.officialVisitId)
+      visitReviewRepository.flush()
       return
     }
 
-    logger.info("processVisit: Found ${currentIssues.size} issues for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
+    logger.info("Found ${newIssues.size} issues for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
 
+    // Get the existing issue review details for this visit
     val existingReview = getExistingVisitReview(officialVisit.officialVisitId)
-    if (existingReview != null) {
-      addIssuesToExistingReview(existingReview, currentIssues, alreadyRaised)
-    } else {
-      logger.info("processVisit: This is the first list of issues for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
-      createVisitReview(officialVisit, currentIssues)
-    }
+
+    // If there were was an existing review, add the new issues to it, otherwise create a new review and add them
+    existingReview?.let { addIssuesToExistingReview(existingReview, newIssues) } ?: createVisitReview(officialVisit, newIssues)
   }
 
+  /**
+   * This method performs the checks to identify if any issues are present on the visit today.
+   */
   private fun detectIssues(officialVisit: OfficialVisitEntity, prisoner: Prisoner): Set<IssueType> = buildSet {
     if (prisoner.isReleased()) {
-      logger.info("detectIssues: Prisoner is released - adding PRISONER_RELEASED issue for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
       add(IssueType.PRISONER_RELEASED)
     }
 
     if (prisoner.isAtDifferentPrisonTo(officialVisit.prisonCode)) {
-      logger.info("detectIssues: Prisoner is transferred - adding PRISONER_TRANSFERRED issue for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
       add(IssueType.PRISONER_TRANSFERRED)
     }
 
-    logger.info("detectIssues: Checking for visitor issues for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
+    // Identify issues with visitors
     addAll(visitorIssueChecker.checkVisitorIssues(officialVisit).map { it.issueType })
 
-    logger.info("detectIssues: Checking for new prisoner alerts for ${officialVisit.officialVisitId} on ${officialVisit.visitDate} for ${officialVisit.prisonerNumber}")
+    // Identify if new prisoner alerts have been created since the visit was created
     prisonerAlertsChecker.checkPrisonerAlerts(officialVisit)?.let { add(it) }
   }
 
-  private fun addIssuesToExistingReview(
-    existingReview: VisitReviewEntity,
-    currentIssues: Set<IssueType>,
-    alreadyRaised: (VisitReviewDetailEntity, IssueType) -> Boolean,
-  ) {
-    logger.info("addIssuesToExistingReview: There are already existing issues for ${existingReview.officialVisitId} - adding more")
-    currentIssues.forEach { issueType ->
-      if (existingReview.visitReviewDetails().none { alreadyRaised(it, issueType) }) {
+  /**
+   * Adds new issues to an existing review, but only if they are not already present.
+   */
+  private fun addIssuesToExistingReview(existingReview: VisitReviewEntity, newIssues: Set<IssueType>) {
+    var issuesAdded = false
+    newIssues.forEach { issueType ->
+      if (existingReview.visitReviewDetails().none { it.issueType == issueType }) {
         existingReview.addVisitReviewDetails(timeSource.now(), issueType, null)
-        visitReviewRepository.saveAndFlush(existingReview)
+        issuesAdded = true
       }
     }
+
+    if (issuesAdded) {
+      visitReviewRepository.saveAndFlush(existingReview)
+    }
   }
 
-  private fun createVisitReview(officialVisit: OfficialVisitEntity, currentIssues: Set<IssueType>) {
-    val visitReview = VisitReviewEntity(
-      officialVisitId = officialVisit.officialVisitId,
-      raisedTime = timeSource.now(),
-    ).apply {
-      currentIssues.forEach { issueType -> addVisitReviewDetails(raisedTime, issueType, null) }
+  /**
+   * Creates a new review and adds any identified issues to it
+   */
+  private fun createVisitReview(officialVisit: OfficialVisitEntity, newIssues: Set<IssueType>) {
+    val visitReview = VisitReviewEntity(officialVisitId = officialVisit.officialVisitId, raisedTime = timeSource.now()).apply {
+      newIssues.forEach { issueType -> addVisitReviewDetails(raisedTime, issueType, null) }
     }
-
-    logger.info("createVisitReview: Adding ${currentIssues.size} issues to a new review for ${officialVisit.officialVisitId}")
-
     visitReviewRepository.saveAndFlush(visitReview)
   }
-
-  private fun hasExistingUnAcknowledgedIssues(detail: VisitReviewDetailEntity, issueType: IssueType): Boolean = detail.issueType == issueType && detail.acknowledgedBy == null
-
-  private fun hasExistingIssues(detail: VisitReviewDetailEntity, issueType: IssueType): Boolean = detail.issueType == issueType
 }

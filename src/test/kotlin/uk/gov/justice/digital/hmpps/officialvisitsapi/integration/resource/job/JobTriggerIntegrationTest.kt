@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.officialvisitsapi.integration.resource.job
 
+import org.awaitility.Awaitility.await
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -469,11 +471,17 @@ class JobTriggerIntegrationTest : IntegrationTestBase() {
 
       alertsApi().stubGetPrisonerAlerts(MOORLAND_PRISONER.number, listOf(activeAlertForPrisoner(MOORLAND_PRISONER)))
       testAPIClient.runJob(JobType.PROCESS_REVIEW_CANDIDATES.name)
+      assertQueueSize(0)
 
-      val issues = firstReviewIssues()
-      issues.size isEqualTo 2
-      issues[0].issueType isEqualTo IssueType.PRISONER_RELEASED
-      issues[1].issueType isEqualTo IssueType.PRISONER_NEW_ALERT
+      await().untilCallTo {
+        testAPIClient.getVisitsForReviewList().content.size isEqualTo 1
+      }
+
+      val issues = testAPIClient.getVisitsForReviewList().content[0].issues
+
+      // The previous PRISONER_RELEASED issue has been acknowledged so only reports the new PRISONER_NEW_ALERT issue
+      issues.size isEqualTo 1
+      issues[0].issueType isEqualTo IssueType.PRISONER_NEW_ALERT
     }
 
     @Test
