@@ -216,7 +216,7 @@ class OfficialVisitUpdateService(
           changes {
             newVisitors.forEach { visitor -> visitorAdded(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
             updatedVisitors.forEach { (_, visitor) -> visitorUpdated(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
-            removedVisitors.forEach { visitor -> visitorRemoved(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
+            removedVisitors.forEach { visitor -> visitorRemoved(visitor.auditName(allPrisonerContacts)) }
           }
         },
       )
@@ -251,7 +251,21 @@ class OfficialVisitUpdateService(
     }
   }
 
-  private fun PrisonerContact.fullName() = "${firstName.lowercase().replaceFirstChar { it.uppercase() }} ${lastName.lowercase().replaceFirstChar { it.uppercase() }}"
+  private fun String.toTitleCase() = lowercase().replaceFirstChar { it.uppercase() }
+
+  private fun PrisonerContact.fullName() = "${firstName.toTitleCase()} ${lastName.toTitleCase()}"
+
+  /**
+   * Audit name for a removed visitor. The prisoner contact relationship may no longer exist (often the reason the
+   * visitor is being removed), so use the name held on the visitor record first, fall back to the contact for older
+   * records without a name, and never fail the request because the contact is missing.
+   */
+  private fun OfficialVisitorEntity.auditName(contacts: List<PrisonerContact>): String = listOfNotNull(firstName, lastName)
+    .filter { it.isNotBlank() }
+    .joinToString(" ") { it.toTitleCase() }
+    .takeIf { it.isNotBlank() }
+    ?: findMatchingPersonOrNull(contacts, this)?.fullName()
+    ?: "unknown"
 
   private fun OfficialVisitor.isNewVisitor() = officialVisitorId == 0L
 
@@ -389,15 +403,19 @@ class OfficialVisitUpdateService(
     }
   } ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
 
-  private fun findMatchingPerson(
+  /**
+   * Lenient lookup for an existing visitor record: returns null rather than throwing when the prisoner contact
+   * relationship no longer exists.
+   */
+  private fun findMatchingPersonOrNull(
     matchingContacts: List<PrisonerContact>,
     visitor: OfficialVisitorEntity,
-  ): PrisonerContact = matchingContacts.singleOrNull {
+  ): PrisonerContact? = matchingContacts.singleOrNull {
     if (visitor.prisonerContactId != null) {
       it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
     } else {
-      // fallback to relationship code if prisonerContactId is not provided in the request, as this because it is nullable and existing visitors may not have it populated
+      // fallback to relationship code as prisonerContactId is nullable and older visitor records may not have it populated
       it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
     }
-  } ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
+  }
 }
