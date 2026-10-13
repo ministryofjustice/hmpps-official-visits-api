@@ -169,7 +169,14 @@ class OfficialVisitUpdateService(
   }
 
   /**
-   * Update the visitors on the visit, adding, removing and updating as required.
+   * Replace the visitors on a visit with the visitors in the request.
+   *
+   * - officialVisitorId == 0: a new visitor, added.
+   * - officialVisitorId != 0: an existing visitor to keep, updated only if something changed.
+   * - Existing visitors missing from the request are removed.
+   *
+   * Every requested visitor must match exactly one current prisoner contact. The whole request is validated and
+   * resolved before anything is changed.
    */
   @Transactional
   fun updateVisitors(
@@ -183,239 +190,177 @@ class OfficialVisitUpdateService(
 
     val existingVisitors = ove.officialVisitors().associateBy { it.officialVisitorId }
 
-    val (newVisitors, updatedVisitors, removedVisitors) = run {
-      val new = request.officialVisitors.filter { it.isNewVisitor() }
-      val updates = request.officialVisitors.filterNot { it.isNewVisitor() }.associateBy { it.officialVisitorId }
-      val removals = existingVisitors.values.filterNot { updates.containsKey(it.officialVisitorId) }
+    // 1. Validate and resolve: work out exactly what will change before touching anything
+    val (requestedNew, requestedExisting) = request.officialVisitors.partition { it.isNewVisitor() }
+    val keptVisitorIds = requestedExisting.map { it.officialVisitorId }.toSet()
 
-      require(updates.keys.all { existingVisitors.containsKey(it) }) {
-        "Request contains visitors which do not exist on official visit with id $officialVisitId"
-      }
-
-      Triple(new, updates, removals)
+    require(keptVisitorIds.size == requestedExisting.size) {
+      "Request contains duplicate visitors for official visit with id $officialVisitId"
+    }
+    require(existingVisitors.keys.containsAll(keptVisitorIds)) {
+      "Request contains visitors which do not exist on official visit with id $officialVisitId"
     }
 
-    val allPrisonerContacts = contactsService.getAllPrisonerContacts(prisonerNumber = ove.prisonerNumber, approved = null, currentTerm = true)
+    // Only call out to the contacts API once the request is structurally valid
+    val contacts = contactsService.getAllPrisonerContacts(prisonerNumber = ove.prisonerNumber, approved = null, currentTerm = true)
+
+    val visitorsToAdd = requestedNew.map { visitor -> visitor to contacts.matchFor(visitor) }
+
+    val visitorsToUpdate = requestedExisting
+      .map { visitor -> Triple(existingVisitors.getValue(visitor.officialVisitorId), visitor, contacts.matchFor(visitor)) }
+      .filter { (entity, visitor, contact) -> entity.hasChanges(visitor, contact) }
+
+    // Remove any existing visitors which are not in the request
+    val visitorsToRemove = existingVisitors.values.filterNot { it.officialVisitorId in keptVisitorIds }
+
+    // 2. Apply
+    visitorsToRemove.forEach(ove::removeVisitor)
+
+    val updated = visitorsToUpdate.map { (entity, visitor, contact) ->
+      officialVisitorRepository.saveAndFlush(entity.applyUpdate(visitor, contact, user))
+    }
+
+    val added = visitorsToAdd.map { (visitor, contact) ->
+      officialVisitorRepository.saveAndFlush(newVisitorEntity(ove, visitor, contact, user))
+    }
+
+    // 3. Audit and metrics
+    auditingService.recordAuditEvent(
+      auditVisitorChangedEvent {
+        officialVisitId(ove.officialVisitId)
+        summaryText(AuditEventType.VISITOR_CHANGED)
+        eventSource("DPS")
+        user(user)
+        prisonCode(ove.prisonCode)
+        prisonerNumber(ove.prisonerNumber)
+        changes {
+          added.forEach { visitorAdded(it.auditName()) }
+          updated.forEach { visitorUpdated(it.auditName()) }
+          visitorsToRemove.forEach { visitorRemoved(it.auditName()) }
+        }
+      },
+    )
+
+    added.forEach { sendVisitorMetric(MetricsEvents.ADD_VISITOR, it, officialVisitId, prisonCode, user) }
+    visitorsToRemove.forEach { sendVisitorMetric(MetricsEvents.REMOVE_VISITOR, it, officialVisitId, prisonCode, user) }
 
     return OfficialVisitUpdateVisitorsResponse(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
       prisonerNumber = ove.prisonerNumber,
-      visitorsAdded = addNewVisitors(ove, newVisitors, allPrisonerContacts, user),
-      visitorsDeleted = deleteExistingVisitors(ove, removedVisitors),
-      visitorsUpdated = updateExistingVisitors(updatedVisitors, allPrisonerContacts, user),
-    ).also {
-      auditingService.recordAuditEvent(
-        auditVisitorChangedEvent {
-          officialVisitId(ove.officialVisitId)
-          summaryText(AuditEventType.VISITOR_CHANGED)
-          eventSource("DPS")
-          user(user)
-          prisonCode(ove.prisonCode)
-          prisonerNumber(ove.prisonerNumber)
-          changes {
-            newVisitors.forEach { visitor -> visitorAdded(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
-            updatedVisitors.forEach { (_, visitor) -> visitorUpdated(findMatchingPerson(allPrisonerContacts, visitor).fullName()) }
-            removedVisitors.forEach { visitor -> visitorRemoved(visitor.auditName(allPrisonerContacts)) }
-          }
-        },
-      )
-    }.also {
-      it.visitorsAdded.forEach { value ->
-        metricsService.send(
-          MetricsEvents.ADD_VISITOR,
-          VisitorMetricInfo(
-            source = Source.DPS,
-            username = user.username,
-            prisonCode = prisonCode,
-            officialVisitId = officialVisitId,
-            contactId = value.contactId,
-            officialVisitorId = value.officialVisitorId,
-          ),
-        )
-      }
-    }.also {
-      it.visitorsDeleted.forEach { value ->
-        metricsService.send(
-          MetricsEvents.REMOVE_VISITOR,
-          VisitorMetricInfo(
-            source = Source.DPS,
-            username = user.username,
-            prisonCode = prisonCode,
-            officialVisitId = officialVisitId,
-            contactId = value.contactId,
-            officialVisitorId = value.officialVisitorId,
-          ),
-        )
-      }
-    }
+      visitorsAdded = added.map { it.toVisitorUpdated() },
+      visitorsDeleted = visitorsToRemove.map { it.toVisitorUpdated() },
+      visitorsUpdated = updated.map { it.toVisitorUpdated() },
+    )
   }
 
-  private fun String.toTitleCase() = lowercase().replaceFirstChar { it.uppercase() }
-
-  private fun PrisonerContact.fullName() = "${firstName.toTitleCase()} ${lastName.toTitleCase()}"
+  private fun newVisitorEntity(
+    visit: OfficialVisitEntity,
+    visitor: OfficialVisitor,
+    contact: PrisonerContact,
+    user: User,
+  ) = OfficialVisitorEntity(
+    officialVisit = visit,
+    visitorTypeCode = VisitorType.CONTACT,
+    relationshipTypeCode = contact.relationshipType(),
+    relationshipCode = contact.relationshipToPrisonerCode,
+    contactId = visitor.contactId,
+    prisonerContactId = contact.prisonerContactId,
+    firstName = contact.firstName,
+    lastName = contact.lastName,
+    leadVisitor = visitor.leadVisitor ?: false,
+    assistedVisit = visitor.assistedVisit ?: false,
+    visitorNotes = visitor.assistedNotes,
+    createdBy = user.username,
+    createdTime = LocalDateTime.now(),
+  ).apply {
+    visitor.equipmentDescription()?.let { visitorEquipment = equipment(it, user) }
+  }
 
   /**
-   * Audit name for a removed visitor. The prisoner contact relationship may no longer exist (often the reason the
-   * visitor is being removed), so use the name held on the visitor record first, fall back to the contact for older
-   * records without a name, and never fail the request because the contact is missing.
+   * True if applying the request would change the visitor. Compares against the values applyUpdate will
+   * actually write, so the two always agree.
    */
-  private fun OfficialVisitorEntity.auditName(contacts: List<PrisonerContact>): String = listOfNotNull(firstName, lastName)
-    .filter { it.isNotBlank() }
-    .joinToString(" ") { it.toTitleCase() }
-    .takeIf { it.isNotBlank() }
-    ?: findMatchingPersonOrNull(contacts, this)?.fullName()
-    ?: "unknown"
+  private fun OfficialVisitorEntity.hasChanges(visitor: OfficialVisitor, contact: PrisonerContact) = prisonerContactId == null ||
+    firstName == null ||
+    lastName == null ||
+    relationshipTypeCode != contact.relationshipType() ||
+    relationshipCode != contact.relationshipToPrisonerCode ||
+    leadVisitor != (visitor.leadVisitor ?: false) ||
+    assistedVisit != (visitor.assistedVisit ?: false) ||
+    visitorNotes != visitor.assistedNotes ||
+    visitorEquipment?.description != visitor.equipmentDescription()
 
-  private fun OfficialVisitor.isNewVisitor() = officialVisitorId == 0L
-
-  private fun deleteExistingVisitors(ove: OfficialVisitEntity, visitorsToRemove: List<OfficialVisitorEntity>) = visitorsToRemove.map { visitor ->
-    ove.removeVisitor(visitor)
-    OfficialVisitorUpdated(officialVisitorId = visitor.officialVisitorId, contactId = visitor.contactId!!)
+  private fun OfficialVisitorEntity.applyUpdate(visitor: OfficialVisitor, contact: PrisonerContact, user: User) = apply {
+    relationshipTypeCode = contact.relationshipType()
+    relationshipCode = contact.relationshipToPrisonerCode
+    leadVisitor = visitor.leadVisitor ?: false
+    assistedVisit = visitor.assistedVisit ?: false
+    visitorNotes = visitor.assistedNotes
+    val newEquipment = visitor.equipmentDescription()
+    if (visitorEquipment?.description != newEquipment) {
+      visitorEquipment = newEquipment?.let { equipment(it, user) }
+    }
+    // Backfill identity fields on older records; values captured at booking are kept
+    prisonerContactId = prisonerContactId ?: contact.prisonerContactId
+    firstName = firstName ?: contact.firstName
+    lastName = lastName ?: contact.lastName
+    updatedBy = user.username
+    updatedTime = LocalDateTime.now()
   }
 
-  private fun addNewVisitors(
-    visit: OfficialVisitEntity,
-    visitorsToAdd: Collection<OfficialVisitor>,
-    matchingContacts: List<PrisonerContact>,
+  private fun sendVisitorMetric(
+    event: MetricsEvents,
+    visitor: OfficialVisitorEntity,
+    officialVisitId: Long,
+    prisonCode: String,
     user: User,
-  ) = buildList {
-    visitorsToAdd.forEach { visitor ->
-      val matchingPerson = findMatchingPerson(matchingContacts, visitor)
+  ) = metricsService.send(
+    event,
+    VisitorMetricInfo(
+      source = Source.DPS,
+      username = user.username,
+      prisonCode = prisonCode,
+      officialVisitId = officialVisitId,
+      contactId = visitor.contactId!!,
+      officialVisitorId = visitor.officialVisitorId,
+    ),
+  )
 
-      val savedVisitor = officialVisitorRepository.saveAndFlush(
-        OfficialVisitorEntity(
-          officialVisit = visit,
-          visitorTypeCode = VisitorType.CONTACT,
-          relationshipTypeCode = if (matchingPerson.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL,
-          relationshipCode = matchingPerson.relationshipToPrisonerCode,
-          contactId = visitor.contactId,
-          prisonerContactId = matchingPerson.prisonerContactId,
-          firstName = matchingPerson.firstName,
-          lastName = matchingPerson.lastName,
-          leadVisitor = visitor.leadVisitor ?: false,
-          assistedVisit = visitor.assistedVisit ?: false,
-          visitorNotes = visitor.assistedNotes,
-          createdBy = user.username,
-          createdTime = LocalDateTime.now(),
-        ).apply {
-          visitor.visitorEquipment?.description?.let { description ->
-            visitorEquipment = VisitorEquipmentEntity(
-              officialVisitor = this,
-              description = description,
-              createdBy = user.username,
-            )
-          }
-        },
-      )
-
-      add(
-        OfficialVisitorUpdated(
-          officialVisitorId = savedVisitor.officialVisitorId,
-          contactId = savedVisitor.contactId!!,
-        ),
-      )
-    }
-  }
-
-  private fun updateExistingVisitors(
-    visitorsToUpdate: Map<Long, OfficialVisitor>,
-    matchingContacts: List<PrisonerContact>,
-    user: User,
-  ) = buildList {
-    visitorsToUpdate.forEach { (officialVisitorId, visitor) ->
-      val matchingPerson = findMatchingPerson(matchingContacts, visitor)
-
-      val visitorEntity = officialVisitorRepository.findById(officialVisitorId).orElseThrow {
-        EntityNotFoundException("Cannot find visitor with id $officialVisitorId to update")
+  /**
+   * The request is invalid unless the visitor matches exactly one current prisoner contact. prisonerContactId is
+   * nullable on older visitors, so fall back to the relationship code when it is absent.
+   */
+  private fun List<PrisonerContact>.matchFor(visitor: OfficialVisitor): PrisonerContact = singleOrNull {
+    it.contactId == visitor.contactId &&
+      if (visitor.prisonerContactId != null) {
+        it.prisonerContactId == visitor.prisonerContactId
+      } else {
+        it.relationshipToPrisonerCode == visitor.relationshipCode
       }
-
-      if (visitorChanged(visitorEntity, visitor, matchingPerson)) {
-        visitorEntity.apply {
-          relationshipTypeCode =
-            if (matchingPerson.relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
-          relationshipCode = matchingPerson.relationshipToPrisonerCode
-          prisonerContactId = this.prisonerContactId ?: matchingPerson.prisonerContactId
-          firstName = this.firstName ?: matchingPerson.firstName
-          lastName = this.lastName ?: matchingPerson.lastName
-          leadVisitor = visitor.leadVisitor ?: false
-          assistedVisit = visitor.assistedVisit ?: false
-          visitorNotes = visitor.assistedNotes
-          visitorEquipment = visitor.visitorEquipment?.description
-            ?.takeIf { it.isNotBlank() }
-            ?.let {
-              VisitorEquipmentEntity(
-                officialVisitor = this,
-                description = it,
-                createdBy = user.username,
-              )
-            }
-          updatedBy = user.username
-          updatedTime = LocalDateTime.now()
-        }
-
-        val savedVisitor = officialVisitorRepository.saveAndFlush(visitorEntity)
-
-        add(
-          OfficialVisitorUpdated(
-            officialVisitorId = savedVisitor.officialVisitorId,
-            contactId = savedVisitor.contactId!!,
-          ),
-        )
-      }
-    }
-  }
-
-  private fun visitorChanged(old: OfficialVisitorEntity, new: OfficialVisitor, person: PrisonerContact?): Boolean {
-    if (old.firstName != person?.firstName) {
-      return true
-    }
-    if (old.lastName != person?.lastName) {
-      return true
-    }
-    if (old.leadVisitor != new.leadVisitor) {
-      return true
-    }
-    if (old.assistedVisit != new.assistedVisit) {
-      return true
-    }
-    if (old.relationshipCode != new.relationshipCode) {
-      return true
-    }
-    if (old.visitorNotes != new.assistedNotes) {
-      return true
-    }
-    if (old.visitorEquipment?.description != new.visitorEquipment?.description) {
-      return true
-    }
-    return false
-  }
-
-  private fun findMatchingPerson(
-    matchingContacts: List<PrisonerContact>,
-    visitor: OfficialVisitor,
-  ): PrisonerContact = matchingContacts.singleOrNull {
-    if (visitor.prisonerContactId != null) {
-      it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
-    } else {
-      // fallback to relationship code if prisonerContactId is not provided in the request, as this because it is nullable and existing visitors may not have it populated
-      it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
-    }
   } ?: throw ValidationException("Invalid request: No matching prisoner contact found for contactId=${visitor.contactId}, prisonerContactId=${visitor.prisonerContactId}")
 
   /**
-   * Lenient lookup for an existing visitor record: returns null rather than throwing when the prisoner contact
-   * relationship no longer exists.
+   * Return a human-readable name for the visitor, or "unknown" if the name is missing. Used in audit events.
    */
-  private fun findMatchingPersonOrNull(
-    matchingContacts: List<PrisonerContact>,
-    visitor: OfficialVisitorEntity,
-  ): PrisonerContact? = matchingContacts.singleOrNull {
-    if (visitor.prisonerContactId != null) {
-      it.contactId == visitor.contactId && it.prisonerContactId == visitor.prisonerContactId
-    } else {
-      // fallback to relationship code as prisonerContactId is nullable and older visitor records may not have it populated
-      it.contactId == visitor.contactId && it.relationshipToPrisonerCode == visitor.relationshipCode
-    }
-  }
+  private fun OfficialVisitorEntity.auditName(): String = listOfNotNull(firstName, lastName)
+    .filter { it.isNotBlank() }
+    .joinToString(" ") { it.toTitleCase() }
+    .ifBlank { "unknown" }
+
+  private fun OfficialVisitorEntity.equipment(description: String, user: User) = VisitorEquipmentEntity(
+    officialVisitor = this,
+    description = description,
+    createdBy = user.username,
+  )
+
+  private fun OfficialVisitorEntity.toVisitorUpdated() = OfficialVisitorUpdated(officialVisitorId = officialVisitorId, contactId = contactId!!)
+
+  private fun OfficialVisitor.isNewVisitor() = officialVisitorId == 0L
+
+  private fun OfficialVisitor.equipmentDescription() = visitorEquipment?.description?.takeIf { it.isNotBlank() }
+
+  private fun PrisonerContact.relationshipType() = if (relationshipTypeCode == "S") RelationshipType.SOCIAL else RelationshipType.OFFICIAL
+
+  private fun String.toTitleCase() = lowercase().replaceFirstChar { it.uppercase() }
 }
