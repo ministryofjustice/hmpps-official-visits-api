@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.ContactMatchingException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -284,7 +285,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitors throws validation error when contactId matches but prisonerContactId differs`() {
+  fun `updateVisitors throws ContactMatchingException when contactId matches but prisonerContactId differs`() {
     val visit = createVisit(officialVisitId = 5L)
     val request = OfficialVisitUpdateVisitorsRequest(
       officialVisitors = listOf(
@@ -308,9 +309,9 @@ class OfficialVisitUpdateServiceTest {
     whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(5L, MOORLAND)).thenReturn(visit)
     whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(returnedContact))
 
-    assertThrows<ValidationException> {
+    assertThrows<ContactMatchingException> {
       service.updateVisitors(5L, MOORLAND, request, MOORLAND_PRISON_USER)
-    }.message?.contains("Invalid request: No matching prisoner contact found for contactId=100, prisonerContactId=200")
+    }.message.contains("Invalid request: No matching prisoner contact found for officialVisitId=5")
     verify(officialVisitorRepository, never()).saveAndFlush(any())
   }
 

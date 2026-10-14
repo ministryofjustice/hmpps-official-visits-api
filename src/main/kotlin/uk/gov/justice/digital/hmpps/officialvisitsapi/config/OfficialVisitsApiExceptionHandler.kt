@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import tools.jackson.databind.exc.InvalidFormatException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.ContactMatchingException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdErrorResponse
@@ -49,6 +50,17 @@ class OfficialVisitsApiExceptionHandler {
         developerMessage = "Validation failure: ${e.message}",
       ),
     ).also { log.info("Validation exception: {}", e.message) }
+
+  @ExceptionHandler(ContactMatchingException::class)
+  fun handleValidationException(e: ContactMatchingException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_REQUEST)
+    .body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = e.message,
+        developerMessage = "Validation failure: ${e.message}",
+      ),
+    ).also { log.info("ContactMatching exception: {}", e.message) }
 
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
