@@ -21,6 +21,22 @@ abstract class Email(val emailAddress: String) {
     personalisation[key] = value
   }
 
+  protected fun addContactMethod(prisonEmail: String?, prisonTelephone: String?) {
+    addPersonalisation("contact_method", buildContactMethod(prisonEmail, prisonTelephone))
+  }
+
+  private fun buildContactMethod(prisonEmail: String?, prisonTelephone: String?): String {
+    val email = prisonEmail?.takeIf { it.isNotBlank() }
+    val telephone = prisonTelephone?.takeIf { it.isNotBlank() }
+
+    return when {
+      !email.isNullOrBlank() && !telephone.isNullOrBlank() -> "Instead, email $email, or phone $telephone"
+      !email.isNullOrBlank() -> "Instead, email $email or refer to the UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+      !telephone.isNullOrBlank() -> "Instead, phone $telephone or refer to the UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+      else -> "Instead, please refer to the UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+    }
+  }
+
   abstract fun type(): EmailType
 
   fun personalisation(): Map<String, String> = personalisation.toMap()
@@ -67,9 +83,8 @@ class InPersonVisitConfirmedEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -106,9 +121,8 @@ class InPersonVisitAmendedEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -143,9 +157,8 @@ class InPersonVisitCancelledEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -182,9 +195,8 @@ class VideoVisitConfirmedEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -224,9 +236,8 @@ class VideoVisitAmendedEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -264,9 +275,8 @@ class VideoVisitCancelledEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -302,9 +312,8 @@ class TelephoneVisitConfirmedEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -341,9 +350,8 @@ class TelephoneVisitAmendedEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
@@ -379,9 +387,8 @@ class TelephoneVisitCancelledEmail(
     addPersonalisation("prison_town", prisonDetails.prisonTown ?: "")
     addPersonalisation("prison_county", prisonDetails.prisonCounty ?: "")
     addPersonalisation("prison_postcode", prisonDetails.prisonPostcode ?: "")
-    addPersonalisation("prison_email", prisonDetails.prisonEmail ?: "")
-    addPersonalisation("prison_telephone", prisonDetails.prisonTelephone ?: "")
     addPersonalisation("prison_website", prisonDetails.prisonWebsite ?: "")
+    addContactMethod(prisonDetails.prisonEmail, prisonDetails.prisonTelephone)
     addPersonalisation("visit_date", visitDate.toMediumFormatStyle())
     addPersonalisation("visit_start_time", visitStartTime.toHourMinuteStyle())
     addPersonalisation("visit_end_time", visitEndTime.toHourMinuteStyle())
