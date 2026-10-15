@@ -30,6 +30,8 @@ class OfficialVisitCreatedEmailTest {
     prisonWebsite = "Website",
   )
 
+  val govUkPrisonContactsUrl = "https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+
   @Test
   fun `should populate personalisation for an in-person visit`() {
     val notes = "This is a note"
@@ -62,9 +64,8 @@ class OfficialVisitCreatedEmailTest {
         "prison_town" to prisonContactDetails.prisonTown,
         "prison_county" to prisonContactDetails.prisonCounty,
         "prison_postcode" to prisonContactDetails.prisonPostcode,
-        "prison_email" to prisonContactDetails.prisonEmail,
-        "prison_telephone" to prisonContactDetails.prisonTelephone,
         "prison_website" to prisonContactDetails.prisonWebsite,
+        "contact_method" to "Instead, email ${prisonContactDetails.prisonEmail}, or phone ${prisonContactDetails.prisonTelephone}",
         "visit_date" to "15 Aug 2026",
         "visit_start_time" to "10:30",
         "visit_end_time" to "11:30",
@@ -74,6 +75,63 @@ class OfficialVisitCreatedEmailTest {
         "notes" to notes,
         "in_person_joining_instructions" to "test instructions",
       ),
+    )
+  }
+
+  @Test
+  fun `should build contact method when only email is available`() {
+    val email = InPersonVisitConfirmedEmail(
+      emailAddress = emailAddress,
+      prisonerNumber = prisonerNumber,
+      prisonerName = prisonerName,
+      prisonDetails = prisonContactDetails.copy(prisonTelephone = null),
+      visitDate = visitDate,
+      visitStartTime = visitStartTime,
+      visitEndTime = visitEndTime,
+      visitLocation = visitLocation,
+      visitorNames = visitorNames,
+    )
+
+    assertThat(email.personalisation()["contact_method"]).isEqualTo(
+      "Instead, email ${prisonContactDetails.prisonEmail} or refer to the UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
+    )
+  }
+
+  @Test
+  fun `should build contact method when only phone is available`() {
+    val email = InPersonVisitConfirmedEmail(
+      emailAddress = emailAddress,
+      prisonerNumber = prisonerNumber,
+      prisonerName = prisonerName,
+      prisonDetails = prisonContactDetails.copy(prisonEmail = null),
+      visitDate = visitDate,
+      visitStartTime = visitStartTime,
+      visitEndTime = visitEndTime,
+      visitLocation = visitLocation,
+      visitorNames = visitorNames,
+    )
+
+    assertThat(email.personalisation()["contact_method"]).isEqualTo(
+      "Instead, phone ${prisonContactDetails.prisonTelephone} or refer to the UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
+    )
+  }
+
+  @Test
+  fun `should build contact method when neither email nor phone is available`() {
+    val email = InPersonVisitConfirmedEmail(
+      emailAddress = emailAddress,
+      prisonerNumber = prisonerNumber,
+      prisonerName = prisonerName,
+      prisonDetails = prisonContactDetails.copy(prisonEmail = null, prisonTelephone = null),
+      visitDate = visitDate,
+      visitStartTime = visitStartTime,
+      visitEndTime = visitEndTime,
+      visitLocation = visitLocation,
+      visitorNames = visitorNames,
+    )
+
+    assertThat(email.personalisation()["contact_method"]).isEqualTo(
+      "Instead, please refer to the UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
     )
   }
 
@@ -111,9 +169,8 @@ class OfficialVisitCreatedEmailTest {
         "prison_town" to prisonContactDetails.prisonTown,
         "prison_county" to prisonContactDetails.prisonCounty,
         "prison_postcode" to prisonContactDetails.prisonPostcode,
-        "prison_email" to prisonContactDetails.prisonEmail,
-        "prison_telephone" to prisonContactDetails.prisonTelephone,
         "prison_website" to prisonContactDetails.prisonWebsite,
+        "contact_method" to "Instead, email ${prisonContactDetails.prisonEmail}, or phone ${prisonContactDetails.prisonTelephone}",
         "visit_date" to "15 Aug 2026",
         "visit_start_time" to "10:30",
         "visit_end_time" to "11:30",
