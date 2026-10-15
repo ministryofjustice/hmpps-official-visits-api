@@ -16,6 +16,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
+import org.springframework.test.util.ReflectionTestUtils
 import uk.gov.justice.digital.hmpps.officialvisitsapi.common.toMediumFormatStyle
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitorEntity
@@ -251,7 +252,7 @@ class OfficialVisitUpdateServiceTest {
   }
 
   @Test
-  fun `updateVisitors throws validation error when existing visitor cannot be loaded for update`() {
+  fun `updateVisitors throws exception when existing visitor cannot be found for update`() {
     val visit = createVisit(officialVisitId = 4L)
     addExistingVisitor(visit, officialVisitorId = 55L, contactId = 9L, prisonerContactId = 900L, firstName = "A", lastName = "B", relationshipCode = "POM")
 
@@ -278,14 +279,49 @@ class OfficialVisitUpdateServiceTest {
     whenever(contactsService.getAllPrisonerContacts(MOORLAND_PRISONER.number, null, true)).thenReturn(listOf(matchingContact))
     whenever(officialVisitorRepository.findById(55L)).thenReturn(Optional.empty())
 
-    assertThrows<IllegalArgumentException> {
+    assertThrows<EntityNotFoundException> {
       service.updateVisitors(4L, MOORLAND, request, MOORLAND_PRISON_USER)
-    }.message?.contains("Request contains visitors which do not exist on official visit with id 4")
+    }.message?.contains("Cannot find visitor with id 55 to update")
     verify(officialVisitorRepository, never()).saveAndFlush(any())
   }
 
   @Test
-  fun `updateVisitors throws ContactMatchingException when contactId matches but prisonerContactId differs`() {
+  fun `updateVisitors throws exception when the same person with different relationships exists on the visit`() {
+    val visit = createVisit(officialVisitId = 4L)
+    addExistingVisitor(visit, officialVisitorId = 55L, contactId = 9L, prisonerContactId = 900L, firstName = "A", lastName = "B", relationshipCode = "POM")
+    addExistingVisitor(visit, officialVisitorId = 56L, contactId = 9L, prisonerContactId = 901L, firstName = "A", lastName = "B", relationshipCode = "COM")
+
+    val request = OfficialVisitUpdateVisitorsRequest(
+      officialVisitors = listOf(
+        OfficialVisitor(
+          officialVisitorId = 55L,
+          visitorTypeCode = VisitorType.CONTACT,
+          contactId = 9L,
+          prisonerContactId = 900L,
+          relationshipCode = "POM",
+        ),
+        OfficialVisitor(
+          officialVisitorId = 56L,
+          visitorTypeCode = VisitorType.CONTACT,
+          contactId = 9L,
+          prisonerContactId = 901L,
+          relationshipCode = "COM",
+        ),
+      ),
+    )
+
+    whenever(officialVisitRepository.findByOfficialVisitIdAndPrisonCode(4L, MOORLAND)).thenReturn(visit)
+
+    assertThrows<IllegalArgumentException> {
+      service.updateVisitors(4L, MOORLAND, request, MOORLAND_PRISON_USER)
+    }.message?.contains("Request contains multiple visitors who are the same person (contact ID). This be unique per visit")
+
+    verify(officialVisitorRepository, never()).saveAndFlush(any())
+    verifyNoInteractions(contactsService)
+  }
+
+  @Test
+  fun `updateVisitors throws ContactMatchingException when contactId matches but prisonerContactId and relationship differ`() {
     val visit = createVisit(officialVisitId = 5L)
     val request = OfficialVisitUpdateVisitorsRequest(
       officialVisitors = listOf(
@@ -483,6 +519,14 @@ class OfficialVisitUpdateServiceTest {
       createdBy = MOORLAND_PRISON_USER,
       createdTime = LocalDateTime.now().minusHours(1),
     )
-    return visitor
+
+    // Ensure the requested officialVisitorId is set on the resulting visitor (it is normally DB-generated)
+    return visit.officialVisitors().single { it.contactId == contactId && it.prisonerContactId == prisonerContactId }.apply {
+      ReflectionTestUtils.setField(this, "officialVisitorId", officialVisitorId)
+      visitorNotes = assistedNotes
+      if (!equipmentDescription.isNullOrBlank()) {
+        visitorEquipment = VisitorEquipmentEntity(officialVisitor = this, description = equipmentDescription, createdBy = "test")
+      }
+    }
   }
 }
