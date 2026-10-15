@@ -314,7 +314,7 @@ class OfficialVisitUpdateServiceTest {
 
     assertThrows<IllegalArgumentException> {
       service.updateVisitors(4L, MOORLAND, request, MOORLAND_PRISON_USER)
-    }.message?.contains("Request contains multiple visitors who are the same person (contact ID). This be unique per visit")
+    }.message?.contains("Request contains multiple visitors who are the same person (contact ID). This should be unique per visit. Visit ID 4")
 
     verify(officialVisitorRepository, never()).saveAndFlush(any())
     verifyNoInteractions(contactsService)

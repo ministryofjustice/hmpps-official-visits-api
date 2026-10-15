@@ -624,7 +624,7 @@ class OfficialVisitUpdateIntegrationTest : IntegrationTestBase() {
     .exchange()
     .expectStatus().is4xxClientError
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody().jsonPath("$.userMessage").isEqualTo("Request contains visitors which do not exist on official visit with id $officialVisitId")
+    .expectBody().jsonPath("$.userMessage").isEqualTo("Request contains updates for visitors which do not exist on visit ID $officialVisitId")
 
   private fun WebTestClient.notExistentOfficialVisit(
     request: OfficialVisitUpdateSlotRequest,

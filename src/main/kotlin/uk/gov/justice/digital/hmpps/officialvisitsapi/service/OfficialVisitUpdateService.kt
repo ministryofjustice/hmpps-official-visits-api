@@ -193,32 +193,32 @@ class OfficialVisitUpdateService(
     val ove = officialVisitRepository.findByOfficialVisitIdAndPrisonCode(officialVisitId, prisonCode)
       ?: throw EntityNotFoundException("Official visit with id $officialVisitId and prison code $prisonCode not found")
 
-    // Identify the visitors on the currently saved version of this visit
+    // Retrieve the visitors on the currently saved version of this visit
     val existingVisitors = ove.officialVisitors().associateBy { it.officialVisitorId }
 
-    // Identify the new visitors - they have a 0L in the officialVisitorId in the request
+    // Identify and new visitors in the request - they have a 0L in the officialVisitorId field
     val newVisitors = request.officialVisitors.filter { it.isNewVisitor() }
 
-    // Updated visitors are those in the request that are not new i.e. they have a non-zero officialVisitorId
+    // Identify the updated visitors - those in the request that have a non-zero officialVisitorId
     val updatedVisitors = request.officialVisitors.filterNot { it.isNewVisitor() }.associateBy { it.officialVisitorId }
 
-    // Removed visitors are those in the existing visitor list but not in visitors being retained/updated
+    // Identify the removed visitors - those in the existing visitors list but not in update list
     val removedVisitors = existingVisitors.values.filterNot { updatedVisitors.containsKey(it.officialVisitorId) }
 
-    // Error if the update list contains any visitors who are not in the current visitors
+    // Error if the update list contains any visitor IDs who are not in the existing list of visitors
     require(updatedVisitors.keys.all { existingVisitors.containsKey(it) }) {
-      "Request contains visitors which do not exist on official visit with id $officialVisitId"
+      "Request contains updates for visitors which do not exist on visit ID $officialVisitId"
     }
 
     // Error if the requested list of visitors contains multiple people with the same contactId (same person appearing twice)
     require(request.officialVisitors.distinctBy { it.contactId }.size == request.officialVisitors.size) {
-      "Request contains multiple visitors who are the same person (contact ID). This be unique per visit, visit ID $officialVisitId"
+      "Request contains multiple visitors who are the same person (contact ID). This should be unique per visit. Visit ID $officialVisitId"
     }
 
-    // Get all the prisoner's contacts, whether approved to visit or not
+    // Get all the prisoner's contacts, whether approved to visit or not, for the prisoner's current term in prison
     val allPrisonerContacts = contactsService.getAllPrisonerContacts(prisonerNumber = ove.prisonerNumber, approved = null, currentTerm = true)
 
-    // Build the response - and save the changes to the visitors on this visit
+    // Build the response and save the changes made to the visitors
     val response = OfficialVisitUpdateVisitorsResponse(
       officialVisitId = officialVisitId,
       prisonCode = prisonCode,
@@ -245,10 +245,8 @@ class OfficialVisitUpdateService(
       },
     )
 
-    // Record a metric for each new visitor added
+    // Record a metric for each of the new and removed visitors
     recordVisitorMetrics(officialVisitId, prisonCode, MetricsEvents.ADD_VISITOR, response.visitorsAdded, user)
-
-    // Record a metric for each visitor removed
     recordVisitorMetrics(officialVisitId, prisonCode, MetricsEvents.REMOVE_VISITOR, response.visitorsDeleted, user)
 
     return response
