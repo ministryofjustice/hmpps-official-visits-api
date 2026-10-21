@@ -8,6 +8,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.prisonersearch.PrisonerValidator
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISONER
 import uk.gov.justice.digital.hmpps.officialvisitsapi.helper.MOORLAND_PRISON_USER
@@ -25,6 +26,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.auditing.AuditingS
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.slotavailability.AvailableSlotService
 import java.time.LocalDate
+import java.time.LocalDateTime.now
 import java.time.LocalTime
 import java.util.Optional
 import java.util.UUID
@@ -83,7 +85,7 @@ class OfficialVisitCreateServiceTest {
           maxGroups = 10,
           maxVideoSessions = 10,
           createdBy = MOORLAND_PRISON_USER.username,
-          createdTime = java.time.LocalDateTime.now(),
+          createdTime = now(),
         ),
       ),
     )
@@ -134,14 +136,14 @@ class OfficialVisitCreateServiceTest {
         ),
       ),
     )
-    whenever(officialVisitRepository.findRecentDuplicateRequest(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mock())
+    whenever(officialVisitRepository.existsRecentMatchingVisit(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mock())
 
-    val exception = assertThrows<RuntimeException> {
+    val exception = assertThrows<ConflictException> {
       service.create(MOORLAND, request, MOORLAND_PRISON_USER)
     }
 
     assertThat(exception.message).isEqualTo(
-      "Prisoner ${MOORLAND_PRISONER.number} already has an official visit booked at $MOORLAND on ${request.visitDate} at ${request.startTime} for the same staff user ${MOORLAND_PRISON_USER.username} within the last 15 minutes.",
+      "Prisoner ${MOORLAND_PRISONER.number} already has an official visit booked at $MOORLAND on ${request.visitDate} at ${request.startTime} within the last 15 minutes.",
     )
   }
 }

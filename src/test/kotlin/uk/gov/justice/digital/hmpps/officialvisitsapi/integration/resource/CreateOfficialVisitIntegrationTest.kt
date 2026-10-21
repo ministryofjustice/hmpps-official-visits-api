@@ -392,7 +392,7 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
       prisonCode = MOORLAND,
       prisonUser = MOORLAND_PRISON_USER,
       request = nextMondayAt9,
-      errorMessage = "Prisoner ${MOORLAND_PRISONER.number} already has an official visit booked at $MOORLAND on ${nextMondayAt9.visitDate} at ${nextMondayAt9.startTime} for the same staff user ${MOORLAND_PRISON_USER.username} within the last 15 minutes.",
+      errorMessage = "Prisoner ${MOORLAND_PRISONER.number} already has an official visit booked at $MOORLAND on ${nextMondayAt9.visitDate} at ${nextMondayAt9.startTime} within the last 15 minutes.",
     )
 
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)

@@ -60,7 +60,6 @@ class OfficialVisitCreateService(
     val matchingVisitors = request.getVisitorDetails()
 
     request.checkStillAvailable(prisonCode, prisonVisitSlot)
-    // Intentionally checking last second to avoid race conditions with other requests from the same user
     request.checkRecentDuplicateRequest(prisonCode, user.username)
 
     officialVisitRepository.saveAndFlush(
@@ -204,7 +203,7 @@ class OfficialVisitCreateService(
   }
 
   private fun CreateOfficialVisitRequest.checkRecentDuplicateRequest(prisonCode: String, createdBy: String) = also {
-    val duplicate = officialVisitRepository.findRecentDuplicateRequest(
+    val exists = officialVisitRepository.existsRecentMatchingVisit(
       prisonCode = prisonCode,
       prisonerNumber = prisonerNumber,
       visitDate = visitDate,
@@ -212,11 +211,11 @@ class OfficialVisitCreateService(
       startTime = startTime,
       endTime = endTime,
       createdBy = createdBy,
-      createdAfter = now().minusMinutes(10),
+      createdAfter = now().minusMinutes(15),
     )
-    if (duplicate != null) {
+    if (exists) {
       throw ConflictException(
-        "Prisoner $prisonerNumber already has an official visit booked at $prisonCode on $visitDate at $startTime for the same staff user $createdBy within the last 15 minutes.",
+        "Prisoner $prisonerNumber already has an official visit booked at $prisonCode on $visitDate at $startTime within the last 15 minutes.",
       )
     }
   }

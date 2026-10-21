@@ -175,8 +175,8 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
   ): Collection<Long>
 
   @Query(
-    value = """
-      SELECT ov
+    """
+      SELECT CASE WHEN COUNT(ov) > 0 THEN true ELSE false END
       FROM OfficialVisitEntity ov
       WHERE ov.prisonCode = :prisonCode
         AND ov.prisonerNumber = :prisonerNumber
@@ -186,10 +186,9 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
         AND ov.endTime = :endTime
         AND ov.createdBy = :createdBy
         AND ov.createdTime >= :createdAfter
-      ORDER BY ov.createdTime DESC
     """,
   )
-  fun findRecentDuplicateRequest(
+  fun existsRecentMatchingVisit(
     prisonCode: String,
     prisonerNumber: String,
     visitDate: LocalDate,
@@ -198,5 +197,5 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     endTime: LocalTime,
     createdBy: String,
     createdAfter: LocalDateTime,
-  ): OfficialVisitEntity?
+  ): Boolean
 }
