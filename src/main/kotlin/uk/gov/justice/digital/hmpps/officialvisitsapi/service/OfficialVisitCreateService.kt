@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonVisitSlotEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.PrisonerVisitedEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.VisitorEquipmentEntity
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.RelationshipType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitorType
@@ -59,6 +60,7 @@ class OfficialVisitCreateService(
     val matchingVisitors = request.getVisitorDetails()
 
     request.checkStillAvailable(prisonCode, prisonVisitSlot)
+    // Intentionally checking last second to avoid race conditions with other requests from the same user
     request.checkRecentDuplicateRequest(prisonCode, user.username)
 
     officialVisitRepository.saveAndFlush(
@@ -210,11 +212,12 @@ class OfficialVisitCreateService(
       startTime = startTime,
       endTime = endTime,
       createdBy = createdBy,
-      createdAfter = now().minusMinutes(15),
+      createdAfter = now().minusMinutes(10),
     )
-
-    require(duplicate == null) {
-      "Prisoner $prisonerNumber already has an official visit booked at $prisonCode on $visitDate at $startTime for the same staff user $createdBy within the last 15 minutes."
+    if (duplicate != null) {
+      throw ConflictException(
+        "Prisoner $prisonerNumber already has an official visit booked at $prisonCode on $visitDate at $startTime for the same staff user $createdBy within the last 15 minutes.",
+      )
     }
   }
 

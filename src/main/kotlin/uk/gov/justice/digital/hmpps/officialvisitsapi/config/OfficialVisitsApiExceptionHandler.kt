@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import tools.jackson.databind.exc.InvalidFormatException
+import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.ConflictException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.ContactMatchingException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.officialvisitsapi.exception.DuplicateOffenderVisitIdConflictException
@@ -186,6 +187,17 @@ class OfficialVisitsApiExceptionHandler {
         developerMessage = e.message,
       ),
     )
+
+  @ExceptionHandler(ConflictException::class)
+  fun handleConflictException(e: ConflictException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(CONFLICT)
+    .body(
+      ErrorResponse(
+        status = CONFLICT,
+        userMessage = e.message,
+        developerMessage = e.message,
+      ),
+    ).also { log.info("Conflict exception: {}", e.message) }
 
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> {

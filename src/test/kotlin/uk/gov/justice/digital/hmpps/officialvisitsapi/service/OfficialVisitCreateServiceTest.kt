@@ -136,7 +136,7 @@ class OfficialVisitCreateServiceTest {
     )
     whenever(officialVisitRepository.findRecentDuplicateRequest(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mock())
 
-    val exception = assertThrows<IllegalArgumentException> {
+    val exception = assertThrows<RuntimeException> {
       service.create(MOORLAND, request, MOORLAND_PRISON_USER)
     }
 
