@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.UUID
 
 @Repository
 interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
@@ -172,4 +173,30 @@ interface OfficialVisitRepository : JpaRepository<OfficialVisitEntity, Long> {
     date: LocalDate,
     prisonCode: String,
   ): Collection<Long>
+
+  @Query(
+    value = """
+      SELECT ov
+      FROM OfficialVisitEntity ov
+      WHERE ov.prisonCode = :prisonCode
+        AND ov.prisonerNumber = :prisonerNumber
+        AND ov.visitDate = :visitDate
+        AND ov.dpsLocationId = :dpsLocationId
+        AND ov.startTime = :startTime
+        AND ov.endTime = :endTime
+        AND ov.createdBy = :createdBy
+        AND ov.createdTime >= :createdAfter
+      ORDER BY ov.createdTime DESC
+    """,
+  )
+  fun findRecentDuplicateRequest(
+    prisonCode: String,
+    prisonerNumber: String,
+    visitDate: LocalDate,
+    dpsLocationId: UUID,
+    startTime: LocalTime,
+    endTime: LocalTime,
+    createdBy: String,
+    createdAfter: LocalDateTime,
+  ): OfficialVisitEntity?
 }

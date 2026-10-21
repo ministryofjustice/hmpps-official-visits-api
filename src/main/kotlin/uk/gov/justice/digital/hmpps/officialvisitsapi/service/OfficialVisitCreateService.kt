@@ -59,6 +59,7 @@ class OfficialVisitCreateService(
     val matchingVisitors = request.getVisitorDetails()
 
     request.checkStillAvailable(prisonCode, prisonVisitSlot)
+    request.checkRecentDuplicateRequest(prisonCode, user.username)
 
     officialVisitRepository.saveAndFlush(
       OfficialVisitEntity(
@@ -197,6 +198,23 @@ class OfficialVisitCreateService(
 
     require(availableSlots.any { slot -> availableSlotSpecification.isSatisfiedBy(slot, prisonVisitSlot) }) {
       "Prison visit slot ${prisonVisitSlot.prisonVisitSlotId} is not available for the requested date, time and number of visitors."
+    }
+  }
+
+  private fun CreateOfficialVisitRequest.checkRecentDuplicateRequest(prisonCode: String, createdBy: String) = also {
+    val duplicate = officialVisitRepository.findRecentDuplicateRequest(
+      prisonCode = prisonCode,
+      prisonerNumber = prisonerNumber,
+      visitDate = visitDate,
+      dpsLocationId = dpsLocationId,
+      startTime = startTime,
+      endTime = endTime,
+      createdBy = createdBy,
+      createdAfter = now().minusMinutes(15),
+    )
+
+    require(duplicate == null) {
+      "Prisoner $prisonerNumber already has an official visit booked at $prisonCode on $visitDate at $startTime for the same staff user $createdBy within the last 15 minutes."
     }
   }
 
