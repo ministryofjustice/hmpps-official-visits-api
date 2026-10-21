@@ -383,6 +383,21 @@ class CreateOfficialVisitIntegrationTest : IntegrationTestBase() {
     stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
   }
 
+  @Test
+  fun `should fail when a duplicate visit request was created by the same user within the last 15 minutes`() {
+    webTestClient.create(nextMondayAt9)
+    stubEvents.reset()
+
+    webTestClient.conflict(
+      prisonCode = MOORLAND,
+      prisonUser = MOORLAND_PRISON_USER,
+      request = nextMondayAt9,
+      errorMessage = "Prisoner ${MOORLAND_PRISONER.number} already has an official visit booked at $MOORLAND on ${nextMondayAt9.visitDate} at ${nextMondayAt9.startTime} within the last 15 minutes.",
+    )
+
+    stubEvents.assertHasNoEvents(event = OutboundEvent.VISIT_CREATED)
+  }
+
   private fun WebTestClient.create(request: CreateOfficialVisitRequest, prisonUser: PrisonUser = MOORLAND_PRISON_USER) = this
     .post()
     .uri("/official-visit/prison/${prisonUser.caseloads.first()}")
