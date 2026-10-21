@@ -136,7 +136,7 @@ class OfficialVisitCreateServiceTest {
         ),
       ),
     )
-    whenever(officialVisitRepository.existsRecentMatchingVisit(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mock())
+    whenever(officialVisitRepository.existsRecentMatchingVisit(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(true)
 
     val exception = assertThrows<ConflictException> {
       service.create(MOORLAND, request, MOORLAND_PRISON_USER)
