@@ -1,0 +1,108 @@
+asyncapi: 3.0.0
+info:
+  title: HMPPS Official Visits
+  version: 1.0.0
+  description: Events which notify of changes to DPS official visits
+
+servers:
+  development:
+    host: "hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Development Environment
+  preproduction:
+    host: "hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Pre-production Environment
+  production:
+    host: "hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Production Environment
+
+components:
+  messages:
+    official-visits-api.visit.created:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-created.yaml
+    official-visits-api.visit.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-updated.yaml
+    official-visits-api.visit.cancelled:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-cancelled.yaml
+    official-visits-api.visit.deleted:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-deleted.yaml
+    official-visits-api.visitor.created:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visitor-created.yaml
+    official-visits-api.visitor.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visitor-updated.yaml
+    official-visits-api.visitor.deleted:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visitor-deleted.yaml
+    official-visits-api.prisoner.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-prisoner-updated.yaml
+    official-visits-api.time-slot.created:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-time-slot-created.yaml
+    official-visits-api.time-slot.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-time-slot-updated.yaml
+    official-visits-api.time-slot.deleted:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-time-slot-deleted.yaml
+    official-visits-api.visit-slot.created:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-visit-slot-created.yaml
+    official-visits-api.visit-slot.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-visit-slot-updated.yaml
+    official-visits-api.visit-slot.deleted:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/official-visits/official-visit-visit-slot-deleted.yaml
+
+
+channels:
+  hmpps-domain-events:
+    description: HMPPS domain events SNS topic
+    bindings:
+      sns:
+        name: domainevents
+    messages:
+      official-visits-api.visit.created:
+        $ref: '#/components/messages/official-visits-api.visit.created'
+      official-visits-api.visit.updated:
+        $ref: '#/components/messages/official-visits-api.visit.updated'
+      official-visits-api.visit.cancelled:
+        $ref: '#/components/messages/official-visits-api.visit.cancelled'
+      official-visits-api.visit.deleted:
+        $ref: '#/components/messages/official-visits-api.visit.deleted'
+      official-visits-api.visitor.created:
+        $ref: '#/components/messages/official-visits-api.visitor.created'
+      official-visits-api.visitor.updated:
+        $ref: '#/components/messages/official-visits-api.visitor.updated'
+      official-visits-api.visitor.deleted:
+        $ref: '#/components/messages/official-visits-api.visitor.deleted'
+      official-visits-api.prisoner.updated:
+        $ref: '#/components/messages/official-visits-api.prisoner.updated'
+      official-visits-api.time-slot.created:
+        $ref: '#/components/messages/official-visits-api.time-slot.created'
+      official-visits-api.time-slot.updated:
+        $ref: '#/components/messages/official-visits-api.time-slot.updated'
+      official-visits-api.time-slot.deleted:
+        $ref: '#/components/messages/official-visits-api.time-slot.deleted'
+      official-visits-api.visit-slot.created:
+        $ref: '#/components/messages/official-visits-api.visit-slot.created'
+      official-visits-api.visit-slot.updated:
+        $ref: '#/components/messages/official-visits-api.visit-slot.updated'
+      official-visits-api.visit-slot.deleted:
+        $ref: '#/components/messages/official-visits-api.visit-slot.deleted'
+
+operations:
+  publish-event:
+    action: send
+    channel:
+      $ref: '#/channels/hmpps-domain-events'
+    messages:
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit.created'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit.cancelled'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit.deleted'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visitor.created'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visitor.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visitor.deleted'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.prisoner.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.time-slot.created'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.time-slot.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.time-slot.deleted'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit-slot.created'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit-slot.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/official-visits-api.visit-slot.deleted'
