@@ -4,18 +4,20 @@ info:
   version: 1.0.0
   description: Events which notify of changes to DPS official visits
 
+defaultContentType: application/json
+
 servers:
   development:
     host: "hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk"
-    protocol: sqs
+    protocol: sns
     description: Development Environment
   preproduction:
     host: "hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk"
-    protocol: sqs
+    protocol: sns
     description: Pre-production Environment
   production:
     host: "hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk"
-    protocol: sqs
+    protocol: sns
     description: Production Environment
 
 components:
@@ -53,9 +55,10 @@ components:
 channels:
   hmpps-domain-events:
     description: HMPPS domain events SNS topic
-    bindings:
-      sns:
-        name: domainevents
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/preproduction'
+      - $ref: '#/servers/production'
     messages:
       official-visits-api.visit.created:
         $ref: '#/components/messages/official-visits-api.visit.created'
@@ -89,6 +92,7 @@ channels:
 operations:
   publish-event:
     action: send
+    summary: Publish official visit domain events
     channel:
       $ref: '#/channels/hmpps-domain-events'
     messages:
