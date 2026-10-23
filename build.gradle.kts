@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.12"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.13"
   id("org.openapi.generator") version "7.26.0"
   kotlin("plugin.spring") version "2.4.21"
   kotlin("plugin.jpa") version "2.4.21"
@@ -32,21 +32,21 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql:42.7.14")
 
   // Open telemetry dependencies
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.32.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.33.0")
 
   // Gov Notify client
   implementation("uk.gov.service.notify:notifications-java-client:6.2.1-RELEASE")
 
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.3")
-  testImplementation("org.springframework.security:spring-security-test:7.1.1")
+  testImplementation("org.springframework.security:spring-security-test:7.1.2")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
 
   // SAR test library
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.4")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.5")
 
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
 
@@ -55,8 +55,8 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:6.3.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.3.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit:6.4.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.4.0")
   testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.2")
 
   // Mockito
