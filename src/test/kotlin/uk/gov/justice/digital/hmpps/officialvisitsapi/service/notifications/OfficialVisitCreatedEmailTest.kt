@@ -93,7 +93,7 @@ class OfficialVisitCreatedEmailTest {
     )
 
     assertThat(email.personalisation()["contact_method"]).isEqualTo(
-      "Instead, email ${prisonContactDetails.prisonEmail} or refer to the UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
+      "Instead, email ${prisonContactDetails.prisonEmail} or refer to the GOV.UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
     )
   }
 
@@ -112,7 +112,7 @@ class OfficialVisitCreatedEmailTest {
     )
 
     assertThat(email.personalisation()["contact_method"]).isEqualTo(
-      "Instead, phone ${prisonContactDetails.prisonTelephone} or refer to the UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
+      "Instead, phone ${prisonContactDetails.prisonTelephone} or refer to the GOV.UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
     )
   }
 
@@ -131,7 +131,7 @@ class OfficialVisitCreatedEmailTest {
     )
 
     assertThat(email.personalisation()["contact_method"]).isEqualTo(
-      "Instead, please refer to the UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
+      "Instead, please refer to the GOV.UK Prisons website for the latest contact details: $govUkPrisonContactsUrl",
     )
   }
 
