@@ -38,4 +38,27 @@ interface OfficialVisitSummaryRepository : ReadOnlyRepository<OfficialVisitSumma
     locationIds: Collection<UUID>?,
     pageable: Pageable,
   ): Page<OfficialVisitSummaryEntity>
+
+  @Query(
+    value = """
+      SELECT ovs.officialVisitId
+        FROM OfficialVisitSummaryEntity ovs
+       WHERE ovs.visitDate BETWEEN :fromDate AND :toDate
+         AND (:prisonerNumber is null or ovs.prisonerNumber = :prisonerNumber)
+         AND (:prisonCode is null or ovs.prisonCode = :prisonCode)
+         AND (:visitStatus is null or ovs.visitStatusCode = :visitStatus)
+         AND (:visitType is null or ovs.visitTypeCode = :visitType)
+         AND (:locationId is null or ovs.dpsLocationId = :locationId)
+    """,
+  )
+  fun findOfficialVisitIdsBy(
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    prisonerNumber: String?,
+    prisonCode: String?,
+    visitStatus: VisitStatusType?,
+    visitType: VisitType?,
+    locationId: UUID?,
+    pageable: Pageable,
+  ): Page<Long>
 }
