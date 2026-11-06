@@ -4,6 +4,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
@@ -32,6 +34,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.service.events.outbound.Ou
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.notifications.NotificationsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewCheckType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.review.VisitReviewService
+import java.time.LocalDate
+import java.util.UUID
 
 @Component
 class OfficialVisitFacade(
@@ -96,6 +100,17 @@ class OfficialVisitFacade(
     page: Int,
     size: Int,
   ) = officialVisitSearchService.searchForOfficialVisitSummaries(prisonCode, request, user, page, size)
+
+  fun searchForOfficialVisitIds(
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    prisonerNumber: String?,
+    prisonCode: String?,
+    visitStatus: VisitStatusType?,
+    visitType: VisitType?,
+    locationId: UUID?,
+    pageable: Pageable,
+  ) = officialVisitSearchService.searchForOfficialVisitIds(fromDate, toDate, prisonerNumber, prisonCode, visitStatus, visitType, locationId, pageable)
 
   fun completeOfficialVisit(
     prisonCode: String,

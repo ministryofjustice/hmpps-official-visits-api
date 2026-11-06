@@ -10,9 +10,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import org.springdoc.core.converters.models.PageableAsQueryParam
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
 import org.springframework.data.domain.Sort.Direction.ASC
+import org.springframework.data.web.PageableDefault
 import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -29,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.officialvisitsapi.client.manageusers.model.ErrorResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.config.getLocalRequestContext
 import uk.gov.justice.digital.hmpps.officialvisitsapi.facade.OfficialVisitFacade
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.CreateOfficialVisitRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCancellationRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitCompletionRequest
@@ -43,6 +48,8 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVis
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitNotification
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OverlappingVisitsResponse
+import java.time.LocalDate
+import java.util.UUID
 
 @Tag(name = "Official visits")
 @RestController
@@ -187,6 +194,48 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     size: Int = 20,
     httpRequest: HttpServletRequest,
   ): PagedModel<OfficialVisitSummarySearchResponse> = facade.searchForOfficialVisitSummaries(prisonCode, request, httpRequest.getLocalRequestContext().user, page, size)
+
+  @Operation(
+    summary = "Return a paged list of official visit IDs matching the supplied criteria",
+    description = "The date range is mandatory and inclusive. All other filters are optional and combined with AND. Only the matching official visit IDs are returned.",
+  )
+  @GetMapping("/ids")
+  @PageableAsQueryParam
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "A paginated list of matching official visit IDs",
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  fun findOfficialVisitIds(
+    @RequestParam
+    @Parameter(description = "The earliest visit date in ISO format (YYYY-MM-DD)", example = "2026-11-01", required = true)
+    fromDate: LocalDate,
+    @RequestParam
+    @Parameter(description = "The latest visit date in ISO format (YYYY-MM-DD)", example = "2026-11-30", required = true)
+    toDate: LocalDate,
+    @RequestParam(required = false)
+    @Parameter(description = "The prisoner number", example = "A1234AA")
+    prisonerNumber: String?,
+    @RequestParam(required = false)
+    @Parameter(description = "The prison code", example = "MDI")
+    prisonCode: String?,
+    @RequestParam(required = false)
+    @Parameter(description = "The visit status", example = "SCHEDULED")
+    visitStatus: VisitStatusType?,
+    @RequestParam(required = false)
+    @Parameter(description = "The visit type", example = "IN_PERSON")
+    visitType: VisitType?,
+    @RequestParam(required = false)
+    @Parameter(description = "The DPS location ID", example = "9485cf4a-750b-4d74-b594-59bacbcda247")
+    locationId: UUID?,
+    @Parameter(hidden = true)
+    @PageableDefault(size = 20, page = 0, direction = Sort.Direction.ASC, sort = ["officialVisitId"])
+    pageable: Pageable,
+  ): PagedModel<Long> = facade.searchForOfficialVisitIds(fromDate, toDate, prisonerNumber, prisonCode, visitStatus, visitType, locationId, pageable)
 
   @Operation(summary = "Completes an official visit.")
   @ApiResponses(
