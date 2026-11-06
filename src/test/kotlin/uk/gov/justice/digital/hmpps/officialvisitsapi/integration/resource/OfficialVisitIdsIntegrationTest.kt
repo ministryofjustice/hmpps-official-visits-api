@@ -4,6 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.data.web.PagedModel
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.expectBody
@@ -93,6 +95,14 @@ class OfficialVisitIdsIntegrationTest : IntegrationTestBase() {
   @Test
   fun `should apply sort parameter`() {
     getIds("sort=officialVisitId,desc").content isEqualTo listOf(fridayId, wednesdayId, mondayId)
+    getIds("sort=visitDate,desc").content isEqualTo listOf(mondayInPerson to mondayId, wednesdayVideo to wednesdayId, fridayInPerson to fridayId).sortedByDescending { it.first.visitDate }.map { it.second }
+  }
+
+  @Test
+  fun `should break sort ties by official visit ID so pages stay consistent`() {
+    val pages = (0..2).flatMap { getIds("sort=startTime,desc&page=$it&size=1").content }
+
+    pages isEqualTo listOf(fridayId, mondayId, wednesdayId)
   }
 
   @Test
@@ -135,7 +145,7 @@ class OfficialVisitIdsIntegrationTest : IntegrationTestBase() {
   fun `should reject a to date before the from date`() {
     webTestClient.get()
       .uri("/official-visit/ids?fromDate=2026-11-02&toDate=2026-11-01")
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(REQUIRED_ROLE)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody().jsonPath("$.userMessage").isEqualTo("To date must be on or after the from date")
@@ -145,17 +155,27 @@ class OfficialVisitIdsIntegrationTest : IntegrationTestBase() {
   fun `should reject an unknown sort property`() {
     webTestClient.get()
       .uri("/official-visit/ids?fromDate=2026-11-01&toDate=2026-11-30&sort=notAField")
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(REQUIRED_ROLE)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody().jsonPath("$.userMessage").isEqualTo("Invalid sort property 'notAField'")
   }
 
   @Test
-  fun `should be forbidden without a suitable role`() {
+  fun `should reject a sort property that is not on the allowlist`() {
+    webTestClient.get()
+      .uri("/official-visit/ids?fromDate=2026-11-01&toDate=2026-11-30&sort=prisonCode")
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(REQUIRED_ROLE)))
+      .exchange()
+      .expectStatus().isBadRequest
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["ROLE_OFFICIAL_VISITS_ADMIN", "ROLE_OFFICIAL_VISITS__R", "ROLE_OFFICIAL_VISITS_RW", "ROLE_SOMETHING_ELSE"])
+  fun `should be forbidden without the dedicated role`(role: String) {
     webTestClient.get()
       .uri("/official-visit/ids?fromDate=2026-11-01&toDate=2026-11-30")
-      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_SOMETHING_ELSE")))
+      .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(role)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -167,12 +187,16 @@ class OfficialVisitIdsIntegrationTest : IntegrationTestBase() {
   ) = webTestClient.get()
     .uri("/official-visit/ids?fromDate=$fromDate&toDate=$toDate&$filters")
     .accept(MediaType.APPLICATION_JSON)
-    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf("ROLE_OFFICIAL_VISITS__R")))
+    .headers(setAuthorisation(username = MOORLAND_PRISON_USER.username, roles = listOf(REQUIRED_ROLE)))
     .exchange()
     .expectStatus().isOk
     .expectBody<IdsResponse>()
     .returnResult().responseBody!!
     .also { assertThat(it.content).doesNotHaveDuplicates() }
+
+  private companion object {
+    const val REQUIRED_ROLE = "ROLE_PRISONER_SCHEDULES__RO"
+  }
 
   data class IdsResponse(
     val content: List<Long>,

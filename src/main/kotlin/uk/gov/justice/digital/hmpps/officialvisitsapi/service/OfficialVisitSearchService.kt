@@ -186,14 +186,17 @@ class OfficialVisitSearchService(
         visitStatus = visitStatus,
         visitType = visitType,
         locationId = locationId,
-        pageable = pageable,
+        pageable = pageable.withStableSort(),
       ),
     )
   }
 
   companion object {
-    private val SORTABLE_ID_PROPERTIES = setOf("officialVisitId", "prisonCode", "prisonerNumber", "visitDate", "startTime", "createdTime", "updatedTime")
+    private const val OFFICIAL_VISIT_ID = "officialVisitId"
+    private val SORTABLE_ID_PROPERTIES = setOf(OFFICIAL_VISIT_ID, "visitDate", "startTime")
   }
+
+  private fun Pageable.withStableSort() = PageRequest.of(pageNumber, pageSize, sort.takeIf { it.getOrderFor(OFFICIAL_VISIT_ID) != null } ?: sort.and(Sort.by(OFFICIAL_VISIT_ID)))
 
   private fun getReferenceDescription(group: ReferenceDataGroup, code: String?) = code?.let {
     referenceDataService.getReferenceDataByGroupAndCode(group, code)?.description ?: "Reference code $code not found"

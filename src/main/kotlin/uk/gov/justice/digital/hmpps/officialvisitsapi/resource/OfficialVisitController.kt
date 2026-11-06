@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.officialvisitsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.Parameters
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -10,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
-import org.springdoc.core.converters.models.PageableAsQueryParam
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
@@ -200,7 +201,16 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
     description = "The date range is mandatory and inclusive. All other filters are optional and combined with AND. Only the matching official visit IDs are returned.",
   )
   @GetMapping("/ids")
-  @PageableAsQueryParam
+  @Parameters(
+    Parameter(name = "page", `in` = ParameterIn.QUERY, description = "Zero-based page index (0..N)", schema = Schema(type = "integer", defaultValue = "0")),
+    Parameter(name = "size", `in` = ParameterIn.QUERY, description = "The size of the page to be returned", schema = Schema(type = "integer", defaultValue = "20")),
+    Parameter(
+      name = "sort",
+      `in` = ParameterIn.QUERY,
+      description = "Sort criteria in the format property,(asc|desc). Sortable properties: officialVisitId, visitDate, startTime. Defaults to officialVisitId,asc. officialVisitId is always the final sort key, so results page consistently.",
+      array = ArraySchema(schema = Schema(type = "string")),
+    ),
+  )
   @ApiResponses(
     value = [
       ApiResponse(
@@ -209,7 +219,7 @@ class OfficialVisitController(private val facade: OfficialVisitFacade) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_OFFICIAL_VISITS_ADMIN', 'ROLE_OFFICIAL_VISITS__R', 'ROLE_OFFICIAL_VISITS_RW')")
+  @PreAuthorize("hasAnyRole('ROLE_PRISONER_SCHEDULES__RO')")
   fun findOfficialVisitIds(
     @RequestParam
     @Parameter(description = "The earliest visit date in ISO format (YYYY-MM-DD)", example = "2026-11-01", required = true)
