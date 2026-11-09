@@ -31,9 +31,9 @@ abstract class Email(val emailAddress: String) {
 
     return when {
       !email.isNullOrBlank() && !telephone.isNullOrBlank() -> "Instead, email $email, or phone $telephone"
-      !email.isNullOrBlank() -> "Instead, email $email or refer to the UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
-      !telephone.isNullOrBlank() -> "Instead, phone $telephone or refer to the UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
-      else -> "Instead, please refer to the UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+      !email.isNullOrBlank() -> "Instead, email $email or refer to the GOV.UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+      !telephone.isNullOrBlank() -> "Instead, phone $telephone or refer to the GOV.UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
+      else -> "Instead, please refer to the GOV.UK Prisons website for the latest contact details: https://www.gov.uk/government/collections/prisons-in-england-and-wales"
     }
   }
 
