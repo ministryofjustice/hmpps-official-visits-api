@@ -17,6 +17,15 @@ generic-service:
     API_BASE_URL_NON_ASSOCIATIONS: "https://non-associations-api-preprod.hmpps.service.justice.gov.uk"
     API_BASE_URL_ALERTS: "https://alerts-api-preprod.hmpps.service.justice.gov.uk"
     API_BASE_URL_PRISON_REGISTER: "https://prison-register-preprod.hmpps.service.justice.gov.uk"
+    APPLICATIONINSIGHTS_STATSBEAT_DISABLED: "true"
+    JAVA_TOOL_OPTIONS: "$(JAVA_PROXY_TOOL_OPTIONS) -XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=50.0"
+
+  namespace_secrets:
+    hmpps-envoy-https-proxy-env:
+      HTTP_PROXY: "HTTP_PROXY"
+      HTTPS_PROXY: "HTTPS_PROXY"
+      NO_PROXY: "NO_PROXY"
+      JAVA_PROXY_TOOL_OPTIONS: "JAVA_PROXY_TOOL_OPTIONS"
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
