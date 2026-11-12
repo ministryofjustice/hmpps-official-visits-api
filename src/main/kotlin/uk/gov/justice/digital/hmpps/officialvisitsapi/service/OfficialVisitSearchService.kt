@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PagedModel
 import org.springframework.stereotype.Component
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.config.StringFeature
 import uk.gov.justice.digital.hmpps.officialvisitsapi.entity.OfficialVisitSummaryEntity
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.ReferenceDataGroup
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitStatusType
+import uk.gov.justice.digital.hmpps.officialvisitsapi.model.VisitType
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.request.OfficialVisitSummarySearchRequest
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.OfficialVisitSummarySearchResponse
 import uk.gov.justice.digital.hmpps.officialvisitsapi.model.response.PrisonerVisitedDetails
@@ -29,6 +31,7 @@ import uk.gov.justice.digital.hmpps.officialvisitsapi.repository.PrisonerVisited
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsEvents
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.MetricsService
 import uk.gov.justice.digital.hmpps.officialvisitsapi.service.metrics.SearchInfo
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -160,6 +163,40 @@ class OfficialVisitSearchService(
 
     PagedModel(response)
   }
+
+  fun searchForOfficialVisitIds(
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    prisonerNumber: String?,
+    prisonCode: String?,
+    visitStatus: VisitStatusType?,
+    visitType: VisitType?,
+    locationId: UUID?,
+    pageable: Pageable,
+  ): PagedModel<Long> = run {
+    require(toDate >= fromDate) { "To date must be on or after the from date" }
+    pageable.sort.forEach { require(it.property in SORTABLE_ID_PROPERTIES) { "Invalid sort property '${it.property}'" } }
+
+    PagedModel(
+      officialVisitSummaryRepository.findOfficialVisitIdsBy(
+        fromDate = fromDate,
+        toDate = toDate,
+        prisonerNumber = prisonerNumber?.trim()?.takeIf { it.isNotEmpty() },
+        prisonCode = prisonCode?.trim()?.takeIf { it.isNotEmpty() },
+        visitStatus = visitStatus,
+        visitType = visitType,
+        locationId = locationId,
+        pageable = pageable.withStableSort(),
+      ),
+    )
+  }
+
+  companion object {
+    private const val OFFICIAL_VISIT_ID = "officialVisitId"
+    private val SORTABLE_ID_PROPERTIES = setOf(OFFICIAL_VISIT_ID, "visitDate", "startTime")
+  }
+
+  private fun Pageable.withStableSort() = PageRequest.of(pageNumber, pageSize, sort.takeIf { it.getOrderFor(OFFICIAL_VISIT_ID) != null } ?: sort.and(Sort.by(OFFICIAL_VISIT_ID)))
 
   private fun getReferenceDescription(group: ReferenceDataGroup, code: String?) = code?.let {
     referenceDataService.getReferenceDataByGroupAndCode(group, code)?.description ?: "Reference code $code not found"
