@@ -18,7 +18,7 @@ generic-service:
     API_BASE_URL_ALERTS: "https://alerts-api-preprod.hmpps.service.justice.gov.uk"
     API_BASE_URL_PRISON_REGISTER: "https://prison-register-preprod.hmpps.service.justice.gov.uk"
     APPLICATIONINSIGHTS_STATSBEAT_DISABLED: "true"
-    JAVA_TOOL_OPTIONS: "$(JAVA_PROXY_TOOL_OPTIONS) -XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=50.0"
+    JAVA_TOOL_OPTIONS: "$(JAVA_PROXY_TOOL_OPTIONS) -XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=50.0 -XX:-UseBASE64Intrinsics"
 
   namespace_secrets:
     hmpps-envoy-https-proxy-env:
