@@ -3,7 +3,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.15"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.1.2"
   id("org.openapi.generator") version "7.27.0"
   kotlin("plugin.spring") version "2.4.21"
   kotlin("plugin.jpa") version "2.4.21"
@@ -23,23 +23,23 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
   // OpenAPI dependencies
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.2.0")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
-  implementation("org.springdoc:springdoc-openapi-starter-common:3.2.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.2.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.1")
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.2.1")
 
   // Postgresql dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
-  runtimeOnly("org.postgresql:postgresql:42.7.14")
+  runtimeOnly("org.postgresql:postgresql:42.7.15")
 
   // Open telemetry dependencies
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.33.1")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.34.0")
 
   // Gov Notify client
   implementation("uk.gov.service.notify:notifications-java-client:6.2.1-RELEASE")
 
   // Test dependencies
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.1.0")
-  testImplementation("org.springframework.security:spring-security-test:7.1.2")
+  testImplementation("org.springframework.security:spring-security-test:7.2.0")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
@@ -55,8 +55,8 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
   // JUnit
-  testImplementation("net.javacrumbs.json-unit:json-unit:6.4.0")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.4.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit:6.4.1")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.4.1")
   testImplementation("net.javacrumbs.json-unit:json-unit-json-path:5.1.2")
 
   // Mockito
