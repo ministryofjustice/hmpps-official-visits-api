@@ -23,9 +23,9 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
   // OpenAPI dependencies
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.2.1")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.1")
-  implementation("org.springdoc:springdoc-openapi-starter-common:3.2.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.2.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
+  implementation("org.springdoc:springdoc-openapi-starter-common:3.2.0")
 
   // Postgresql dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
