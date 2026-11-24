@@ -68,7 +68,7 @@ jobs:
     with:
       gradle-command: './gradlew integrationTest'
       postgres-db: official-visits-test-db
-      postgres-tag: "16"
+      postgres-tag: "18.6"
       postgres-username: official-visits
       postgres-password: official-visits
       artifact-name: integration-test-results
